@@ -15,6 +15,7 @@ Never start the next phase without explicit user approval.** Tick checklist item
 
 | Layer | Choice | Notes |
 |---|---|---|
+| Targets | **Windows** (WebView2 = Chromium) and **Linux** (WebKitGTK 4.1) | macOS is not a target; keep code portable but don't spend effort on it |
 | Desktop shell | Tauri 2 (Rust) | File I/O, zip bundles, workspace dirs, heavy geometry (convex decomposition) |
 | UI framework | React 19 + TypeScript 6 (strict) | `@react-three/fiber` 9 currently requires React `>=19 <19.4` |
 | Build | Vite 8 | Dev server on fixed port 1420 (Tauri expects it) |
@@ -193,3 +194,9 @@ Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindi
 
 - Small, focused commits with descriptive messages (`feat(viewport): ...`, `fix(physics): ...`).
 - Phase work happens on the designated feature branch; no PRs unless asked.
+
+## 11. Product decisions (see `PLAN.md` §5)
+
+- Project files: `.stvd` (zip). App identifier: `com.studiovd.desktop`.
+- Simulation: steady state only (v1). Simulation drives visuals only; it never moves parts.
+- Default mouse mapping: SolidWorks-style (middle-drag orbit, Ctrl+middle pan, wheel zoom).

@@ -12,7 +12,7 @@ Status legend: `[x]` done and verified · `[ ]` to do · ⛔ = **stop and get us
 | 2 | UI scaffolding & state | Full app shell with resizable panels, menu bar, store, undo/redo |
 | 3 | Core 3D & physics spike | Grid, lights, CAD camera; two blocks on a hinge, mouse-drag blocked by collision |
 | 4 | Import pipeline | GLB/OBJ/STL/STEP/IGES parts appear in viewport + scene tree, in mm |
-| 5 | Project bundle | Save/open `.studiovd` round-trips exactly |
+| 5 | Project bundle | Save/open `.stvd` round-trips exactly |
 | 6 | Materials | PBR library + editor; metal, plastic, glass look right |
 | 7 | Anchors | Click a face/hole/vertex to place an anchor frame; hole axes auto-detected |
 | 8 | Mates & snapping | Pick two anchors and a type: parts snap together, DOF shown |
@@ -95,13 +95,14 @@ flowchart LR
 10. **Every Tauri call goes through `src/lib/tauri/`** so the full UI runs in a browser with
     `mockIPC` for Playwright tests.
 
-### 1.2 Project bundle (`.studiovd`)
+### 1.2 Project bundle (`.stvd`)
 
-A zip with a custom extension. (Not `.svd`: that extension is already used by CMSIS-SVD
-microcontroller register files, which electronics users will have on disk.)
+A zip with a custom extension, `.stvd` (user decision). No registered format uses `.stvd`;
+ST Visual Develop ("STVD") uses `.stw`/`.stp`. `.svd` was rejected because CMSIS-SVD
+microcontroller register files already use it.
 
 ```
-MyAssembly.studiovd
+MyAssembly.stvd
 ├── scene.json                         master file (schema-validated, versioned)
 ├── geometry/<sha256>.glb              normalized geometry, one per unique asset
 ├── sources/<sha256>.<step|iges|...>   optional originals (re-tessellate at another quality)
@@ -173,12 +174,16 @@ $(\text{top}-\text{bottom})/\text{zoom}=h$, and the reverse when switching back.
 
 ---
 
-## 3. Simulation model (Phase 11; flagged for your review)
+## 3. Simulation model (Phase 11)
 
-- **Steady state only in v1.** Nothing auto-animates, so the natural model is an operating
-  point re-solved on every change (edit, parameter, or a bound 3D joint moving during a drag).
-  Capacitors are open, inductors shorted. Transient (time-domain) simulation is out of scope
-  unless you want it; it is a much larger solver.
+- **Steady state only in v1 (confirmed).** Nothing auto-animates, so the natural model is an
+  operating point re-solved on every change (edit, parameter, or a bound 3D joint moving during
+  a drag). Capacitors are open, inductors shorted. Transient (time-domain) simulation is a
+  possible later phase; keep the component interface open for it (no steady-state-only
+  assumptions baked into port or netlist types).
+- **3D ↔ sim coupling (confirmed):** 3D → sim carries *measurements* (joint angle/position,
+  mass, gravity torque, part-contact state); sim → 3D carries *visuals only* (LED glow, tint,
+  force arrows). The simulation never moves parts.
 - **Two port classes:**
   - *Conserved (acausal) domains*: an across ("effort") and a through ("flow") variable.
     Connected ports share effort; flows sum to zero at each net (Kirchhoff).
@@ -209,7 +214,7 @@ $(\text{top}-\text{bottom})/\text{zoom}=h$, and the reverse when switching back.
 | Thin parts tunnel when dragged fast | CCD on dynamic bodies + velocity clamp |
 | Zero-clearance CAD fits interpenetrate at start | Contacts off for mated pairs; start-of-test interference scan → filtered + reported |
 | Rapier JS joints and arbitrary part orientations: a hinge may "jump" if local frames are wrong | Phase 3 headless test creates a hinge between differently-rotated bodies and asserts zero initial correction (`JointData.frame1/frame2` exist; behaviour to be verified) |
-| WebView differences (WebKitGTK on Linux is the weakest WebGL host; WKWebView on macOS) | WebGL2 only; Phase 3 gate includes a run on every target OS |
+| WebView differences: Windows uses WebView2 (Chromium, strong WebGL); Linux uses WebKitGTK (the weakest WebGL host, some GPU/driver combos need `WEBKIT_DISABLE_DMABUF_RENDERER=1`) | WebGL2 only; E2E runs on Playwright Chromium (≈ WebView2) and WebKit (≈ WebKitGTK); Phase 3 gate includes a real run on Windows and Linux |
 | `occt-import-js` is 7.6 MB WASM, LGPL-2.1 | Lazy-load in a worker only when importing STEP/IGES; ship it unmodified as a separate file + licence notice |
 | Default drei/three assets fetch from CDNs (HDRI presets, DRACO decoder) | Bundle locally; CSP blocks external origins |
 | Triangle count, not part count, is what kills frame rate | Tessellation quality presets at import; warn above the ~2-3 M triangle budget |
@@ -217,19 +222,15 @@ $(\text{top}-\text{bottom})/\text{zoom}=h$, and the reverse when switching back.
 
 ---
 
-## 5. Open questions (answers change the plan)
+## 5. Decisions log
 
-1. **Target OS(es)?** Windows (WebView2/Chromium), macOS (WKWebView), Linux (WebKitGTK)? This
-   decides the test matrix and how much WebGL risk we carry.
-2. **Steady-state simulation for v1 OK?** (§3) Or do you need time-domain behaviour (motor
-   spin-up, capacitor charging) from the start?
-3. **Binding semantics:** I propose 3D → sim carries *measurements* (joint angle/position, mass,
-   gravity torque, part-contact state) and sim → 3D carries *visuals only* (LED glow, tint, force
-   arrows). The sim never moves parts. Correct?
-4. **Default mouse mapping:** SolidWorks-style (middle-drag orbit, Ctrl+middle pan), Fusion 360,
-   Onshape (right-drag orbit), or Blender? Left click stays reserved for select/pick in all cases.
-5. **File extension `.studiovd`** and app identifier `com.studiovd.desktop` OK, or do you have
-   a domain you want in the identifier?
+| # | Question | Decision (2026-10-09) |
+|---|---|---|
+| D1 | Target OSes | **Windows + Linux.** macOS not targeted (code stays portable, but untested) |
+| D2 | Simulation fidelity | **Steady state** for v1 |
+| D3 | 3D ↔ sim semantics | **Measurements in, visuals out**; sim never moves parts |
+| D4 | Default mouse mapping | **SolidWorks-style** default (assumed from "yes" to the first option); other presets selectable |
+| D5 | Project extension / app ID | **`.stvd`**, `com.studiovd.desktop` |
 
 ---
 
@@ -243,7 +244,9 @@ $(\text{top}-\text{bottom})/\text{zoom}=h$, and the reverse when switching back.
   joint frames, no JS convex decomposition; occt-import-js B-rep face output)
 - [x] 1.5 `CLAUDE.md` (rules, stack, palette with computed contrast ratios, layout)
 - [x] 1.6 `PLAN.md` (this file)
-- [ ] ⛔ 1.7 **User approval of plan + answers to §5**
+- [x] 1.7 Answers to open questions recorded (§5 D1-D5)
+- [ ] 1.8 Component library design (new requirement, §6 + Phase 14)
+- [ ] ⛔ 1.9 **User approval of the revised plan**
 
 ## Phase 2: UI scaffolding & state
 
@@ -275,8 +278,7 @@ Shell
 - [ ] 2.15 Right sidebar: Properties for current selection (placeholder inspectors)
 - [ ] 2.16 Centre: resizable split 3D | Schematic (placeholders), orientation toggle, maximize a pane
 - [ ] 2.17 Status bar: selection count, units, mode, sim status
-- [ ] 2.18 Keyboard shortcut registry (Ctrl/Cmd+S, Z, Shift+Z, Delete, F, Esc); keep Tauri's
-  default macOS app menu so Cmd+C/V/Q work in inputs
+- [ ] 2.18 Keyboard shortcut registry (Ctrl+S, Ctrl+Z, Ctrl+Shift+Z / Ctrl+Y, Delete, F, Esc)
 - [ ] 2.19 Per-panel error boundaries (a crashed schematic must not take down the viewport)
 
 Exit criteria
@@ -292,7 +294,9 @@ Viewport
   mapping, sRGB output, gradient background
 - [ ] 3.2 Infinite grid (mm: 10 mm minor / 100 mm major, distance fade) + axis triad + view cube
 - [ ] 3.3 Lighting: hemisphere + key/fill directional + local `RoomEnvironment` PMREM (no network)
-- [ ] 3.4 `CameraControls`: CAD mouse preset (per §5 Q4), zoom-to-cursor, fit-all (F/Home)
+- [ ] 3.4 `CameraControls`: SolidWorks-style default (middle-drag orbit, Ctrl+middle pan, wheel
+  zoom; left click reserved for pick), presets for Fusion 360 / Onshape / Blender in settings,
+  zoom-to-cursor, fit-all (F/Home)
 - [ ] 3.5 Perspective ↔ orthographic toggle preserving framing (§2 formula, unit tested)
 - [ ] 3.6 Hover + click selection (synced to store; highlight in `highlight-3d`)
 
@@ -311,7 +315,7 @@ Exit criteria
   differently-rotated bodies produces no initial jump; (d) released part comes to rest
 - [ ] 3.12 Unit tests: drag spring math, ortho/perspective conversion
 - [ ] 3.13 Playwright: canvas renders (headless WebGL), screenshot
-- [ ] 3.14 Manual check of `npm run tauri dev` on each target OS
+- [ ] 3.14 Manual check of `npm run tauri dev` on Windows and Linux
 - [ ] ⛔ 3.15 **User approval**
 
 ## Phase 4: Import pipeline & geometry assets
@@ -344,7 +348,7 @@ Exit criteria
   extract into workspace, zip-slip & size-limit guards, corrupt-file errors
 - [ ] 5.3 Commands: New, Open, Save, Save As, Close; dirty tracking; "unsaved changes" prompt on
   window close; recent files (app config dir)
-- [ ] 5.4 File association for `.studiovd` + open-on-launch (single-instance forwarding)
+- [ ] 5.4 File association for `.stvd` + open-on-launch (single-instance forwarding)
 - [ ] 5.5 Autosave to workspace + crash-recovery prompt on next launch; thumbnail capture
 - [ ] 5.6 Tests: Rust round-trip, zip-slip rejection, truncated zip; TS schema round-trip;
   E2E import → save → reopen → deep-equal document
@@ -467,7 +471,8 @@ Exit criteria
 - [ ] 13.3 Performance pass on a 200-part reference assembly (load time, orbit fps, test-mode fps)
 - [ ] 13.4 Undo/redo coverage audit, context menus, shortcut help overlay
 - [ ] 13.5 Logging (`tauri-plugin-log`), crash reporting to local log file
-- [ ] 13.6 Installers per target OS, icons, file association, signing notes, optional updater
+- [ ] 13.6 Installers: Windows (NSIS + MSI, WebView2 bootstrapper) and Linux (AppImage + .deb),
+  icons, `.stvd` file association, code-signing notes, optional updater
 - [ ] 13.7 CI build matrix (`tauri build` per OS) + Playwright in CI
 - [ ] 13.8 Docs: user guide, `scene.json` format spec, LGPL notice for occt-import-js
 - [ ] ⛔ 13.9 **User approval / release**

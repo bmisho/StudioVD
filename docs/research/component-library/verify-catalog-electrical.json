@@ -1,0 +1,413 @@
+{
+ "summary": "I checked the electrical parameters against datasheets with an adversarial eye. Direct downloads from manufacturer sites (ti.com, vishay.com, energizer.com, kingbrightusa.com, raspberrypi.com and others) were blocked by the sandbox proxy, with 403 on CONNECT, and WebFetch could not resolve any host. Evidence therefore comes from three places: WebSearch reading of datasheet copies, the GitHub code index (the Fairchild PN2222 SPICE model in KiCad-Spice-Library), and raw.githubusercontent.com (official Arduino docs-content datasheet and tech-specs YAML, and the raspberrypi/documentation page). Where WebSearch was the only route, the verdict is limited by how faithfully the search tool extracted the datasheet. I did not confirm any value from memory.\n\n**Refuted or corrected (most important):**\n1. **Kingbright LEDs.** Forward voltages hold up (red 1.85/2.5, green 2.2/2.5, blue 3.3/4.0, white 3.3/4.0 V). Several optical values are wrong or out of date:\n   - Red: 640 nm is the dominant wavelength; the peak is 660 nm.\n   - Green WP7113SGC: Iv is 240 typ / 120 min mcd, not 200/70.\n   - White WP7113QWC/D: the current Rev V.6B gives Iv 3600 typ / 2000 min mcd, not 2500, and Vf_max is 4.0 V, not unknown.\n   - Blue WP7113QBC/D: Iv and viewing angle conflict between sources. One copy of the current spec (V.14B) gives 3100/4500 mcd at 20 deg, while distributors give 2700-3000 mcd at 16 deg.\n   - Red Iv: current listings say 210 mcd typ, and one extraction of the spec gives 120 min / 210 typ, against the claimed 250/180.\n   - The flux estimates and any Iv-scaled visuals built on these numbers need recomputing.\n2. **LM340/LM7805 Iq.** The TI LM340 product page gives Iq typ 6.5 mA. The 8 mA figure belongs to the LM340-MIL page and the LM7805C datasheet (SNOSBR7D). That datasheet also confirms 4.8-5.2 V at 25 C, which the claim had left unconfirmed.\n3. **ESP32 GPIO drive.** I_OH 40 mA (VDD3P3_CPU domain, maximum drive) is in the ESP32-WROOM-32 datasheet itself, so the note calling it ESP32-S2 data is wrong. I_OL 28 mA was not confirmed for the ESP32.\n4. **Arduino Nano power consumption of 19 mA.** It is not in Arduino's official docs-content: the datasheet's power table says TBC and tech-specs.yml has no such row. Only reseller copies carry it. The official datasheet also says the external supply is 7-15 V, while the tech specs say 7-12 V nominal.\n5. **Omron SS-5GL operating force.** The 0.49 N figure belongs to the SS-5-F variant. Distributor data for SS-5GL says 1.47 N max. The 8.8 mm operating position is unverified; the SS-5 pin-plunger version is 8.4 +/- 0.5 mm.\n\n**Confirmed with primary or near-primary evidence:**\n- Mabuchi FA-130RA-2270, official PDF: 9100 rpm at 0.20 A, 6990 rpm / 0.66 A / 0.59 mN*m, stall 2.55 mN*m at 2.20 A, about 17 g.\n- Energizer E91: 150-300 mOhm fresh, 23.0 g, -18 to 55 C, D 13.5-14.5 mm, H 49.5-50.5 mm.\n- Duracell MN1604: 1.7 Ohm at 1 kHz.\n- Energizer 522: 625 mAh, 45.6 g (other revisions say 45.0 or 46.0 g).\n- Samsung INR18650-25R: AC impedance up to 18 mOhm (typ 13.2), DC-IR (10 A-1 A) up to 30 mOhm (typ 22.15), 20 A continuous, 4.20 V charge / 2.5 V cutoff, up to 45 g.\n- LM340: dropout 2.0 V, Vin 7.5-35 V, 1.5 A.\n- LM2596: Vin 4.5-40 V (45 V absolute max), V_FB 1.230 V (1.193-1.267), Vsat 1.16 V typ / 1.4-1.5 V max, Iq 5/10 mA, 73% at 12 V in, 3 V out, 3 A.\n- ULN2003A: Vce(sat) 0.9/1.1 V at 100 mA and 1.2/1.6 V at 350 mA, 2.7 kOhm input resistor, clamp 1.7/2 V (onsemi gives 1.5 V typ), 500 mA.\n- 1N4007: 1.1 V at 1 A, 5 uA, IFSM 30 A and 45 A.\n- 1N5819: 0.60 V at 1 A, IR 1 mA / 10 mA.\n- IRLZ44N: all R_DS(on) points, Vth, g_fs, 47 A, 55 V.\n- PN2222A (Fairchild SPICE model): IS = ISE = 14.34f, BF 255.9, VAF 74.03, IKF 0.2847, BR 6.092, NE 1.307. Both copies agree on ISE, and BR and NE (previously \"recalled, low\") are now confirmed.\n- BPW34: VR 60 V, which was previously unknown.\n- Other parts confirmed as claimed: HC-SR04, Noctua NF-A8 FLX, Sunon 40 mm fan, Adafruit 997 and 413, PJ-002A, Phoenix 1715721, Yageo MFR-25, PTV09, Omron B3F, C&K OS.\n- Official Arduino docs: Uno VIN 7-12 / 6-20 V, 20 mA per pin, 25 g; Nano 7-12 V nominal, 20 mA per pin, 7 g, 18 x 45 mm.\n- 28BYJ-48 (Kiatronics) and 17HS4401 confirmed. For the 17HS4401 this rests on seller listings only, which vary (some say 1.5 A).\n\n**Physics consistency (recomputed locally):**\n- **DC motor:** R = V/I_stall = 0.682 Ohm. With k = (V - I0*R)/w0 = 1.431e-3 V*s/rad (equal to k_t in SI), the model gives back exactly 9100 rpm no-load and 0.664 A at 6990 rpm. The datasheet itself implies k_t of about 1.275e-3 N*m/A from the stall point, about 11% lower than k_e, so a single-k model overstates stall torque by 12%, as the claim says.\n- **LED and diode fits:** The derived Is values are arithmetically correct (red 5.78e-18 A, green 6.6e-21 A, blue and white 3.8e-30 A, 1N4007 5.8e-10 A). So are the 1N5819 values (Rs 0.129 Ohm, Is 1.22e-8 A), but those depend on the unverified 0.900 V at 3.1 A point.\n- **IRLZ44N fit:** reproduces 0.022 / 0.0292 / 0.035 Ohm, and g_fs is 38 S.\n- **Other derived values:** BPW34 n = 1.345, ULN2003 fit V0 = 0.78 V and R = 1.2 Ohm, valve coil 37.5 Ohm, fan R_eq 232 and 218 Ohm. All unit conversions are correct (kgf*cm, CFM, inH2O, mmH2O).\n- **Adafruit 413 solenoid:** about 12 Ohm at 12 V means about 1 A, which contradicts Adafruit's \"about 250 mA\" text. The conflict is real.\n- **New values for the catalog:** IRLZ44N IDSS of 25 uA at 55 V (from a datasheet mirror; a second search could not show the row) gives a worst-case G_off of about 4.5e-7 S. The official Uno datasheet names the regulator as SPX1117M3-L-5, which can inform the dropout flag.\n\n**Unverified (no reachable source this session):**\n- ATmega328P VOH/VOL (so the Uno R_oh = 50 Ohm derivation is unverified).\n- Uno 3V3 pin 50 mA from official docs.\n- RP2040 GPIO thresholds and 12 mA drive.\n- Relay drop-out at 10% (only secondary).\n- 1N5819 0.900 V at 3.1 A.\n- GL5528 R10 and gamma (sources conflict: 10-20 vs 8-20 kOhm, 0.6 vs 0.7).\n- USB Type-C 1.5 / 3.0 A.\n- B3F travel; header ratings; buzzer, pump and LCD values. The claims already marked these low.\n\nScratch directory: scratch:/datasheet-check/ (holds the downloaded Arduino nano_ds.md, uno_ds.md and *_tech-specs.yml).",
+ "checks": [
+  {
+   "claim": "led5_red Vf_typ 1.85 V @ 20 mA (WP7113SRD/D)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Kingbright spec (DSAF2433) shows Vf 1.85 typ / 2.5 max at IF=20 mA per WebSearch extraction; DigiKey/Microchip USA also list 1.85 V.",
+   "evidence_url": "http://www.kingbrightusa.com/images/catalog/spec/wp7113srd-d.pdf"
+  },
+  {
+   "claim": "led5_red Vf_max 2.5 V (marked 'not confirmed', low)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Vf max 2.5 V @ 20 mA appears in the Kingbright WP7113SRD/D spec table (per search extraction). Can be upgraded to medium.",
+   "evidence_url": "http://www.kingbrightusa.com/images/catalog/spec/wp7113srd-d.pdf"
+  },
+  {
+   "claim": "led5_red lambda_peak 640 nm",
+   "verdict": "refuted",
+   "correct_value_or_note": "Kingbright spec: lambda_peak 660 nm, lambda_dominant 640 nm (DigiKey lists peak 655). 640 nm is the dominant wavelength, not the peak.",
+   "evidence_url": "http://www.kingbrightusa.com/images/catalog/spec/wp7113srd-d.pdf"
+  },
+  {
+   "claim": "led5_red Iv 250 typ / 180 min mcd @ 20 mA (confidence high)",
+   "verdict": "refuted",
+   "correct_value_or_note": "Not supported at high confidence. LCSC and Microchip USA list 210 mcd; one extraction of the Kingbright spec gives 120 min / 210 typ (text partly garbled). Octopart lists 250 mcd and other listings say 400-600 mcd. Use 210 typ (medium at best) and drop the confidence to low/medium. The part is also listed as obsolete/EOL (replacement WP7113SURDK).",
+   "evidence_url": "https://www.lcsc.com/product-detail/led-indication-discrete_kingbright-wp7113srd-d_C6001446.html"
+  },
+  {
+   "claim": "led5_red viewing angle 2theta1/2 = 30 deg",
+   "verdict": "confirmed",
+   "correct_value_or_note": "30 deg in the Kingbright spec and on DigiKey/Microchip USA.",
+   "evidence_url": "https://www.digikey.com/en/products/detail/kingbright/WP7113SRD-D/1747674"
+  },
+  {
+   "claim": "led5_green Vf 2.2 typ / 2.5 max @ 20 mA",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Kingbright WP7113SGC spec Rev V.14B (03/2025): 2.2 typ / 2.5 max at IF=20 mA, tolerance +/-0.1 V.",
+   "evidence_url": "https://www.kingbrightusa.com/images/catalog/SPEC/WP7113SGC.pdf"
+  },
+  {
+   "claim": "led5_green Iv 200 typ / 70 min mcd (from L-7113SGC sister part)",
+   "verdict": "refuted",
+   "correct_value_or_note": "WP7113SGC (water clear) is 240 typ / 120 min mcd @ 20 mA, 20 deg (X-On copy of the Kingbright Apr-2022 sheet; DigiKey and TTI list 240 mcd). Flux estimate becomes about 0.24 cd x 0.0955 sr = 0.023 lm.",
+   "evidence_url": "https://xonstorage.z8.web.core.windows.net/pdf/kingbright_wp7113sgc_apr22_xonlink.pdf"
+  },
+  {
+   "claim": "led5_green viewing angle 20 deg; lambda dominant 568 nm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "20 deg on all listings; lambda_dom 568 nm in Kingbright Rev V.14B. Peak 565 nm only from the sibling WP7113SGD sheet.",
+   "evidence_url": "https://www.digikey.com/en/products/detail/kingbright/WP7113SGC/1747672"
+  },
+  {
+   "claim": "led5_blue Vf 3.3 typ / 4.0 max @ 20 mA",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Kingbright WP7113QBC/D spec V.14B (per electronicsfinder copy) gives 3.3 typ / 4.0 max at 20 mA; DigiKey gives 3.3 V.",
+   "evidence_url": "https://www.electronicsfinder.net/kingbright/wp7113qbc$d"
+  },
+  {
+   "claim": "led5_blue Iv 3000 typ / 1900 min mcd and viewing angle 16 deg (from L-7113QBC-D DSAA4777)",
+   "verdict": "unverified",
+   "correct_value_or_note": "Sources conflict. One extraction of the current WP7113QBC/D spec V.14B gives 3100 min / 4500 typ mcd at 20 deg (Mouser and Arrow also list 4500 mcd and 20 deg). DigiKey lists 2700 mcd at 16 deg, Future Electronics 3000 mcd at 16 deg, findchips 3000 typ. Dominant wavelength 465 nm per Octopart/DigiKey vs the claimed 470. The claimed values come from an older L-series document, not this part number. Resolve against the current Kingbright PDF.",
+   "evidence_url": "https://www.kingbrightusa.com/images/catalog/spec/wp7113qbc-d.pdf"
+  },
+  {
+   "claim": "led5_white Vf_typ 3.3 V; Vf_max unknown",
+   "verdict": "refuted",
+   "correct_value_or_note": "Vf 3.3 typ is confirmed. Vf_max is not unknown: Kingbright DSAI6407 Rev V.6B (10/2023) gives 4.0 V max at 20 mA (+/-0.1 V tolerance).",
+   "evidence_url": "https://www.kingbrightusa.com/images/catalog/SPEC/WP7113QWC-D.pdf"
+  },
+  {
+   "claim": "led5_white Iv 2500 mcd @ 20 mA",
+   "verdict": "refuted",
+   "correct_value_or_note": "The current Kingbright DSAI6407 Rev V.6B selection guide gives Iv 2000 min / 3600 typ mcd @ 20 mA (+/-15%). 2500 mcd comes from an older Mouser summary or revision. Flux estimate becomes about 3.6 x 0.0955 = 0.34 lm.",
+   "evidence_url": "https://www.kingbrightusa.com/images/catalog/SPEC/WP7113QWC-D.pdf"
+  },
+  {
+   "claim": "led5_white VR_max 5 V; IR 50 uA @ 5 V; Pd 120 mW; 20 deg",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The Kingbright spec gives VR 5 V and also DC IF max 30 mA (useful for If_max). IR 50 uA, Pd 120 mW and 20 deg were confirmed only via Mouser's summary, not the datasheet table (medium).",
+   "evidence_url": "https://www.mouser.in/new/kingbright/kingbright-wp-white-leds/"
+  },
+  {
+   "claim": "LED Is derivations (red 5.78e-18, green 6.6e-21, blue/white 3.8e-30 A; n=2, Vt=25.852 mV)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Recomputed: 5.777e-18, 6.635e-21, 3.82e-30 A. Arithmetic is correct; physical validity of n=2, Rs=0 stays low as stated. The cone flux formula also checks out (0.25 cd x 0.214 sr = 0.0535 lm), but the Iv inputs above changed.",
+   "evidence_url": "n/a (recomputed locally from the claimed inputs)"
+  },
+  {
+   "claim": "diode_1n4007 VRRM 1000 V, IF(AV) 1 A, IFSM 30 A (8.3 ms) / 45 A (1 ms), VF 1.1 V @ 1.0 A, IR 5 uA @ 25 C",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Vishay 88503 copies: VF max 1.1 V at IF = 1.0 A, 25 C (test current now confirmed); IR 5.0 uA at 25 C and 50 uA at 125 C; IFSM 30 A (8.3 ms) and 45 A square 1 ms (2020 rev). Is fit 5.76e-10 A recomputed OK.",
+   "evidence_url": "https://assets.rs-online.com/v1698969092/Datasheets/21a5c2cdb4543658966f9264c77086e2.pdf"
+  },
+  {
+   "claim": "diode_1n5819 VF_max 0.600 V @ 1.0 A and 0.900 V @ 3.1 A; IR 1.0 mA @ 25 C / 10 mA @ 100 C",
+   "verdict": "unverified",
+   "correct_value_or_note": "Confirmed: 0.60 V @ 1 A and IR 1.0 / 10 mA (Vishay major ratings, SparkFun datasheet copy). Not confirmed this session: the 0.900 V @ 3.1 A point, so the derived Rs = 0.129 Ohm / Is = 1.22e-8 A (arithmetic recomputed correctly) rest on an unverified input.",
+   "evidence_url": "https://cdn.sparkfun.com/datasheets/Components/General/1N5819.pdf"
+  },
+  {
+   "claim": "nmos_irlz44n R_DS(on) 0.022/0.025/0.035 Ohm @ 10/5/4 V; Vth 1.0-2.0 V; gfs 21 S; 55 V; 47 A",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Electrical table reproduced on the aiema.cn datasheet mirror; 47 A / 55 V from DigiKey. Fit recomputed: 0.0220 / 0.0292 / 0.0350 Ohm, g_fs 38 S.",
+   "evidence_url": "https://aiema.cn/part/datasheet/irlz44npbf-fn11683200-f10063538?page=2"
+  },
+  {
+   "claim": "nmos_irlz44n G_off unknown (IDSS not retrieved)",
+   "verdict": "refuted",
+   "correct_value_or_note": "IDSS is published: 25 uA max at VDS=55 V, VGS=0 (250 uA at 44 V, TJ=150 C), per the same datasheet mirror (a second search could not show the row). Worst-case G_off is about 25e-6/55 = 4.5e-7 S. Pinout G-D-S is confirmed only by a retailer listing.",
+   "evidence_url": "https://aiema.cn/part/datasheet/irlz44npbf-fn11683200-f10063538?page=2"
+  },
+  {
+   "claim": "npn_2n2222a SPICE IS 14.34e-15, BF 255.9, VAF 74.03, IKF 0.2847, ISE 14.34e-15 ('copies disagree'), BR 6.092 / NE 1.307 ('recalled, low')",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Fairchild model (pid=19): Is=14.34f Xti=3 Eg=1.11 Vaf=74.03 Bf=255.9 Ne=1.307 Ise=14.34f Ikf=.2847 Xtb=1.5 Br=6.092 Nc=2 Isc=0 Ikr=0 Rc=1 Rb=10. Identical in a National-labelled Q2N2222A copy, so ISE, BR and NE can all be upgraded.",
+   "evidence_url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/master/Models/uncategorized/PN2222.mod"
+  },
+  {
+   "claim": "npn_2n2222a hFE min 100 @ 150 mA/10 V; VCEO 40 V; IC 600 mA",
+   "verdict": "confirmed",
+   "correct_value_or_note": "DigiKey: hFE min 100 @ 150 mA, 10 V. onsemi datasheet: V(BR)CEO min 40 Vdc. 600 mA only from distributor listings (Findchips); the abs-max row was not seen. Part listed obsolete.",
+   "evidence_url": "https://www.onsemi.com/pdf/datasheet/p2n2222a-d.pdf"
+  },
+  {
+   "claim": "batt_aa_alkaline EMF 1.5 V; R_int 0.15-0.30 Ohm fresh; 23.0 g; -18..55 C; D 13.5-14.5, H 49.5-50.5 mm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Energizer E91 datasheet copies: nominal IR 150-300 mOhm (fresh), 23.0 g, -18 to 55 C, diameter 13.50-14.50 mm, height 49.50-50.50 mm.",
+   "evidence_url": "https://data.energizer.com/pdfs/E91_Max_NA.pdf"
+  },
+  {
+   "claim": "batt_9v_alkaline R_int 1.7 Ohm (1 kHz impedance, Duracell MN1604)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "1,700 mOhm @ 1 kHz on the 2003/2008/2013 sheets (the 2000 sheet says 1,812 mOhm). It is an AC figure, as the claim notes.",
+   "evidence_url": "https://hallaweb.jlab.org/tech/Detectors/public_html/manuals/data_sheets-manuals/D-F/D/duracell/MN1604.pdf"
+  },
+  {
+   "claim": "batt_9v_alkaline capacity 625 mAh @ 25 mA to 0.8 V/cell; mass 45.6 g",
+   "verdict": "confirmed",
+   "correct_value_or_note": "rs-online copy: 625 mAh to 0.8 V/cell at 25 mA. 45.6 g on several copies, but other revisions say 45.0 g or 46.0 g.",
+   "evidence_url": "https://assets.rs-online.com/v1698850056/Datasheets/e934a3333de37d745d87b12fe42ac9c3.pdf"
+  },
+  {
+   "claim": "batt_18650_liion 3.6 V nominal; R_DC <=30 mOhm (typ 22.2, 10A-1A); R_AC <=18 mOhm (typ 13.2); 20 A continuous; <=45 g; 4.20/2.5 V",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Samsung SDI spec v1.0: 3.6 V, AC 1 kHz <=18 mOhm, 20 A, 45.0 g max, 4.20 V CC-CV, 2.5 V cutoff. DC-IR (10A-1A) <=30 mOhm with typ 22.15 and AC typ 13.20 per the DNK Power / PowerStream copy (typicals are lot data, not guaranteed). V_charge/V_cutoff can be upgraded from 'standard' to sourced.",
+   "evidence_url": "https://docs.telitpower.com/pdf/li-ion/INR18650-25R.pdf"
+  },
+  {
+   "claim": "motor_dc_130 FA-130RA-2270 @1.5 V: no-load 9100 rpm @ 0.20 A; max-eff 6990 rpm, 0.66 A, 0.59 mN*m; stall 2.55 mN*m @ 2.20 A; ~17 g",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Official Mabuchi PDF table: 1.5-3.0 V, 1.5 V constant, 9100 / 0.20 / 6990 / 0.66 / 0.59 mN*m / 0.43 W / 2.55 mN*m (26 g*cm) / 2.20 A; product page gives about 17 g. Primary source, so the confidence can be raised to high.",
+   "evidence_url": "https://www.mabuchi-motor.co.jp/motorize/branch/motor/pdf/fa_130ra.pdf"
+  },
+  {
+   "claim": "motor_dc_130 physics: R=0.682 Ohm, k=1.431e-3 (k_t=k_e), tau_c=2.86e-4; I_stall=V/R; no-load speed=V/k_e",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Recomputed: R=0.6818, k=1.4310e-3 V*s/rad (= N*m/A in SI), tau_c=2.862e-4 N*m; (V-I0*R)/k gives exactly 9100 rpm; i@6990 rpm = 0.6637 A. Inconsistency inside the datasheet: implied k_t = 2.55e-3/(2.20-0.20) = 1.275e-3 N*m/A (and 1.283e-3 from max-eff), about 11% below k_e, so one shared k overpredicts stall torque by 12% (2.86 vs 2.55 mN*m), as stated.",
+   "evidence_url": "https://www.mabuchi-motor.co.jp/motorize/branch/motor/pdf/fa_130ra.pdf"
+  },
+  {
+   "claim": "servo_sg90 tau_stall 1.8 kgf*cm (0.1765 N*m) @ 4.8 V; 0.1 s/60 deg; 9 g; dead band 10 us",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Rapid Online sheet (Oct 2013) and the NKUST copy list 1.8 kgf*cm, 0.1 s/60 deg, 10 us, 9 g. The same NKUST file has a second table with 1.2 kgf*cm / 0.12 s, so keep medium. Conversion 1.8 x 0.0980665 = 0.1765 N*m is correct.",
+   "evidence_url": "https://static.rapidonline.com/pdf/37-1330t.pdf"
+  },
+  {
+   "claim": "servo_mg996r tau_stall 9.4 kgf*cm @ 4.8 V / 11 kgf*cm @ 6 V; I_stall 2.5 A; I_run 500-900 mA @ 6 V; 5 us; 55 g",
+   "verdict": "confirmed",
+   "correct_value_or_note": "TowerPro datasheet copy matches all of these, plus 40.7x19.7x42.9 mm. Retail listings give 1 us dead band and 0.19/0.15 s/60 deg. Conversions 0.922 / 1.079 N*m are correct.",
+   "evidence_url": "https://courses.ece.cornell.edu/ece5990/ECE5725_Spring2020_Projects/May_15_Demo/Smart%20Lock/W_pp445_yl656/datasheet/MG996R_Tower-Pro.pdf"
+  },
+  {
+   "claim": "stepper_nema17_40 (17HS4401) T_H 0.40 N*m, 1.7 A/phase, 1.5 Ohm, 2.8 mH, 1.8 deg, 40 mm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matching values on several seller listings (40 N*cm min, 1.7 A, 1.5 Ohm, 2.8 mH, 1.8 deg, 42x42x40 mm, 280 g); no manufacturer PDF retrieved, so keep medium. Variant listings show 1.5 A or 1.68 A / 1.95 Ohm. Mass 280 g (seller) can replace 'unknown' at low confidence. Implied rated voltage I*R = 2.55 V.",
+   "evidence_url": "https://www.alldatasheet.com/datasheet-pdf/pdf/1137272/MOTIONKING/17HS4401.html"
+  },
+  {
+   "claim": "stepper_28byj48 5 V; 50 Ohm +/-7 %; 1/64; self-positioning >34.3 mN*m; pull-in 300 gf*cm; friction 600-1200 gf*cm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Kiatronics datasheet (CERN mirror) matches all values. Conversions 0.0294 and 0.059-0.118 N*m are correct. The ULN2003-driven phase current (5-0.88)/50 = 82 mA is consistent with the ULN2003 fit.",
+   "evidence_url": "https://microcontroller-course.web.cern.ch/Project_Material/resources/stepd-01-data-sheet-1143075.pdf"
+  },
+  {
+   "claim": "reg_lm7805 V_do 2.0 V typ; V_IN 7.5-35 V; I_OUT 1.5 A; V_nom 5.0",
+   "verdict": "confirmed",
+   "correct_value_or_note": "TI LM340 product page: Vdo typ 2000 mV, Vin min 7.5 V, max 35 V, 1.5-A. LM7805C datasheet SNOSBR7D: dropout 2.0 V at Tj=25 C, IOUT=1 A. Note the sim's dropout threshold V_nom+V_do = 7.0 V sits below TI's 7.5 V minimum.",
+   "evidence_url": "https://www.ti.com/product/LM340"
+  },
+  {
+   "claim": "reg_lm7805 I_q typ 8 mA (TI product page)",
+   "verdict": "refuted",
+   "correct_value_or_note": "The TI LM340 product page lists Iq(typ) 6.5 mA. 8 mA is the LM340-MIL page value and the LM7805C (SNOSBR7D) quiescent figure at 25 C (8.5 mA over temperature). Use 6.5 mA for LM340, or cite SNOSBR7D if modelling LM7805C.",
+   "evidence_url": "https://www.ti.com/product/LM340"
+  },
+  {
+   "claim": "reg_lm7805 accuracy (LM7805C 4.8-5.2 V 'not confirmed')",
+   "verdict": "confirmed",
+   "correct_value_or_note": "LM7805C SNOSBR7D: 4.8-5.2 V at Tj=25 C, 5 mA-1 A; 4.75-5.25 V over the wider line/load/power range.",
+   "evidence_url": "https://datasheet.octopart.com/LM7805CT-Texas-Instruments-datasheet-41216253.pdf"
+  },
+  {
+   "claim": "buck_lm2596 V_IN 4.5-40 V (45 abs max); V_FB 1.230 (1.193-1.267); I_OUT 3 A; V_sat 1.16 typ / 1.4-1.5 max; I_q 5/10 mA; eta 0.73 (12 V in, 3 A)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "TI SNVS124B/G copies: operating 4.5-40 V, 45 V abs max, VFB 1.230 (1.193-1.267 at 25 C; 1.180-1.280 full range in SNVS124B), Vsat 1.16 / 1.4 (1.5 full temperature) at 3 A, Iq 5/10 mA. The 73% point is VIN 12 V, VOUT 3 V, 3 A (SNVS124B). The '5 V output in the onsemi copy' attribution is unverified, and onsemi Vsat is quoted as 1.5 typ / 1.8 max, not 2.0.",
+   "evidence_url": "https://files.amperka.ru/datasheets/lm2596.pdf"
+  },
+  {
+   "claim": "driver_uln2003_board V_CE(sat) 0.9/1.1 V @ 100 mA, 1.2/1.6 V @ 350 mA; 2.7 kOhm input; clamp VF 1.7/2 V @ 350 mA; fit V0 0.78 V, R_sat 1.2 Ohm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "TI-style and Diodes Inc. ULN2003A sheets match (onsemi clamp VF 1.5 typ / 2.0 max). 2.7 kOhm series base resistor per TI. Fit recomputed: R = 0.3/0.25 = 1.2 Ohm, V0 = 0.78 V.",
+   "evidence_url": "https://www.diodes.com/datasheet/download/ULN2003A.pdf"
+  },
+  {
+   "claim": "driver_uln2003_board I_OUT max 500 mA per channel (not re-verified)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "TI SLRS027T: each Darlington can sink up to 500 mA.",
+   "evidence_url": "https://www.ti.com/document-viewer/ULN2003A/datasheet/GUID-810F3B0F-BAD5-443F-A7BF-53DB8B1DB9CC"
+  },
+  {
+   "claim": "relay_module_5v_1ch R_coil 70 Ohm; P_coil 0.36 W; R_contact <=0.1 Ohm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "LCSC/JLCPCB/Electrokit listings: 70 Ohm, 360 mW, 100 mOhm. 5^2/70 = 0.357 W is consistent. Songle PDF not opened (distributor-level, medium).",
+   "evidence_url": "https://www.lcsc.com/product-detail/C35449.html"
+  },
+  {
+   "claim": "relay_module_5v_1ch pick-up <=75 % (3.75 V) / drop-out >=10 % (0.5 V)",
+   "verdict": "unverified",
+   "correct_value_or_note": "One secondary source quotes pull-in 75% max and release 10% min, but the Songle coil table itself was not extracted. Keep low/medium.",
+   "evidence_url": "https://www.circuitbasics.com/wp-content/uploads/2015/11/SRD-05VDC-SL-C-Datasheet.pdf"
+  },
+  {
+   "claim": "mcu_arduino_uno_r3 VIN 7-12 V recommended / 6-20 V limits; 20 mA per I/O pin; 25 g; 68.6 x 53.4 mm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Official arduino/docs-content tech-specs.yml: input nominal 7-12 V, 20 mA per pin, 25 g, 53.4 x 68.6 mm. Official datasheet table: VIN 6-20 V, VUSB max 5.5 V. The datasheet names the regulator U1 as SPX1117M3-L-5 (a 1117-class LDO), relevant to the 'dropout' flag.",
+   "evidence_url": "https://raw.githubusercontent.com/arduino/docs-content/main/content/hardware/uno/boards/uno-rev3/tech-specs.yml"
+  },
+  {
+   "claim": "mcu_arduino_uno_r3 3V3 pin 50 mA",
+   "verdict": "unverified",
+   "correct_value_or_note": "Not in the official docs-content tech-specs or datasheet; only third-party pages say 50 mA.",
+   "evidence_url": "https://raw.githubusercontent.com/arduino/docs-content/main/content/hardware/uno/boards/uno-rev3/datasheet/datasheet.md"
+  },
+  {
+   "claim": "mcu_arduino_uno_r3 ATmega328P VOH min 4.0 V / VOL max 0.9 V @ 20 mA, 5 V (gives R_oh 50 Ohm, R_ol 45 Ohm)",
+   "verdict": "unverified",
+   "correct_value_or_note": "The DC characteristics rows could not be retrieved (Microchip and Atmel PDFs blocked; search excerpts lacked the rows). If VOH min is 4.2 V at 85 C, R_oh would be 40 Ohm. Keep low until the table is read.",
+   "evidence_url": "https://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-7810-Automotive-Microcontrollers-ATmega328P_Datasheet.pdf"
+  },
+  {
+   "claim": "mcu_arduino_nano VIN 7-12 V; 5 V; 20 mA per I/O; 7 g; 18 x 45 mm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Official tech-specs.yml: input nominal 7-12 V, I/O 5 V, 20 mA per pin, 7 g, 18 x 45 mm. The official datasheet instead says '7-15V unregulated external power supply (pin 30)', so the two official documents disagree on the upper bound.",
+   "evidence_url": "https://raw.githubusercontent.com/arduino/docs-content/main/content/hardware/nano/boards/nano/tech-specs.yml"
+  },
+  {
+   "claim": "mcu_arduino_nano power consumption (I_board) 19 mA (confidence high, official store)",
+   "verdict": "refuted",
+   "correct_value_or_note": "Not in the current official Arduino docs: the datasheet's Power Consumption table lists USB VCC / VIN typ as 'TBC', and tech-specs.yml has no consumption row. 19 mA appears only on resellers (PiShop) and guide sites. Downgrade to low.",
+   "evidence_url": "https://raw.githubusercontent.com/arduino/docs-content/main/content/hardware/nano/boards/nano/datasheet/datasheet.md"
+  },
+  {
+   "claim": "mcu_esp32_devkitc module supply 3.0-3.6 V; I_avg 80 mA; min PSU current 500 mA",
+   "verdict": "confirmed",
+   "correct_value_or_note": "ESP32-WROOM-32 datasheet v3.4+ Table 1: 3.0-3.6 V, 80 mA average, 500 mA minimum supply. Older revisions (V2.x) said 2.7-3.6 V.",
+   "evidence_url": "https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf"
+  },
+  {
+   "claim": "mcu_esp32_devkitc GPIO thresholds VIH 0.75 VDD, VIL 0.25 VDD, VOH 0.8 VDD, VOL 0.1 VDD",
+   "verdict": "confirmed",
+   "correct_value_or_note": "ESP32-WROOM-32 datasheet (v3.8) DC characteristics at 3.3 V.",
+   "evidence_url": "https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf"
+  },
+  {
+   "claim": "mcu_esp32_devkitc GPIO drive I_OH 40 / I_OL 28 mA 'ESP32-S2 data, not ESP32' (low)",
+   "verdict": "refuted",
+   "correct_value_or_note": "The ESP32-WROOM-32 datasheet itself lists I_OH 40 mA (VDD3P3_CPU domain, VDD=3.3 V, VOH >= 2.64 V, max drive), so the ~16 Ohm estimate (0.66 V/40 mA = 16.5 Ohm) can cite ESP32 data. I_OL 28 mA was confirmed only for ESP32-C3/S3 documents this session.",
+   "evidence_url": "https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf"
+  },
+  {
+   "claim": "mcu_esp32_devkitc power options micro-USB / 5V pin / 3V3 pin mutually exclusive",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The Espressif DevKitC guide says the options are mutually exclusive and only one should be used.",
+   "evidence_url": "https://docs.espressif.com/projects/esp-idf/en/v3.3/get-started/get-started-devkitc.html"
+  },
+  {
+   "claim": "mcu_rpi_pico VSYS 1.8-5.5 V",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Pico/Pico 2 datasheets: VSYS may vary 1.8-5.5 V into the RT6150 buck-boost. The official raspberrypi/documentation page about_pico.adoc says 'VSYS at pin 39 (2 V to 5 V system input)', so a docs inconsistency exists.",
+   "evidence_url": "https://github.com/raspberrypi/documentation/blob/develop/documentation/asciidoc/microcontrollers/pico-series/about_pico.adoc"
+  },
+  {
+   "claim": "mcu_rpi_pico 3V3_OUT ~300 mA; GPIO drive 12 mA",
+   "verdict": "unverified",
+   "correct_value_or_note": "300 mA is datasheet wording ('recommended to keep the load less than 300mA', quoted by pico.pinout.xyz), a recommendation rather than a hard limit. The 12 mA GPIO and the thresholds were not verified against the RP2040 datasheet (blocked).",
+   "evidence_url": "https://pico.pinout.xyz/"
+  },
+  {
+   "claim": "sensor_hcsr04 5 V; 15 mA; 40 kHz; 2 cm-4 m; 15 deg; 10 us trigger; ~3 mm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "ElecFreaks datasheet. Its table says '40Hz' (a typo); the text says 8 cycles at 40 kHz. The datasheet's distance formula uses 340 m/s. The <2 mA quiescent figure was not checked.",
+   "evidence_url": "https://www.radiolocman.com/datasheet/pdf.html?di=168043"
+  },
+  {
+   "claim": "photodiode_bpw34 area 7.5 mm2; Ik 70 uA @ 1 klx, 47 uA @ 1 mW/cm2 950 nm; Vo 350 mV",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Vishay 81521 (Rev 1.9/2.0/2.1). n derivation recomputed as 1.345.",
+   "evidence_url": "https://www.vishay.com/docs/81521/bpw34.pdf"
+  },
+  {
+   "claim": "photodiode_bpw34 I_dark 2 typ / 30 max nA @ VR 10 V",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Rev 2 (1999) copy: Iro 2 typ / 30 max nA at VR=10 V. One extraction of a later revision showed '230 nA', almost certainly the 2|30 columns merged. Rev 2.1 numeric row not seen.",
+   "evidence_url": "https://www.rcscomponents.kiev.ua/datasheets/BPW34.pdf"
+  },
+  {
+   "claim": "photodiode_bpw34 V_R max unknown ('>=60 V recalled, not verified')",
+   "verdict": "refuted",
+   "correct_value_or_note": "Not unknown: Vishay BPW34 absolute maximum reverse voltage VR = 60 V (Rev 1.9).",
+   "evidence_url": "https://www.farnell.com/datasheets/6514.pdf"
+  },
+  {
+   "claim": "ldr_gl5528 R10 10-20 kOhm; gamma 0.6; R_dark 1 MOhm; 150 V / 100 mW; 540 nm",
+   "verdict": "unverified",
+   "correct_value_or_note": "Confirmed: 150 V, 100 mW (GL5516 90 mW), 540 nm, dark resistance 1 MOhm min, gamma definition lg(R10/R100). Conflicting: R10 is 10-20 kOhm on most listings but 8-20 kOhm on the Handsontec/Rapid tables; gamma 0.6 vs 0.7 on other sources; per-model gamma values not extracted from the Senba table.",
+   "evidence_url": "https://www.handsontec.com/dataspecs/sensor/GL55-LDR.pdf"
+  },
+  {
+   "claim": "sw_tactile_6x6 Omron B3F 1-50 mA at 5-24 VDC; R_on <=100 mOhm; R_off >=100 MOhm @ 250 VDC; 0.98 N",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Omron B3F excerpt plus Farnell. The excerpt renders contact resistance as '100 MOhm max', an extraction error for 100 mOhm. Travel 0.25 mm is still unverified.",
+   "evidence_url": "https://html.alldatasheet.net/html-pdf/333076/OMRON/B3F/602/4/B3F.html"
+  },
+  {
+   "claim": "sw_slide_spdt C&K OS 100 mA @ 12 VDC; R_on <=20 mOhm; R_off >=100 MOhm @ 500 VDC; 10,000 cycles",
+   "verdict": "confirmed",
+   "correct_value_or_note": "DigiKey part listing plus the series table on a mirror (series-level values). The operating temperature disagrees (-10..70 vs -30..70 C).",
+   "evidence_url": "https://www.digikey.com/en/products/detail/c-k/OS102011MS2QN1/411602"
+  },
+  {
+   "claim": "sw_micro_limit SS-5 5 A 125 VAC / 3 A 250 VAC; R_on <=30 mOhm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Buerklin SS-5 listing: 5.0 A/125 VAC, 3.0 A/250 VAC, 30 mOhm. Farnell gives a series DC rating of 0.1 A at 30 VDC.",
+   "evidence_url": "https://www.buerklin.com/en/Snap-acting-switch/p/12G7810"
+  },
+  {
+   "claim": "sw_micro_limit SS-5GL OP 8.8 +/-0.8 mm; OF 0.49 N max",
+   "verdict": "refuted",
+   "correct_value_or_note": "0.49 N belongs to the SS-5-F variant (Farnell). SS-5GL (hinge lever, 18.5 mm) is listed at 1.47 N max. OP 8.8 mm was not found: the pin-plunger SS-5 is 8.4 +/- 0.5 mm per Buerklin, and no SS-5GL OP was confirmed.",
+   "evidence_url": "https://baoanjsc.com.vn/products/subminiature-basic-switch-omron_89701_en.aspx"
+  },
+  {
+   "claim": "pot_rotary_ptv09 10 kOhm; +/-20 %; 0.05 W; travel 280 +/-10 deg; shaft 6 x 20",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Farnell/element14 listings: 50 mW, +/-20 %, 280 +/-10 deg mechanical angle, 10k cycles, -10..50 C. I found no source for 300 deg; 280 deg can be raised to medium. Bourns PDF not opened.",
+   "evidence_url": "https://nz.element14.com/bourns/ptv09a-4020f-b103/pot-rotary-10kohm-9mm-20/dp/2469524"
+  },
+  {
+   "claim": "res_axial_0207 Yageo MFR-25: 0.25 W @ 70 C, 250 V, -55..155 C, body 6.3 +/-0.5 x 2.4 +/-0.2 mm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Yageo MFR copy (pdp8online) plus Mouser MFR-25FBF52 listing.",
+   "evidence_url": "https://www.pdp8online.com/mfm/board/datasheets/Yageo_MFR.pdf"
+  },
+  {
+   "claim": "conn_screw_terminal_508 Phoenix 1715721: 17.5 A, 250/400/630 V (III/3, III/2, II/2), 1.5 mm2, 5.08 mm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Phoenix catalog extract; it also gives a 22 A maximum load current and 4 kV surge.",
+   "evidence_url": "https://bpx.ie/dbdocument/104000/1715721.pdf"
+  },
+  {
+   "claim": "conn_dc_barrel_jack PJ-002A 24 VDC 2.5 A; 30 mOhm; 100 MOhm @ 500 VDC; 500 VAC 1 min; 5000 cycles; 2.0 mm pin",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Same Sky PJ-002A datasheet (03/11/2025 revision).",
+   "evidence_url": "https://jp.sameskydevices.com/product/resource/pj-002a.pdf"
+  },
+  {
+   "claim": "fan_80mm_12v Noctua NF-A8 FLX 2000 rpm, 50.4 m3/h (1.40e-2 m3/s), 1.96 mmH2O (19.2 Pa), 0.66 W",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Official Noctua spec page. Conversions and R_eq = 144/0.66 = 218 Ohm recomputed.",
+   "evidence_url": "https://noctua.at/en/nf-a8-flx/specification"
+  },
+  {
+   "claim": "fan_40mm_12v Sunon MF40101V1 12 V (4.5-13.8), 7000 rpm, 8.0 CFM, 0.190 inH2O, 0.62 W / 59 mA",
+   "verdict": "confirmed",
+   "correct_value_or_note": "RS/Future listings. Static pressure is listed as 0.48 cmH2O (47.1 Pa, about 0.189 inH2O); Comet lists 0.72 W, so a minor conflict. Conversions recomputed (3.776e-3 m3/s, 47.3 Pa, R_eq 232 Ohm).",
+   "evidence_url": "https://uk.rs-online.com/web/p/axial-fans/2025401"
+  },
+  {
+   "claim": "valve_solenoid_12v_nc Adafruit 997: 160 mA @ 6 V ... 320 mA @ 12 V (R 37.5 Ohm); 0.02-0.8 MPa; 121.9 g",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Adafruit page: current table 6-12 V, 0.02 MPa minimum, 0.8 MPa maximum, 4.3 oz = 121.9 g, actuates down to 6 V (slower). The 6 V and 12 V points both give 37.5 Ohm.",
+   "evidence_url": "https://www.adafruit.com/product/997"
+  },
+  {
+   "claim": "solenoid_pushpull_12v Adafruit 413: R_coil ~12 Ohm vs '~250 mA'; 10 mm; 6 N @ 12 V 50 % duty; 144 g",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Adafruit spec sheet (Mouser copy): about 12 Ohm, 10 mm, 6 N, 144 g, 9-12 V. The physics conflict is real: 12 V / 12 Ohm = 1 A (12 W), which contradicts the '~250 mA' product text, so keep R_coil at low confidence.",
+   "evidence_url": "https://www.mouser.com/datasheet/2/737/Adafruit_05132020_413-1858436.pdf"
+  },
+  {
+   "claim": "psu_usb_5v V 4.75-5.25 V; 100 mA unit load / 500 mA high-power; BC1.2 DCP 1.5 A; USB 3.x 900 mA",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Only via secondary sources (TI SLUAA94 for BC1.2 DCP up to 1.5 A; forum quote of the spec for 4.75-5.25 V, 100/500 mA, USB 3.0 150 mA x 6 = 900 mA). A USB-IF ECN raises the VBUS supply-side maximum to 5.5 V. The Type-C 1.5/3.0 A levels were not confirmed (stay low).",
+   "evidence_url": "https://edgeworker.ti.com/lit/pdf/sluaa94"
+  },
+  {
+   "claim": "Derived-value consistency: 1N5819 Rs 0.129 / Is 1.22e-8; ULN2003 82 mA phase current; buzzer R_eq 167 Ohm; G_leak 1N4007 5 nS; 1N5819 25 uS",
+   "verdict": "confirmed",
+   "correct_value_or_note": "All recomputed and arithmetically correct. Validity depends on the inputs flagged above (1N5819 3.1 A point unverified).",
+   "evidence_url": "n/a (recomputed locally)"
+  }
+ ]
+}

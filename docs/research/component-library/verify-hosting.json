@@ -1,0 +1,377 @@
+{
+ "summary": "I checked about 65 claims against primary sources: GitHub, GitLab, Cloudflare and Microsoft doc sources fetched from their repos; crate source pulled from static.crates.io; the crates.io API; and live curl tests run on 2026-10-09. Most claims hold, but six are wrong or incomplete in ways that matter, a few smaller ones are partly wrong, and four could not be checked.\n\nWRONG OR INCOMPLETE (these need changes):\n(1) PROXY: hyper-util 0.1.21 does NOT parse the Windows ProxyServer per-protocol form 'http=h:p;https=h:p'. It copies the whole registry string into both the http and https proxy slots. http::Uri then rejects that string ('invalid authority', reproduced with http 1.x), so reqwest quietly connects with no proxy. Only a single host:port or URL works. The '<local>' token in ProxyOverride is also passed through without being translated.\n(2) GITHUB 'LATEST': the REST API docs say make_latest defaults to \"true\" for newly published releases. Choosing by date and version only happens with make_latest=\"legacy\". Separately, the GET /releases/latest doc says releases are sorted by created_at, which is the commit date. The advice to create pack releases with --latest=false still holds and matters more than the claim suggested. Catalog releases should pass --latest explicitly, and this should be tested on a scratch repo.\n(3) The proposed CSP would break embedded GLB textures in WebView2. GLTFLoader turns embedded images into blob: URLs and loads them with ImageBitmapLoader, which uses fetch(). fetch() is governed by connect-src, and in CSP3 'self' never matches blob:. So connect-src needs blob:, and also data: if any .gltf files use data URIs.\n(4) Cloudflare partial (CNAME) setup is available only on Business and Enterprise plans. On the Free plan, an R2 custom domain needs a full setup, meaning the domain's nameservers move to Cloudflare.\n(5) The Windows path-length example is 206 characters, not about 190. It is still under MAX_PATH (260).\n(6) jsDelivr 'no request limits' is not documented. The README only says there are no bandwidth limits. The terms add soft per-repo file-count limits and a scraping prohibition, and recommend an appropriate license.\n\nCONFIRMED, with notes: every crate version, date, MSRV and license listed (tokio-util 0.7.20, like zip 9.0.0, was released today and raises its MSRV to 1.85). Cargo.lock has reqwest 0.13.5 with no TLS dependencies, pulled in by tauri 2.12.2. reqwest 0.13 defaults to rustls with aws-lc and the platform verifier; it panics when built with rustls-no-provider and no provider installed; tls_certs_merge adds roots alongside the platform verifier; the redirect header stripping matches the claim (cookie2 is also stripped); the timeout methods exist; and proxy auth is basic or a static header only. Both Tauri plugins use reqwest 0.12 and webpki roots by default. upload's download() behaves exactly as described. minisign-verify 0.3.0 has zero dependencies, prehashed and stream verification, and allow_legacy semantics as described, but it has no public key_id accessor (the app must try each trusted key) and trusted_comment() can be read before verification. The updater's verify_signed_version pattern is as described. zip's symlink default and RUSTSEC-2025-0168 are as described. File::lock has been stable since 1.89.0. The aws-lc NASM rules are as described. On Tauri paths: app_cache_dir and app_local_data_dir are the same folder on Windows, and the webview data folder sits in app_local_data_dir; the logs folder is also there. appDirectoriesOverride arrived in 2.12.0. protocol-asset turns on http-range. convertFileSrc URL forms, default allowing of all app commands, AppManifest::commands, the channel-fetch ACL exemption, and the channels doc quote all check out. The GitHub, GitLab, R2, Pages and Hugging Face limits and prices match the doc sources.\n\nOBSERVED: the GitHub release redirect host is release-assets.githubusercontent.com. Its JWT is valid for 300 s (the Azure signature lasts about 40 min) and it returns 206 to Range requests. raw.githubusercontent.com is served by Fastly with max-age=300, a strong ETag and 206 responses. GitLab generic packages return 206, X-Checksum-SHA256 and no-cache.\n\nNOT VERIFIED: the Backblaze pricing page (blocked; search results agree with the claim), raw.githubusercontent.com serving only LFS pointers (third-party reports only), the unofficial figure of about 5000 requests per hour on raw, and the Roaming-profile advice. Whether R2 needs a payment method is still unknown; the docs require an 'R2 subscription' taken through a checkout flow. github.blog and the Cloudflare blog were blocked, so their content was confirmed only through search-engine extracts (medium confidence).\n\nScratch files are in scratch:/fc/. Nothing in /home/user/StudioVD was modified.",
+ "checks": [
+  {
+   "claim": "GitHub Releases: up to 1000 assets per release, each file under 2 GiB, no limit on total release size nor bandwidth",
+   "verdict": "confirmed",
+   "correct_value_or_note": "about-releases.md line 49 plus variables release_asset_limit='1000' and large_files.max_file_size='2 GiB'. High confidence.",
+   "evidence_url": "https://raw.githubusercontent.com/github/docs/main/content/repositories/releasing-projects-on-github/about-releases.md"
+  },
+  {
+   "claim": "GitHub AUP section 9 'Excessive Bandwidth Use' allows throttling of file hosting or suspension when usage is significantly excessive",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Quoted text matches. Also allows deleting repos that place 'undue strain', after advance notice.",
+   "evidence_url": "https://raw.githubusercontent.com/github/docs/main/content/site-policy/acceptable-use-policies/github-acceptable-use-policies.md"
+  },
+  {
+   "claim": "Immutable releases on Free accounts: assets cannot be modified or deleted, tag locked, release attestation generated",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Feature versions fpt:'*' (Free/Pro/Team). Notes: the whole release can still be deleted (the tag then becomes deletable but its name cannot be reused). Title, notes and the latest flag stay editable. Assets must be attached while the release is a draft, and enabling applies only to future releases.",
+   "evidence_url": "https://raw.githubusercontent.com/github/docs/main/content/code-security/concepts/supply-chain-security/immutable-releases.md"
+  },
+  {
+   "claim": "Stable URL /releases/latest/download/<asset> exists",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Documented. Observed 2026-10-09: 302 to /releases/download/<tag>/<asset>, then 302 to release-assets.githubusercontent.com (two redirects).",
+   "evidence_url": "https://raw.githubusercontent.com/github/docs/main/content/repositories/releasing-projects-on-github/linking-to-releases.md"
+  },
+  {
+   "claim": "'Latest' is chosen automatically from date and version unless a release is created with make_latest=false",
+   "verdict": "refuted",
+   "correct_value_or_note": "REST API: make_latest 'Defaults to true for newly published releases'. Date/version selection applies only with make_latest='legacy'. gh omits make_latest when --latest is not given, so the API default (true) applies; gh's help text 'automatic based on date and version' does not match the API docs. GET /releases/latest separately says it returns the most recent non-prerelease, non-draft release sorted by created_at (the commit date). Practical rule: always pass --latest=false for pack releases and --latest for catalog releases, and test on a scratch repo.",
+   "evidence_url": "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json"
+  },
+  {
+   "claim": "bmisho/StudioVD is private, and release downloads need read access",
+   "verdict": "confirmed",
+   "correct_value_or_note": "api.github.com returned \"private\": true on 2026-10-09 through the session's authenticated proxy. Docs: 'Anyone with read access to a repository can view and compare releases'.",
+   "evidence_url": "https://api.github.com/repos/bmisho/StudioVD"
+  },
+  {
+   "claim": "Release downloads redirect to a short-lived signed *.githubusercontent.com URL; about 300 s expiry and Range support reported by third parties (medium/low)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Observed 2026-10-09 (upgrades confidence to high): host release-assets.githubusercontent.com. The JWT has nbf 20:55:11Z and exp 21:00:11Z (300 s); the Azure signature 'se' parameter is about 40 min later. A Range request returned 206 with Content-Range. Still undocumented by GitHub.",
+   "evidence_url": "https://github.com/cli/cli/releases/latest/download/gh_2.102.0_checksums.txt"
+  },
+  {
+   "claim": "Unauthenticated REST API limit is 60 requests/hour per IP",
+   "verdict": "confirmed",
+   "correct_value_or_note": "'The primary rate limit for unauthenticated requests is 60 requests per hour', tied to the originating IP.",
+   "evidence_url": "https://raw.githubusercontent.com/github/docs/main/data/reusables/rest-api/primary-rate-limit-unauthenticated-users.md"
+  },
+  {
+   "claim": "May 2025 unauthenticated rate limits name cloning, REST API and raw.githubusercontent.com; release assets not named",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Medium confidence: github.blog is blocked from this sandbox (WebFetch DNS fail, curl 403). A search-engine extract of the post lists HTTPS cloning, anonymous REST API use and raw.githubusercontent.com downloads. Release assets are not mentioned, so 'unknown' stands.",
+   "evidence_url": "https://github.blog/changelog/2025-05-08-updated-rate-limits-for-unauthenticated-requests/"
+  },
+  {
+   "claim": "Git warns above 50 MiB, blocks above 100 MiB, browser uploads capped at 25 MiB, repos ideally <1 GB and <5 GB strongly recommended",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Variables warning_size '50 MiB', max_github_size '100 MiB', max_github_browser_size '25 MiB'. Doc lines 51 and 62.",
+   "evidence_url": "https://raw.githubusercontent.com/github/docs/main/content/repositories/working-with-files/managing-large-files/about-large-files-on-github.md"
+  },
+  {
+   "claim": "LFS downloads count against owner's bandwidth; 10 GiB/month free on Free/Pro",
+   "verdict": "confirmed",
+   "correct_value_or_note": "included_bandwidth_free_pro '10 GiB' and storage '10 GiB'. A download is 'included in the repository owner's bandwidth usage'.",
+   "evidence_url": "https://raw.githubusercontent.com/github/docs/main/content/billing/concepts/product-billing/git-lfs.md"
+  },
+  {
+   "claim": "raw.githubusercontent.com serves only the LFS pointer file",
+   "verdict": "unverified",
+   "correct_value_or_note": "Only third-party reports (a DiffKit PR and an Obsidian forum post) say raw serves the pointer and github.com/<o>/<r>/raw/... redirects LFS files to media.githubusercontent.com. No GitHub doc found, and not tested.",
+   "evidence_url": "https://raw.githubusercontent.com/github/docs/main/content/repositories/working-with-files/managing-large-files/about-git-large-file-storage.md"
+  },
+  {
+   "claim": "raw.githubusercontent.com: Range returns 206, strong ETag, Cache-Control max-age=300, Fastly CDN",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Observed 2026-10-09: HTTP/2 206, content-range bytes 0-99/2279, a strong etag, cache-control max-age=300, and x-fastly-request-id / varnish headers.",
+   "evidence_url": "https://raw.githubusercontent.com/github/docs/main/README.md"
+  },
+  {
+   "claim": "Unofficial raw limit of about 5000/h/IP; one 429 observed from the sandbox",
+   "verdict": "unverified",
+   "correct_value_or_note": "No primary source. The 429 was not reproduced in this check.",
+   "evidence_url": "https://github.com/orgs/community/discussions/159123"
+  },
+  {
+   "claim": "GitLab.com generic package max file size 5 GB",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Package registry limits table: Generic 5 GB.",
+   "evidence_url": "https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/user/gitlab_com/_index.md"
+  },
+  {
+   "claim": "GitLab package registry is not counted in the 10 GiB per-project limit (repo + LFS only)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "'Only the project's repository and LFS are included... The container registry, package registry, and build artifacts are not included.' Free tier: 10 GiB per project.",
+   "evidence_url": "https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/user/storage_usage_quotas.md"
+  },
+  {
+   "claim": "GitLab current limits: unauthenticated 500/min/IP, package hosting 1,000/min/IP, all traffic 2,000/min/IP",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Exact. Additional: 'Unauthenticated raw endpoint traffic for a project' is 800/min. 429 responses include Retry-After.",
+   "evidence_url": "https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/user/gitlab_com/rate_limits.md"
+  },
+  {
+   "claim": "GitLab PROPOSED tier-aware limits: unauthenticated 60/HOUR per IP, not yet enforced, with brownouts",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Doc note: 'proposed and are not in effect yet', with brownout windows announced in advance. These limits 'apply to API requests, web requests...', so generic-package API downloads would be counted (only the listed exemptions are excluded).",
+   "evidence_url": "https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/user/gitlab_com/rate_limits.md"
+  },
+  {
+   "claim": "GitLab generic packages: SHA-256 stored, Range 206, direct_asset_url in release API, cache-control no-cache",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Doc: 'SHA256 checksums are automatically calculated and stored'. Observed: direct_asset_url (/-/releases/v1.122.0/downloads/...) 302s to /api/v4/projects/.../packages/generic/...; Range gives 206 with an x-checksum-sha256 header and cache-control no-cache.",
+   "evidence_url": "https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/user/packages/generic_packages/_index.md"
+  },
+  {
+   "claim": "R2: unlimited storage and objects per bucket; object up to 4.995 TiB; single-part upload up to 4.995 GiB",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Limits table and footnotes match. Also: at most 1 concurrent write per second to the same key.",
+   "evidence_url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/r2/platform/limits.mdx"
+  },
+  {
+   "claim": "r2.dev not intended for production: variable rate limit (hundreds of requests/s, then 429) and bandwidth throttling",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Quoted text matches.",
+   "evidence_url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/r2/platform/limits.mdx"
+  },
+  {
+   "claim": "R2 custom domain must be a zone in the same account, via full setup or partial CNAME setup",
+   "verdict": "refuted",
+   "correct_value_or_note": "Same-account requirement confirmed. Missing: 'A CNAME setup (partial) is only available to customers on a Business or Enterprise plan' and is not supported on Cloudflare Registrar domains. For $0, the domain must use a full setup (nameservers on Cloudflare).",
+   "evidence_url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/dns/zone-setups/partial-setup/index.mdx"
+  },
+  {
+   "claim": "Cloudflare max cacheable file size is 512 MB on Free/Pro/Business",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Free/Pro/Business 512 MB; Enterprise defaults to 5 GB.",
+   "evidence_url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/cache/concepts/default-cache-behavior.mdx"
+  },
+  {
+   "claim": "R2 pricing: $0.015/GB-month, Class A $4.50/M, Class B $0.36/M, egress free; free tier 10 GB-month, 1M A, 10M B; usage rounded up",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Exact (Standard storage). The free tier does not cover Infrequent Access. The worked example (5 GB, 300k Class B per month, so $0) is arithmetically consistent.",
+   "evidence_url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/r2/pricing.mdx"
+  },
+  {
+   "claim": "Whether R2 free tier requires a payment method is UNKNOWN",
+   "verdict": "unverified",
+   "correct_value_or_note": "Still not stated explicitly. Get-started says 'You need a Cloudflare account with an R2 subscription... Complete the checkout flow to add an R2 subscription', which suggests a billing step.",
+   "evidence_url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/r2/get-started/index.mdx"
+  },
+  {
+   "claim": "The 2023 Cloudflare terms update allows large non-HTML files on the CDN when hosted on R2",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Medium confidence: blog.cloudflare.com was blocked, but a search extract of the post says Section 2.8 moved to the CDN Service-Specific Terms and that video and large files are OK when hosted on Stream, Images or R2. Publication year not verified.",
+   "evidence_url": "https://blog.cloudflare.com/updated-tos/"
+  },
+  {
+   "claim": "R2 Range support (not tested; R2 implements S3 GetObject)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The R2 S3 compatibility table lists GetObject Range plus If-Match/If-None-Match as supported. Range on the public custom-domain path was still not tested live.",
+   "evidence_url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/r2/api/s3/api.mdx"
+  },
+  {
+   "claim": "Backblaze B2: about $6.95/TB per 30 days (another page says $6), first 10 GB free, free egress up to 3x storage then $0.01/GB, free via partner CDNs",
+   "verdict": "unverified",
+   "correct_value_or_note": "backblaze.com is blocked here. Search extracts agree with every figure, including the $6.95 vs $6 inconsistency. Primary page not read.",
+   "evidence_url": "https://www.backblaze.com/cloud-storage/pricing"
+  },
+  {
+   "claim": "jsDelivr: GitHub packages over 150 MB or single files over 20 MB not supported by default; files permanently cached",
+   "verdict": "confirmed",
+   "correct_value_or_note": "README: 'Packages larger than 150 MB or single files larger than 20 MB (in the case of GitHub) are not supported by default'. The wording is ambiguous: the 150 MB rule may apply to npm too. Permanent S3 storage confirmed.",
+   "evidence_url": "https://raw.githubusercontent.com/jsdelivr/jsdelivr/master/README.md"
+  },
+  {
+   "claim": "jsDelivr has no bandwidth or request limits",
+   "verdict": "refuted",
+   "correct_value_or_note": "README states only 'no bandwidth limits'. Terms \u00a75 add soft per-repo limits for the GitHub proxy (about 10,000 actively accessed files recommended, 100,000 soft), 'not automatically enforced', and \u00a76.3 forbids scraping-like access. The terms also recommend 'an appropriate license that allows use by other people'. The general-purpose-hosting ban and the 'apps, or games with a large number of assets' exception are confirmed.",
+   "evidence_url": "https://raw.githubusercontent.com/jsdelivr/jsdelivr/master/Terms%20of%20Use.md"
+  },
+  {
+   "claim": "GitHub Pages: site at most 1 GB, soft 100 GB/month bandwidth, 429 possible, source repo recommended under 1 GB, no commercial SaaS or e-commerce",
+   "verdict": "confirmed",
+   "correct_value_or_note": "All statements match the limits page.",
+   "evidence_url": "https://raw.githubusercontent.com/github/docs/main/content/pages/getting-started-with-github-pages/github-pages-limits.md"
+  },
+  {
+   "claim": "Hugging Face: free public storage best-effort, chunks <200 GB, 500 GB hard per-file limit, 'as useful to the community as possible', add-on $12/TB/month",
+   "verdict": "confirmed",
+   "correct_value_or_note": "All match. The add-on drops to $10/TB at 50 TB.",
+   "evidence_url": "https://raw.githubusercontent.com/huggingface/hub-docs/main/docs/hub/storage-limits.md"
+  },
+  {
+   "claim": "reqwest 0.13.5 (2026-09-08, MSRV 1.85) is already in Cargo.lock via tauri 2.12.2 with no TLS features; features rustls/http2/system-proxy/stream exist",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The lock entry for reqwest 0.13.5 has no rustls or hyper-rustls dependencies. tauri 2.12.2 depends on reqwest ^0.13 with default-features=false and [json, stream]. Toolchain is rustc 1.97.0.",
+   "evidence_url": "https://crates.io/api/v1/crates/tauri/2.12.2/dependencies"
+  },
+  {
+   "claim": "reqwest 0.13.0 made rustls the default with aws-lc-rs and rustls-platform-verifier",
+   "verdict": "confirmed",
+   "correct_value_or_note": "CHANGELOG v0.13.0 breaking changes. Feature map: rustls = [__rustls-aws-lc-rs, dep:rustls-platform-verifier, __rustls]. rustls-platform-verifier requirement '>=0.6.0, <0.8.0' resolves to 0.7.1.",
+   "evidence_url": "https://raw.githubusercontent.com/seanmonstar/reqwest/master/CHANGELOG.md"
+  },
+  {
+   "claim": "With rustls-no-provider, reqwest panics at client build if no provider is installed",
+   "verdict": "confirmed",
+   "correct_value_or_note": "client.rs: it uses CryptoProvider::get_default() first, then default_rustls_crypto_provider(), which panic!s when __rustls-aws-lc-rs is absent. Note: tauri's own optional 'rustls-tls' feature already maps to reqwest/rustls-no-provider plus rustls 'ring'.",
+   "evidence_url": "https://docs.rs/crate/reqwest/0.13.5/source/src/async_impl/client.rs"
+  },
+  {
+   "claim": "ClientBuilder::tls_certs_merge merges extra CAs with platform roots; connect_timeout and read_timeout exist; no total timeout by default",
+   "verdict": "confirmed",
+   "correct_value_or_note": "tls_certs_merge leads to rustls_platform_verifier::Verifier::new_with_extra_roots (Windows and unix). timeout/read_timeout/connect_timeout all default to none.",
+   "evidence_url": "https://docs.rs/crate/reqwest/0.13.5/source/src/async_impl/client.rs"
+  },
+  {
+   "claim": "reqwest follows redirects with Policy::limited(10) and on cross-host strips only Authorization/Cookie/Proxy-Authorization/WWW-Authenticate, so Range survives",
+   "verdict": "confirmed",
+   "correct_value_or_note": "redirect.rs remove_sensitive_headers also strips 'cookie2'. tower-http 0.6.11 FollowRedirect strips only Content-Type/Length/Encoding and Transfer-Encoding, and only on a method change. Range survives.",
+   "evidence_url": "https://docs.rs/crate/reqwest/0.13.5/source/src/redirect.rs"
+  },
+  {
+   "claim": "reqwest proxy auth is Proxy::basic_auth and custom_http_auth only; no NTLM/Negotiate/Kerberos",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Also Proxy::headers (static). No ntlm, negotiate or kerberos code anywhere in src/.",
+   "evidence_url": "https://docs.rs/crate/reqwest/0.13.5/source/src/proxy.rs"
+  },
+  {
+   "claim": "hyper-util Matcher::from_system: env vars first; Windows HKCU Internet Settings ProxyEnable/ProxyServer/ProxyOverride; no PAC/WPAD; Linux env only",
+   "verdict": "confirmed",
+   "correct_value_or_note": "from_system = from_env plus mac::with_system and win::with_system only. No AutoConfigURL or WPAD code. REQUEST_METHOD (CGI) disables proxies.",
+   "evidence_url": "https://docs.rs/crate/hyper-util/0.1.21/source/src/client/proxy/matcher.rs"
+  },
+  {
+   "claim": "hyper-util handles Windows ProxyServer formats 'http=...;https=...;socks=...' or a single host:port",
+   "verdict": "refuted",
+   "correct_value_or_note": "win::with_system copies the raw ProxyServer string into both builder.http and builder.https. parse_env_uri then calls http::Uri parse, which fails on 'http=proxy:80;https=proxy:443' ('invalid authority', reproduced locally), so no proxy is used and the request goes direct without any error. Only a single host:port or URL value works. ProxyOverride '<local>' is passed through untranslated, so it does not bypass intranet names. The Settings UI should detect this format and parse it, or warn.",
+   "evidence_url": "https://docs.rs/crate/hyper-util/0.1.21/source/src/client/proxy/matcher.rs"
+  },
+  {
+   "claim": "rustls-platform-verifier: Windows store + Windows API with revocation; Linux system CA bundle via openssl-probe/rustls-native-certs + webpki without revocation, loaded once; SSL_CERT_FILE first; webpki-roots ignores system-local roots",
+   "verdict": "confirmed",
+   "correct_value_or_note": "README tables and Linux/BSD note match. The rustls-native-certs README says SSL_CERT_FILE is checked first.",
+   "evidence_url": "https://raw.githubusercontent.com/rustls/rustls-native-certs/main/README.md"
+  },
+  {
+   "claim": "Crate versions: rustls 0.23.45, rustls-platform-verifier 0.7.1, tokio 1.53.2, tokio-util 0.7.20, futures-util 0.3.34, sha2 0.11.0 (2026-03-25, digest 0.11), hex 0.4.3, tempfile 3.27.0, fs4 1.1.0 (available_space), semver 1.0.28, wiremock 0.6.5, mockito 1.7.2, tough 0.24.0, ed25519-dalek 3.0.0 (2026-07-06, BSD-3-Clause)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "All match crates.io max_stable. sha2 0.11.0 depends on digest ^0.11. fs4 has pub fn available_space(path). Note: tokio-util 0.7.20 was published 2026-10-09 (today) and raises MSRV from 1.71 to 1.85, so the 'let it soak' caution given for zip 9.0.0 applies here too.",
+   "evidence_url": "https://crates.io/api/v1/crates/tokio-util"
+  },
+  {
+   "claim": "minisign-verify 0.3.0 (2026-09-25): zero deps, prehashed BLAKE2b, streaming verify, trusted comment, verify(bytes,&sig,false) accepts only prehashed; key ID selects the trusted key",
+   "verdict": "confirmed",
+   "correct_value_or_note": "No [dependencies]; MIT. verify() returns UnexpectedAlgorithm for legacy signatures when allow_legacy=false, and verify_stream needs prehashed. Notes: Signature has NO public key_id accessor, so the app must try each embedded key (a wrong key gives UnexpectedKeyId). trusted_comment() is a plain getter that can be read BEFORE verification, so read-only-after-verify is the caller's job.",
+   "evidence_url": "https://docs.rs/crate/minisign-verify/0.3.0/source/src/lib.rs"
+  },
+  {
+   "claim": "minisign creates pre-hashed signatures by default",
+   "verdict": "confirmed",
+   "correct_value_or_note": "minisign.c: sign_legacy = 0 by default; -l selects legacy.",
+   "evidence_url": "https://raw.githubusercontent.com/jedisct1/minisign/master/src/minisign.c"
+  },
+  {
+   "claim": "Tauri updater depends on minisign-verify ^0.2 and checks the trusted comment only after global signature verification (verify_signed_version)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "tauri-plugin-updater 2.13.2: minisign-verify ^0.2. verify_signature calls public_key.verify(data,&sig,true) and then verify_signed_version(signature.trusted_comment(),...). Note: the updater uses allow_legacy=true.",
+   "evidence_url": "https://docs.rs/crate/tauri-plugin-updater/2.13.2/source/src/updater.rs"
+  },
+  {
+   "claim": "Tauri updater docs: losing the private key means you cannot publish updates to existing installs",
+   "verdict": "confirmed",
+   "correct_value_or_note": "'if you lose this key you will NOT be able to publish new updates to the users that have the app already installed'.",
+   "evidence_url": "https://raw.githubusercontent.com/tauri-apps/tauri-docs/v2/src/content/docs/plugin/updater.mdx"
+  },
+  {
+   "claim": "zip 9.0.0 published 2026-10-09, 8.6.0 on 2026-04-25, both MSRV 1.88; enclosed_name()/is_symlink() exist; default SymlinkExtractAction on unix/windows is ExtractRecursiveInFolder; RUSTSEC-2025-0168/CVE-2025-29787 fixed in 2.3.0",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Source read/extract.rs: #[default] ExtractRecursiveInFolder under cfg(any(unix, windows)). The advisory lists patched as '>= 2.3.0'.",
+   "evidence_url": "https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/zip/RUSTSEC-2025-0168.md"
+  },
+  {
+   "claim": "std File::lock/try_lock stable since Rust 1.89.0",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Listed under Version 1.89.0 (2025-08-07) stabilized APIs.",
+   "evidence_url": "https://raw.githubusercontent.com/rust-lang/rust/master/RELEASES.md"
+  },
+  {
+   "claim": "tauri-plugin-http 2.8.1: reqwest ^0.12.16, default rustls-tls (webpki roots), MSRV 1.90; redirect hops checked only with scopeRedirects",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Default features: rustls-tls, http2, charset, system-proxy, cookies. In reqwest 0.12.28, rustls-tls maps to rustls-tls-webpki-roots. config.scope_redirects defaults to false. A 3.0.0-alpha.2 also exists.",
+   "evidence_url": "https://crates.io/api/v1/crates/tauri-plugin-http/2.8.1"
+  },
+  {
+   "claim": "tauri-plugin-upload 2.5.0 (3.0.0-alpha.2 exists): reqwest ^0.12, default rustls-tls, MSRV 1.90 (alpha 1.95); download() creates a Client per call, File::create truncates, no cancel or checksum, URL and path from the webview with no scope check, progress via Channel",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Source lib.rs lines 96-144 match. Default permissions allow-upload and allow-download, with no scope.",
+   "evidence_url": "https://docs.rs/crate/tauri-plugin-upload/2.5.0/source/src/lib.rs"
+  },
+  {
+   "claim": "aws-lc-sys on x86_64-pc-windows-msvc needs a C compiler plus NASM, or AWS_LC_SYS_PREBUILT_NASM=1 (used only when NASM is absent); Linux needs only a C compiler, no CMake",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The aws-lc-rs book matches. A 'prebuilt-nasm' Cargo feature is an alternative to the env var. Prebuilt objects are never used off Windows.",
+   "evidence_url": "https://raw.githubusercontent.com/aws/aws-lc-rs/main/book/src/requirements/windows.md"
+  },
+  {
+   "claim": "Tauri 2.12.2 paths: appLocalDataDir = local_data_dir/<identifier>; on Windows appCacheDir is the same LocalAppData/<identifier> folder; appLocalDataDir is the default webview data dir on Windows and Linux; Linux appDataDir = appLocalDataDir = $XDG_DATA_HOME/<id>, appCacheDir = $XDG_CACHE_HOME/<id>",
+   "verdict": "confirmed",
+   "correct_value_or_note": "desktop.rs docs match. Also app_log_dir on Windows/Linux is local_data_dir/<id>/logs, the same root, so add logs/ to the do-not-delete list. FOLDERID_LocalAppData default path is %USERPROFILE%\\AppData\\Local.",
+   "evidence_url": "https://docs.rs/crate/tauri/2.12.2/source/src/path/desktop.rs"
+  },
+  {
+   "claim": "Tauri 2.12 adds app.appDirectoriesOverride",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Added in 2.12.0 (PR #14620). Supports a single root or per-directory overrides, and Context::config_mut at runtime.",
+   "evidence_url": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri/CHANGELOG.md"
+  },
+  {
+   "claim": "protocol-asset implies http-range in 2.12.2; asset scope can be widened at runtime (medium)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Feature map protocol-asset = ['http-range']. Manager::asset_protocol_scope() returns scope::fs::Scope with allow_directory/allow_file (upgrades the runtime-API part to high). AssetProtocolConfig {scope, enable}; $APPLOCALDATA variable exists.",
+   "evidence_url": "https://docs.rs/crate/tauri/2.12.2/source/src/scope/fs.rs"
+  },
+  {
+   "claim": "convertFileSrc gives asset://localhost/... on Linux and http://asset.localhost/... on Windows",
+   "verdict": "confirmed",
+   "correct_value_or_note": "core.js: on windows/android it uses `${protocolScheme}://${protocol}.localhost/`. protocolScheme becomes https if useHttpsScheme is enabled.",
+   "evidence_url": "https://docs.rs/crate/tauri/2.12.2/source/scripts/core.js"
+  },
+  {
+   "claim": "All registered app commands are allowed in all windows by default; restrict with AppManifest::commands in build.rs; channels need no extra permission",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Capabilities doc quote matches. tauri-build 2.7.1 has AppManifest::commands. webview/mod.rs exempts plugin:__TAURI_CHANNEL__|fetch from the ACL check.",
+   "evidence_url": "https://raw.githubusercontent.com/tauri-apps/tauri-docs/v2/src/content/docs/security/capabilities.mdx"
+  },
+  {
+   "claim": "Tauri docs: channels 'are designed to be fast and deliver ordered data', used for download progress; events evaluate JS and are JSON only",
+   "verdict": "confirmed",
+   "correct_value_or_note": "calling-frontend.mdx lines 25 and 151-155.",
+   "evidence_url": "https://raw.githubusercontent.com/tauri-apps/tauri-docs/v2/src/content/docs/develop/calling-frontend.mdx"
+  },
+  {
+   "claim": "CSP: 'wasm-unsafe-eval' needed for WASM; Tauri injects nonces/hashes at compile time; GLTFLoader uses fetch",
+   "verdict": "confirmed",
+   "correct_value_or_note": "csp.mdx lines 12, 23, 41. three 0.186.1: FileLoader and ImageBitmapLoader call fetch().",
+   "evidence_url": "https://raw.githubusercontent.com/tauri-apps/tauri-docs/v2/src/content/docs/security/csp.mdx"
+  },
+  {
+   "claim": "Proposed CSP connect-src 'ipc: http://ipc.localhost asset: http://asset.localhost' is enough for GLTFLoader",
+   "verdict": "refuted",
+   "correct_value_or_note": "GLTFLoader puts embedded GLB images into URL.createObjectURL(blob) and uses ImageBitmapLoader (fetch) on Chromium/WebView2. fetch() is governed by connect-src, and CSP3 'self' returns Does Not Match for blob:. Without blob: in connect-src, embedded textures fail on Windows. Add blob: (and data: if data-URI .gltf buffers are allowed).",
+   "evidence_url": "https://raw.githubusercontent.com/w3c/webappsec-csp/main/index.bs"
+  },
+  {
+   "claim": "Typical Windows pack path is about 190 characters, under MAX_PATH 260",
+   "verdict": "refuted",
+   "correct_value_or_note": "The exact example (20-char user, 32-char packId, 16-char version, 64-hex.glb) is 206 characters. Still under MAX_PATH = 260 including the NUL; directory paths must stay under MAX_PATH-12 = 248. Margin is about 53 characters, less with long profile names such as user.DOMAIN.",
+   "evidence_url": "https://raw.githubusercontent.com/MicrosoftDocs/win32/docs/desktop-src/FileIO/maximum-file-path-limitation.md"
+  },
+  {
+   "claim": "Do not use Roaming AppData because roaming profiles sync it and corporate quotas apply",
+   "verdict": "unverified",
+   "correct_value_or_note": "Not checked against a Microsoft primary source in this pass. Tauri does map appDataDir to FOLDERID_RoamingAppData on Windows (confirmed).",
+   "evidence_url": "https://raw.githubusercontent.com/MicrosoftDocs/win32/docs/desktop-src/shell/knownfolderid.md"
+  },
+  {
+   "claim": "WinHttpGetIEProxyConfigForCurrentUser and WinHttpGetProxyForUrl are documented Win32 APIs usable for PAC",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Both doc pages exist. WinHttpGetProxyForUrl takes WINHTTP_AUTOPROXY_OPTIONS and documents PAC download and script errors.",
+   "evidence_url": "https://raw.githubusercontent.com/MicrosoftDocs/sdk-api/docs/sdk-api-src/content/winhttp/nf-winhttp-winhttpgetproxyforurl.md"
+  }
+ ]
+}

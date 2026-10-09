@@ -166,7 +166,7 @@ only cue: each domain also has a distinct line pattern and port shape.
 |---|---|---|
 | Electrical (V, I) | `#EA580C` (orange-600) 3.56:1 | solid |
 | Mechanical (F/v, tau/omega) | `#475569` (slate-600) 7.58:1 | thick solid |
-| Fluid / pressure (P, Q) | `#0D9488` (teal-600) 3.74:1 | long dash |
+| Fluid / pressure (p, mass flow) | `#0D9488` (teal-600) 3.74:1 | long dash |
 | Light (flux) | `#A16207` (yellow-700) 4.92:1 | dotted |
 | Data / signal | `#7C3AED` (violet-600) 5.70:1 | short dash |
 

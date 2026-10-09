@@ -1,0 +1,419 @@
+{
+ "checks": [
+  {
+   "claim": "ISO 4762 dk_max(plain)/k/s, M2 to M8: M2 3.8/2/1.5; M2.5 4.5/2.5/2; M3 5.5/3/2.5; M4 7/4/3; M5 8.5/5/4; M6 10/6/5; M8 13/8/6",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matches FastenersWB iso4762def.csv and an independent third table (BOLTS hex_socket.blt, ISO 4762/DIN 912 columns d2,k,s). All three are secondary; ISO 4762 itself is paywalled.",
+   "evidence_url": "https://raw.githubusercontent.com/boltsparts/BOLTS/05a2acd1f77737789a313b4c77f1f8eea35da256/data/hex_socket.blt"
+  },
+  {
+   "claim": "ISO 4762 dk_max knurled head: M2 3.98; M2.5 4.68; M3 5.68; M4 7.22; M5 8.72; M6 10.22; M8 13.27",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The values are in cq_warehouse socket_head_cap_parameters.csv. That column is labelled only 'iso4762:dk', not 'knurled'. Reading it as knurled dk_max is an inference: it is about 0.2 to 0.3 mm above the plain-head dk_max.",
+   "evidence_url": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/socket_head_cap_parameters.csv"
+  },
+  {
+   "claim": "ISO 4762 pitch P, socket depth t_min, and reference thread length b (M2 to M8)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "P 0.4/0.45/0.5/0.7/0.8/1.0/1.25; t 1.0/1.1/1.3/2/2.5/3/4; b 16/17/18/20/22/24/28. All match FastenersWB, and t and b also match BOLTS.",
+   "evidence_url": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/iso4762def.csv"
+  },
+  {
+   "claim": "ISO 4762 nominal length ranges M2 3-20 ... M8 10-80",
+   "verdict": "confirmed",
+   "correct_value_or_note": "cq_warehouse short/long columns and the FastenersWB ISO4762range table agree.",
+   "evidence_url": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/socket_head_cap_parameters.csv"
+  },
+  {
+   "claim": "ISO 4032 s/m_max: M2 4/1.6; M2.5 5/2.0; M3 5.5/2.4; M4 7/3.2; M5 8/4.7; M6 10/5.2; M8 13/6.8",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Three tables agree: cq_warehouse, FastenersWB, and BOLTS nut.blt (ISO 4032 rows).",
+   "evidence_url": "https://raw.githubusercontent.com/boltsparts/BOLTS/05a2acd1f77737789a313b4c77f1f8eea35da256/data/nut.blt"
+  },
+  {
+   "claim": "ISO 7089 d1_min/d2_max/h and h_max, M2 to M8",
+   "verdict": "confirmed",
+   "correct_value_or_note": "d1/d2/h nominal match FastenersWB and BOLTS washer.blt (ISO 7089 / DIN 125 A). h_max 0.35/0.55/0.55/0.9/1.1/1.8/1.8 matches the FastenersWB h_max column and the cq_warehouse h column.",
+   "evidence_url": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/iso7089def.csv"
+  },
+  {
+   "claim": "ISO 4026 hex key s and dp_max (M2 to M8)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "s 0.9/1.3/1.5/2/2.5/3/4 and dp 1.0/1.5/2.0/2.5/3.5/4.0/5.5 match FastenersWB and cq_warehouse. BOLTS gives the same dp and s for M3 to M8.",
+   "evidence_url": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/iso4026def.csv"
+  },
+  {
+   "claim": "ISO 4026 socket depth t: M2 1.7; M2.5 2; M3 2; M4 2.5; M5 3; M6 3.5; M8 5 (longer lengths)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "These are the cq_warehouse values. The three sources disagree because t depends on screw length. BOLTS gives the short-length minimums (M3 1.2, M4 1.5, M5 2, M6 2, M8 3) and FastenersWB gives intermediate values. Store t per length class rather than as one value.",
+   "evidence_url": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/setscrew_parameters.csv"
+  },
+  {
+   "claim": "ISO 4026 length ranges M2 3-10 ... M8 8-40",
+   "verdict": "confirmed",
+   "correct_value_or_note": "FastenersWB ISO4026range and the cq_warehouse short/long columns agree.",
+   "evidence_url": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/iso4026def.csv"
+  },
+  {
+   "claim": "Deep groove d x D x B: 625 5x16x5; 608 8x22x7; 6000 10x26x8; 6001 12x28x8; 6002 15x32x9; 6003 17x35x10; 6004 20x42x12; 6005 25x47x12",
+   "verdict": "confirmed",
+   "correct_value_or_note": "BOLTS bearings.blt (DIN 625-1) and the cq_warehouse SKF CSV both match.",
+   "evidence_url": "https://raw.githubusercontent.com/boltsparts/BOLTS/05a2acd1f77737789a313b4c77f1f8eea35da256/data/bearings.blt"
+  },
+  {
+   "claim": "688 family: 628/8-2Z 8x16x5 (C 1.33, C0 0.57, 3.6 g); open 618/8 8x16x4 (C 0.819, C0 0.3)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Both CSVs match. Note that the shielded 628/8-2Z has a limiting speed of 45000 rpm.",
+   "evidence_url": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/single_row_capped_deep_groove_ball_bearing_parameters.csv"
+  },
+  {
+   "claim": "C/C0/mass/limiting speed/d1/D2/r12 for 625, 608, 6000 (SKF)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "625: 1.14/0.38 kN, 0.005 kg, 60000 rpm, d1 8.4, D2 13.3, r 0.3. 608: 3.45/1.37, 0.012, 48000, 12.1/19.2, 0.3. 6000: 4.75/1.96, 0.019, 40000, 14.8/22.6, 0.3. The limiting speeds are for open bearings; the 2Z versions are lower (E2.608-2Z: 42000 rpm, C 3.32 kN).",
+   "evidence_url": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/single_row_deep_groove_ball_bearing_parameters.csv"
+  },
+  {
+   "claim": "C for 6001 to 6005: 5.4 / 5.85 / 6.37 / 9.95 / 11.9 kN",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matches an SKF 6001 datasheet copy and distributor listings that quote SKF (RS, rgbautomatyka). Only search-engine extracts were reachable; SKF's own site is blocked here. Timken/ondrives give 5.6 kN for 6002, so these values are SKF-specific.",
+   "evidence_url": "https://www.rgbautomatyka.pl/en/new-6002-2z-bearing-skf-id14550.html"
+  },
+  {
+   "claim": "C0: 6001 2.36; 6002 2.85; 6003 3.25; 6004 5.0; 6005 6.55 kN",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Distributors agree. An SKF 6001 datasheet copy shows 2.4 kN, which is a rounding of 2.36; it also gives a 6001 limiting speed of 38000 rpm.",
+   "evidence_url": "https://baoanjsc.com.vn/TaiLieu/SKF-6001 15092016050740.pdf"
+  },
+  {
+   "claim": "Ring chamfer r12 placeholders: 0.3 for 6001 to 6003, 0.6 for 6004/6005",
+   "verdict": "unverified",
+   "correct_value_or_note": "Distributor 'fillet radius 0.6 mm' listings support 6004/6005. No source was found for 6001 to 6003. BOLTS DIN 625-1 gives different r_fillet values (0.5 for 6000 to 6003, 1.0 for 6004/6005), so the sources conflict.",
+   "evidence_url": "https://raw.githubusercontent.com/boltsparts/BOLTS/05a2acd1f77737789a313b4c77f1f8eea35da256/data/bearings.blt"
+  },
+  {
+   "claim": "SKF simplified friction M = 0.5*mu*P*d with mu = 0.0015 (unsealed deep groove); Koyo 0.0010 to 0.0015",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The SKF catalogue text quoted on eng-tips and the technologuepro course give M = 0.5\u00b7\u03bc\u00b7P\u00b7d, valid for P \u2248 0.1C with good lubrication. Koyo gives the 0.0010 to 0.0015 range.",
+   "evidence_url": "https://www.eng-tips.com/viewthread.cfm?qid=113896"
+  },
+  {
+   "claim": "Worked example: 608 at P = 100 N gives M = 0.6 N*mm",
+   "verdict": "refuted",
+   "correct_value_or_note": "The arithmetic is correct (0.5 x 0.0015 x 100 x 8 = 0.6 N\u00b7mm), but 100 N is P/C = 0.029, far below the model's validity point P \u2248 0.1C = 345 N. At such light loads, load-independent drag (grease, seals) dominates, so the constant-\u03bc torque is an underestimate. Add a load-independent M0 term (user parameter) to the block.",
+   "evidence_url": "https://www.eng-tips.com/viewthread.cfm?qid=113896"
+  },
+  {
+   "claim": "L10 = (C/P)^3 * 1e6 revolutions (ball bearings)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "This is the ISO 281 basic rating life with exponent 3 for ball bearings (secondary sources; ISO text not fetched).",
+   "evidence_url": "https://sensemore.io/tools/bearing-life-calculator/"
+  },
+  {
+   "claim": "LM8UU d 8 / D 15 / L 24 / B 17.5 / D1 14.3 / W 1.1",
+   "verdict": "confirmed",
+   "correct_value_or_note": "NopSCADlib linear_bearings.scad has LM8UU = [24, 15, 8, 1.1, 14.3, 17.5]. The Samick drawing itself was not reachable.",
+   "evidence_url": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/linear_bearings.scad"
+  },
+  {
+   "claim": "LM8UU C/C0 260/400 N (Samick), mass 0.016 kg",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The SLS Bearings Samick listing and Adafruit 1181 give 260/400 N and 0.016 kg. Misumi LMU8 265/380 was not checked (unverified).",
+   "evidence_url": "https://shop.slsbearings.com/sg/samick-lm8uu-linear-bushing.html"
+  },
+  {
+   "claim": "Linear bushing life L = (C/P)^3 * 50 km",
+   "verdict": "unverified",
+   "correct_value_or_note": "THK defines linear-bushing nominal life on a 50 km basis, but Samick's basis was not found. Keep the 'check vendor basis' caveat.",
+   "evidence_url": "https://www.thk.com/jp/en/products/other_linear_motion_guides/linear_bushing/selection/0002"
+  },
+  {
+   "claim": "8 mm shaft h6 = 0/-0.009 mm (6 < d <= 10)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Secondary ISO 286 charts give h6 = 0/-0.009 for the 6 to 10 mm band. The ISO formula IT6 = 10i with i(7.75 mm) = 0.898 \u00b5m also gives 9 \u00b5m. Ooznest's 0/-0.015 is the IT7 (h7) band, so that vendor's shaft is not h6 as listed.",
+   "evidence_url": "https://ns2.engineersedge.com/iso_tolerance.htm"
+  },
+  {
+   "claim": "Shaft linear mass 0.395 kg/m; 2020 0.494 kg/m; 2040 0.875 kg/m",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Recomputed: pi*0.004^2*7850 = 0.3946; 183e-6*2700 = 0.4941; 324e-6*2700 = 0.8748.",
+   "evidence_url": "https://raw.githubusercontent.com/boltsparts/BOLTS/05a2acd1f77737789a313b4c77f1f8eea35da256/data/bearings.blt"
+  },
+  {
+   "claim": "Tr8 thread geometry: d2 = d - P/2 = 7.0; d3 = d - P - 2ac = 5.5 with ac = 0.25 for P = 2",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matches FastenersWB FSmakeTrapezoidRod.py (rin = r - 0.5P - ac) and the DIN103clearance table (P 2 -> ac 0.25). However, the same DIN 103 table lists only P 1.5 for Tr8. 'T8 lead 8, P2' is a commercial non-standard thread, so label it 'T8', not ISO/DIN Tr.",
+   "evidence_url": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/din103def.csv"
+  },
+  {
+   "claim": "Lead angles 19.99 deg (Tr8x8) / 5.20 deg (Tr8x2); eta = 0.749/0.661/0.589 at mu 0.10/0.15/0.20; v/w = 1.2732e-3 m/rad",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Recomputed: 19.9905 deg, 5.1965 deg; eta 0.7491/0.6612/0.5893; back-drive eta_b 0.689/0.543/0.401. Using the normal-plane flank angle instead of cos 15 deg changes eta by less than 0.2%.",
+   "evidence_url": "https://en.wikipedia.org/wiki/Leadscrew"
+  },
+  {
+   "claim": "Param text: self-locking when mu > tan(lambda)",
+   "verdict": "refuted",
+   "correct_value_or_note": "That is the square-thread criterion. For a 30 deg trapezoidal thread it is mu/cos15 > tan(lambda), i.e. mu > 0.0878 for Tr8x2 (not 0.0909) and mu > 0.351 for Tr8x8. The sim_model's phi' form is correct, and the conclusion 'Tr8x2 self-locks for mu >= 0.10' still holds. Make the param text match the sim_model.",
+   "evidence_url": "https://www.ondrives.com/images/uploaded/Trapezoidal%20Leadscrews Technical WEB.pdf"
+  },
+  {
+   "claim": "Leadscrew drive formulas tau = F*lead/(2*pi*eta), back-drive tau = F*lead*eta_b/(2*pi), eta_b = tan(lambda - phi')/tan(lambda), phi' = atan(mu/cos 15 deg)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Dividing the Shigley/Wikipedia trapezoidal torque T = (F dm/2)(l + pi mu dm sec a)/(pi dm - mu l sec a) by pi*dm gives tan(lambda + phi') with tan phi' = mu sec a. The units are consistent (lead in m gives N\u00b7m). Verified by derivation; the source page was not fetched.",
+   "evidence_url": "https://en.wikipedia.org/wiki/Leadscrew"
+  },
+  {
+   "claim": "T8 brass lead nut: flange 22, length 15, shank 10.2, flange t 3.5 at offset 1.5, 4 x 3.5 holes on PCD 16 (source NopSCADlib LSN8x2)",
+   "verdict": "unverified",
+   "correct_value_or_note": "A Makerstore Tr8x8(P2) listing confirms flange 22, height 15, shank 10 and 4 x 3.5 holes for M3. Flange thickness and PCD come only from NopSCADlib's LSN8x2 entry, which is a lead-2 nut. NopSCADlib's lead-8 entry (LSN8x8 RobotDigg) differs: shank 12.75, length 19, flange 25.4 x 4.1, 3 holes on PCD 19.05. So the source does not support the default lead-8 nut.",
+   "evidence_url": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/leadnuts.scad"
+  },
+  {
+   "claim": "MGN12H carriage L 45.4 / L1 32.4 / W 27 / H 13 / H1 3 / B x C 20 x 20 M3; rail WR 12, HR 8, D 6, h 4.5, d 3.5, P 25",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matches NopSCADlib rails.scad and the HIWIN catalog row seen in search results.",
+   "evidence_url": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/rails.scad"
+  },
+  {
+   "claim": "MGN12 rail end distance E = 10",
+   "verdict": "unverified",
+   "correct_value_or_note": "E depends on how the rail is cut. NopSCADlib gives Emin = 7.5, a third-party interchangeable listing shows 10/10, and DamenCNC says E1 = E2 is set by the cut. Make E a derived parameter: E = (L - n*P)/2, with E >= Emin.",
+   "evidence_url": "https://www.lily-bearing.com/products/mgn12c1r95z0c/"
+  },
+  {
+   "claim": "MGN12H C/C0 3.72/5.88 kN, block 0.054 kg, rail 0.65 kg/m",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The search extract of the HIWIN MG catalog row reads 'MGN12H 20 32.4 45.4 3.72 5.88 ... 0.054'. Rail 0.65 kg/m is consistent with Albeco's 2 m rail at 1.3 kg.",
+   "evidence_url": "https://hiwin.co.uk/wp-content/uploads/2017/05/CRD-Hiwin-Linear-guides-MG-series.pdf"
+  },
+  {
+   "claim": "HIWIN friction mu ~ 0.004; wipers/grease dominate below ~10% of C",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Both statements appear in the HIWIN Linear Guideways catalog excerpt (DirectIndustry).",
+   "evidence_url": "https://pdf.directindustry.com/pdf/hiwin-gmbh/linear-guideways/14370-972295.html"
+  },
+  {
+   "claim": "MGN life L = (C/P)^3 * 50 km (HIWIN MG rating basis)",
+   "verdict": "unverified",
+   "correct_value_or_note": "The HIWIN life text was not reachable. THK and a KM-series catalog use 50 km for ball guides, so this is plausible but not confirmed for HIWIN.",
+   "evidence_url": "https://www.sbn.de/media/45/d7/6b/1643027223/KM-Serie.pdf"
+  },
+  {
+   "claim": "GT2 20T: PD = z*p/pi = 12.732 mm; r = 6.3662e-3 m; OD 12.22 = PD - 2*0.254; bore 5",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Recomputed PD 12.7324 and OD 12.2244. Adafruit 1251 gives 12.2 mm across the tooth tips, a 5 mm bore, 16 mm flange diameter and 16 mm overall length. NopSCADlib GT2x20ob also lists OD 12.22.",
+   "evidence_url": "https://www.adafruit.com/product/1251"
+  },
+  {
+   "claim": "GT2 belt thickness 1.38, tooth height 0.75, pitch-line differential 0.254",
+   "verdict": "unverified",
+   "correct_value_or_note": "All three appear in NopSCADlib belts.scad (GT2x6 = [2.0, 6, 1.38, 0.75, 0.254]), which is secondary. No Gates primary document was reachable to confirm the 0.254 PLD.",
+   "evidence_url": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/belts.scad"
+  },
+  {
+   "claim": "GT2 pulley hub/flange: channel 7.5, flange 16 x 1.0, hub 16 x 5.5, 2 x M3 grub (OpenBuilds 20T)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matches NopSCADlib GT2x20ob_pulley.",
+   "evidence_url": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/pulleys.scad"
+  },
+  {
+   "claim": "Flexible coupling 5x8: OD 19, L 25 (cites NopSCADlib SC_6x8_flex)",
+   "verdict": "unverified",
+   "correct_value_or_note": "The NopSCADlib entry is a 6x8 coupling, not 5x8; it supports only the 19 x 25 envelope. The 5x8 D19 dimensions, rated torque and set screws remain unverified.",
+   "evidence_url": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/shaft_couplings.scad"
+  },
+  {
+   "claim": "Spur gear m1: d = mz, da = m(z+2), df = m(z-2.5), db = mz cos20; table z10 to z60",
+   "verdict": "confirmed",
+   "correct_value_or_note": "I recomputed all 16 rows and they match (e.g. z45 db 42.286). ha* = 1.0 and hf* = 1.25 (whole depth 2.25m) are confirmed by standard formulas. Shaved/ground teeth may use 2.35m.",
+   "evidence_url": "https://engineersedge.com/gear_formula.htm"
+  },
+  {
+   "claim": "Undercut: z_min = 17 (17.1); x_min = 1 - z sin^2(20)/2: z10 0.415, z12 0.298, z15 0.123, z16 0.064",
+   "verdict": "confirmed",
+   "correct_value_or_note": "KHK gives z_min 17, and 2/sin^2 20 = 17.097. Recomputed x_min: 0.4151, 0.2981, 0.1227, 0.0642. This assumes ha* = 1.",
+   "evidence_url": "https://www.khkgears.us/media/1284/addendum-modification-and-undercut.pdf"
+  },
+  {
+   "claim": "ISO 53 profile A root fillet rho_f* = 0.38",
+   "verdict": "unverified",
+   "correct_value_or_note": "The ISO 53 table was not reachable.",
+   "evidence_url": "https://nbviewer.org/github/drivetrainhub/notebooks-gears/blob/master/tooling/Chapter%25201%2520-%2520Basic%2520Rack.ipynb"
+  },
+  {
+   "claim": "Gear pair: a = m(z1+z2)/2 (20/40 gives 30 mm), w2 = -(z1/z2) w1, tau2 = -(z2/z1) eta tau1",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The kinematics are consistent and power balances (|P2| = eta|P1|). The default eta 0.98 is still unsourced.",
+   "evidence_url": "https://engineersedge.com/gear_formula.htm"
+  },
+  {
+   "claim": "Misumi HFS5-2020: A 183 mm^2, Ix = Iy 0.742e4 mm^4, 0.50 kg/m",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The search extract of Misumi listings reads 'HFS5-2020 ... 0.5, 183, 0.742x10^4'.",
+   "evidence_url": "https://uk.misumi-ec.com/vona2/detail/110302245270"
+  },
+  {
+   "claim": "Misumi HFS5-2040: A 324 mm^2, I 1.358e4 / 5.13e4 mm^4, 0.88 kg/m",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The Misumi table row matches exactly.",
+   "evidence_url": "https://api.uk.misumi-ec.com/vona2/detail/110302684350"
+  },
+  {
+   "claim": "V-slot 20x20: 198 mm^2, 0.810e4 mm^4, 0.535 kg/m",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matches Systeal 2C-AS-6-2020-VSLOT. A sibling profile has the same area but Ix/Iy 0.924/0.711e4, so record which profile and axis.",
+   "evidence_url": "https://www.systeal.com/en/profiles-20-series/1221-v-slot-aluminium-profile-20x20-6mm-slot.html"
+  },
+  {
+   "claim": "2020 slot 6, centre bore 4.2, channel 12 / lip 2 / spar 2 / fillet 1 (E2020); T-variant 11/1.8/1.5/1.5",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matches the NopSCADlib E2020 and E2020t rows (the E2020t centre bore is 5.0).",
+   "evidence_url": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/extrusions.scad"
+  },
+  {
+   "claim": "2020 corner bracket 28x28x20; wall thickness and hole unknown (placeholder 3 / 5.5 slot for M5)",
+   "verdict": "refuted",
+   "correct_value_or_note": "The NopSCADlib entry the claim cites already defines these: E20_corner_bracket = [[28,28,20], base thickness 2, side thickness 3, hole offset 19.5 from the corner, M4 sliding T-nut, for E2020t]. Use M4 clearance, not M5, and base 2 / side 3.",
+   "evidence_url": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/extrusion_brackets.scad"
+  },
+  {
+   "claim": "Spring rate k = G d^4/(8 D^3 n_a); preset d 0.9, OD 8, 10 coils closed, n_a 8, L0 20 gives k 2.33 N/mm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The formula and n_a = n_t - 2 for closed ends are standard. The preset matches NopSCADlib yellow_bed_spring [8, 0.9, 20, 10, closed]. Recomputed k = 2.334 N/mm with G 81500.",
+   "evidence_url": "https://engineerexcel.com/compression-spring-formula/"
+  },
+  {
+   "claim": "Shear modulus G 81500 N/mm^2 (spring steel); stainless about 69000",
+   "verdict": "unverified",
+   "correct_value_or_note": "The EN 13906-1 and EN 10270-3 tables were not reachable. Commonly quoted values are 81500 and 70000 (1.4310), but I did not confirm them.",
+   "evidence_url": "https://www.firgelliauto.com/blogs/engineering-calculators/spring-rate-calculator"
+  },
+  {
+   "claim": "Compression spring force law: F = k(L0 - L) for Lc <= L <= L0, else 0",
+   "verdict": "refuted",
+   "correct_value_or_note": "For L < Lc the spring is solid (coil bind), so the force is at least k(L0 - Lc), not 0. Returning 0 removes the load exactly when it is largest. Saturate at k(L0 - Lc) and raise the coil-bind warning. Similarly, the extension-spring law jumps from F0 to 0 at L0 and needs smoothing for Newton.",
+   "evidence_url": "https://engineerexcel.com/compression-spring-formula/"
+  },
+  {
+   "claim": "ISO 6432 bore/rod: 10/4, 12/6, 16/6, 20/8, 25/10",
+   "verdict": "confirmed",
+   "correct_value_or_note": "10/4 and 16/6 back-calculate from Festo DSNU forces (DSNU-16 120.6/103.7 N; DSNU-10 47/40 N). 20/8 and 25/10 come from the Rexroth MNI extract. The 12 mm rod diameter of 6 is unverified; only its M6 rod thread was confirmed.",
+   "evidence_url": "https://landefeld.com/artikel/fr/dsnu-16-20-p-a-1908260-standards-based-cyli/OT-FESTO034071"
+  },
+  {
+   "claim": "A_cap/A_ann and 6 bar forces (10: 47.1/39.6 ... 25: 294.5/247.4 N)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "I recomputed all five rows and they match exactly.",
+   "evidence_url": "https://www.rowse-pneumatics.co.uk/festo-dsnu-10-15-p-a-1908251"
+  },
+  {
+   "claim": "Rod threads 10 M4, 12 M6, 16 M6, 20 M8, 25 M10x1.25; nose threads 8/10 M12x1.25, 12/16 M16x1.5, 20/25 M22x1.5; ports M5 (10-16), G1/8 (20, 25)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The SMC/Numatics ISO series table gives 8/10 as M4 with M12x1.25 nose and 12 as M6 with M16x1.5 nose and M5 port. That confirms the 10 mm nose thread, which the claim had only inferred. Rexroth MNI covers 16/20/25.",
+   "evidence_url": "https://smcpneumatics.com/numatics/ISO_Series_Cylinders.pdf"
+  },
+  {
+   "claim": "Cylinder model F = p_a*A_cap - p_b*A_ann (gauge), Q_a = A_cap*v, Q_b = -A_ann*v",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Gauge pressures are valid here: the atmospheric term multiplies (A_cap - A_ann - A_rod) = 0. The model is power-consistent: p_a Q_a + p_b Q_b = F v.",
+   "evidence_url": "https://www.mathworks.com/help/hydro/ref/orificeg.html"
+  },
+  {
+   "claim": "Fluid net flow variable: cylinder/tube use volumetric Q (A*v, Hagen-Poiseuille) while fittings/valves use ISO 6358 Q in ANR 'converted to m^3/s'",
+   "verdict": "refuted",
+   "correct_value_or_note": "These are different quantities. ISO 6358 Q is standard (ANR) volume flow, i.e. a mass flow, while A\u00b7v and 128\u03bcL/(\u03c0d\u2074) use actual volume flow at line pressure. They differ by roughly p_abs/p_ANR, about 7x at 6 bar g. The net must conserve one quantity (mass flow, or ANR flow with Q_actual = Q_ANR*(p0/p)*(T/T0)). This is harmless only when Q = 0 (stalled steady state).",
+   "evidence_url": "https://www.mathworks.com/help/simscape/ref/constantareapneumaticorificeiso6358.html"
+  },
+  {
+   "claim": "ISO 6358 orifice equations (choked/subsonic with b, sqrt(293/T)); S ~ 5C; Simscape alt C = 0.128*4S/pi",
+   "verdict": "confirmed",
+   "correct_value_or_note": "SMC gives S = 5.0 x C (mm^2 vs dm^3/(s\u00b7bar)). Simscape gives C = 0.128 d^2, which equals 0.128\u00b74S/\u03c0 for geometric area S. The subsonic form shown is ISO 6358 with subsonic index m = 0.5.",
+   "evidence_url": "https://ca01.smcworld.com/catalog/New-products-en/es70-44c-vx2/spdfdata/es70-44c-vx2_43sp.htm"
+  },
+  {
+   "claim": "SMC KQ2H04-M5 (H 8 / D 7.7 / L 17.7, S 4) and KQ2H06-01AS (H 10 / D 9.7 / L 18.4, S 13.1 nylon / 10.4 urethane)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matches the SMC table extract (04 size as the M5A/M5N variants). The A/M columns for the 04 size are ambiguous in the extract.",
+   "evidence_url": "https://www.smcpneumatics.com/newKQ2Hmetric-m-r.html"
+  },
+  {
+   "claim": "Festo QH-QS-4 148 l/min NW 2.5; QH-QS-6 533 l/min NW 4 (DIN 1343)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matches the Festo datasheet and distributor extracts.",
+   "evidence_url": "https://www.festo.com/gb/en/a/download-document/datasheet/153484"
+  },
+  {
+   "claim": "Derived ball-valve sonic conductance C about 0.58 (4 mm) / 2.1 (6 mm) dm^3/(s*bar)",
+   "verdict": "refuted",
+   "correct_value_or_note": "The arithmetic reproduces (0.582 / 2.096), but it skips the reference-condition change. qnN is in DIN 1343 normal litres (0 \u00b0C, 1.01325 bar), while ISO 6358 C is defined on ANR (20 \u00b0C, 1 bar), a factor of 1.087. Under the same assumptions (b 0.3, p1 7 / p2 6 bar abs) C is about 0.63 and 2.28. The 6/5 bar test pressures themselves remain unverified.",
+   "evidence_url": "https://motionworld.com/assets/Festo-QH-QS-6-Datasheet.pdf"
+  },
+  {
+   "claim": "SMC TU0425 4x2.5 (bend R 10, 0.8 MPa) and TU0604 6x4 (bend R 15)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matches distributor and SMC parts-search listings. The softer TUS series differs (0.6 MPa, R 8).",
+   "evidence_url": "https://elasticsearch.smcpneumatics.com/10-TU0604R-20.html"
+  },
+  {
+   "claim": "Air viscosity 1.81e-5 Pa*s; laminar R per metre 1.888e7 (ID 2.5), 1.614e7 (2.6), 2.881e6 (4.0) Pa*s/m^3",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Omni Calculator gives 1.813e-5 at 20 \u00b0C (secondary). Recomputed R: 1.8879e7, 1.6138e7, 2.8807e6.",
+   "evidence_url": "https://wba.omnicalculator.com/physics/kinematic-viscosity-of-air"
+  },
+  {
+   "claim": "PU tube material uses Rubber 1100 because 'real PU density unsourced'; gear says 'acetal/POM density not sourced here'",
+   "verdict": "refuted",
+   "correct_value_or_note": "PLAN.md Phase 6.2 already has built-in presets for Polyurethane 1200 kg/m^3 and POM 1410 kg/m^3. Use those keys instead of the Rubber stand-in and the 'unsourced' note.",
+   "evidence_url": "file:///home/user/StudioVD/PLAN.md"
+  },
+  {
+   "claim": "Densities taken from PLAN.md 6.2: Steel 7850, Stainless 8000, Brass 8500, Aluminium 2700, Rubber 1100, ABS 1040, Glass 2500, Copper 8960",
+   "verdict": "confirmed",
+   "correct_value_or_note": "PLAN.md lines 611-613 match. These are project presets, not measured part densities.",
+   "evidence_url": "file:///home/user/StudioVD/PLAN.md"
+  },
+  {
+   "claim": "N-BK7 nd 1.51680, vd 64.17, density 2.51 g/cm^3",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Matches the SCHOTT datasheet as seen in the search extract (also PGO and Crystran).",
+   "evidence_url": "https://media.schott.com/api/public/content/41e799d0bf874807a0bb8e702fbb75b5"
+  },
+  {
+   "claim": "LA1131: R1 25.84 (= f(n-1)), Thorlabs 25.8; CT 5.3, ET 2.0, BFL 46.3",
+   "verdict": "confirmed",
+   "correct_value_or_note": "3DOptix's Thorlabs catalog entry lists R 25.8, CT 5.3, ET 2, BFL 46.3; thorlabs.com was unreachable. A simple check gives BFL = f - CT/n = 46.5, consistent within design-wavelength and rounding differences.",
+   "evidence_url": "https://www.3doptix.com/catalog/optics/lens/thorlabs/LA1131"
+  },
+  {
+   "claim": "Uncoated lens T = (1-R)^2 = 0.917, R = 0.0422/surface",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Recomputed: R 0.04216, T 0.9174 (absorption ignored).",
+   "evidence_url": "https://media.schott.com/api/public/content/41e799d0bf874807a0bb8e702fbb75b5"
+  },
+  {
+   "claim": "Mirror PF10-03-G01: dia 25.4, thickness 6, Ravg 0.90 (450 nm-2 um), fused silica",
+   "verdict": "unverified",
+   "correct_value_or_note": "GoPhotonics confirms 25.4 mm, fused silica, 450 nm to 2 \u00b5m and Ravg 90%/95% (the band split is unclear). The 6.0 mm thickness is confirmed only for \u00d81/2\" PF05 and PFE10, not for PF10.",
+   "evidence_url": "https://www.gophotonics.com/products/mirrors/thorlabs-inc/40-46-pf10-03-g01-10"
+  },
+  {
+   "claim": "Laser module class 3R (<= 5 mW visible CW); R_eq = 5 V / 30 mA = 167 ohm",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Cornell EHS gives the 5 mW CW limit for visible Class 3R; R_eq arithmetic is correct. The I_op, V_on, housing and lead length values are vendor-listing data that I did not check (unverified).",
+   "evidence_url": "https://ehs.weill.cornell.edu/faq/how-are-classes-lasers-defined"
+  },
+  {
+   "claim": "Belt closed-loop pitch length = teeth * 2 (188T = 376 mm)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Follows from p = 2 mm, and the goBILDA part naming matches.",
+   "evidence_url": "https://www.gobilda.com/2mm-pitch-gt2-timing-belt-6mm-width-376mm-pitch-length-188-tooth/"
+  },
+  {
+   "claim": "Check valve cracking 0.005/0.02 MPa, AKH S 12.7 mm^2; brass G1/4 valve Kv 6; 2020 alloy A6N01SS-T5; shaft 58 HRC; coupling 1 N*m",
+   "verdict": "unverified",
+   "correct_value_or_note": "Not checked against reachable sources. Keep the existing low/medium confidence.",
+   "evidence_url": "https://www.smcpneumatics.com/tegralcheckvalves.html"
+  }
+ ],
+ "summary": "Adversarial check of the mechanical, fluid and optical component data. The scratch files are in scratch:/adv-mech/: dl/ holds the downloaded FastenersWB, cq_warehouse, BOLTS and NopSCADlib tables, and scripts/calc.py holds all recomputations.\n\nWhat was available: vendor sites (SKF, HIWIN, Misumi, Thorlabs, Festo, Gates, MathWorks) are blocked for curl, and WebFetch fails on DNS. Vendor numbers were therefore checked only through search-engine extracts. ISO standards themselves were not reachable.\n\nConfirmed:\n- **Fastener dimensions:** ISO 4762, 4032, 7089 and 4026 dimensions are confirmed by an independent third table (BOLTS) as well as FastenersWB and cq_warehouse.\n- **Bearings:** all deep-groove dimensions, C, C0 and mass values are confirmed (cq_warehouse SKF CSVs, BOLTS DIN 625-1, SKF/distributor extracts).\n- **Linear and drive parts:** LM8UU, MGN12H, the GT2 pulley, and the Misumi 2020/2040 section properties are confirmed.\n- **Recomputed values:** every derived number reproduces \u2014 GT2 PD/OD, gear tables and undercut shifts, cylinder areas and forces, tube resistance, lens values, and lead-angle/efficiency values.\n\nRefuted or corrected:\n1. PLAN.md 6.2 already has Polyurethane 1200 and POM 1410 presets. The 'PU/POM density unsourced' notes and the Rubber stand-in are wrong.\n2. The 2020 corner bracket wall and hole are sourced in the cited NopSCADlib file: base 2, side 3, hole offset 19.5, M4 T-nut (not M5).\n3. The compression-spring law returns F = 0 at coil bind (L < Lc). It must saturate at k(L0 - Lc) or higher. The extension-spring law also jumps from F0 to 0 at L0.\n4. The fluid net mixes quantities: ISO 6358 ANR (standard) flow in fittings and valves with actual volumetric flow (A\u00b7v, Hagen-Poiseuille) in cylinders and tubes. That is about a 7x error at 6 bar unless one conserved quantity is used.\n5. The derived ball-valve C misses the DIN 1343 to ANR conversion (factor 1.087). The values should be about 0.63 and 2.28.\n6. The leadscrew param text uses the square-thread self-locking test. The trapezoidal threshold is mu > tan(lambda)\u00b7cos15\u00b0 (0.0878 for Tr8x2); the sim_model's phi' form is correct.\n7. The 608 friction example at 100 N (0.03C) is outside the SKF constant-\u03bc validity (P \u2248 0.1C), so add a load-independent drag term.\n\nWeaker or unverified:\n- **Lead nut:** flange thickness and PCD come from NopSCADlib's 8x2 nut, not its 8x8 nut. Commercial 'T8 P2' threads are non-standard (DIN 103 lists only Tr8x1.5).\n- **Shaft tolerance:** Ooznest's 0/-0.015 is the h7 band, not h6.\n- **MGN12 rail:** E is set by the cut (NopSCADlib Emin 7.5), not a fixed 10.\n- **Other items without primary confirmation:** GT2 PLD 0.254 (NopSCADlib only, no Gates source), ISO 53 rho_f 0.38, spring G values, the HIWIN and Samick 50 km life basis, PF10 thickness, the 12 mm cylinder rod diameter, and the coupling, check-valve and laser module vendor values."
+}

@@ -233,16 +233,21 @@ rate $k = G\,d^4/(8\,D^3\,n)$ (wire diameter $d$, mean coil diameter $D$, active
 - **Two port classes:**
   - *Conserved (acausal) domains*: an across ("effort") and a through ("flow") variable.
     Connected ports share effort; flows sum to zero at each net (Kirchhoff).
-    Electrical $V/I$, fluid $p/Q$, mechanical translational $v/F$, rotational $\omega/\tau$.
+    Electrical $V/I$, fluid $p/\dot m$, mechanical translational $v/F$, rotational $\omega/\tau$.
     Mechanical ports always have a reference terminal (the housing/frame). Fluid nets carry a
     medium tag (air, water, oil) and only same-medium ports connect, so a fan can't be wired to
-    a pump. Solved together by **Modified Nodal Analysis** + Newton-Raphson for non-linear
+    a pump. The fluid through-variable is **mass flow** $\dot m$ (kg/s), not volume flow. Valve
+    and fitting data (ISO 6358) is standard-condition flow, while cylinders and tubes move
+    actual volume at line pressure. For air at 6 bar these differ by about 7×, so only mass
+    flow is conserved correctly across both. Volume flow is derived per medium
+    ($Q=\dot m/\rho$). Pneumatic results away from pressure equilibrium are indicative only,
+    because compressibility is simplified. Solved together by **Modified Nodal Analysis** + Newton-Raphson for non-linear
     parts (LED, diode), dense LU (fine at this scale; sparse only if benchmarks demand it).
   - *Signal (causal) domains*: **data** and **light**. Directed output → input, evaluated in
     topological order; feedback loops iterate to a fixed point or are reported. Data values are
     typed: bool, number, PWM duty (0..1), pulse width (µs, servos), ADC counts, text (LCDs).
     Light values are luminous intensity at emitters and illuminance (lx) at sensors.
-- **Power is derived, not wired:** $P = e\cdot f$ per port ($VI$, $pQ$, $Fv$, $\tau\omega$).
+- **Power is derived, not wired:** $P = e\cdot f$ per port ($VI$, $p\,\dot m/\rho$, $Fv$, $\tau\omega$).
   I'm pushing back on "power" as its own flow domain: making it independent would let the
   model violate energy conservation.
 - **Cross-domain components** couple domains inside one solve, e.g. DC motor
@@ -259,7 +264,10 @@ rate $k = G\,d^4/(8\,D^3\,n)$ (wire diameter $d$, mean coil diameter $D$, active
   point with ideality $n=2$ gives saturation currents from about $3\times10^{-19}$ A (red,
   2.0 V at 20 mA) down to $3\times10^{-29}$ A (blue/white, 3.2 V at 20 mA), and Newton steps
   overflow without limiting. Also tanh-smoothed Coulomb friction (undefined at $v=0$) and a
-  small `gmin` on every node. A single $(V_f, I_f)$ point can't determine $n$ and series
+  small `gmin` on every node. Piecewise laws must be continuous and saturate, never drop to
+  zero. A compression spring at coil bind holds at least $k(L_0-L_c)$; returning 0 would remove
+  the load exactly when it is largest. Friction elements need a load-independent drag term
+  as well as the load-proportional one. A single $(V_f, I_f)$ point can't determine $n$ and series
   resistance, so LED models need a second point from the datasheet curve.
 - **Gravity** enters only as mechanical sources computed from 3D mass properties (§2). The
   Rapier world stays at zero gravity.
@@ -342,11 +350,13 @@ path). Draft TypeScript interfaces live in `docs/research/component-library/sche
   Rollback guard: the highest verified sequence is stored and lower ones are rejected. An
   expired cached index is refetched before installing.
 - **Hosting:** GitHub Releases on a separate public repo (`bmisho/StudioVD` is private, so its
-  releases can't serve anonymous downloads; §7 Q1), immutable releases; pack releases are
-  created with `--latest=false` and only catalog releases are marked latest, so the stable
-  URL `…/releases/latest/download/index.json` always points to the catalog. A Cloudflare R2
-  mirror or a user-set mirror URL can be added later without an app release, because trust
-  comes only from the signatures.
+  releases can't serve anonymous downloads; §7 Q1), immutable releases. GitHub marks every
+  newly published release as latest by default, so every pack release passes
+  `--latest=false` and every catalog release passes `--latest` explicitly. The stable URL
+  `…/releases/latest/download/index.json` then always points to the catalog; verified on a
+  scratch repo before first use. A Cloudflare R2 mirror (free tier requires the domain's
+  nameservers on Cloudflare) or a user-set mirror URL can be added later without an app
+  release, because trust comes only from the signatures.
 
 ### 4.5 Local storage (Rust writes, webview reads)
 
@@ -382,6 +392,11 @@ version change is offered as Replace.
   (PEM, merged with OS roots), a custom mirror URL, a connection test with a precise diagnosis,
   and **Install from file** (a pack + `.minisig` downloaded in a browser, which handles PAC/NTLM
   proxies that reqwest can't).
+- Windows system proxy: hyper-util 0.1.21 copies a per-protocol registry value
+  (`http=h:p;https=h:p`) verbatim and fails to parse it, so the request silently goes direct.
+  We read and parse the Windows proxy settings ourselves (including the `<local>` bypass token)
+  and pass explicit proxies to reqwest. Linux reads proxy environment variables only (GNOME/KDE
+  settings are not read), which the connection test reports.
 - Zip handling (shared with `.stvd`): own extraction loop (never `ZipArchive::extract`, see
   RUSTSEC-2025-0168), `enclosed_name()` required, symlinks rejected, byte-counted size and
   compression-ratio caps, Windows reserved names and case collisions rejected.
@@ -773,15 +788,17 @@ Exit criteria
 ## Phase 14: Component library II (online catalog & content packs)
 
 - [ ] 14.1 Public hosting repo (§7 Q1) with immutable releases; pack releases `--latest=false`,
-  catalog releases marked latest; post-publish smoke test of `latest/download/index.json`
+  catalog releases `--latest` (both explicit; the API defaults new releases to latest);
+  post-publish smoke test of `latest/download/index.json`
 - [ ] 14.2 Signing: two minisign keypairs (active + offline backup), separate from any updater
   key; trusted comment binds catalog id, sequence and schema; rotation procedure documented
 - [ ] 14.3 Rust downloader: reqwest 0.13 (rustls, platform verifier, system proxy), minisign
   verification before parsing (16 MiB cap), rollback guard, expiry refetch, Range resume with
   `If-Range`, streaming SHA-256, cancellation, 2 concurrent downloads, `Retry-After` backoff,
   disk-space check, progress over `tauri::ipc::Channel` (throttled)
-- [ ] 14.4 Settings → Network: offline switch, first-use consent, proxy mode, extra CA, mirror URL,
-  connection test; no startup checks unless opted in
+- [ ] 14.4 Settings → Network: offline switch, first-use consent, proxy mode (own parser for the
+  Windows proxy registry, §4.7), extra CA, mirror URL, connection test; no startup checks unless
+  opted in
 - [ ] 14.5 Online catalog in the Library tab: search from the cached index, thumbnails bundle,
   per-pack install/remove/update, "remove old versions", revocation warnings, disk usage
 - [ ] 14.6 Component updates in projects: badge on same-MAJOR updates, Update = one undo entry
@@ -802,7 +819,10 @@ Exit criteria
 ## Phase 15: Hardening & release
 
 - [ ] 15.1 Strict CSP: no external origins at all; `script-src 'self' 'wasm-unsafe-eval'`, workers,
-  IPC and asset protocol only (both `asset:` and `http://asset.localhost` forms)
+  IPC and asset protocol only (both `asset:` and `http://asset.localhost` forms), plus `blob:` in
+  `connect-src` and `img-src`. GLTFLoader turns embedded GLB textures into blob URLs and
+  fetches them on Chromium/WebView2, and `'self'` never matches `blob:`. E2E test: a textured
+  GLB renders under the release CSP
 - [ ] 15.2 Capability audit (least privilege): app commands restricted via the build-time app
   manifest, library commands for the main window only, narrow asset-protocol scopes
 - [ ] 15.3 Performance pass on a 200-part reference assembly (load time, orbit fps, test-mode fps)

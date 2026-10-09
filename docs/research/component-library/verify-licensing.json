@@ -1,0 +1,179 @@
+{
+ "summary": "Adversarial verification of the 14 licensing claims. Primary files were fetched with curl from gitlab.com and raw.githubusercontent.com and saved under scratch:/verify/. The repo /home/user/StudioVD was not modified. The proxy blocked creativecommons.org, gnu.org, forum.kicad.info, raspberrypi.com, mcmaster.com, traceparts.com, grabcad.com, 3dcontentcentral.com, web.archive.org and pip.raspberrypi.com. WebFetch could not resolve those hosts either.\n\nCONFIRMED from primary files:\n- KiCad Packages3D is CC-BY-SA-4.0 WITH KiCad-libraries-exception. The collection clause is quoted correctly. LICENSE.md at tag 10.0.7 is identical to master, and the exception is a real SPDX id.\n- The CC BY-SA 4.0 sections cited (2(a)(4), 2(a)(5)(C), 3(a)(1)(B), 3(b)) say what the claims say. Checked via the SPDX mirror of the legal text, because creativecommons.org is blocked.\n- kicad-library-tools is GPL-3.0-or-later with MIT and LGPL-2-or-later files, and kicad-footprint-generator 301-redirects to it.\n- FreeCAD-library: parts and assets are CC-BY-3.0, code is LGPL-2.1-or-later in LICENSE-Code. The license files are identical at the pinned commit. The Pico-R3 and Nano STEP headers match the claim.\n- cq_warehouse and bd_warehouse are Apache-2.0. Neither repo has a NOTICE file. bd_warehouse docs/bearing.rst names the SKF 'Rolling bearings' catalogue ('SKT' is a typo), so the catalogue-provenance caveat is stronger than stated.\n- Adafruit_CAD_Parts is MIT, (c) 2016 Adafruit Industries.\n- Espressif uses the same license as KiCad. Its LICENSE.md lacks KiCad's collection paragraph, but CC BY-SA 4.0 still applies.\n- Raspberry Pi design-file grant: confirmed from the official raspberrypi/documentation repo, which gives the grant for Pico, Pico W, Pico 2 and Pico 2 W. The licensing page itself is blocked.\n\nREFUTED (SPDX precision only; the practical advice still holds):\n- Archived kicad-packages3D-generator is not 'GPL-3.0-only'. Its LICENSE file is GPLv3 text with no 'only', and sampled file headers are GPL-2.0-or-later or LGPL-2.0-or-later.\n- NopSCADlib is GPL-3.0-or-later, not -only (pcbs.scad header). It also contains CC-BY-SA-3.0 printed pulleys and MIT microview STLs.\n- BOLTS is not 'GPL-3.0-only'. The .blt data is LGPL-2.1+ as claimed, but the code is mostly LGPL too: blt.py and bolts.py are LGPL-2.1+, freecad.py is LGPL-3.0+.\n\nUNVERIFIED (blocked sites): the KiCad forum reply; the GNU FAQ page (GPLv3 \u00a72 has the same output rule and was read instead); creativecommons.org pages; the McMaster, TraceParts, GrabCAD and 3D ContentCentral terms; the Raspberry Pi antenna, third-party and documentation-license exclusions; FreeCAD committer names (the GitHub API is restricted in this session). Search snippets broadly agree for GrabCAD and TraceParts. Nothing found confirms the exact McMaster or 3D ContentCentral wording.\n\nExample paths: 50 URLs were spot-checked and all exist. KiCad (15 files at tag 10.0.7, byte sizes match the claims), FreeCAD (12 at f5ca01cd), Adafruit (8 at c128bce), Espressif (2), cq/bd_warehouse (10), kicad-library-tools (3 paths), plus NopSCADlib pcbs.scad and 3 BOLTS .blt files. The KiCad 'NOT PRESENT' list is correct for 10.0.7.\n\nNew risks found:\n- KiCad's RaspberryPi_Pico.step is a community model by Peter S. Hollander, not Raspberry Pi's file, so it falls under KiCad's license.\n- Several KiCad STEP files have no license text in their header (LED_D5.0mm, SW_PUSH_6mm, TO-220, BarrelJack, Pico, ESP32-WROOM-32), and Battery.3dshapes has no CREDITS.md. Packs must ship LICENSE.md themselves.\n- Adafruit's 1119 tactile-switch STEP came from someone's Downloads folder, so it may be a third-party model.\n- FreeCAD's ESP32_DOIT_DevKit_V1.step was re-exported 2026-09-29 with author 'Author', so its origin is unknown.",
+ "checks": [
+  {
+   "claim": "KiCad Packages3D license is CC-BY-SA-4.0 WITH KiCad-libraries-exception",
+   "verdict": "confirmed",
+   "correct_value_or_note": "LICENSE.md, read at master and identical at tag 10.0.7, says CC BY-SA 4.0 with the exception text quoted in the claim. SPDX lists 'KiCad-libraries-exception' as a valid exception id. High confidence.",
+   "evidence_url": "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/LICENSE.md"
+  },
+  {
+   "claim": "KiCad LICENSE.md: the exception does not apply when redistributing the libraries 'as a collection'; such collections must be shared under the same license and retain attribution, including the license documents",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Verbatim: 'if you wish to redistribute the KiCad libraries, or parts thereof (including in modified form) as a collection then the exception above does not apply. Redistributed library collections must be shared under the same license agreement. Under these circumstances, the libraries must also retain attribution information, including the license documents which are distributed with the library files.' This is KiCad's own reading and goes beyond what CC BY-SA 4.0 strictly requires for collections, but a pack should comply with it. High confidence.",
+   "evidence_url": "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/master/LICENSE.md"
+  },
+  {
+   "claim": "KiCad STEP headers embed the CC-BY-SA text (R_Axial, PinHeader, Relay, BatteryHolder, TerminalBlock), and each folder has a CREDITS.md",
+   "verdict": "confirmed",
+   "correct_value_or_note": "True for those 5 families: R_Axial_DIN0207, PinHeader_1x04, PinSocket_1x15, both Relay files, both 18650 holders, MKDS terminal block. Caveat: LED_D5.0mm, SW_PUSH_6mm, TO-220-3_Vertical, both BarrelJack files, RaspberryPi_Pico and ESP32-WROOM-32 have only a FreeCAD/StepUp FILE_NAME header and no license comment. CREDITS.md exists in Module, RF_Module and LED_THT. The full Battery.3dshapes listing (29 files) has none. So the pack itself must carry LICENSE.md and source/credit metadata; relying on per-file headers is not enough.",
+   "evidence_url": "https://gitlab.com/api/v4/projects/kicad%2Flibraries%2Fkicad-packages3D/repository/tree?path=Battery.3dshapes&ref=10.0.7&per_page=100"
+  },
+  {
+   "claim": "CC BY-SA 4.0: s.2(a)(4) technical modifications 'never produce Adapted Material'; s.2(a)(5)(C) no DRM; s.3(a)(1)(B) indicate modifications; ShareAlike applies to Adapted Material only",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The SPDX copy of the legal text has all four clauses verbatim. s.3(b) begins 'if You Share Adapted Material You produce', so ShareAlike is limited to adaptations. creativecommons.org and the CC wiki are blocked here, so the SPDX mirror was used. Applying s.2(a)(4) to STEP-to-GLB tessellation is an interpretation (medium). Re-orienting or re-centring is probably still a technical modification; adding or removing geometry is not.",
+   "evidence_url": "https://raw.githubusercontent.com/spdx/license-list-data/main/text/CC-BY-SA-4.0.txt"
+  },
+  {
+   "claim": "KiCad exception means user .stvd projects embedding a converted model need not be CC-BY-SA (medium-high)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "LICENSE.md supports the intent: 'Use of the library data in a project does not (by itself) require that the design or any files generated from the design are licensed under the CC-BY-SA 4.0 License' and 'Neither do we wish to force users to attribute the KiCad libraries within their design'. Caveat: the waiver applies only 'to the extent that the creation of electronic designs ... can be considered Adapted Material'. A .stvd carrying a verbatim (format-shifted) GLB is arguably not Adapted Material, so Art. 3(a) attribution may still attach to that embedded file when the bundle is shared. ShareAlike would not attach in any case. Keep automatic per-asset attribution in bundles. Medium confidence.",
+   "evidence_url": "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/master/LICENSE.md"
+  },
+  {
+   "claim": "KiCad forum reply: an item extracted from a design and redistributed alone is CC-BY-SA again",
+   "verdict": "unverified",
+   "correct_value_or_note": "forum.kicad.info is blocked by the proxy and could not be read.",
+   "evidence_url": "https://forum.kicad.info/t/license-for-exported-footprints-from-pcb-file/32112"
+  },
+  {
+   "claim": "KiCad 10.0.7 example paths exist with the stated sizes",
+   "verdict": "confirmed",
+   "correct_value_or_note": "All 15 files return HTTP 200 at tag 10.0.7, and byte sizes match the claim: LED_D5.0mm 23,819; R_Axial_DIN0207 24,557; SW_PUSH_6mm 179,934; Keystone_1042 133,175; MPD_BH-18650-PC2 121,322; RaspberryPi_Pico 876,847; ESP32-WROOM-32 1,221,098; PinHeader_1x04 145,684; PinSocket_1x15 310,533; BarrelJack_Horizontal 118,861; CUI_PJ-063AH 143,186; MKDS 2-pin 70,419; SANYOU SRD 113,450; Omron G5LE 125,686; TO-220-3_Vertical 85,145. The Pico variants listed in Module.3dshapes match the claim. Note: KiCad's RaspberryPi_Pico.step is by Peter S. Hollander (Ki-Lime Pi Pico, per CREDITS.md), not Raspberry Pi's official file, so it is under KiCad's license, not the RPi grant.",
+   "evidence_url": "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/Module.3dshapes/CREDITS.md"
+  },
+  {
+   "claim": "NOT PRESENT in KiCad: Arduino Uno/Nano, ESP32 DevKit boards, an 18650 cell",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The full 10.0.7 listings were checked. Module.3dshapes has 11 entries (Coral, Pico variants, Sipeed) and no Arduino. RF_Module.3dshapes has 19 entries and no DevKit. Battery.3dshapes has only the two 18650 holders and no cell.",
+   "evidence_url": "https://gitlab.com/api/v4/projects/kicad%2Flibraries%2Fkicad-packages3D/repository/tree?path=Module.3dshapes&ref=10.0.7&per_page=100"
+  },
+  {
+   "claim": "Archived kicad-packages3D-generator is GPL-3.0-only",
+   "verdict": "refuted",
+   "correct_value_or_note": "The LICENSE file is GPLv3 text with no 'only' statement, and the GitLab API detects it as 'gpl-3.0+'. Sampled file headers: Resistor_THT/main_generator.py and Connector_PinHeader/main_generator.py say GPL 'version 2 ... or (at your option) any later version'; Battery/main_generator.py says LGPL 'version 2 ... or any later version'. Correct description: mixed GPL-2.0-or-later and LGPL-2.0-or-later files shipped with GPL-3.0 text, so the combined work is effectively GPL-3.0-or-later. The practical advice (CI-only use, do not port into the app) is unchanged. The README 'moved to be part of the KiCad Library Footprint Generators repository' quote is accurate.",
+   "evidence_url": "https://gitlab.com/kicad/libraries/kicad-packages3D-generator/-/raw/master/Resistor_THT/main_generator.py"
+  },
+  {
+   "claim": "kicad-library-tools is GPL-3.0-or-later with some MIT and LGPL-2-or-later files; kicad-footprint-generator redirects to it; src/generators, data and .gitlab-ci-3dgen.yml exist",
+   "verdict": "confirmed",
+   "correct_value_or_note": "README: 'licensed under the GNU General Public License, Version 3 or later (GPL-3.0-or-later), unless explicitly specified otherwise within the individual file header', with MIT and LGPL-2-or-later named as alternatives. LICENSE.GPL (v3), LICENSE.LGPL (Library GPL v2) and LICENSE.MIT ((c) 2025 KiCad Librarian Team) exist. gitlab.com/kicad/libraries/kicad-footprint-generator returns 301 to kicad-library-tools. All three example paths exist. The '(high)' rating on 'porting data/*.yaml makes the app GPL' is overconfident: bare dimension facts may not be copyrightable. As conservative advice it is fine.",
+   "evidence_url": "https://gitlab.com/kicad/libraries/kicad-library-tools/-/raw/main/README.md"
+  },
+  {
+   "claim": "GPL generator output is generally not covered by the GPL unless it contains parts of the program",
+   "verdict": "confirmed",
+   "correct_value_or_note": "GPLv3 \u00a72 (the LICENSE text actually fetched): 'The output from running a covered work is covered by this License only if the output, given its content, constitutes a covered work.' The cited GNU FAQ page itself is blocked (gnu.org) and was not read.",
+   "evidence_url": "https://gitlab.com/kicad/libraries/kicad-packages3D-generator/-/raw/master/LICENSE"
+  },
+  {
+   "claim": "FreeCAD-library: all parts and assets are CC-BY-3.0; macro/scripts are LGPL-2.1-or-later",
+   "verdict": "confirmed",
+   "correct_value_or_note": "LICENSE-Assets: '.FCStd ... .stp/.step, .brp/.brep, .stl, .dxf, .wrl ... licensed under the Creative Commons Attribution 3.0 Unported license (SPDX identifier: CC-BY-3.0)'; 'Each part is copyrighted by its own author'; authorship is in git history and FCStd properties. LICENSE-Code covers PartsLibrary.FCMacro, build_index.py, fcinfo and Doors_Windows/*.FCMacro under LGPL-2.1-or-later. Both files are identical at the pinned commit f5ca01cd. The README also says 'All Parts ... CC-BY 3.0'.",
+   "evidence_url": "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/LICENSE-Assets"
+  },
+  {
+   "claim": "FreeCAD CC-BY-3.0 conditions: per-author attribution, title, source link, license URI, adaptation credit, no DRM, no ShareAlike",
+   "verdict": "confirmed",
+   "correct_value_or_note": "\u00a74(a) requires a copy or URI of the license with every copy, keeping notices intact, and no effective technological measures. \u00a74(b)(i)-(iv) cover author name, title, the licensor-specified URI, and an adaptation credit. There is no ShareAlike clause. One addition: on a licensor's request, credit must be removed from a Collection or Adaptation (\u00a74(a)). High confidence.",
+   "evidence_url": "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/master/LICENSE-Assets"
+  },
+  {
+   "claim": "FreeCAD provenance: Pico-R3.step header 'PICO.STEP' 2021-01-22 SolidWorks 2021, re-uploaded 2022 by 'integrated-circuit'; Nano-Rev3_0.step made 2015 in '/home/alexandre/.../git-robot-conf', committed 2020 by 'BERSERK'",
+   "verdict": "unverified",
+   "correct_value_or_note": "The STEP headers are confirmed. Pico-R3: FILE_NAME('PICO.STEP','2021-01-22T14:05:44',...,'SwSTEP 2.0','SolidWorks 2021'). Nano: '/home/alexandre/Documents/git-robot-conf/FreeCAD/Arduino/Nano-Rev3_ 0.step', 2015-08-15. The committer names and years could not be checked: the GitHub API is restricted in this session and github.com HTML is blocked. Also, ESP32_DOIT_DevKit_V1.step has a header timestamp of 2026-09-29 and author 'Author', so its provenance is unknown.",
+   "evidence_url": "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Computing/SingleBoardComputers/Raspberry/Raspberry%20Pi%20Pico/Pico-R3.step"
+  },
+  {
+   "claim": "FreeCAD example paths exist; Arduino UNO is FCStd only; TO-220 is FCStd + STL only",
+   "verdict": "confirmed",
+   "correct_value_or_note": "All 12 listed files return HTTP 206 at f5ca01cd. No 'Arduino UNO.step' or '.stp' exists, and no relay-SRD-05VDC-SL-C .step or .stp. TO220_Std.stl exists; TO220_Std.step, .stp and .STEP do not.",
+   "evidence_url": "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Electronics%20Parts/Semiconductors/TO220_Std.stl"
+  },
+  {
+   "claim": "cq_warehouse is Apache-2.0; example paths exist",
+   "verdict": "confirmed",
+   "correct_value_or_note": "LICENSE is the Apache 2.0 text. fastener.py's header reads 'Copyright 2021 Gumyr ... Licensed under the Apache License, Version 2.0'. No NOTICE, NOTICE.txt or NOTICE.md exists, so the Apache \u00a74(d) NOTICE duty does not arise. All 4 example paths return 200.",
+   "evidence_url": "https://raw.githubusercontent.com/gumyr/cq_warehouse/HEAD/LICENSE"
+  },
+  {
+   "claim": "bd_warehouse is Apache-2.0; 'keep the license and NOTICE'; example paths exist",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Apache-2.0 is confirmed (LICENSE; gear.py and open_builds.py headers 'Copyright 2024 Gumyr'). Small correction: there is no NOTICE file (404 for NOTICE, NOTICE.txt and NOTICE.md), so only the LICENSE, the in-file notices and change markings apply. All 6 example paths at 8e9be06 return 200. open_builds.py says it parameterizes parts from openbuildspartstore.com; the trademark should not be used in pack branding.",
+   "evidence_url": "https://raw.githubusercontent.com/gumyr/bd_warehouse/HEAD/LICENSE"
+  },
+  {
+   "claim": "bd_warehouse bearing CSV 'SKT:' columns (C, C0, speeds, mass) look like manufacturer catalogue data (medium)",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Stronger than claimed. The CSV header is 'Size,SKT:d,SKT:D,SKT:B,SKT:C,SKT:C0,SKT:Pu,SKT:Speed-reference,SKT:Speed-limit,SKT:mass,SKT:Designation,...', and docs/bearing.rst says 'SKT provides comprehensive information about all types of rolling bearings in their document: Rolling bearings', linking an skf.com catalogue PDF. 'SKT' is a typo for SKF, so the data is SKF catalogue data (high). The EU database-right point is a legal opinion and was not verified.",
+   "evidence_url": "https://raw.githubusercontent.com/gumyr/bd_warehouse/HEAD/docs/bearing.rst"
+  },
+  {
+   "claim": "NopSCADlib is GPL-3.0-only (README: 'The license is GNU General Public License v3.0')",
+   "verdict": "refuted",
+   "correct_value_or_note": "The README sentence exists (the file is readme.md in lowercase; README.md returns 404). But file headers, e.g. vitamins/pcbs.scad, say 'either version 3 of the License, or (at your option) any later version', so the license is GPL-3.0-or-later. The repo also has mixed parts: printed pulleys are a remix of droftarts' Thingiverse design under CC-BY-SA-3.0, and the microview STLs are MIT. The ArduinoUno3 fact (68.58 x 53.34 x 1.6 mm; holes (15.24,50.8), (66.04,35.56), (66.04,7.62), (13.97,2.54)) is confirmed at pcbs.scad line 741. The advice to use it as a fact reference only is unchanged.",
+   "evidence_url": "https://raw.githubusercontent.com/nophead/NopSCADlib/HEAD/vitamins/pcbs.scad"
+  },
+  {
+   "claim": "NopSCADlib rendered STL/STEP output very likely carries GPL obligations (medium)",
+   "verdict": "unverified",
+   "correct_value_or_note": "This is a legal interpretation. GPLv3 \u00a72 makes output covered only if 'given its content, [it] constitutes a covered work'. A render of a .scad model plausibly qualifies, but no authoritative source settles it. Treating it as risky is a reasonable conservative position.",
+   "evidence_url": "https://raw.githubusercontent.com/nophead/NopSCADlib/HEAD/COPYING"
+  },
+  {
+   "claim": "BOLTS: GPL-3.0-only (repo LICENSE); data/*.blt files carry LGPL-2.1-or-later headers",
+   "verdict": "refuted",
+   "correct_value_or_note": "The data half is confirmed: bearings, hex_socket, extrusions, nut and profile_i .blt headers all say LGPL 'version 2.1 of the License, or any later version', with a 'license: LGPL 2.1+' field. The 'GPL-3.0-only' half is not supported. The LICENSE file is GPLv3 text with no 'only'. Code headers are LGPL: bolttools/blt.py and bolts.py are LGPL-2.1-or-later, bolttools/freecad.py is LGPL-3.0-or-later. Correct description: mostly LGPL-2.1+/LGPL-3.0+ with a GPL-3.0 LICENSE file. The advice to use it only as an ISO/DIN cross-check is unchanged.",
+   "evidence_url": "https://raw.githubusercontent.com/boltsparts/BOLTS/HEAD/bolttools/freecad.py"
+  },
+  {
+   "claim": "Adafruit_CAD_Parts is MIT, 'Copyright (c) 2016 Adafruit Industries'; example paths exist",
+   "verdict": "confirmed",
+   "correct_value_or_note": "The LICENSE is the standard MIT text with that copyright line. The README is 2 lines and has no other license terms. All 8 example STEP files return HTTP 206 at c128bce. Provenance caveat (medium): the '1119-12mm-TactileSwitch.step' header FILE_NAME is '/Users/afreeland/Downloads/1119-12mm-TactileSwitch.step' (Autodesk Translation Framework), so it was likely downloaded from a third party and Adafruit's MIT grant may not cover it. Most other files carry Adafruit Dropbox paths or author 'Adafruit'.",
+   "evidence_url": "https://raw.githubusercontent.com/adafruit/Adafruit_CAD_Parts/HEAD/LICENSE"
+  },
+  {
+   "claim": "Espressif kicad-libraries is CC-BY-SA-4.0 WITH KiCad-libraries-exception, 'same license conditions as those used by KiCad project'",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Verbatim: 'These are the same license conditions as those used by KiCad project for the official libraries'. Difference: Espressif's LICENSE.md does not include KiCad's 'redistribute ... as a collection' paragraph. Plain CC BY-SA 4.0 obligations (attribution, license copy, no ETM) still apply to packs. Both example STEP files exist (HTTP 206). The ESP32-WROOM-32E header shows SolidWorks 2019, 2021-03-08.",
+   "evidence_url": "https://raw.githubusercontent.com/espressif/kicad-libraries/HEAD/LICENSE.md"
+  },
+  {
+   "claim": "Raspberry Pi design files (Pico/Pico 2 STEP) carry a permissive 'use, copy, modify, and/or distribute ... for any purpose with or without fee' grant",
+   "verdict": "confirmed",
+   "correct_value_or_note": "Confirmed from the official raspberrypi/documentation repo (about_pico.adoc lines 108, 173, 270, 334). Design files for Pico/Pico H, Pico W/WH, Pico 2 and Pico 2 W 'are openly available with no limitations. Raspberry Pi grants permission to use, copy, modify, and distribute the following designs for any purpose, with or without fee', plus an as-is and no-liability disclaimer. There is no notice-retention condition, so '0BSD-style' is accurate. raspberrypi.com/licensing itself is blocked. The antenna, third-party-design and documentation-license (CC BY-SA/ND) exclusions are NOT verified; the docs only say the antenna is 'licensed from ABRACON (formerly ProAnt)'.",
+   "evidence_url": "https://raw.githubusercontent.com/raspberrypi/documentation/master/documentation/asciidoc/microcontrollers/pico-series/about_pico.adoc"
+  },
+  {
+   "claim": "Raspberry Pi STEP zip is at https://datasheets.raspberrypi.com/pico/",
+   "verdict": "unverified",
+   "correct_value_or_note": "datasheets.raspberrypi.com is blocked. The current official docs link STEP files at https://pip.raspberrypi.com/documents/RP-008311-DS (Pico), RP-008318-DS (Pico W) and RP-009061-CA (Pico 2). No STEP link is listed for Pico 2 W, only a schematic (RP-008306-DS). pip.raspberrypi.com is also blocked here, so file existence is unverified.",
+   "evidence_url": "https://raw.githubusercontent.com/raspberrypi/documentation/master/documentation/asciidoc/microcontrollers/pico-series/about_pico.adoc"
+  },
+  {
+   "claim": "McMaster-Carr CAD models: not redistributable ('shall not reproduce, display, retain copies of, redistribute or make available the CAD Models ... to outside parties')",
+   "verdict": "unverified",
+   "correct_value_or_note": "mcmaster.com is blocked to both curl and WebFetch. A web search did not surface the exact clause. A PTC community post paraphrases the terms as models being provided 'to help decide whether to purchase'. Treat McMaster as not usable in packs, but the quoted wording is not confirmed.",
+   "evidence_url": "https://www.mcmaster.com/termsandconditions"
+  },
+  {
+   "claim": "TraceParts: no redistribution; API terms forbid distributing Data as part of an external service, posting on a website, any storage medium, or competing",
+   "verdict": "unverified",
+   "correct_value_or_note": "traceparts.com and its subdomains are blocked. A web search found the API clause quoted only on a third-party KiCad forum post. The translated TraceParts general-terms pages say commercial use, including duplication and distribution of data, needs express written consent. The parts-distributor terms require a 'powered by TraceParts' link. The primary text was not read.",
+   "evidence_url": "https://developers.traceparts.com/docs/api-terms-of-use"
+  },
+  {
+   "claim": "GrabCAD Community: own benefit and non-commercial, internal use only; no redistribution or scraping",
+   "verdict": "unverified",
+   "correct_value_or_note": "grabcad.com is blocked. Search snippets agree: the \u00a76.2 cross-license is 'for their own benefit and non-commercial, internal use', non-sublicensable and non-transferable, and the Code of Conduct requires agreement with the creator for commercial use. The primary terms were not read.",
+   "evidence_url": "https://grabcad.com/terms"
+  },
+  {
+   "claim": "3D ContentCentral: internal CAD use only; no distribution as part of a service, on internet sites, or on internet catalog/model sites",
+   "verdict": "unverified",
+   "correct_value_or_note": "3dcontentcentral.com is blocked, and a web search found no terms text, only SOLIDWORKS help pages saying a license agreement must be accepted on first use. The quoted wording, possibly from a c. 2016 page, is unconfirmed.",
+   "evidence_url": "https://www.3dcontentcentral.com/Terms-of-use.aspx"
+  }
+ ]
+}

@@ -1,0 +1,1988 @@
+{
+ "components": [
+  {
+   "id": "mech.fastener.iso4762",
+   "name": "Socket head cap screw ISO 4762, M2 to M8",
+   "category": "mechanical/fastener",
+   "ports": [],
+   "sim_model": "No schematic block by default (structural part). Contributes mass only. Mass is computed analytically from the generated head and shank volumes times density; the mesh is not used because procedural unions are not watertight. Dropping a screw through coaxial hole anchors on two parts proposes a fixed mate between them, and a fixed mate merges them into one rigid body (PLAN decision 5). Bolt preload is out of scope for v1.",
+   "params": [
+    {
+     "name": "dk_max (plain head) / k / s (hex key), per size",
+     "value": "M2 3.8/2/1.5; M2.5 4.5/2.5/2; M3 5.5/3/2.5; M4 7/4/3; M5 8.5/5/4; M6 10/6/5; M8 13/8/6",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/iso4762def.csv (k and s cross-checked against https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/socket_head_cap_parameters.csv)",
+     "confidence": "high"
+    },
+    {
+     "name": "dk_max (knurled head), per size",
+     "value": "M2 3.98; M2.5 4.68; M3 5.68; M4 7.22; M5 8.72; M6 10.22; M8 13.27",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/socket_head_cap_parameters.csv",
+     "confidence": "medium"
+    },
+    {
+     "name": "coarse thread pitch P",
+     "value": "M2 0.4; M2.5 0.45; M3 0.5; M4 0.7; M5 0.8; M6 1.0; M8 1.25",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/iso4762def.csv",
+     "confidence": "high"
+    },
+    {
+     "name": "socket depth t_min",
+     "value": "M2 1.0; M2.5 1.1; M3 1.3; M4 2.0; M5 2.5; M6 3.0; M8 4.0",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/socket_head_cap_parameters.csv (FastenersWB iso4762def.csv agrees)",
+     "confidence": "high"
+    },
+    {
+     "name": "thread length b (reference, long screws)",
+     "value": "M2 16; M2.5 17; M3 18; M4 20; M5 22; M6 24; M8 28",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/iso4762def.csv",
+     "confidence": "medium"
+    },
+    {
+     "name": "nominal length range",
+     "value": "M2 3-20; M2.5 4-25; M3 5-30; M4 6-40; M5 8-50; M6 8-60; M8 10-80",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/socket_head_cap_parameters.csv (columns iso4762:short/long)",
+     "confidence": "medium"
+    },
+    {
+     "name": "density",
+     "value": "7850",
+     "unit": "kg/m^3",
+     "source": "/home/user/StudioVD/PLAN.md Phase 6.2 built-in materials (Steel 7850)",
+     "confidence": "high"
+    }
+   ],
+   "anchors": [
+    "head_seat (planar): face under the head, normal points along the screw axis toward the tip; this is the part origin",
+    "screw_axis (axial): thread axis, +Z toward the tip",
+    "tip (point): centre of the thread end",
+    "socket (axial): hex socket axis at the head top, used for tool or visual alignment"
+   ],
+   "model_source": "procedural. LatheGeometry for the head profile (cylinder dk x k with top edge chamfer) and the shank (d x L, tip chamfer). ExtrudeGeometry of a circle shape with a hexagon hole (s) to depth t for the socket. Threads are cosmetic only (normal map). No CAD kernel or boolean step is needed.",
+   "model_license": "n/a (generated in-app). Dimensions are facts from ISO 4762. Ship values transcribed from cq_warehouse (Apache-2.0) or from the standard. FastenersWB is GPL-2.0-or-later, so use it only to cross-check, never copy its files.",
+   "default_material": "Steel, class 12.9 black-oxide appearance, 7850 kg/m^3. Option: stainless A2, 8000 kg/m^3.",
+   "priority": "v1-core",
+   "dimensions_mm": "Per size: d, P, dk, k, s, t, L (user picks L from the range). Sources as in params.",
+   "notes": "FastenersWB gives the plain-head dk max (3.8 for M2). cq_warehouse gives the knurled-head dk max (3.98). ISO 4762 has both limits. Use the plain value for geometry."
+  },
+  {
+   "id": "mech.fastener.iso4032",
+   "name": "Hex nut ISO 4032 (style 1), M2 to M8",
+   "category": "mechanical/fastener",
+   "ports": [],
+   "sim_model": "No schematic block. Mass only. A nut placed coaxially on a screw anchor completes the fixed-mate group of the clamped stack.",
+   "params": [
+    {
+     "name": "s (width across flats) / m_max (height)",
+     "value": "M2 4/1.6; M2.5 5/2.0; M3 5.5/2.4; M4 7/3.2; M5 8/4.7; M6 10/5.2; M8 13/6.8",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/hex_nut_parameters.csv (identical in https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/iso4032def.csv)",
+     "confidence": "high"
+    },
+    {
+     "name": "density",
+     "value": "7850",
+     "unit": "kg/m^3",
+     "source": "/home/user/StudioVD/PLAN.md Phase 6.2 (Steel)",
+     "confidence": "high"
+    }
+   ],
+   "anchors": [
+    "bore_axis (axial): thread axis through the centre",
+    "bearing_face (planar): bottom face, normal along -axis",
+    "top_face (planar)"
+   ],
+   "model_source": "procedural. ExtrudeGeometry of a hexagon shape (s) with a circular hole (d, or minor diameter for looks), height m. A 30 degree corner chamfer is optional; the simplest way is a lathe-profile intersection or bevelled extrude.",
+   "model_license": "n/a (generated in-app); data from ISO 4032 via cq_warehouse (Apache-2.0)",
+   "default_material": "Steel, 7850 kg/m^3",
+   "priority": "v1-core",
+   "dimensions_mm": "s, m, d per size (see params)",
+   "notes": "m is the maximum height. ISO gives a min/max band (M5 is 4.4 to 4.7)."
+  },
+  {
+   "id": "mech.fastener.iso7089",
+   "name": "Plain washer ISO 7089 (normal series, 200 HV), M2 to M8",
+   "category": "mechanical/fastener",
+   "ports": [],
+   "sim_model": "No schematic block. Mass only.",
+   "params": [
+    {
+     "name": "d1_min (bore) / d2_max (OD) / h (nominal)",
+     "value": "M2 2.2/5/0.3; M2.5 2.7/6/0.5; M3 3.2/7/0.5; M4 4.3/9/0.8; M5 5.3/10/1.0; M6 6.4/12/1.6; M8 8.4/16/1.6",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/iso7089def.csv (d1 and d2 match https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/plain_washer_parameters.csv)",
+     "confidence": "high"
+    },
+    {
+     "name": "h_max",
+     "value": "M2 0.35; M2.5 0.55; M3 0.55; M4 0.9; M5 1.1; M6 1.8; M8 1.8",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/plain_washer_parameters.csv",
+     "confidence": "high"
+    }
+   ],
+   "anchors": [
+    "axis (axial)",
+    "face_a (planar)",
+    "face_b (planar)"
+   ],
+   "model_source": "procedural. LatheGeometry of a rectangle (annulus d1..d2, height h).",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Steel, 7850 kg/m^3",
+   "priority": "v1-core",
+   "dimensions_mm": "d1, d2, h per size",
+   "notes": "cq_warehouse's h column holds the max thickness. Use the nominal h for geometry."
+  },
+  {
+   "id": "mech.fastener.iso4026",
+   "name": "Hex socket set screw, flat point, ISO 4026, M2 to M8",
+   "category": "mechanical/fastener",
+   "ports": [],
+   "sim_model": "No block. It fixes a hub (pulley, coupler, gear) to a shaft, so it implies a fixed mate between the hub and the shaft. That gives a rigid rotational connection in the schematic: the shaft port and the hub port share one net.",
+   "params": [
+    {
+     "name": "s (hex key)",
+     "value": "M2 0.9; M2.5 1.3; M3 1.5; M4 2; M5 2.5; M6 3; M8 4",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/setscrew_parameters.csv (FastenersWB iso4026def.csv agrees)",
+     "confidence": "high"
+    },
+    {
+     "name": "dp_max (flat point diameter)",
+     "value": "M2 1.0; M2.5 1.5; M3 2.0; M4 2.5; M5 3.5; M6 4.0; M8 5.5",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/iso4026def.csv",
+     "confidence": "medium"
+    },
+    {
+     "name": "socket depth t (min, longer lengths)",
+     "value": "M2 1.7; M2.5 2; M3 2; M4 2.5; M5 3; M6 3.5; M8 5",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/setscrew_parameters.csv (FastenersWB lists smaller t: M2 1.25 ... M8 4)",
+     "confidence": "medium"
+    },
+    {
+     "name": "length range",
+     "value": "M2 3-10; M2.5 3-10; M3 3-20; M4 4-20; M5 5-25; M6 6-35; M8 8-40",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsData/iso4026def.csv (ISO4026range) and cq_warehouse setscrew_parameters.csv (short/long)",
+     "confidence": "medium"
+    }
+   ],
+   "anchors": [
+    "axis (axial): +Z toward the point",
+    "point_face (planar): flat point that bears on the shaft",
+    "socket_face (planar)"
+   ],
+   "model_source": "procedural. LatheGeometry body (d x L, flat point dp with 45 degree chamfer) plus an extruded hex socket recess.",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Steel 45H, 7850 kg/m^3",
+   "priority": "v1-extended",
+   "dimensions_mm": "d, s, dp, t, L",
+   "notes": "The two sources give different t. Only the visual socket depth depends on it."
+  },
+  {
+   "id": "mech.bearing.deep_groove",
+   "name": "Deep-groove ball bearing: 625, 688(ZZ), 608, 6000 to 6005",
+   "category": "mechanical/bearing",
+   "ports": [
+    {
+     "name": "inner",
+     "domain": "mech_rotational",
+     "direction": "terminal",
+     "unit": "rad/s | N*m"
+    },
+    {
+     "name": "outer",
+     "domain": "mech_rotational",
+     "direction": "terminal",
+     "unit": "rad/s | N*m"
+    }
+   ],
+   "sim_model": "Rotational friction between the inner and outer ring (the outer ring is usually tied to mechanical ground). Torque: tau = M*tanh(w_rel/w_s) + c*w_rel, with M = 0.5*mu*P*d (SKF simplified model: roughly P near 0.1C, good lubrication). P is the radial load in N, from a 3D gravity binding or a user parameter. d is the bore in m. w_s is a small smoothing speed (e.g. 0.1 rad/s) so Newton converges at w = 0, where Coulomb friction is undefined. Rating checks (warnings only): P > C0 gives a static overload warning; L10 = (C/P)^3 * 1e6 revolutions is shown for information. Shields (ZZ/2Z) add negligible torque. Contact seals (2RS) add unknown seal torque, so expose it as a user parameter. Example: 608 at P = 100 N gives M = 0.6 N*mm.",
+   "params": [
+    {
+     "name": "d x D x B (625, 608, 6000)",
+     "value": "625 5x16x5; 608 8x22x7; 6000 10x26x8",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/single_row_deep_groove_ball_bearing_parameters.csv (SKF-derived) and https://raw.githubusercontent.com/boltsparts/BOLTS/05a2acd1f77737789a313b4c77f1f8eea35da256/data/bearings.blt (DIN 625-1)",
+     "confidence": "high"
+    },
+    {
+     "name": "d x D x B (6001 to 6005)",
+     "value": "6001 12x28x8; 6002 15x32x9; 6003 17x35x10; 6004 20x42x12; 6005 25x47x12",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/boltsparts/BOLTS/05a2acd1f77737789a313b4c77f1f8eea35da256/data/bearings.blt (DIN 625-1); matches https://www.skf.com/group/products/rolling-bearings/ball-bearings/deep-groove-ball-bearings/productid-6005",
+     "confidence": "high"
+    },
+    {
+     "name": "d x D x B (688)",
+     "value": "688ZZ / SKF 628/8-2Z: 8x16x5 (default); open 688 = SKF 618/8: 8x16x4",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/single_row_capped_deep_groove_ball_bearing_parameters.csv ; https://openbuildspartstore.com/flanged-bearing-688zz-8x16x5/",
+     "confidence": "medium"
+    },
+    {
+     "name": "C (basic dynamic load rating): 625, 608, 6000",
+     "value": "625 1.14; 608 3.45; 6000 4.75",
+     "unit": "kN",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/single_row_deep_groove_ball_bearing_parameters.csv (SKF data)",
+     "confidence": "high"
+    },
+    {
+     "name": "C: 688",
+     "value": "628/8-2Z (8x16x5) 1.33; 618/8 open (8x16x4) 0.819",
+     "unit": "kN",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/single_row_capped_deep_groove_ball_bearing_parameters.csv ; https://uk.rs-online.com/web/p/ball-bearings/2076954",
+     "confidence": "medium"
+    },
+    {
+     "name": "C: 6002, 6004, 6005",
+     "value": "6002 5.85; 6004 9.95; 6005 11.9",
+     "unit": "kN",
+     "source": "https://www.skf.com/group/products/rolling-bearings/ball-bearings/deep-groove-ball-bearings/productid-6002 ; .../productid-6004 ; .../productid-6005 (read through search-engine extraction; direct fetch blocked)",
+     "confidence": "high"
+    },
+    {
+     "name": "C: 6001, 6003",
+     "value": "6001 5.4; 6003 6.37",
+     "unit": "kN",
+     "source": "https://www.jameco.com/z/6001-2RSH-SKF-Deep-Groove-Ball-Bearing-12x28x8mm-IDxODxTh_2322751.html ; https://www.simplybearings.co.uk/products/6003-skf (distributors quoting SKF)",
+     "confidence": "medium"
+    },
+    {
+     "name": "C0 (basic static load rating)",
+     "value": "625 0.38; 628/8-2Z 0.57; 618/8 0.3; 608 1.37; 6000 1.96; 6001 2.36; 6002 2.85; 6003 3.25; 6004 5.0; 6005 6.55",
+     "unit": "kN",
+     "source": "cq_warehouse SKF CSVs (625, 688, 608, 6000); SKF product pages via search (6002, 6004, 6005); https://uk.rubix.com/en/rigid-ball-bearings/p-G1321014469 (6001); https://www.simplybearings.co.uk/products/6003-skf (6003)",
+     "confidence": "medium"
+    },
+    {
+     "name": "mass",
+     "value": "625 0.005; 628/8-2Z 0.0036; 608 0.012; 6000 0.019; 6001 to 6005 unknown",
+     "unit": "kg",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/single_row_deep_groove_ball_bearing_parameters.csv",
+     "confidence": "high"
+    },
+    {
+     "name": "ring chamfer r12_min",
+     "value": "625 0.3; 628/8 0.2; 608 0.3; 6000 0.3; 6001 to 6005 unknown (placeholder 0.3, and 0.6 for 6004/6005)",
+     "unit": "mm",
+     "source": "cq_warehouse SKF CSVs (known sizes); placeholders unsourced",
+     "confidence": "low"
+    },
+    {
+     "name": "shoulder diameters d1 (inner ring OD) / D2 (outer ring ID)",
+     "value": "625 8.4/13.3; 608 12.1/19.2; 6000 14.8/22.6; 628/8-2Z d1 10.1, D1 14.2",
+     "unit": "mm",
+     "source": "cq_warehouse SKF CSVs",
+     "confidence": "medium"
+    },
+    {
+     "name": "limiting speed (open)",
+     "value": "625 60000; 608 48000; 6000 40000",
+     "unit": "rpm",
+     "source": "https://raw.githubusercontent.com/gumyr/cq_warehouse/daa46507ecc429c0e2dce11d9d5ffd09b12a42af/src/cq_warehouse/single_row_deep_groove_ball_bearing_parameters.csv",
+     "confidence": "medium"
+    },
+    {
+     "name": "friction coefficient mu (unsealed deep groove)",
+     "value": "0.0015 (Koyo range 0.0010 to 0.0015)",
+     "unit": "-",
+     "source": "https://www.eng-tips.com/viewthread.cfm?qid=113896 (quotes the SKF catalogue) ; https://koyo.jtekt.co.jp/en/support/bearing-knowledge/8-4000.html",
+     "confidence": "medium"
+    }
+   ],
+   "anchors": [
+    "bore_axis (axial): through the centre, +Z along the axis; mates to shaft axis anchors",
+    "od_axis (axial): same line, used for housing-bore mates",
+    "face_a (planar): ring side face at -B/2",
+    "face_b (planar): ring side face at +B/2",
+    "centre (point)"
+   ],
+   "model_source": "procedural. LatheGeometry of the inner-ring and outer-ring cross-sections (rectangles with r12 corner chamfers), plus a thin annulus shield for ZZ. Balls are not modelled. Fallback STEP: https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/master/Mechanical%20Parts/Bearings/608ZZ_Ball_Bearing.step (CC-BY-3.0).",
+   "model_license": "n/a for procedural. FreeCAD-library fallback is CC-BY-3.0 (attribution required).",
+   "default_material": "Bearing steel shown as Steel 7850 kg/m^3. Set massOverrideKg from the catalogue mass: the rings are generated solid, so rho*V overestimates the mass.",
+   "priority": "v1-core",
+   "dimensions_mm": "d, D, B, r12, d1/D2 per size (params)",
+   "notes": "Hobby '688' is ambiguous: 8x16x5 shielded vs 8x16x4 open. Default to 688ZZ 8x16x5 and offer the 4 mm open variant. The library also needs an inner-ring-to-shaft fixed mate and an outer-ring-to-housing fixed mate, plus a revolute mate between the two rings."
+  },
+  {
+   "id": "mech.linear.lm8uu",
+   "name": "Linear ball bushing LM8UU (8 mm)",
+   "category": "mechanical/linear_bearing",
+   "ports": [
+    {
+     "name": "carriage",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    },
+    {
+     "name": "shaft",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    }
+   ],
+   "sim_model": "Axial friction between the bushing and the shaft: F = mu*P*tanh(v_rel/v_s) + c*v_rel. P is the radial load from a 3D gravity binding or a parameter. Warning if P > C0. Optional life L = (C/P)^3 * 50 km (ball-type linear rule; check the vendor's basis). The 3D side is a prismatic mate along the shaft axis; rotation about the shaft is also free (cylindrical behaviour), so the library should offer revolute + prismatic, or rely on a second shaft.",
+   "params": [
+    {
+     "name": "bore d / OD D / length L",
+     "value": "8 / 15 / 24",
+     "unit": "mm",
+     "source": "https://bearingsize.info/catalogue-online/linear-bearings/bearing-lm8uu-samick-obj177929.html ; https://iskbearing.com/product-details/lm8uu ; https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/linear_bearings.scad",
+     "confidence": "high"
+    },
+    {
+     "name": "retaining-groove spacing B / groove dia D1 / groove width W",
+     "value": "17.5 / 14.3 / 1.1",
+     "unit": "mm",
+     "source": "https://bearingsize.info/catalogue-online/linear-bearings/bearing-lm8uu-samick-obj177929.html ; NopSCADlib linear_bearings.scad",
+     "confidence": "high"
+    },
+    {
+     "name": "C / C0",
+     "value": "260 / 400 (Samick); Misumi LMU8 265 / 380",
+     "unit": "N",
+     "source": "https://bearingsize.info/catalogue-online/linear-bearings/bearing-lm8uu-samick-obj177929.html ; https://www.der-getriebedoktor.de/en/misumi-lmu8-linear-bushings",
+     "confidence": "medium"
+    },
+    {
+     "name": "mass",
+     "value": "0.016",
+     "unit": "kg",
+     "source": "https://bearingsize.info/catalogue-online/linear-bearings/bearing-lm8uu-samick-obj177929.html",
+     "confidence": "medium"
+    },
+    {
+     "name": "friction coefficient mu",
+     "value": "0.002 default (Rexroth compact bushing 0.001 to 0.004; THK ST series 0.0006 to 0.0012)",
+     "unit": "-",
+     "source": "https://www.sp-spareparts.de/en/p/r065801230-bosch-rexroth ; https://mx.misumi-ec.com/en/vona2/maker/thk/mech/M0100000000/M0104000000",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "bore_axis (axial): shaft axis, +Z along length",
+    "end_face_a (planar)",
+    "end_face_b (planar)",
+    "groove_a / groove_b (planar, at the retaining-ring groove centres, for clip or housing location)",
+    "centre (point)"
+   ],
+   "model_source": "procedural. LatheGeometry of the sleeve profile (OD 15, bore 8, two 1.1 mm grooves at D1 14.3, outer-to-outer spacing 17.5). Fallback STEP: https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/master/Mechanical%20Parts/Bearings/linear_bearings/LM8uu.stp (CC-BY-3.0).",
+   "model_license": "n/a for procedural; CC-BY-3.0 for the fallback",
+   "default_material": "Steel 7850 kg/m^3, with massOverrideKg 0.016",
+   "priority": "v1-extended",
+   "dimensions_mm": "d 8, D 15, L 24, B 17.5, D1 14.3, W 1.1",
+   "notes": "Generic retail listings quote C = 176 N. Use the catalogue values."
+  },
+  {
+   "id": "mech.linear.shaft8",
+   "name": "Linear shaft, 8 mm, hardened and ground (cut to length)",
+   "category": "mechanical/shaft",
+   "ports": [],
+   "sim_model": "No block. Structural guide, usually grounded. It is the reference body for the LM8UU friction block's shaft port, which connects to mechanical ground when the shaft is grounded. Mass = 0.395 kg/m times length.",
+   "params": [
+    {
+     "name": "diameter / tolerance",
+     "value": "8 h6",
+     "unit": "mm",
+     "source": "https://ooznest.co.uk/8mm-solid-hardened-ground-bearing-linear-shaft-cut-to-size ; https://hu.misumi-ec.com/vona2/detail/110311187819",
+     "confidence": "high"
+    },
+    {
+     "name": "h6 band for 6 < d <= 10 mm",
+     "value": "0 / -0.009 (ISO 286-2; not fetched). Ooznest lists 0/-0.015.",
+     "unit": "mm",
+     "source": "https://ooznest.co.uk/8mm-solid-hardened-ground-bearing-linear-shaft-cut-to-size",
+     "confidence": "medium"
+    },
+    {
+     "name": "surface hardness",
+     "value": "58 HRC (Misumi induction-hardened, chrome-plated)",
+     "unit": "HRC",
+     "source": "https://hu.misumi-ec.com/vona2/detail/110311187819",
+     "confidence": "medium"
+    },
+    {
+     "name": "linear mass",
+     "value": "0.395 (computed: pi*0.004^2*7850)",
+     "unit": "kg/m",
+     "source": "computed; density from /home/user/StudioVD/PLAN.md Phase 6.2",
+     "confidence": "high"
+    },
+    {
+     "name": "length",
+     "value": "user parameter (e.g. 100 to 1000)",
+     "unit": "mm",
+     "source": "user choice",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "axis (axial): +Z along length, origin at the centre",
+    "end_a (planar)",
+    "end_b (planar)",
+    "mid (point)"
+   ],
+   "model_source": "procedural. Cylinder (LatheGeometry with 0.5 mm end chamfers; chamfer size unsourced).",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Steel Cf53 (EN 1.1213) shown as Steel 7850 kg/m^3",
+   "priority": "v1-extended",
+   "dimensions_mm": "d 8, L user",
+   "notes": "The end-chamfer size is unsourced and only cosmetic."
+  },
+  {
+   "id": "mech.drive.leadscrew_tr8",
+   "name": "Lead screw Tr8x8(P2), 4-start (T8), with Tr8x2 variant",
+   "category": "mechanical/power_transmission",
+   "ports": [
+    {
+     "name": "screw",
+     "domain": "mech_rotational",
+     "direction": "terminal",
+     "unit": "rad/s | N*m"
+    },
+    {
+     "name": "nut",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    }
+   ],
+   "sim_model": "Rotational-to-translational transformer, referenced to mechanical ground (the frame). Kinematics: v_nut = (lead/(2*pi)) * w_screw; for lead 8 mm that is 1.2732e-3 m/rad. Forward drive: tau_screw = F_nut*lead/(2*pi*eta), with eta = tan(lambda)/tan(lambda + phi'), phi' = atan(mu/cos 15 deg) for the 30 degree trapezoidal flank, lambda = atan(lead/(pi*d2)). Back-drive: tau = F*lead*eta_b/(2*pi), with eta_b = tan(lambda - phi')/tan(lambda). If lambda <= phi' the screw is self-locking and the nut is constrained to v = 0 against back-driving loads, with the reaction going to ground. Choosing between forward and back-drive is a sign test on power flow; Newton handles it with a smoothed switch. Tr8x8: lambda = 19.99 deg; eta = 0.749 / 0.661 / 0.589 at mu = 0.10 / 0.15 / 0.20; not self-locking. Tr8x2: lambda = 5.20 deg; self-locking for mu >= 0.10.",
+   "params": [
+    {
+     "name": "nominal diameter d / pitch P / lead / starts",
+     "value": "8 / 2 / 8 / 4 (variant Tr8x2: lead 2, 1 start)",
+     "unit": "mm",
+     "source": "https://www.makerstore.com.au/product/hard-t8x8x2-c-nut/ ; https://ampere-electronics.com/product/tr8x8-acme-leadscrew-copper-nut/ ; https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/leadnuts.scad",
+     "confidence": "high"
+    },
+    {
+     "name": "flank diameter d2 = d - P/2",
+     "value": "7.0",
+     "unit": "mm",
+     "source": "DIN 103 / ISO 2904 basic profile; same relation used in https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsFunctions/FSmakeTrapezoidRod.py",
+     "confidence": "medium"
+    },
+    {
+     "name": "minor diameter d3 = d - P - 2*ac (ac = 0.25 for P = 2)",
+     "value": "5.5",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/shaise/FreeCAD_FastenersWB/fddd07af422b7d3a69098b32333711c5eeae184c/FsFunctions/FSmakeTrapezoidRod.py",
+     "confidence": "medium"
+    },
+    {
+     "name": "lead angle lambda",
+     "value": "19.99 (Tr8x8); 5.20 (Tr8x2)",
+     "unit": "deg",
+     "source": "computed: atan(lead/(pi*d2))",
+     "confidence": "high"
+    },
+    {
+     "name": "thread friction mu (brass nut on steel)",
+     "value": "0.15 default (literature range 0.06 lubricated bronze to 0.25 dry steel)",
+     "unit": "-",
+     "source": "https://mece307.cankaya.edu.tr/uploads/files/bolts1.pdf",
+     "confidence": "low"
+    },
+    {
+     "name": "efficiency formula",
+     "value": "eta = tan(lambda)/tan(lambda+phi), self-locking when mu > tan(lambda)",
+     "unit": "-",
+     "source": "https://Www.Wikipedia.org/wiki/Leadscrew ; https://blog.igus.ca/2021/04/13/efficiency-and-effectiveness/",
+     "confidence": "high"
+    },
+    {
+     "name": "length",
+     "value": "user parameter (300 typical)",
+     "unit": "mm",
+     "source": "user choice",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "screw_axis (axial): +Z along length",
+    "end_a (planar): motor end face",
+    "end_b (planar)",
+    "journal_a / journal_b (axial, at bearing seats near the ends)",
+    "motor_end (point)"
+   ],
+   "model_source": "procedural. Cylinder of diameter d (LatheGeometry) with a cosmetic thread (normal map or texture). An optional true helical sweep of the trapezoid profile is too many triangles for the 2 to 3 M budget. Fallback STEP: https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/master/Mechanical%20Parts/Mountings/T8_leadscrew/T8_leadscrew_150mm.step (CC-BY-3.0).",
+   "model_license": "n/a for procedural",
+   "default_material": "Stainless steel 8000 kg/m^3 (PLAN.md 6.2). The stainless grade of T8 screws is not sourced.",
+   "priority": "v1-core",
+   "dimensions_mm": "d 8, d2 7.0, d3 5.5, P 2, lead 8, L user",
+   "notes": "Ship as a kit: screw plus brass nut gives one schematic node bound to two 3D parts (revolute mate on the screw, prismatic mate on the nut). Rapier has no screw or helical joint, so in kinematic test mode the nut's translation is not coupled to the screw's rotation. The coupling exists only in the steady-state solve."
+  },
+  {
+   "id": "mech.drive.leadnut_tr8_brass",
+   "name": "T8 brass flange nut (Tr8x8 or Tr8x2)",
+   "category": "mechanical/power_transmission",
+   "ports": [],
+   "sim_model": "No separate block. The nut is the 3D body bound to the 'nut' port of mech.drive.leadscrew_tr8, and its prismatic mate displacement is a measurement source. Mass only otherwise.",
+   "params": [
+    {
+     "name": "flange diameter",
+     "value": "22",
+     "unit": "mm",
+     "source": "https://www.handsontec.com/dataspecs/linear%20motion/T8-Copper-Nut.pdf ; https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/leadnuts.scad (LSN8x2)",
+     "confidence": "high"
+    },
+    {
+     "name": "body (shank) diameter",
+     "value": "10.2 (NopSCADlib) vs 10 (vendor listings)",
+     "unit": "mm",
+     "source": "NopSCADlib leadnuts.scad ; https://start3dprint.si/Trapezna-Matica-T8-TR8x8-Medeninasta-prirobnico",
+     "confidence": "medium"
+    },
+    {
+     "name": "overall length",
+     "value": "15",
+     "unit": "mm",
+     "source": "NopSCADlib leadnuts.scad ; https://www.makerstore.com.au/product/hard-t8x8x2-c-nut/",
+     "confidence": "medium"
+    },
+    {
+     "name": "flange thickness / flange offset from top",
+     "value": "3.5 / 1.5 (NopSCADlib); one vendor lists 2 mm thickness",
+     "unit": "mm",
+     "source": "NopSCADlib leadnuts.scad ; https://www.makerstore.com.au/product/hard-t8x8x2-c-nut/",
+     "confidence": "low"
+    },
+    {
+     "name": "mounting holes",
+     "value": "4 x dia 3.5 on PCD 16 (M3 screws)",
+     "unit": "mm",
+     "source": "NopSCADlib leadnuts.scad (hole pitch radius 8) ; https://www.handsontec.com/dataspecs/linear%20motion/T8-Copper-Nut.pdf",
+     "confidence": "medium"
+    },
+    {
+     "name": "density",
+     "value": "8500",
+     "unit": "kg/m^3",
+     "source": "/home/user/StudioVD/PLAN.md Phase 6.2 (Brass)",
+     "confidence": "high"
+    }
+   ],
+   "anchors": [
+    "thread_axis (axial)",
+    "flange_face (planar): mounting face that seats on the carriage",
+    "hole_1..hole_4 (axial, on PCD 16)",
+    "nut_top (planar)"
+   ],
+   "model_source": "procedural. LatheGeometry (shank plus flange), with the four holes cut by an ExtrudeGeometry flange shape that has holes. Fallback STEP: https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/master/Mechanical%20Parts/Mountings/T8_screw_nut/Flange_nut/T8_Flange_nut.step (CC-BY-3.0).",
+   "model_license": "n/a for procedural",
+   "default_material": "Brass 8500 kg/m^3",
+   "priority": "v1-core",
+   "dimensions_mm": "flange 22, shank 10.2, L 15, flange t 3.5, 4 x 3.5 on PCD 16",
+   "notes": "Variants differ. The RobotDigg 8x8 nut has a 12.75 shank and a 25.4 flange (NopSCADlib LSN8x8). No manufacturer drawing was found, so the values come from vendor listings and NopSCADlib."
+  },
+  {
+   "id": "mech.linear.mgn12h",
+   "name": "Miniature linear guide MGN12 rail with MGN12H carriage",
+   "category": "mechanical/linear_guide",
+   "ports": [
+    {
+     "name": "carriage",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    },
+    {
+     "name": "rail",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    }
+   ],
+   "sim_model": "Axial friction between carriage and rail: F = mu*P*tanh(v_rel/v_s) + F_seal. The HIWIN general mu is about 0.004. Wiper/seal drag dominates below about 10% of C and is unknown (user parameter, default 0). Rating checks: P > C0 gives a warning; life L = (C/P)^3 * 50 km (HIWIN MG rating basis). The 3D side is a prismatic mate, with limits set to rail length minus carriage length.",
+   "params": [
+    {
+     "name": "rail WR / HR / hole pitch P / end distance E",
+     "value": "12 / 8 / 25 / 10",
+     "unit": "mm",
+     "source": "https://www.hiwin.de/en/Products/Linear-guideways/Blocks/Miniature-guides/MGN-HIRES-series/MGN12HZ0CM/p/MGN12HZ0CM ; https://hiwin.co.uk/wp-content/uploads/2017/05/CRD-Hiwin-Linear-guides-MG-series.pdf",
+     "confidence": "high"
+    },
+    {
+     "name": "rail counterbore D / depth h / hole d",
+     "value": "6.0 / 4.5 / 3.5 (M3)",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/rails.scad",
+     "confidence": "medium"
+    },
+    {
+     "name": "carriage L / L1 (steel block) / W / H / H1",
+     "value": "45.4 / 32.4 / 27 / 13 / 3",
+     "unit": "mm",
+     "source": "https://www.hiwin.de/en/Products/Linear-guideways/Blocks/Miniature-guides/MGN-HIRES-series/MGN12HZ0CM/p/MGN12HZ0CM (NopSCADlib rails.scad agrees)",
+     "confidence": "high"
+    },
+    {
+     "name": "carriage hole pattern B x C / thread",
+     "value": "20 x 20 / M3",
+     "unit": "mm",
+     "source": "https://www.hiwin.de/en/Products/Linear-guideways/Blocks/Miniature-guides/MGN-HIRES-series/MGN12HZ0CM/p/MGN12HZ0CM",
+     "confidence": "high"
+    },
+    {
+     "name": "C / C0",
+     "value": "3.72 / 5.88",
+     "unit": "kN",
+     "source": "https://hiwin.co.uk/wp-content/uploads/2017/05/CRD-Hiwin-Linear-guides-MG-series.pdf",
+     "confidence": "high"
+    },
+    {
+     "name": "mass block / rail",
+     "value": "0.054 kg / 0.65 kg/m",
+     "unit": "kg, kg/m",
+     "source": "https://www.hiwin.de/en/Products/Linear-guideways/Blocks/Miniature-guides/MGN-HIRES-series/MGN12HZ0CM/p/MGN12HZ0CM",
+     "confidence": "high"
+    },
+    {
+     "name": "friction coefficient mu",
+     "value": "0.004",
+     "unit": "-",
+     "source": "https://hiwin.com/wp-content/uploads/Linear_Guideway-E.pdf",
+     "confidence": "medium"
+    }
+   ],
+   "anchors": [
+    "rail_axis (axial): along the rail at the top-centre line",
+    "rail_base (planar): bottom mounting face",
+    "rail_ref_side (planar)",
+    "rail_hole_i (axial): first hole at E from the end, then every P",
+    "carriage_top (planar): mounting face",
+    "carriage_hole_1..4 (axial, 20 x 20 pattern)",
+    "carriage_ref_side (planar)"
+   ],
+   "model_source": "procedural. Rail = ExtrudeGeometry of a 2D outline (12 x 8 with simplified ball grooves) along the length, with counterbored holes from a shape-with-holes. Carriage = steel block (27 x 32.4) plus end caps reaching L 45.4, with four M3 holes. Fallback STEPs (CC-BY-3.0, about 33 KB, simplified): https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/master/Mechanical%20Parts/Bearings/linear_bearings/LinearSlide-MGN12H.step and .../LinearSlide-MGN12-Rail.step",
+   "model_license": "n/a for procedural; CC-BY-3.0 fallback",
+   "default_material": "Steel 7850 kg/m^3, with mass overrides from HIWIN (block 0.054 kg, rail 0.65 kg/m)",
+   "priority": "v1-extended",
+   "dimensions_mm": "rail 12 x 8, P 25, E 10; carriage 45.4 x 27 x 13, block 32.4, holes 20 x 20 M3",
+   "notes": "Some listings give a block length of 47.5 to 47.6 (other seal options). The default follows the HIWIN catalogue value of 45.4."
+  },
+  {
+   "id": "mech.drive.gt2_pulley_20t",
+   "name": "GT2 timing pulley, 20 teeth, 6 mm belt, 5 mm bore",
+   "category": "mechanical/power_transmission",
+   "ports": [
+    {
+     "name": "shaft",
+     "domain": "mech_rotational",
+     "direction": "terminal",
+     "unit": "rad/s | N*m"
+    },
+    {
+     "name": "belt",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    }
+   ],
+   "sim_model": "Rotational-to-translational transformer about grounded bearings: v_belt = r*w and F_belt = tau/r, with r = PD/2 = 6.3662e-3 m/rad. Efficiency eta is a parameter, default 1.0 (unsourced). Two pulleys joined by a belt node form a 1:1 (or z2/z1) drive.",
+   "params": [
+    {
+     "name": "teeth z / pitch p",
+     "value": "20 / 2",
+     "unit": "- / mm",
+     "source": "https://www.adafruit.com/product/1251",
+     "confidence": "high"
+    },
+    {
+     "name": "pitch diameter PD = z*p/pi",
+     "value": "12.732",
+     "unit": "mm",
+     "source": "computed; relation from https://www.gates.com/content/dam/documents-library/catalogs/light-power-and-precision-manual.pdf",
+     "confidence": "high"
+    },
+    {
+     "name": "outside diameter OD",
+     "value": "12.22 (PD - 2*0.254 = 12.224; Adafruit 12.2)",
+     "unit": "mm",
+     "source": "https://www.adafruit.com/product/1251 ; https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/pulleys.scad",
+     "confidence": "medium"
+    },
+    {
+     "name": "bore",
+     "value": "5",
+     "unit": "mm",
+     "source": "https://www.adafruit.com/product/1251",
+     "confidence": "high"
+    },
+    {
+     "name": "belt channel width / flange dia / flange t / hub dia / hub length",
+     "value": "7.5 / 16 / 1.0 / 16 / 5.5 (OpenBuilds-style 20T)",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/pulleys.scad (GT2x20ob_pulley)",
+     "confidence": "medium"
+    },
+    {
+     "name": "set screws",
+     "value": "2 x M3 grub (ISO 4026), radial, centred in the hub",
+     "unit": "-",
+     "source": "NopSCADlib pulleys.scad ; https://www.adafruit.com/product/1251",
+     "confidence": "medium"
+    },
+    {
+     "name": "effective radius r",
+     "value": "6.3662e-3",
+     "unit": "m/rad",
+     "source": "computed",
+     "confidence": "high"
+    }
+   ],
+   "anchors": [
+    "bore_axis (axial)",
+    "hub_face (planar): outer hub end",
+    "belt_plane (planar): mid-plane of the belt channel; belts route in this plane",
+    "pitch_circle (point at the axis; radius PD/2 stored as anchor metadata for belt-path generation)",
+    "setscrew_1 / setscrew_2 (axial, radial direction)"
+   ],
+   "model_source": "procedural. LatheGeometry for hub and flanges, plus an ExtrudeGeometry tooth ring (20 gaps). The exact GT2 curvilinear tooth geometry is proprietary to Gates and not published in the sources checked, so use an approximate arc profile on OD 12.22.",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Aluminium 2700 kg/m^3 (PLAN.md 6.2)",
+   "priority": "v1-core",
+   "dimensions_mm": "PD 12.732, OD 12.22, bore 5, channel 7.5, flanges dia 16 x 1, hub dia 16 x 5.5",
+   "notes": "PD = z*2/pi follows from the definition and does not depend on the vendor."
+  },
+  {
+   "id": "mech.drive.gt2_belt_6mm",
+   "name": "GT2 timing belt, 2 mm pitch, 6 mm wide (open or closed loop)",
+   "category": "mechanical/power_transmission",
+   "ports": [
+    {
+     "name": "end_a",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    },
+    {
+     "name": "end_b",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    }
+   ],
+   "sim_model": "Steady state: ideal rigid translational link (equal velocity at both ends, tension transmitted). Belts carry tension only, so if the solved force is compressive the block reports 'slack span'. An elastic model k = EA/L is possible later, but belt stiffness is unknown.",
+   "params": [
+    {
+     "name": "pitch / width",
+     "value": "2 / 6",
+     "unit": "mm",
+     "source": "https://www.adafruit.com/product/1184",
+     "confidence": "high"
+    },
+    {
+     "name": "total thickness",
+     "value": "1.38 (Handsontec, NopSCADlib) vs 1.52 (Pfeifer table)",
+     "unit": "mm",
+     "source": "https://www.handsontec.com/dataspecs/gt2-belt-B.pdf ; https://www.pfeiferindustries.com/documents/Timing%20Belt%20Tooth%20Profiles%20and%20Pitches.pdf",
+     "confidence": "medium"
+    },
+    {
+     "name": "tooth height",
+     "value": "0.75",
+     "unit": "mm",
+     "source": "https://www.handsontec.com/dataspecs/gt2-belt-B.pdf ; https://texasbelting.com/pages/timing-belt-pitch-chart",
+     "confidence": "medium"
+    },
+    {
+     "name": "pitch-line differential (pitch line to tooth land)",
+     "value": "0.254",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/belts.scad ; https://forum.duet3d.com/topic/10586/belt-length (not confirmed in Gates primary docs)",
+     "confidence": "low"
+    },
+    {
+     "name": "closed-loop length",
+     "value": "pitch length = teeth * 2 (e.g. 188T = 376)",
+     "unit": "mm",
+     "source": "https://www.gobilda.com/2mm-pitch-gt2-timing-belt-6mm-width-376mm-pitch-length-188-tooth/",
+     "confidence": "high"
+    },
+    {
+     "name": "allowable working tension / tensile stiffness",
+     "value": "unknown",
+     "unit": "N, N",
+     "source": "not found",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "start (point): clamp point for open belts",
+    "end (point)",
+    "the path is generated from the pitch_circle and belt_plane anchors of the pulleys it wraps"
+   ],
+   "model_source": "procedural. Tangent-line and arc path computed from pulley pitch circles. Ribbon or tooth-profile sweep along the path (tooth normal map to save triangles).",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Rubber 1100 kg/m^3 (PLAN.md 6.2). Real belts are neoprene or PU with glass or steel cords; their density is unknown.",
+   "priority": "v1-core",
+   "dimensions_mm": "p 2, w 6, t 1.38, tooth 0.75, PLD 0.254",
+   "notes": "The belt has no Rapier joint. In kinematic test mode the belt geometry is only re-generated, not simulated."
+  },
+  {
+   "id": "mech.coupling.flex_5x8",
+   "name": "Flexible shaft coupler 5 mm to 8 mm (D19 x L25, aluminium helical)",
+   "category": "mechanical/coupling",
+   "ports": [
+    {
+     "name": "shaft_a",
+     "domain": "mech_rotational",
+     "direction": "terminal",
+     "unit": "rad/s | N*m"
+    },
+    {
+     "name": "shaft_b",
+     "domain": "mech_rotational",
+     "direction": "terminal",
+     "unit": "rad/s | N*m"
+    }
+   ],
+   "sim_model": "Steady state: rigid rotational connection (w_a = w_b, torque passes through). Torsional compliance only adds wind-up angle theta = tau/k_t, which can be displayed when k_t is known. Warning if |tau| exceeds the rated torque.",
+   "params": [
+    {
+     "name": "OD / length / bores",
+     "value": "19 / 25 / 5 and 8",
+     "unit": "mm",
+     "source": "https://www.neweggbusiness.com/p/9B-2ZY-007G-014G2 ; https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/shaft_couplings.scad (SC_6x8_flex 19 x 25)",
+     "confidence": "medium"
+    },
+    {
+     "name": "rated torque",
+     "value": "1 (from 5x8 sibling listings OD 20 and 25; unverified for D19)",
+     "unit": "N*m",
+     "source": "https://stg.robu.in/?p=52060",
+     "confidence": "low"
+    },
+    {
+     "name": "set screws",
+     "value": "2 per hub, M3 or M4 (unverified)",
+     "unit": "-",
+     "source": "https://ifuturetech.org/?p=2608",
+     "confidence": "low"
+    },
+    {
+     "name": "torsional stiffness k_t",
+     "value": "unknown",
+     "unit": "N*m/rad",
+     "source": "not found",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "bore_a_axis (axial, 5 mm side)",
+    "bore_b_axis (axial, 8 mm side, coaxial)",
+    "end_face_a (planar)",
+    "end_face_b (planar)",
+    "setscrew axes (axial, radial)"
+   ],
+   "model_source": "procedural. LatheGeometry cylinder with two stepped bores; helical slot as a texture. Fallback STEP: https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/master/Mechanical%20Parts/Fasteners/Shaft%20Couplers%20%26%20Dowel%20Pins/Zaxis_coupling_5x8mm.step (CC-BY-3.0).",
+   "model_license": "n/a for procedural",
+   "default_material": "Aluminium 2700 kg/m^3",
+   "priority": "v1-extended",
+   "dimensions_mm": "OD 19, L 25, bores 5 / 8 (bore depth about L/2, unsourced)",
+   "notes": "No manufacturer datasheet was found."
+  },
+  {
+   "id": "mech.gear.spur_m1",
+   "name": "Spur gear, module 1, 20 degree involute, z = 10 to 60",
+   "category": "mechanical/power_transmission",
+   "ports": [
+    {
+     "name": "shaft",
+     "domain": "mech_rotational",
+     "direction": "terminal",
+     "unit": "rad/s | N*m"
+    }
+   ],
+   "sim_model": "Each gear exposes its shaft port. When two gears are placed in mesh, the app creates a 'gear pair' block (2 rotational ports, frame = ground): w2 = -(z1/z2)*w1 (external mesh reverses direction), tau2 = -(z2/z1)*eta*tau1 in the driving direction (ratio z2/z1). eta is a parameter, default 0.98 (unsourced). Mesh validation: |a_3D - m*(z1+z2)/2| <= tolerance, where a_3D is the bound distance between the two bore axes; otherwise the diagnostic 'gears not in mesh'. Example: z1 = 20, z2 = 40 gives a = 30 mm and ratio 2.",
+   "params": [
+    {
+     "name": "module m (ISO 54) / pressure angle (ISO 53)",
+     "value": "1 / 20",
+     "unit": "mm / deg",
+     "source": "https://www.khkgears.us/media/1284/addendum-modification-and-undercut.pdf",
+     "confidence": "high"
+    },
+    {
+     "name": "addendum ha* / dedendum hf*",
+     "value": "1.0 / 1.25",
+     "unit": "x m",
+     "source": "https://www.firgelliauto.com/es/blogs/engineering-calculators/gear-blank-diameter-calculator-od-from-teeth-and-module",
+     "confidence": "high"
+    },
+    {
+     "name": "root fillet radius coefficient rho_f*",
+     "value": "0.38 (ISO 53 profile A, from memory; not fetched)",
+     "unit": "x m",
+     "source": "not fetched",
+     "confidence": "low"
+    },
+    {
+     "name": "d = m*z; da = m*(z+2); df = m*(z-2.5); db = m*z*cos20",
+     "value": "z10 10/12/7.5/9.397; z12 12/14/9.5/11.276; z15 15/17/12.5/14.095; z16 16/18/13.5/15.035; z17 17/19/14.5/15.975; z20 20/22/17.5/18.794; z24 24/26/21.5/22.553; z25 25/27/22.5/23.492; z30 30/32/27.5/28.191; z32 32/34/29.5/30.070; z36 36/38/33.5/33.829; z40 40/42/37.5/37.588; z45 45/47/42.5/42.286; z48 48/50/45.5/45.105; z50 50/52/47.5/46.985; z60 60/62/57.5/56.382",
+     "unit": "mm",
+     "source": "computed (scratch:/mech/derived_mech.txt)",
+     "confidence": "high"
+    },
+    {
+     "name": "minimum teeth without undercut / required profile shift x_min = 1 - z*sin^2(20)/2",
+     "value": "z_min 17 (17.1); x_min: z10 0.415, z12 0.298, z15 0.123, z16 0.064",
+     "unit": "-",
+     "source": "https://www.khkgears.us/media/1284/addendum-modification-and-undercut.pdf ; computed",
+     "confidence": "high"
+    },
+    {
+     "name": "face width b / bore",
+     "value": "user parameters (e.g. b 6, bore 5 or 8)",
+     "unit": "mm",
+     "source": "user choice",
+     "confidence": "low"
+    },
+    {
+     "name": "mesh efficiency eta",
+     "value": "0.98 default",
+     "unit": "-",
+     "source": "unsourced",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "bore_axis (axial): +Z along the axis",
+    "face_a (planar)",
+    "face_b (planar)",
+    "pitch_circle (point at the centre, radius d/2 as metadata)",
+    "tooth_0 (point on the pitch circle at a tooth centreline, for phasing two gears)"
+   ],
+   "model_source": "procedural. 2D involute tooth outline (involute from db to da; root circle df with a trochoid or arc fillet; profile shift x for z < 17) made into a Shape with a bore hole, then ExtrudeGeometry over the face width. Pure TypeScript in core/math with no licensing issues. Roughly 20 to 40 points per flank at z = 60 keeps the triangle count small.",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Steel 7850 kg/m^3 (an acetal/POM preset would be useful, but its density is not sourced here)",
+   "priority": "v1-core",
+   "dimensions_mm": "per z: d, da, df, db, b, bore",
+   "notes": "Rapier has no gear (coupling) joint, so meshing gears are not kinematically coupled in drag tests unless a custom coupling constraint is added."
+  },
+  {
+   "id": "mech.frame.extrusion_2020",
+   "name": "Aluminium T-slot extrusion 20x20, slot 6 (5-series / V-slot variant)",
+   "category": "mechanical/structural",
+   "ports": [],
+   "sim_model": "No block in v1 (structural, usually grounded). Mass = area * length * density = 0.494 kg/m (Misumi lists 0.50). Later option: beam deflection with Ix and Iy.",
+   "params": [
+    {
+     "name": "outer size / slot opening / centre bore",
+     "value": "20 x 20 / 6 / dia 4.2 (M5 tap)",
+     "unit": "mm",
+     "source": "https://us.misumi-ec.com/pdf/fa/2012/p2_0511.pdf ; https://www.systeal.com/en/profiles-20-series/1221-v-slot-aluminium-profile-20x20-6mm-slot.html",
+     "confidence": "high"
+    },
+    {
+     "name": "area / Ix = Iy / mass (Misumi HFS5-2020)",
+     "value": "183 mm^2 / 0.742e4 mm^4 / 0.50 kg/m",
+     "unit": "mm^2, mm^4, kg/m",
+     "source": "https://us.misumi-ec.com/pdf/fa/2019/2019_US_2686.pdf",
+     "confidence": "high"
+    },
+    {
+     "name": "area / I / mass (V-slot 20x20 variant)",
+     "value": "198 mm^2 / 0.810e4 mm^4 / 0.535 kg/m",
+     "unit": "mm^2, mm^4, kg/m",
+     "source": "https://www.systeal.com/en/profiles-20-series/1221-v-slot-aluminium-profile-20x20-6mm-slot.html",
+     "confidence": "medium"
+    },
+    {
+     "name": "internal channel width / lip thickness / spar / corner fillet",
+     "value": "12 / 2 / 2 / 1 (E2020); T-variant 11 / 1.8 / 1.5 / 1.5",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/extrusions.scad",
+     "confidence": "medium"
+    },
+    {
+     "name": "alloy",
+     "value": "A6N01SS-T5 (6005A-T5 equivalent); older data 6063-T5",
+     "unit": "-",
+     "source": "https://mx.misumi-ec.com/en/vona2/detail/110302245270/",
+     "confidence": "medium"
+    },
+    {
+     "name": "length",
+     "value": "user parameter (cut to length)",
+     "unit": "mm",
+     "source": "user choice",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "profile_axis (axial): through the centre bore along the length",
+    "end_a (planar)",
+    "end_b (planar)",
+    "face_+x / face_-x / face_+y / face_-y (planar, at the slot centre)",
+    "slot_+x ... slot_-y (axial along each slot centreline, for T-nut placement and sliding mates)",
+    "bore_end_a / bore_end_b (axial): tapped M5 end holes"
+   ],
+   "model_source": "procedural. A 2D profile Shape (outer square, 4 slots with lips, centre-bore hole) built from the parameter table, extruded along the length. Fallback STEP: https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/master/Mechanical%20Parts/Mountings/2020_V-slot_Al_extrusion/2020x50_V_slot_profile-Part.step (CC-BY-3.0).",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Aluminium 2700 kg/m^3 (PLAN.md 6.2). Use the area-based mass, because the generated outline is approximate.",
+   "priority": "v1-core",
+   "dimensions_mm": "20 x 20, slot 6, bore 4.2, A 183, Ix = Iy 7420 mm^4",
+   "notes": "Brands differ (Misumi HFS5, OpenBuilds V-slot, Item, Bosch), so the profile outline is per-preset. No OpenBuilds primary drawing was reachable."
+  },
+  {
+   "id": "mech.frame.extrusion_2040",
+   "name": "Aluminium T-slot extrusion 20x40, slot 6",
+   "category": "mechanical/structural",
+   "ports": [],
+   "sim_model": "No block in v1. Mass = 0.875 kg/m computed from the area (Misumi lists 0.88).",
+   "params": [
+    {
+     "name": "outer / slot / centre bores",
+     "value": "20 x 40 / 6 / 2 x dia 4.2 at +/-10 from centre",
+     "unit": "mm",
+     "source": "https://api.uk.misumi-ec.com/vona2/detail/110302684350 ; https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/extrusions.scad",
+     "confidence": "high"
+    },
+    {
+     "name": "area / I (two axes) / mass",
+     "value": "324 mm^2 / 1.358e4 and 5.13e4 mm^4 / 0.88 kg/m",
+     "unit": "mm^2, mm^4, kg/m",
+     "source": "https://mx.misumi-ec.com/en/vona2/detail/110302684350",
+     "confidence": "high"
+    }
+   ],
+   "anchors": [
+    "profile_axis (axial, centre of section)",
+    "end_a / end_b (planar)",
+    "4 wide-face slots + 2 narrow-face slots (axial along slot centrelines)",
+    "bore_1 / bore_2 end axes (axial)"
+   ],
+   "model_source": "procedural (same 2D profile generator as the 2020)",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Aluminium 2700 kg/m^3",
+   "priority": "v1-extended",
+   "dimensions_mm": "20 x 40, slot 6, bores 4.2",
+   "notes": "The search extraction did not say which inertia value belongs to which axis. The larger one, 5.13e4, is about the axis parallel to the 20 mm side (bending across the 40 mm depth); this follows from geometry but should be checked on the drawing."
+  },
+  {
+   "id": "mech.frame.corner_bracket_2020",
+   "name": "Corner bracket for 20-series extrusion (L-bracket with gusset)",
+   "category": "mechanical/structural",
+   "ports": [],
+   "sim_model": "No block. It creates fixed mates between two extrusions (rigid group).",
+   "params": [
+    {
+     "name": "leg length x leg length x width",
+     "value": "28 x 28 x 20",
+     "unit": "mm",
+     "source": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/extrusion_brackets.scad (E20_corner_bracket)",
+     "confidence": "low"
+    },
+    {
+     "name": "wall thickness / hole",
+     "value": "unknown (placeholder 3 / dia 5.5 slot for M5, or M4 T-nut per NopSCADlib)",
+     "unit": "mm",
+     "source": "not sourced",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "face_a (planar): seats on extrusion A",
+    "face_b (planar): seats on extrusion B",
+    "hole_a (axial)",
+    "hole_b (axial)",
+    "corner_edge (axial)"
+   ],
+   "model_source": "procedural. ExtrudeGeometry of an L outline with a triangular gusset; holes from a shape-with-holes. Fallback STEP: https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/master/Mechanical%20Parts/Mountings/Corner/2020_corner_bracket-Corner.step (CC-BY-3.0).",
+   "model_license": "n/a for procedural",
+   "default_material": "Aluminium (die-cast) 2700 kg/m^3",
+   "priority": "v1-extended",
+   "dimensions_mm": "28 x 28 x 20 (low confidence)",
+   "notes": "No primary drawing. The Misumi HBLFSN5 page could not be read (scrambled drawing text)."
+  },
+  {
+   "id": "mech.spring.compression",
+   "name": "Helical compression spring (parametric)",
+   "category": "mechanical/spring",
+   "ports": [
+    {
+     "name": "end_a",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    },
+    {
+     "name": "end_b",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    }
+   ],
+   "sim_model": "Static force between the ends: F = k*(L0 - L) for Lc <= L <= L0, else 0 (no contact). L is the 3D distance between the two seat anchors, supplied by an anchor-distance binding (Phase 12). Spring rate k = G*d^4/(8*D^3*n_a). In a v/F steady-state network a spring is the inductor analogue (a short at DC), so it cannot be stamped as an admittance; its force has to come from geometry as a force source. Warnings: L < Lc (coil bind); L > L0 (spring loose).",
+   "params": [
+    {
+     "name": "rate formula",
+     "value": "k = G*d^4 / (8*D^3*n_a) (N/mm with d and D in mm, G in N/mm^2)",
+     "unit": "N/mm",
+     "source": "https://business.eagleburgmann.com/LexiconOfMechanicalSeals/lexikon/en/lex-art-1332.htm ; https://resources.skill-lync.com/branches/mechanical-engineering/questions/machine-design/spring-rate-definition (EN 13906-1 itself not fetched)",
+     "confidence": "high"
+    },
+    {
+     "name": "shear modulus G",
+     "value": "81500 (spring steel / music wire); stainless about 69000",
+     "unit": "N/mm^2",
+     "source": "https://www.firgelliauto.com/blogs/engineering-calculators/spring-rate-calculator",
+     "confidence": "medium"
+    },
+    {
+     "name": "wire d / mean D / active coils n_a / free length L0",
+     "value": "user parameters; default preset d 0.9, OD 8 (D 7.1), 10 total coils with closed ends so n_a 8, L0 20",
+     "unit": "mm, -, mm",
+     "source": "https://raw.githubusercontent.com/nophead/NopSCADlib/00ec2898c0a2cdebd446f0175671b633d5ae7d5f/vitamins/springs.scad (yellow_bed_spring); n_a = n_total - 2 is an assumption",
+     "confidence": "low"
+    },
+    {
+     "name": "default preset rate",
+     "value": "2.33",
+     "unit": "N/mm",
+     "source": "computed from the preset (material and end type assumed)",
+     "confidence": "low"
+    },
+    {
+     "name": "solid length Lc",
+     "value": "about n_total * d",
+     "unit": "mm",
+     "source": "approximation",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "seat_a (planar): end face, normal along the axis",
+    "seat_b (planar)",
+    "axis (axial)",
+    "centre (point)"
+   ],
+   "model_source": "procedural. TubeGeometry sweep of a circle of diameter d along a helix (D, pitch derived from L and n), with closed end coils. In test mode the mesh can be re-generated as the anchor distance changes (visual only).",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Spring steel 7850 kg/m^3",
+   "priority": "v1-core",
+   "dimensions_mm": "d, D (or OD), n_total, L0 (user)",
+   "notes": "The library default is a parametric spring rather than a catalogue part, because catalogue spring rates are vendor-specific."
+  },
+  {
+   "id": "mech.spring.extension",
+   "name": "Helical extension spring with hooks (parametric)",
+   "category": "mechanical/spring",
+   "ports": [
+    {
+     "name": "end_a",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    },
+    {
+     "name": "end_b",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    }
+   ],
+   "sim_model": "Tension only: F = F0 + k*(L - L0) for L > L0, else 0. L is the bound distance between hook anchors. k = G*d^4/(8*D^3*n_a), with n_a = body coils. F0 (initial tension) is spring-specific.",
+   "params": [
+    {
+     "name": "rate formula / G",
+     "value": "same as the compression spring; G 81500",
+     "unit": "N/mm, N/mm^2",
+     "source": "https://www.firgelliauto.com/blogs/engineering-calculators/spring-rate-calculator",
+     "confidence": "medium"
+    },
+    {
+     "name": "initial tension F0",
+     "value": "user parameter (no default source)",
+     "unit": "N",
+     "source": "not sourced",
+     "confidence": "low"
+    },
+    {
+     "name": "d / D / n_a / L0 (inside hooks)",
+     "value": "user parameters",
+     "unit": "mm",
+     "source": "user choice",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "hook_a (point): hook-eye centre, also axial for a pin mate",
+    "hook_b (point)",
+    "axis (axial)"
+   ],
+   "model_source": "procedural. Close-wound helix sweep plus two hook loops (torus segments).",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Spring steel 7850 kg/m^3",
+   "priority": "v1-extended",
+   "dimensions_mm": "d, D, n_a, L0 (user)",
+   "notes": ""
+  },
+  {
+   "id": "mech.hinge.butt",
+   "name": "Butt hinge (two leaves, pin), parametric",
+   "category": "mechanical/joint",
+   "ports": [
+    {
+     "name": "leaf_a",
+     "domain": "mech_rotational",
+     "direction": "terminal",
+     "unit": "rad/s | N*m"
+    },
+    {
+     "name": "leaf_b",
+     "domain": "mech_rotational",
+     "direction": "terminal",
+     "unit": "rad/s | N*m"
+    },
+    {
+     "name": "angle",
+     "domain": "data",
+     "direction": "out",
+     "unit": "rad"
+    }
+   ],
+   "sim_model": "Created as two parts already joined by a revolute mate about the pin axis. Optional friction torque tau = tau0*tanh(w_rel/w_s), with tau0 default 0. The 'angle' output is the revolute mate angle (3D measurement binding), e.g. to drive a potentiometer or a limit-switch comparator, as in the PLAN 12.4 example. Gravity torque about the pin comes from the Phase 11.6 gravity sources.",
+   "params": [
+    {
+     "name": "leaf length / open width / leaf thickness / knuckle OD / pin dia / knuckles",
+     "value": "app defaults 50 / 40 / 1.2 / 4.5 / 2.5 / 5 (all user-editable)",
+     "unit": "mm, -",
+     "source": "not sourced (generic placeholder)",
+     "confidence": "low"
+    },
+    {
+     "name": "holes per leaf",
+     "value": "2 x dia 3.5, countersunk (placeholder)",
+     "unit": "mm",
+     "source": "not sourced",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "pin_axis (axial): defines the revolute mate",
+    "leaf_a_face (planar): mounting face",
+    "leaf_b_face (planar)",
+    "hole_a1, hole_a2, hole_b1, hole_b2 (axial)"
+   ],
+   "model_source": "procedural. Two leaf boxes, alternating knuckle cylinders, and a pin cylinder, built as two parts with a revolute mate and angle limits (e.g. 0 to 270 deg).",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Steel 7850 kg/m^3 (options: stainless 8000, brass 8500)",
+   "priority": "v1-core",
+   "dimensions_mm": "all parametric, no standard (EN 1935 covers performance, not dimensions)",
+   "notes": "A flat FreeCAD-library hinge (Industrial Design/Hinge/Rustic hinge/Hinge_200.step) exists but is decorative and 200 mm long. Prefer procedural."
+  },
+  {
+   "id": "fluid.pneumatic.cylinder_iso6432",
+   "name": "Pneumatic mini cylinder ISO 6432, double acting, bore 10/12/16/20/25",
+   "category": "fluid/actuator",
+   "ports": [
+    {
+     "name": "port_a",
+     "domain": "fluid",
+     "direction": "terminal",
+     "unit": "Pa | m^3/s"
+    },
+    {
+     "name": "port_b",
+     "domain": "fluid",
+     "direction": "terminal",
+     "unit": "Pa | m^3/s"
+    },
+    {
+     "name": "rod",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    },
+    {
+     "name": "body",
+     "domain": "mech_translational",
+     "direction": "terminal",
+     "unit": "m/s | N"
+    }
+   ],
+   "sim_model": "Fluid-to-translational transducer. Force on the rod (extend positive): F = p_a*A_cap - p_b*A_ann (gauge pressures). Flows: Q_a = A_cap*v_rel and Q_b = -A_ann*v_rel, with v_rel = v_rod - v_body. In steady state a cylinder holding a load is stalled: v = 0, Q = 0, so the line pressures equal the supply and F = p*A. This matches the PLAN 11.9 test 'cylinder F = pA'. Breakaway friction is a parameter (default 0; unknown). The rod's prismatic mate (limits 0..stroke) provides the 3D position; end-of-stroke contact can be reported.",
+   "params": [
+    {
+     "name": "bore / rod diameter",
+     "value": "10/4; 12/6; 16/6; 20/8; 25/10",
+     "unit": "mm",
+     "source": "https://boschrexroth.africa/public/front_end/pdfs/products/5209f8b5741fb4b2c183985f7973f9f4.pdf (Rexroth MNI); 10/4 and 16/6 confirmed by the Festo DSNU forces at 6 bar (47.1/39.6 N, 120.6/103.7 N) https://landefeld.com/artikel/it/dsnu-10-30-p-a-1908253-standards-based-cyli/OT-FESTO034057",
+     "confidence": "high"
+    },
+    {
+     "name": "A_cap / A_ann",
+     "value": "10: 78.54/65.97; 12: 113.10/84.82; 16: 201.06/172.79; 20: 314.16/263.89; 25: 490.87/412.33",
+     "unit": "mm^2",
+     "source": "computed",
+     "confidence": "high"
+    },
+    {
+     "name": "theoretical force at 6 bar, extend / retract",
+     "value": "10: 47.1/39.6; 12: 67.9/50.9; 16: 120.6/103.7; 20: 188.5/158.3; 25: 294.5/247.4",
+     "unit": "N",
+     "source": "computed; matches Festo DSNU-10 and DSNU-16 published forces (https://www.rowse-pneumatics.co.uk/festo-dsnu-10-15-p-a-1908251)",
+     "confidence": "high"
+    },
+    {
+     "name": "rod thread",
+     "value": "10: M4; 12: M6; 16: M6; 20: M8; 25: M10x1.25",
+     "unit": "-",
+     "source": "Rexroth MNI brochure (above); https://www.festo.com/media/catalog/204332_documentation.pdf",
+     "confidence": "high"
+    },
+    {
+     "name": "air port",
+     "value": "10: M5; 12: M5; 16: M5 (Mindman lists G1/8); 20: G1/8; 25: G1/8",
+     "unit": "-",
+     "source": "Rexroth MNI brochure; https://www.baccarastore.com.au/product/mcmi-iso-6432-single-acting-mini-air-cylinder/",
+     "confidence": "medium"
+    },
+    {
+     "name": "nose mounting thread",
+     "value": "8, 10: M12x1.25; 12, 16: M16x1.5; 20, 25: M22x1.5",
+     "unit": "-",
+     "source": "https://www.emerson.com/documents/automation/catalog-series-iso-6432-cylinder-asco-en-3672776.pdf (8, 12, 20, 25); https://cdn.automationdirect.com/static/specs/cutsheet/0950120010_cutsheet.pdf (M16x1.5 nut for 12 and 16); the 10 mm value is inferred",
+     "confidence": "medium"
+    },
+    {
+     "name": "working pressure",
+     "value": "1 to 10 (double acting)",
+     "unit": "bar",
+     "source": "Rexroth MNI brochure (above)",
+     "confidence": "medium"
+    },
+    {
+     "name": "stroke",
+     "value": "user parameter (e.g. 10 to 200)",
+     "unit": "mm",
+     "source": "user choice",
+     "confidence": "low"
+    },
+    {
+     "name": "barrel OD / end-cap lengths / overall length",
+     "value": "unknown (placeholder: barrel OD = bore + 2.5)",
+     "unit": "mm",
+     "source": "not sourced (the ASCO table columns could not be mapped)",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "rod_axis (axial): cylinder axis, +Z toward the rod end",
+    "rod_end (planar): rod tip face, also the rod-thread axis",
+    "nose_mount (planar): shoulder of the nose thread, for nut or foot mounting",
+    "rear_pivot (axial): rear clevis or eye pin axis",
+    "port_a_axis (axial)",
+    "port_b_axis (axial): fitting mates"
+   ],
+   "model_source": "procedural. LatheGeometry for barrel, end caps, nose thread and rod; the rod is a separate part with a pre-applied prismatic mate (limits 0..stroke). Port bosses are cylinders. Geometry other than bore, rod and threads is approximate.",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Stainless 8000 kg/m^3 for barrel and rod (assumed; unsourced). Aluminium 2700 for the caps.",
+   "priority": "v1-core",
+   "dimensions_mm": "bore, rod, rod thread, nose thread, port per bore (params); barrel OD and lengths unknown",
+   "notes": "Fluid quantities: Q is volumetric. Treating air as incompressible is acceptable only because steady-state cylinders have Q = 0. The PLAN fluid domain p/Q fits this."
+  },
+  {
+   "id": "fluid.pneumatic.pushin_fitting",
+   "name": "Push-in fitting, straight male connector: tube 4 x M5, tube 6 x R1/8",
+   "category": "fluid/connector",
+   "ports": [
+    {
+     "name": "tube_side",
+     "domain": "fluid",
+     "direction": "terminal",
+     "unit": "Pa | m^3/s"
+    },
+    {
+     "name": "thread_side",
+     "domain": "fluid",
+     "direction": "terminal",
+     "unit": "Pa | m^3/s"
+    }
+   ],
+   "sim_model": "Default: ideal connection (both ports on one fluid net, no pressure drop). Optional ISO 6358 restriction using sonic conductance C and critical ratio b (Newton, non-linear). Choked (p2/p1 <= b): Q = C*p1*sqrt(293/T). Subsonic: Q = C*p1*sqrt(1 - ((p2/p1 - b)/(1 - b))^2)*sqrt(293/T). Absolute pressures; Q in ANR, converted to m^3/s. With no flow (stalled actuators) the drop is zero either way.",
+   "params": [
+    {
+     "name": "4 x M5 (ref. SMC KQ2H04-M5): hex H / body dia D / length L / A / M",
+     "value": "8 / 7.7 / 17.7 / 14.7 / 13.3",
+     "unit": "mm",
+     "source": "https://www.smcpneumatics.com/newKQ2Hmetric-m-r.html",
+     "confidence": "medium"
+    },
+    {
+     "name": "6 x R1/8 (ref. SMC KQ2H06-01AS): H / D / L / A / M",
+     "value": "10 / 9.7 / 18.4 / 15.3 / 13.3",
+     "unit": "mm",
+     "source": "https://www.smcpneumatics.com/newKQ2Hmetric-m-r.html",
+     "confidence": "medium"
+    },
+    {
+     "name": "effective area S",
+     "value": "4 x M5: 4; 6 x R1/8: 13.1 (nylon tube) / 10.4 (urethane tube)",
+     "unit": "mm^2",
+     "source": "https://www.smcpneumatics.com/newKQ2Hmetric-m-r.html",
+     "confidence": "medium"
+    },
+    {
+     "name": "sonic conductance from S",
+     "value": "C about S/5 (0.8 for S = 4; 2.1 to 2.6 for 6 mm); Simscape alternative C = 0.128*4S/pi",
+     "unit": "dm^3/(s*bar)",
+     "source": "https://ca01.smcworld.com/catalog/BEST-5-7-en/7-p0101-0151-newvxd_en/spdfdata/7-p0101-0151-newvxd_en_44sp.htm ; https://www.mathworks.com/help/simscape/ref/constantareapneumaticorificeiso6358.html",
+     "confidence": "low"
+    },
+    {
+     "name": "critical pressure ratio b",
+     "value": "0.3 typical (unknown per part)",
+     "unit": "-",
+     "source": "https://www.mathworks.com/help//releases/R2021a/physmod/hydro/ref/orificeiso6358g.html",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "thread_axis (axial): mates to port_a_axis / port_b_axis of cylinders and valves",
+    "seat_face (planar): thread shoulder",
+    "tube_socket (axial): tube insertion axis with depth metadata",
+    "hex_flat (planar)"
+   ],
+   "model_source": "procedural. Extruded hex prism, lathe body and collet, and a thread cylinder.",
+   "model_license": "n/a (generated in-app). Dimensions are vendor reference values; the library item should be generic, not branded.",
+   "default_material": "Brass, nickel-plated look, 8500 kg/m^3 (real KQ2 bodies are mixed PBT/brass; unsourced)",
+   "priority": "v1-core",
+   "dimensions_mm": "see params",
+   "notes": "The S to C rule of thumb (S = 5*C) is SMC's general conversion from memory, not confirmed for these parts."
+  },
+  {
+   "id": "fluid.pneumatic.pu_tube",
+   "name": "Polyurethane pneumatic tubing 4 mm and 6 mm OD",
+   "category": "fluid/line",
+   "ports": [
+    {
+     "name": "end_a",
+     "domain": "fluid",
+     "direction": "terminal",
+     "unit": "Pa | m^3/s"
+    },
+    {
+     "name": "end_b",
+     "domain": "fluid",
+     "direction": "terminal",
+     "unit": "Pa | m^3/s"
+    }
+   ],
+   "sim_model": "Default: ideal connection. Optional linear (laminar, incompressible) resistance R = 128*mu*L/(pi*d^4); per metre of air at 20 C: 1.888e7 (ID 2.5), 1.614e7 (ID 2.6), 2.881e6 (ID 4.0) Pa*s/m^3. This is indicative only: real pneumatic flow is compressible and often turbulent, so the ISO 6358 elements (fittings, valves) dominate when there is flow.",
+   "params": [
+    {
+     "name": "OD x ID, 4 mm",
+     "value": "4 x 2.5 (SMC TU0425); 4 x 2.6 (Festo PUN-H-4x0.75)",
+     "unit": "mm",
+     "source": "https://elasticsearch.smcpneumatics.com/TU0425PU1-100.html ; https://uk.rs-online.com/web/p/air-hoses/0852017",
+     "confidence": "medium"
+    },
+    {
+     "name": "OD x ID, 6 mm",
+     "value": "6 x 4",
+     "unit": "mm",
+     "source": "https://elasticsearch.smcpneumatics.com/10-TU0604R-20.html ; https://uk.rs-online.com/web/p/air-hoses/0852018",
+     "confidence": "high"
+    },
+    {
+     "name": "min bend radius",
+     "value": "4 mm: 10 (SMC TU) / 8 (Festo); 6 mm: 15 (SMC TU) / 26 (RS listing for Festo)",
+     "unit": "mm",
+     "source": "https://elasticsearch.smcpneumatics.com/TU0425PU1-100.html ; https://uk.rs-online.com/web/p/air-hoses/0852026",
+     "confidence": "medium"
+    },
+    {
+     "name": "max working pressure",
+     "value": "0.8 MPa at 20 C (SMC TU); 10 bar (Festo PUN-H)",
+     "unit": "MPa",
+     "source": "https://elasticsearch.smcpneumatics.com/10-TU0604R-20.html ; https://it.farnell.com/en-IT/festo/pun-h-6x1-bl/pneumatic-tubing-50m-10bar-pu/dp/3432497",
+     "confidence": "medium"
+    },
+    {
+     "name": "air dynamic viscosity",
+     "value": "1.81e-5 at 20 C",
+     "unit": "Pa*s",
+     "source": "standard handbook value (not fetched)",
+     "confidence": "medium"
+    },
+    {
+     "name": "length",
+     "value": "user parameter, or the path length of the routed spline",
+     "unit": "mm",
+     "source": "user choice",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "end_a (axial): tube end, direction out of the tube",
+    "end_b (axial)",
+    "the path is a spline between two port anchors and honours the min bend radius"
+   ],
+   "model_source": "procedural. TubeGeometry of an annulus swept along a Catmull-Rom or Bezier path between the two snapped fitting anchors (visual only, no collider).",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Rubber 1100 kg/m^3 (PLAN.md 6.2) as a stand-in for PU (real PU density unsourced); translucent blue look",
+   "priority": "v1-core",
+   "dimensions_mm": "OD/ID per size; length",
+   "notes": "Steady-state pneumatic networks with dead-ended actuators carry no flow, so tube resistance changes nothing until an exhaust or leak path exists."
+  },
+  {
+   "id": "fluid.valve.ball_2way",
+   "name": "Manual 2/2 ball valve, push-in 4 mm / 6 mm (generic)",
+   "category": "fluid/valve",
+   "ports": [
+    {
+     "name": "port_1",
+     "domain": "fluid",
+     "direction": "terminal",
+     "unit": "Pa | m^3/s"
+    },
+    {
+     "name": "port_2",
+     "domain": "fluid",
+     "direction": "terminal",
+     "unit": "Pa | m^3/s"
+    },
+    {
+     "name": "open",
+     "domain": "data",
+     "direction": "in",
+     "unit": "1 (0..1)"
+    }
+   ],
+   "sim_model": "Switchable restriction. Closed: leak conductance only (e.g. 1e-15 m^3/(s*Pa)) to keep the matrix regular. Open: ISO 6358 orifice with C and b, or a linear conductance for simple mode. The 'open' input comes from a data wire, or from a binding to the handle's revolute angle (0 deg closed, 90 deg open; the fraction can scale C).",
+   "params": [
+    {
+     "name": "nominal size",
+     "value": "4 mm tube: 2.5; 6 mm tube: 4",
+     "unit": "mm",
+     "source": "https://landefeld.com/artikel/da/qh-qs-4-153483-ball-valve/OT-FESTO013185 ; https://landefeld.com/artikel/da/qh-qs-6-153484-ball-valve/OT-FESTO013187",
+     "confidence": "medium"
+    },
+    {
+     "name": "standard nominal flow (DIN 1343)",
+     "value": "4 mm: 148; 6 mm: 533",
+     "unit": "l/min",
+     "source": "https://motionworld.com/assets/Festo-QH-QS-6-Datasheet.pdf ; https://motionworld.com/assets/festo-qh-ball-valve-datasheet.pdf",
+     "confidence": "medium"
+    },
+    {
+     "name": "derived sonic conductance C",
+     "value": "4 mm: about 0.58; 6 mm: about 2.1 (assumes b = 0.3 and a 6 to 5 bar gauge test)",
+     "unit": "dm^3/(s*bar)",
+     "source": "computed (scratch:/mech/derived_mech.txt)",
+     "confidence": "low"
+    },
+    {
+     "name": "pressure range",
+     "value": "-0.1 to 1",
+     "unit": "MPa",
+     "source": "https://motionworld.com/assets/festo-qh-ball-valve-datasheet.pdf",
+     "confidence": "medium"
+    },
+    {
+     "name": "mass (6 mm)",
+     "value": "0.012",
+     "unit": "kg",
+     "source": "https://landefeld.com/artikel/sl/qh-qs-6-153484-ball-valve/OT-FESTO013187",
+     "confidence": "medium"
+    },
+    {
+     "name": "larger brass G1/4 ball valve (alternative preset)",
+     "value": "Kv 6 m^3/h, 10 mm bore",
+     "unit": "m^3/h",
+     "source": "https://tameson.com/products/pneumatic-ball-valve-g1-4-brass-spring-closed-v3j57",
+     "confidence": "medium"
+    },
+    {
+     "name": "body geometry",
+     "value": "unknown (placeholder envelope)",
+     "unit": "mm",
+     "source": "not sourced",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "port_1_axis (axial)",
+    "port_2_axis (axial)",
+    "handle_pivot (axial): revolute mate for the handle part, limits 0 to 90 deg",
+    "mount_face (planar)"
+   ],
+   "model_source": "procedural. Body (box with lathe ends), two push-in collets, and a handle lever as a separate part with a revolute mate.",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "ABS 1040 kg/m^3 as a stand-in for the PBT housing (low); brass 8500 for the brass preset",
+   "priority": "v1-core",
+   "dimensions_mm": "placeholder envelope; port spacing user-editable",
+   "notes": "The item is generic; Festo QH data is used only for flow and pressure reference values."
+  },
+  {
+   "id": "fluid.valve.check",
+   "name": "Check valve, in-line push-in (generic, 4 / 6 mm)",
+   "category": "fluid/valve",
+   "ports": [
+    {
+     "name": "inlet",
+     "domain": "fluid",
+     "direction": "terminal",
+     "unit": "Pa | m^3/s"
+    },
+    {
+     "name": "outlet",
+     "domain": "fluid",
+     "direction": "terminal",
+     "unit": "Pa | m^3/s"
+    }
+   ],
+   "sim_model": "Fluid diode: Q = G*softplus(dp - p_crack) in the forward direction (dp = p_in - p_out), reverse leak G_leak. Solved with Newton like the electrical diode. An ISO 6358 C/b orifice can replace the linear G when open.",
+   "params": [
+    {
+     "name": "cracking pressure",
+     "value": "0.005 (SMC AKH, dealer listings); 0.02 (SMC AK series)",
+     "unit": "MPa",
+     "source": "https://www.cromwell.co.uk/shop/flow-control/check-and-exhaust-valves/akh06-00-check-valve/p/SMC2942753H ; https://ph.rs-online.com/web/p/pneumatic-non-return-valves/0425576",
+     "confidence": "low"
+    },
+    {
+     "name": "effective area (AKH04-00)",
+     "value": "about 12.7 (scrambled table)",
+     "unit": "mm^2",
+     "source": "https://www.smcpneumatics.com/tegralcheckvalves.html",
+     "confidence": "low"
+    },
+    {
+     "name": "pressure range",
+     "value": "-100 kPa to 1 MPa",
+     "unit": "Pa",
+     "source": "https://www.elasticsearch.smcpneumatics.com/AKH04B-M5.html",
+     "confidence": "medium"
+    },
+    {
+     "name": "body geometry",
+     "value": "unknown (placeholder)",
+     "unit": "mm",
+     "source": "not sourced",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "inlet_axis (axial)",
+    "outlet_axis (axial)",
+    "flow_direction (axial, arrow glyph from inlet to outlet)"
+   ],
+   "model_source": "procedural. Lathe body with two collets and a direction-arrow decal.",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Brass 8500 kg/m^3 (assumed)",
+   "priority": "v1-extended",
+   "dimensions_mm": "placeholder",
+   "notes": ""
+  },
+  {
+   "id": "optic.source.laser_module_650",
+   "name": "Laser diode dot module 650 nm, about 5 mW, dia 6 mm",
+   "category": "optical/emitter",
+   "ports": [
+    {
+     "name": "vcc",
+     "domain": "electrical",
+     "direction": "terminal",
+     "unit": "V | A"
+    },
+    {
+     "name": "gnd",
+     "domain": "electrical",
+     "direction": "terminal",
+     "unit": "V | A"
+    },
+    {
+     "name": "beam",
+     "domain": "light",
+     "direction": "out",
+     "unit": "W"
+    }
+   ],
+   "sim_model": "Electrical side: a module with a built-in driver, modelled as a smoothed constant-current load, I = I_op*s((V - V_on)/dV) for V >= V_on, where s is a logistic step; or, simplest, R_eq = V_nom/I_op (about 167 ohm at 5 V and 30 mA). Light side: P_out = P_rated*clamp(I/I_op, 0, 1). The beam is emitted along the beam anchor's +Z; the viewport draws a beam line and spot glow when P_out > 0 (visual only). Warning if V exceeds V_max.",
+   "params": [
+    {
+     "name": "wavelength",
+     "value": "650",
+     "unit": "nm",
+     "source": "https://www.firgelliauto.com/en-pt/products/3v-5v-laser-diode-tube-650nm-5mw-od-6mm ; https://probots.co.in/5v-650nm-5mw-red-dot-laser-module-copper-diode.html",
+     "confidence": "high"
+    },
+    {
+     "name": "optical power P_rated",
+     "value": "5 (sold as <5)",
+     "unit": "mW",
+     "source": "https://grobotronics.com/laser-transmitter-module-650nm-ky-008.html ; https://www.firgelliauto.com/en-pt/products/3v-5v-laser-diode-tube-650nm-5mw-od-6mm",
+     "confidence": "medium"
+    },
+    {
+     "name": "supply voltage",
+     "value": "3 to 5 (most listings say 5 V)",
+     "unit": "V",
+     "source": "https://www.firgelliauto.com/en-pt/products/3v-5v-laser-diode-tube-650nm-5mw-od-6mm ; https://phippselectronics.com/product/5v-laser-module-650nm-ky-008",
+     "confidence": "medium"
+    },
+    {
+     "name": "operating current I_op",
+     "value": "about 30 (listed as < 40; one listing < 20)",
+     "unit": "mA",
+     "source": "https://www.hackster.io/infoelectorials/review-001-ky-008-laser-module-review-c20246 ; https://othoba.com/650nm-6mm-dc-5v-5mw-laser-dot-diode-module-red-copper-head-ready-electronics-445756",
+     "confidence": "low"
+    },
+    {
+     "name": "turn-on voltage V_on",
+     "value": "unknown (placeholder 2.5)",
+     "unit": "V",
+     "source": "not sourced",
+     "confidence": "low"
+    },
+    {
+     "name": "housing dia x length",
+     "value": "6 x 10.5 (listings also give 6 x 10 and 6 x 18)",
+     "unit": "mm",
+     "source": "https://www.firgelliauto.com/en-pt/products/3v-5v-laser-diode-tube-650nm-5mw-od-6mm ; https://www.makerstore.com.au/?p=9206",
+     "confidence": "medium"
+    },
+    {
+     "name": "lead length",
+     "value": "120 (one listing says about 24)",
+     "unit": "mm",
+     "source": "https://www.firgelliauto.com/en-pt/products/3v-5v-laser-diode-tube-650nm-5mw-od-6mm",
+     "confidence": "low"
+    },
+    {
+     "name": "laser class",
+     "value": "3R / IIIa",
+     "unit": "-",
+     "source": "https://grobotronics.com/laser-transmitter-module-650nm-ky-008.html ; https://www.makerstore.com.au/?p=9206",
+     "confidence": "medium"
+    }
+   ],
+   "anchors": [
+    "beam_axis (axial): origin at the lens face, +Z = emission direction",
+    "body_axis (axial): for 6 mm clamp or hole mates",
+    "rear_face (planar)",
+    "wire_exit (point)"
+   ],
+   "model_source": "procedural. Lathe cylinder 6 x 10.5 with a lens recess, plus two wire sweeps. The KiCad 3D library listings checked (OptoDevice) contain no such module.",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Copper 8960 kg/m^3 (most listings; Firgelli says brass, 8500)",
+   "priority": "v1-core",
+   "dimensions_mm": "6 x 10.5",
+   "notes": "The KY-008 breakout (3-pin S/+/- on an 18.5 x 15 mm PCB) is a separate variant. It belongs with the electronic-modules catalogue, and its pin S adds a data/electrical enable."
+  },
+  {
+   "id": "optic.lens.plano_convex_25_f50",
+   "name": "Plano-convex lens dia 25.4 mm, f = 50 mm, N-BK7 (generic; f parametric)",
+   "category": "optical/lens",
+   "ports": [
+    {
+     "name": "in",
+     "domain": "light",
+     "direction": "in",
+     "unit": "W"
+    },
+    {
+     "name": "out",
+     "domain": "light",
+     "direction": "out",
+     "unit": "W"
+    }
+   ],
+   "sim_model": "Signal block: P_out = T*P_in. Uncoated T = (1 - R)^2 = 0.917, with R = ((n - 1)/(n + 1))^2 = 0.0422 per surface, ignoring absorption. AR-coated T is a parameter. No ray tracing in v1; f is used only to show the focal-point anchor. A later version could scale T by an alignment factor from a 3D binding (angle and offset between the emitter beam axis and the lens optical axis).",
+   "params": [
+    {
+     "name": "refractive index n_d / Abbe / density (N-BK7)",
+     "value": "1.51680 / 64.17 / 2.51 g/cm^3",
+     "unit": "-, -, g/cm^3",
+     "source": "https://media.schott.com/api/public/content/41e799d0bf874807a0bb8e702fbb75b5 ; https://www.crystran.co.uk/media/wysiwyg/Materials/optical-glass-n-BK7-data-sheet.pdf",
+     "confidence": "high"
+    },
+    {
+     "name": "diameter / f / R1 (computed R = f*(n - 1))",
+     "value": "25.4 / 50 / 25.84 (Thorlabs LA1131 lists 25.8)",
+     "unit": "mm",
+     "source": "computed; cross-check https://www.3doptix.com/catalog/optics/lens/thorlabs/LA1131",
+     "confidence": "high"
+    },
+    {
+     "name": "centre thickness / edge thickness / BFL",
+     "value": "5.3 / 2.0 / 46.3 (computed CT from the sag with ET 2: 5.34)",
+     "unit": "mm",
+     "source": "https://www.3doptix.com/catalog/optics/lens/thorlabs/LA1131",
+     "confidence": "medium"
+    },
+    {
+     "name": "transmission T (uncoated)",
+     "value": "0.917",
+     "unit": "-",
+     "source": "computed (Fresnel at normal incidence, n = 1.5168)",
+     "confidence": "medium"
+    },
+    {
+     "name": "transmission T (AR-coated)",
+     "value": "about 0.99 (placeholder)",
+     "unit": "-",
+     "source": "not sourced",
+     "confidence": "low"
+    }
+   ],
+   "anchors": [
+    "optical_axis (axial): through the vertex, +Z = propagation",
+    "flat_face (planar)",
+    "convex_vertex (point)",
+    "edge_axis (axial): for mount-bore mates",
+    "focal_point (point at BFL beyond the flat face, for an f = 50 lens with the beam entering the convex side)"
+   ],
+   "model_source": "procedural. LatheGeometry of the profile (spherical arc R1, flat side, edge cylinder), with sag computed from R1 and the diameter.",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Glass (N-BK7) 2510 kg/m^3; transmission material preset",
+   "priority": "v1-extended",
+   "dimensions_mm": "dia 25.4, R1 25.84, CT 5.3, ET 2.0",
+   "notes": "The library item is generic (dia, f, n parametric). Thorlabs LA1131 values are only a cross-check."
+  },
+  {
+   "id": "optic.mirror.flat_25",
+   "name": "Flat mirror dia 25.4 x 6 mm, protected aluminium (generic)",
+   "category": "optical/mirror",
+   "ports": [
+    {
+     "name": "in",
+     "domain": "light",
+     "direction": "in",
+     "unit": "W"
+    },
+    {
+     "name": "out",
+     "domain": "light",
+     "direction": "out",
+     "unit": "W"
+    }
+   ],
+   "sim_model": "Signal block: P_out = R*P_in. For visuals the reflected beam direction d' = d - 2(d.n)n uses the mirror_face anchor normal (drawing only, no ray tracing in the solve).",
+   "params": [
+    {
+     "name": "diameter / thickness",
+     "value": "25.4 / 6 (6.0 confirmed for the 1/2 inch sibling; 1 inch value inferred)",
+     "unit": "mm",
+     "source": "https://www.gophotonics.com/products/mirrors/thorlabs-inc/40-46-pf10-03-g01-10 ; https://www.gophotonics.com/products/mirrors/thorlabs-inc/40-46-pf05-03-g01",
+     "confidence": "medium"
+    },
+    {
+     "name": "average reflectance R (450 nm to 2 um)",
+     "value": "0.90",
+     "unit": "-",
+     "source": "https://www.gophotonics.com/products/mirrors/thorlabs-inc/40-46-pf10-03-g01-10",
+     "confidence": "low"
+    },
+    {
+     "name": "substrate",
+     "value": "fused silica (density not sourced)",
+     "unit": "-",
+     "source": "https://www.gophotonics.com/products/mirrors/thorlabs-inc/40-46-pf10-03-g01-10",
+     "confidence": "medium"
+    }
+   ],
+   "anchors": [
+    "mirror_face (planar): reflective surface, normal outward",
+    "back_face (planar)",
+    "edge_axis (axial)",
+    "centre (point)"
+   ],
+   "model_source": "procedural. Cylinder disc (LatheGeometry), mirror-finish material on the front face.",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "Glass 2500 kg/m^3 (PLAN.md 6.2) as a stand-in for fused silica; metalness 1 / roughness 0 on the front face",
+   "priority": "v1-extended",
+   "dimensions_mm": "dia 25.4 x 6",
+   "notes": "R is wavelength dependent. At 650 nm protected aluminium is roughly 0.85 to 0.9 (unsourced)."
+  },
+  {
+   "id": "mech.enclosure.box",
+   "name": "Generic enclosure box with lid (parametric)",
+   "category": "mechanical/enclosure",
+   "ports": [],
+   "sim_model": "No block. Mass and gravity load only (mass is analytic from the shell volume). Panel faces carry anchors for panel-mount parts (switches, LEDs, jacks) from the electronics catalogue.",
+   "params": [
+    {
+     "name": "outer L x W x H",
+     "value": "app default 100 x 60 x 40 (user-editable)",
+     "unit": "mm",
+     "source": "not sourced (generic default)",
+     "confidence": "low"
+    },
+    {
+     "name": "wall / lid thickness",
+     "value": "2.0",
+     "unit": "mm",
+     "source": "https://ibselectronics.com/products/hammond/1591ubk (listing metadata for a similar ABS box)",
+     "confidence": "low"
+    },
+    {
+     "name": "corner radius / bosses",
+     "value": "3 / 4 x M3 bosses (dia 6) inset 5 from the inner walls (placeholders)",
+     "unit": "mm",
+     "source": "not sourced",
+     "confidence": "low"
+    },
+    {
+     "name": "material density (ABS)",
+     "value": "1040",
+     "unit": "kg/m^3",
+     "source": "/home/user/StudioVD/PLAN.md Phase 6.2",
+     "confidence": "high"
+    },
+    {
+     "name": "flammability (typical ABS project box)",
+     "value": "UL94 V-0 (Hammond 1591 example)",
+     "unit": "-",
+     "source": "https://my.rs-online.com/web/p/general-purpose-enclosures/4936032",
+     "confidence": "medium"
+    }
+   ],
+   "anchors": [
+    "base_outer (planar): bottom face, the grounding face",
+    "base_inner (planar): PCB mounting plane",
+    "boss_1..boss_4 (axial, M3)",
+    "lid_seat (planar)",
+    "lid_top (planar)",
+    "wall_+x / -x / +z / -z, inner and outer (planar): panel-mount faces"
+   ],
+   "model_source": "procedural. Shell = ExtrudeGeometry of the rounded-rectangle ring (outer shape with an inner-shape hole) for the walls, plus a floor slab; separate lid part with a fixed mate; bosses as lathe cylinders. No boolean kernel is needed. Panel cut-outs can be shape holes in a per-wall ExtrudeGeometry later.",
+   "model_license": "n/a (generated in-app)",
+   "default_material": "ABS 1040 kg/m^3 (PLAN.md 6.2)",
+   "priority": "v1-core",
+   "dimensions_mm": "L x W x H, wall 2, lid 2, bosses (all user)",
+   "notes": "Do not ship branded presets that imitate a vendor's product names. Size presets can be generic (e.g. 100 x 50 x 25)."
+  }
+ ],
+ "gaps": [
+  "Vendor primary sites (skf.com, hiwin, misumi-ec, festo, smc, gates, thorlabs, openbuilds) were blocked from this container: curl got a 403 from the egress proxy and WebFetch failed DNS. Every value attributed to them came from search-engine extraction of those pages, or from distributor listings. A human should check them against the vendor PDFs before shipping. The worst-supported ones: 6001/6003 ratings, the LM8UU rating, all fitting and valve flow data, and the laser module values.",
+  "ISO standard texts (ISO 4762, 4032, 7089, 4026, 53, 54, 6432, 286-2, DIN 103) are paywalled and were not read. Fastener dimensions come from open transcriptions: cq_warehouse (Apache-2.0) and FreeCAD FastenersWB (GPL-2.0-or-later). Ship StudioVD-owned JSON tables with citations; do not copy the GPL FastenersWB or NopSCADlib (GPL-3.0) files. Dimension facts are generally not copyrightable, but this is not legal advice.",
+  "Bearing load ratings in cq_warehouse are SKF catalogue data. SKF's terms for redistributing catalogue tables are unknown. Ratings could ship as 'typical' values with a note, or be fetched only as references.",
+  "688 is ambiguous: the hobby 688ZZ is 8x16x5 (SKF 628/8-2Z, C 1.33 kN) and the open 618/8 is 8x16x4 (C 0.819 kN). The default is 8x16x5. Distributors also quote 1.25 to 1.6 kN for 688 from other makers.",
+  "Missing data: masses and chamfers for 6001-6005, seal (2RS) friction torque, linear-guide seal drag, GT2 belt tensile stiffness and allowable tension, flexible-coupler torsional stiffness and verified rated torque, gear mesh efficiency, ISO 6432 barrel OD and lengths, ball-valve and check-valve body geometry, corner bracket thickness and holes, butt hinge dimensions (no dimensional standard exists), and the laser module turn-on voltage and current.",
+  "GT2: the 0.254 mm pitch-line differential and the 1.38 mm belt thickness were not confirmed from Gates primary documents (one table says 1.52 mm). The exact GT2 tooth profile is proprietary, so procedural pulleys use an approximate profile.",
+  "Simulation-model gaps: (1) In the PLAN's v/F steady-state formulation a spring is a DC short, so its force must come from an anchor-distance binding (Phase 12). Springs therefore depend on bindings existing. (2) Coulomb friction (bearings, guides, hinge) is undefined at zero speed, so smoothing (tanh) or a stiction model must be chosen. (3) The lead screw forward/back-drive efficiency and self-locking are non-linear and need a smoothed switch. (4) Pneumatics: air is compressible and ISO 6358 orifices are non-linear in absolute pressure. The PLAN's p/Q domain must state that Q is ANR volumetric flow and that pressures are gauge (0 = atmosphere) with an absolute offset inside ISO 6358 elements.",
+  "The light domain unit is undecided: W (radiant) vs lm (luminous). The laser module is specified in mW. Converting 650 nm to lumens needs the CIE V(lambda) value at 650 nm (about 0.107, from memory, not sourced here), so the LED/photodiode catalogue must use the same convention.",
+  "Kinematics: Rapier has no gear, belt/pulley or screw (helical) coupling joints (from memory of the Rapier joint set, not re-verified here). Gear pairs, pulleys and lead screws are therefore coupled only in the steady-state solve, not in drag/test mode, unless a custom coupling constraint is written. This should be flagged in PLAN Phase 9 or Phase 14.",
+  "There is no optical ray tracing in v1. Light coupling between emitter, lens, mirror and sensor goes through schematic wires, not 3D geometry. Alignment-dependent transmission would need a new binding source (angle and offset between two axial anchors).",
+  "Procedural geometry built from LatheGeometry, ExtrudeGeometry (shapes with holes) and TubeGeometry avoids a CSG kernel. However, multi-mesh unions are not watertight, so the divergence-theorem mass in PLAN section 2 fails for them. Library parts should carry analytic mass (formula or catalogue massOverrideKg) instead of mesh-derived mass.",
+  "FreeCAD-library STEP fallbacks (CC-BY-3.0: 608ZZ, LM8uu, MGN12H/rail, 5x8 coupler, 2020 V-slot, 2020 corner bracket, T8 screw and nut) need per-part author attribution taken from git history. They are simplified (MGN12H is 33 KB) and are not recommended over procedural generation.",
+  "The ISO 6432 nose thread for bore 10 (M12x1.25) is inferred from the bore-8 row and was not directly sourced. Some suppliers list a different nose thread for bore 16 (M12x1.25 vs M16x1.5), and Mindman lists a G1/8 port for bore 16 where others list M5.",
+  "The air viscosity 1.81e-5 Pa*s, the ISO 286-2 h6 band (0/-9 um) and the ISO 53 root fillet coefficient 0.38 are from memory and were not fetched. They are marked medium or low."
+ ]
+}

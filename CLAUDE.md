@@ -28,9 +28,10 @@ Never start the next phase without explicit user approval.** Tick checklist item
 | State | Zustand 5 + `immer` + `zundo` (undo/redo) | See §4 |
 | Validation | `zod` | All `scene.json` I/O is schema-validated |
 | Tests | Vitest (+ React Testing Library, jsdom), Playwright (E2E, mocked Tauri IPC), `cargo test` | See §8 |
+| Library downloads | Rust only: `reqwest` 0.13 (rustls + `rustls-platform-verifier`, system proxy) + `minisign-verify` | Never `tauri-plugin-http`/`-upload` (second reqwest, bundled roots that ignore corporate CAs) |
 
 Adding any new runtime dependency requires a one-line justification in the commit message.
-Prefer small, tree-shakeable libraries. No CDN or network fetches at runtime (see §6).
+Prefer small, tree-shakeable libraries. The webview never touches the network (see §6).
 
 ## 2. Repository layout
 
@@ -47,10 +48,12 @@ src/
     schematic/    React Flow editor, node types, ports
     scene-graph/  Left sidebar tree
     properties/   Right sidebar inspectors
+    library/      Library tab, insertion drag, credits dialog
   core/           PURE TypeScript. No React, no R3F, no DOM, no Tauri
     math/         Frames, transforms, fitting (three math types allowed)
     sim/          Netlist compiler, MNA solver, signal propagation (no three.js at all)
-    schema/       zod schemas for scene.json + migrations
+    generators/   Parametric standard parts: <id>/v<major>.ts (pure, runs in a worker)
+    schema/       zod schemas for scene.json, component.json, packs, catalog + migrations
     units.ts      The only place unit conversions live
   store/          Zustand slices + selectors
   lib/tauri/      Typed wrappers for every Tauri command/plugin call
@@ -60,7 +63,9 @@ src-tauri/src/
   bundle/         Project bundle zip read/write
   workspace/      Per-project working directory management
   geometry/       Convex decomposition (parry3d) and other heavy geometry
+  library/        Component store, install, signature verification, downloads
 tests/e2e/        Playwright specs
+docs/research/    Research behind PLAN.md decisions (not shipped; values need re-verification)
 ```
 
 ## 3. Code rules
@@ -120,9 +125,12 @@ Further rules:
   `"always"` only while test mode is running.
 - Heavy CPU work runs off the main thread: STEP/IGES parsing (worker), simulation solve
   (worker), convex decomposition (Rust).
-- **Offline-first: no runtime network requests.** Do not use drei `Environment` presets
-  (they fetch HDRIs from a CDN) or default DRACO/meshopt decoder URLs (gstatic). Bundle
-  decoders, fonts, and environment maps locally.
+- **Offline-first.** The webview makes **no** network requests, ever. Do not use drei
+  `Environment` presets (they fetch HDRIs from a CDN) or default DRACO/meshopt decoder URLs
+  (gstatic). Bundle decoders, fonts, and environment maps locally.
+- The **only** network access in the app is the Rust library downloader, and only on an
+  explicit user action (Browse, Refresh, Download, Check for updates) or an opt-in periodic
+  check (off by default). No startup network traffic. An "Offline mode" switch disables it.
 - Large binaries never cross IPC as JSON. Assets live in the project workspace dir and are
   loaded via the Tauri asset protocol; writes use raw binary IPC payloads.
 
@@ -187,8 +195,18 @@ Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindi
 
 - Tauri capabilities are least-privilege; fs access scoped to the project workspace, app
   data/cache dirs, and paths the user picked in a dialog.
-- Zip extraction rejects absolute paths and `..` segments (zip-slip) and enforces size limits.
-- A strict CSP replaces `"csp": null` before release (Phase 13).
+- Zip extraction (`.stvd` and `.stvdpack`) uses our own loop, never `ZipArchive::extract`:
+  `enclosed_name()` required; absolute paths, `..`, symlinks, Windows reserved names and
+  case-insensitive duplicates rejected; byte-counted size and compression-ratio limits.
+- **Library packs are data only.** Allowed files: JSON, GLB, PNG, JPG, TXT. No SVG, HTML,
+  scripts, or GLB buffers/images with external or `data:` URIs. Behaviour comes only from
+  app-built-in model/generator/symbol IDs or the sandboxed expression parser.
+- Trust comes only from signatures: the catalog index is verified with compiled-in minisign
+  keys before it is parsed; every pack and file is checked by SHA-256. Hosts and mirrors are
+  untrusted. Library commands take IDs, never URLs or file paths from the webview.
+- Every `component.json`, including those inside an opened `.stvd` (a project file is
+  untrusted input), passes the same strict zod validation.
+- A strict CSP replaces `"csp": null` before release (Phase 15).
 
 ## 10. Git
 
@@ -200,3 +218,19 @@ Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindi
 - Project files: `.stvd` (zip). App identifier: `com.studiovd.desktop`.
 - Simulation: steady state only (v1). Simulation drives visuals only; it never moves parts.
 - Default mouse mapping: SolidWorks-style (middle-drag orbit, Ctrl+middle pan, wheel zoom).
+- Component library: model packs are download-only (never in the installer); generator code,
+  simulation models and symbols ship in the app. Inserted components are copied into the
+  project, so a `.stvd` never depends on the library being installed.
+
+## 12. Content & licensing rules
+
+- **Never copy GPL/LGPL code or geometry into the app or official packs** (NopSCADlib, BOLTS,
+  KiCad generator scripts, FreeCAD Fasteners). Facts (dimensions) may be cross-checked against
+  them; tables are written by us from the standards.
+- Official pack content must be one of: CC0-1.0, CC-BY-3.0, CC-BY-4.0, CC-BY-SA-4.0
+  (± KiCad-libraries-exception), MIT, BSD-2/3-Clause, Apache-2.0. Never re-host models from
+  McMaster-Carr, TraceParts, GrabCAD or 3D ContentCentral.
+- Every geometry asset carries licence metadata (SPDX, creators, source @ pinned revision,
+  modifications). Attribution travels into every `.stvd` (`licenses/`) and every export.
+- Every datasheet number carries a source and a confidence level. Never invent values; mark
+  unknowns as unknown. Numbers in `docs/research/` are leads to re-check, not facts.

@@ -1,0 +1,411 @@
+{
+ "sources": [
+  {
+   "name": "KiCad Packages3D (official KiCad 3D model library)",
+   "url": "https://gitlab.com/kicad/libraries/kicad-packages3D",
+   "license_spdx": "CC-BY-SA-4.0 WITH KiCad-libraries-exception",
+   "license_evidence_url": "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/master/LICENSE.md",
+   "redistribution_ok": "conditional",
+   "conditions": "Read from LICENSE.md (high confidence): the library is CC-BY-SA-4.0. The exception waives Article 3 (attribution and ShareAlike) only for 'electronic designs that use Licensed Material' and 'any generated files'. LICENSE.md also says: 'if you wish to redistribute the KiCad libraries, or parts thereof (including in modified form) as a collection then the exception above does not apply. Redistributed library collections must be shared under the same license agreement ... must also retain attribution information, including the license documents.' What this means for a StudioVD pack: (1) the pack's model files stay CC-BY-SA-4.0, and passing the KiCad exception through, as Espressif does, is reasonable. (2) Ship LICENSE.md plus each folder's CREDITS.md and keep the per-file STEP header notices; many headers embed the CC-BY-SA text (seen in R_Axial, PinHeader, Relay, BatteryHolder, TerminalBlock samples). (3) Say what was changed (CC BY-SA 4.0 s.3(a)(1)(B)). (4) No encryption or DRM on packs (s.2(a)(5)(C)); signing a manifest for integrity is fine. (5) Converting STEP to GLB is a format shift that s.2(a)(4) says 'never produces Adapted Material' (https://creativecommons.org/licenses/by-sa/4.0/legalcode, high confidence). Our own anchor/schematic JSON is a separate work and can be CC0, though KiCad expects the collection as a whole under BY-SA (medium).",
+   "effect_on_user_projects": "StudioVD app code: not affected. Models are data downloaded separately, and putting them in a collection is not an adaptation; CC 4.0 ShareAlike applies 'to Adaptations only' (https://wiki.creativecommons.org/wiki/4.0/ShareAlike) (high). User .stvd projects: the exception waives attribution and ShareAlike for designs and generated files that use library data (KiCad intent: 'free use of library data for commercial, closed, and non-commercial projects'). So a .stvd that embeds a converted model in geometry/<sha>.glb does not have to be CC-BY-SA. Confidence is medium-high: the exception's wording targets 'electronic designs', and a mechatronic assembly with a schematic fits that only by reasonable reading. A KiCad forum reply (non-authoritative, https://forum.kicad.info/t/license-for-exported-footprints-from-pcb-file/32112) says an item extracted from a design and redistributed on its own is CC-BY-SA again. So keep per-asset license metadata in scene.json and in the bundle.",
+   "formats": [
+    "STEP (AP214, mm, 1:1) only on master and tags 9.0.9 and 10.0.x",
+    "VRML .wrl only in older tags (8.0.x, 9.0.0)"
+   ],
+   "approx_size": "Measured with GitLab GraphQL blob rawSize at master 8d4070daa0 (2026-09-13), latest tag 10.0.7 (high confidence): 7,315 files, 3,387.6 MB. Of that, 7,252 STEP files total 3,367.8 MB raw. Compression measured on 11 samples: gzip -9 5.7x, xz -9 9.7x, so roughly 590 MB gz or 350 MB xz for the whole library. A curated maker subset of about 1,240 files is 212 MB raw STEP, about 37 MB gz. Biggest folders are pin headers and sockets: Connector_PinHeader_2.54mm is 278 files, 306.6 MB.",
+   "categories_covered": [
+    "LED_THT/LED_SMD",
+    "Resistor_THT/SMD",
+    "Capacitor_THT/SMD",
+    "Diode_THT",
+    "Button_Switch_THT/SMD",
+    "Battery holders",
+    "Connector_* (pin headers/sockets all pitches, JST, Molex, USB, RJ, barrel jack, D-sub, audio, IDC)",
+    "TerminalBlock_* (Phoenix, Altech, Wuerth, Ningbo-Kagnex)",
+    "Relay_THT/SMD",
+    "Package_TO_SOT_THT (TO-220 etc.), DIP, QFP, SO, BGA",
+    "Module (Raspberry Pi Pico variants)",
+    "RF_Module (ESP32 modules)",
+    "Potentiometer, Buzzer, Display_7Segment, OptoDevice, Fuse, Heatsink, Crystal, Inductor, Transformer, Sensor, Valve"
+   ],
+   "example_paths": [
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/LED_THT.3dshapes/LED_D5.0mm.step (23.8 KB; also _Blue/_Green/_Yellow/_Clear, LED_D5.0mm-4_RGB.step)",
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/Resistor_THT.3dshapes/R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal.step (24.6 KB; DIN0207 = common 1/4 W body)",
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/Button_Switch_THT.3dshapes/SW_PUSH_6mm.step (180 KB; H4.3/H5/H7.3/H8/H9.5/H13 variants)",
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/Battery.3dshapes/BatteryHolder_Keystone_1042_1x18650.step (133 KB); .../Battery.3dshapes/BatteryHolder_MPD_BH-18650-PC2.step (121 KB)",
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/Module.3dshapes/RaspberryPi_Pico.step (877 KB; also RaspberryPi_Pico_H/_W/_WH/_AddedHeaders_H2.54mm/_PinSockets_H8.50mm)",
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/RF_Module.3dshapes/ESP32-WROOM-32.step (1.22 MB; module only, NOT a DevKit board)",
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x04_P2.54mm_Vertical.step (146 KB; 1x40 is 1.46 MB)",
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x15_P2.54mm_Vertical.step",
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/Connector_BarrelJack.3dshapes/BarrelJack_Horizontal.step (119 KB); .../BarrelJack_CUI_PJ-063AH_Horizontal.step",
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/TerminalBlock_Phoenix.3dshapes/TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal.step (70 KB; 15 MKDS 5.08 mm variants)",
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/Relay_THT.3dshapes/Relay_SPDT_SANYOU_SRD_Series_Form_C.step (113 KB, the common blue SRD-05VDC hobby relay form factor); .../Relay_SPDT_Omron-G5LE-1.step",
+    "https://gitlab.com/kicad/libraries/kicad-packages3D/-/raw/10.0.7/Package_TO_SOT_THT.3dshapes/TO-220-3_Vertical.step (85 KB; generic TO-220 for 7805/LM317)",
+    "NOT PRESENT: Arduino Uno, Arduino Nano, ESP32 DevKit boards; an 18650 cell (holders only)"
+   ],
+   "reachable_from_container": true,
+   "notes": "All 15 example paths returned HTTP 200 at tag 10.0.7. WRL was dropped: LED_THT has 50 .step + 49 .wrl at tags 8.0.0 and 9.0.0, but 87 .step and 0 .wrl at 9.0.9, 10.0.0 and master (GitLab tree API). The README now lists only STEP. Geometry conventions, measured by tessellating 11 samples with occt-import-js 0.0.23 (high): Z-up, mm, origin at the footprint origin (pin 1), Z=0 at the PCB top surface (LED_D5.0mm bbox Z -2.5..11.6). Import needs a Z-up to Y-up rotation. Per-face colours are present (e.g. LED body 0.45,0.01,0.00 and leads 0.65,0.64,0.57), so they can seed PBR materials. Triangle counts at default tessellation: LED 1,891; resistor 3,352; SW_PUSH_6mm 2,368; 18650 holder 2,884; TO-220 324; SRD relay 864; Pico 12,884; ESP32-WROOM 7,656. All fit the 200-part / 2-3 M triangle budget. Pairing with kicad-footprints (same license, https://gitlab.com/kicad/libraries/kicad-footprints/-/raw/master/LED_THT.pretty/LED_D5.0mm.kicad_mod) gives pad numbers and positions: pad 1 at (0,0), pad 2 at (2.54,0). Those can auto-generate electrical port anchors and the pin-to-port mapping for the schematic block. Pico model provenance: Module.3dshapes/CREDITS.md says it was authored by Peter S. Hollander (Ki-Lime Pi Pico project), not copied from Raspberry Pi."
+  },
+  {
+   "name": "KiCad 3D model generators (kicad-packages3D-generator, archived; now in kicad-library-tools)",
+   "url": "https://gitlab.com/kicad/libraries/kicad-library-tools",
+   "license_spdx": "GPL-3.0-only (archived kicad-packages3D-generator LICENSE); GPL-3.0-or-later with some MIT and LGPL-2.0-or-later files (kicad-library-tools)",
+   "license_evidence_url": "https://gitlab.com/kicad/libraries/kicad-packages3D-generator/-/raw/master/LICENSE",
+   "redistribution_ok": "conditional",
+   "conditions": "The code is GPL: redistributing it requires source and the GPL. The archived repo's README says (high): 'moved to be part of the KiCad Library Footprint Generators repository' (kicad-footprint-generator now redirects to kicad-library-tools). kicad-library-tools README: 'licensed under the GNU General Public License, Version 3 or later (GPL-3.0-or-later), unless explicitly specified otherwise ... MIT ... LGPL-2-or-later'. The generated STEP models are what KiCad publishes under CC-BY-SA-4.0 WITH the exception.",
+   "effect_on_user_projects": "Use these only offline, in a pack-building CI job (CadQuery 2.x + OCCT, Python). Do not port them or their data/*.yaml into the StudioVD app, or the app becomes a GPL derivative (high). Generated output is generally not covered by the GPL unless it contains parts of the program (GNU FAQ https://www.gnu.org/licenses/gpl-faq.html#GPLOutput, medium as applied to CAD). Treat outputs as KiCad-licensed (CC-BY-SA-4.0 WITH exception). No effect on .stvd projects beyond that.",
+   "formats": [
+    "Python + CadQuery 2.x scripts and YAML parameter data",
+    "outputs STEP (VRML optional in the archived version)"
+   ],
+   "approx_size": "unknown (code repo, small); the 3D generator CI job is .gitlab-ci-3dgen.yml",
+   "categories_covered": [
+    "DIP_parts",
+    "LED",
+    "battery",
+    "button_switch",
+    "buzzer_beeper",
+    "capacitor",
+    "connector",
+    "crystal/oscillator",
+    "diode",
+    "fuse",
+    "inductor",
+    "mounting_hardware",
+    "opto_devices",
+    "package",
+    "potentiometer",
+    "relay",
+    "resistor",
+    "terminal_block",
+    "transformer",
+    "valve"
+   ],
+   "example_paths": [
+    "https://gitlab.com/kicad/libraries/kicad-library-tools/-/tree/main/src/generators",
+    "https://gitlab.com/kicad/libraries/kicad-library-tools/-/tree/main/data",
+    "https://gitlab.com/kicad/libraries/kicad-library-tools/-/raw/main/.gitlab-ci-3dgen.yml"
+   ],
+   "reachable_from_container": true,
+   "notes": "Last activity on the archived generator repo was 2025-06-04, and its description says it is deprecated. Useful later if we want extra LED colours, pitches or pin counts that KiCad does not publish; run in CI and publish the outputs under the KiCad license. Optional: the pre-generation source models repo is https://gitlab.com/kicad/libraries/kicad-packages3D-source."
+  },
+  {
+   "name": "FreeCAD-library (community parts library)",
+   "url": "https://github.com/FreeCAD/FreeCAD-library",
+   "license_spdx": "CC-BY-3.0 (all parts and assets); LGPL-2.1-or-later (macro/scripts only)",
+   "license_evidence_url": "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/master/LICENSE-Assets",
+   "redistribution_ok": "conditional",
+   "conditions": "LICENSE-Assets (high): 'every part and every supporting asset ... .FCStd ... .stp/.step, .brp/.brep, .stl ... licensed under the Creative Commons Attribution 3.0 Unported license (SPDX identifier: CC-BY-3.0)'. It also says: 'Each part is copyrighted by its own author ... Authorship is recorded in the git history ... and ... file properties of the .FCStd'. Redistribution requires attribution to each author (taken from git log), title, a link to the source, the license URI, and credit for adaptations. No DRM is allowed. There is no ShareAlike. Big caveat: each license grant is only as good as the uploader's rights, and provenance varies (medium). Examples: Pico-R3.step's STEP header is 'PICO.STEP', 2021-01-22, 'SolidWorks 2021', which looks like Raspberry Pi's official file re-uploaded in 2022 by user 'integrated-circuit'. Nano-Rev3_0.step's header shows it was made in 2015 by another person ('/home/alexandre/.../git-robot-conf') and committed in 2020 by 'BERSERK'. Curate part by part and record authorship.",
+   "effect_on_user_projects": "No copyleft: the app and .stvd projects can use any license (high). A shared .stvd that embeds a converted model is a redistribution of that model, so it needs the attribution notice. StudioVD should write it into the bundle automatically.",
+   "formats": [
+    "FCStd (about 3,231 incl. .fcstd)",
+    "STEP/.stp (about 2,908)",
+    "STL (about 2,545)",
+    "BREP, DXF, WRL (some)"
+   ],
+   "approx_size": "10,475 files at HEAD f5ca01cdca (2026-10-07). The README says '+/- 5 Gb' (not independently measured; medium). Example files: Nano-Rev3_0.step 2.28 MB, ESP32_DOIT_DevKit_V1.step 426 KB, Pico-R3.step 1.72 MB, arduino-mega.step 7.1 MB, NEMA_17_with_connector.step 8.1 MB, Arduino UNO.FCStd 8.3 MB.",
+   "categories_covered": [
+    "Mechanical Parts/Fasteners (3,125 files)",
+    "Mechanical Parts/Profiles EN (2,851)",
+    "Chains (970)",
+    "Bearings, Pulleys, Couplings, Mountings, Enclosures",
+    "Electrical Parts/Motors (DC, stepper NEMA17/23, 28BYJ-48), Servos, Relays, Batteries, Push buttons, Endstops, fans",
+    "Electronics Parts (LEDs, Resistors, Buttons, Connectors, Switch, Semiconductors, Displays, Headers)",
+    "Computing/SingleBoardComputers (Arduino, ESP32, Raspberry Pi)",
+    "Electro-pneumatic (cylinders, manifolds), Hydraulics, Pipes and tubes, Sensors"
+   ],
+   "example_paths": [
+    "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Computing/SingleBoardComputers/Arduino/Nano-Rev3_0.step",
+    "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Computing/SingleBoardComputers/Arduino/Arduino%20UNO/Arduino%20UNO.FCStd (FCStd only, no STEP; needs FreeCAD conversion)",
+    "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Computing/SingleBoardComputers/ESP32/ESP32_DOIT_DevKit_v1/ESP32_DOIT_DevKit_V1.step",
+    "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Computing/SingleBoardComputers/Raspberry/Raspberry%20Pi%20Pico/Pico-R3.step",
+    "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Electronics%20Parts/LEDs/led-5mm.step",
+    "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Electronics%20Parts/Resistors/res-1_4w-220ohm.step",
+    "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Electronics%20Parts/Buttons/THT/Electronic_Button.step",
+    "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Electronics%20Parts/Connectors/power-connectors/jack_DC_2.1mm_PCB.step",
+    "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Electronics%20Parts/Connectors/power-connectors/pcb-terminal-block-female-1x2.step",
+    "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Electrical%20Parts/Relays/SRD-05VDC-SL-C/relay-SRD-05VDC-SL-C.FCStd",
+    "https://raw.githubusercontent.com/FreeCAD/FreeCAD-library/f5ca01cdcaa2f69b9295a6382719c2d90628780c/Electrical%20Parts/Motors/Stepper/NEMA/NEMA_17_with_connector.step",
+    "TO-220: Electronics Parts/Semiconductors/TO220_Std.FCStd (FCStd + STL only)"
+   ],
+   "reachable_from_container": true,
+   "notes": "GitHub API is blocked here, but git clone (blobless) and raw.githubusercontent.com work. Board models were moved from 'Electronics Parts/Boards/...' to 'Computing/SingleBoardComputers/...' in commit 71fae7e on 2026-10-06, so paths are unstable: pin a commit SHA. This is the only open source found here with an Arduino Nano and an ESP32 DevKit board as STEP. 18650 cell or holder: none found (only AA/AAA holders and LiPo)."
+  },
+  {
+   "name": "cq_warehouse (CadQuery parametric parts)",
+   "url": "https://github.com/gumyr/cq_warehouse",
+   "license_spdx": "Apache-2.0",
+   "license_evidence_url": "https://raw.githubusercontent.com/gumyr/cq_warehouse/HEAD/LICENSE",
+   "redistribution_ok": "yes",
+   "conditions": "Apache-2.0 (high): include the LICENSE, keep notices, and state changes in modified files. There is no copyleft. You can port its algorithms and CSV dimension tables into StudioVD TypeScript with attribution.",
+   "effect_on_user_projects": "None on .stvd projects. If code or CSVs are ported into the app, the app must carry the Apache-2.0 notice. That is compatible with proprietary, MIT or GPL-3.0 app licenses (high).",
+   "formats": [
+    "Python (CadQuery/OCCT) generators",
+    "CSV dimension tables",
+    "produces STEP/STL on demand"
+   ],
+   "approx_size": "142 files (tiny); last commit daa4650, 2023-09-24",
+   "categories_covered": [
+    "fasteners: socket head, hex head, button, pan, countersunk, cheese head screws; hex/square/domed/heat-set nuts; washers; set screws",
+    "clearance, tap and drill hole tables",
+    "bearings: deep groove, capped, angular contact, cylindrical and tapered roller",
+    "chains and sprockets",
+    "threads (ISO, ACME, plastic bottle)"
+   ],
+   "example_paths": [
+    "https://raw.githubusercontent.com/gumyr/cq_warehouse/HEAD/src/cq_warehouse/socket_head_cap_parameters.csv",
+    "https://raw.githubusercontent.com/gumyr/cq_warehouse/HEAD/src/cq_warehouse/single_row_deep_groove_ball_bearing_parameters.csv",
+    "https://raw.githubusercontent.com/gumyr/cq_warehouse/HEAD/src/cq_warehouse/fastener.py",
+    "https://raw.githubusercontent.com/gumyr/cq_warehouse/HEAD/src/cq_warehouse/sprocket.py"
+   ],
+   "reachable_from_container": true,
+   "notes": "No commits since 2023-09-24. The same author's build123d-based bd_warehouse is active and is a superset (medium on 'successor'). Prefer bd_warehouse as the reference. It cannot run in-app (Python + OCCT), so it is a reference and data source for in-app TypeScript generators, not a model source."
+  },
+  {
+   "name": "bd_warehouse (build123d parametric parts)",
+   "url": "https://github.com/gumyr/bd_warehouse",
+   "license_spdx": "Apache-2.0",
+   "license_evidence_url": "https://raw.githubusercontent.com/gumyr/bd_warehouse/HEAD/LICENSE",
+   "redistribution_ok": "yes",
+   "conditions": "Apache-2.0 (high): keep the license and NOTICE and mark changes. Data-provenance caveat (medium): the bearing CSV columns are labelled 'SKT:' and include catalogue values such as dynamic and static load ratings C/C0, reference and limit speeds, and mass, which look like a manufacturer catalogue. Bare numeric facts are generally not copyrightable in the US, but EU database rights could cover wholesale extraction. Boundary dimensions (d, D, B) follow ISO 15. Use load ratings only as default simulation parameters, with attribution.",
+   "effect_on_user_projects": "None on .stvd projects. If ported into the app, include the Apache-2.0 notice.",
+   "formats": [
+    "Python (build123d/OCCT) generators",
+    "CSV tables"
+   ],
+   "approx_size": "157 files; active, last commit 8e9be06 on 2026-10-07",
+   "categories_covered": [
+    "fasteners (ISO 4762, 4017, 4032, 7089 etc.), heat-set inserts, shoulder screws",
+    "bearings (deep groove, angular contact, roller)",
+    "spur gears (gear.py)",
+    "sprockets, threads",
+    "shaft keys (shaft_key_parameters.csv), retaining rings DIN 471/472",
+    "O-rings with glands, pipes, ASME flanges",
+    "OpenBuilds parts (C-Beam rail and assemblies, spacers, anti-backlash nut block)"
+   ],
+   "example_paths": [
+    "https://raw.githubusercontent.com/gumyr/bd_warehouse/8e9be0645b53db3d7414f74828c2d67b0da21138/src/bd_warehouse/data/socket_head_cap_parameters.csv",
+    "https://raw.githubusercontent.com/gumyr/bd_warehouse/8e9be0645b53db3d7414f74828c2d67b0da21138/src/bd_warehouse/data/hex_nut_parameters.csv",
+    "https://raw.githubusercontent.com/gumyr/bd_warehouse/8e9be0645b53db3d7414f74828c2d67b0da21138/src/bd_warehouse/data/plain_washer_parameters.csv",
+    "https://raw.githubusercontent.com/gumyr/bd_warehouse/8e9be0645b53db3d7414f74828c2d67b0da21138/src/bd_warehouse/data/single_row_deep_groove_ball_bearing_parameters.csv",
+    "https://raw.githubusercontent.com/gumyr/bd_warehouse/8e9be0645b53db3d7414f74828c2d67b0da21138/src/bd_warehouse/gear.py",
+    "https://raw.githubusercontent.com/gumyr/bd_warehouse/8e9be0645b53db3d7414f74828c2d67b0da21138/src/bd_warehouse/open_builds.py"
+   ],
+   "reachable_from_container": true,
+   "notes": "Sample rows read from the CSVs above (high, as data in the file): ISO 4762 M3-0.5 dk 5.68, k 3, s 2.5, t 1.3, lengths 5-30. ISO 4762 M4 dk 7.22, k 4, s 3. ISO 4032 M3 nut m 2.4, s 5.5. ISO 7089 M3 washer d1 3.2, d2 7, h 0.55. Bearing 608: d 8, D 22, B 7, mass 0.012 kg. Bearing 623: 3x10x4, C 0.54 kN. Cross-check any value against the ISO table or a manufacturer datasheet before relying on it."
+  },
+  {
+   "name": "NopSCADlib (OpenSCAD vitamins library)",
+   "url": "https://github.com/nophead/NopSCADlib",
+   "license_spdx": "GPL-3.0-only",
+   "license_evidence_url": "https://raw.githubusercontent.com/nophead/NopSCADlib/HEAD/COPYING",
+   "redistribution_ok": "conditional",
+   "conditions": "GPL-3.0 (README: 'The license is GNU General Public License v3.0', high). Redistribution must be under the GPL with corresponding source (.scad). Rendered STL/STEP output is a rendering of the GPL'd model description itself, so it very likely carries GPL obligations (medium).",
+   "effect_on_user_projects": "Risky. Shipping its geometry in packs would plausibly push GPL obligations into users' shared .stvd files. Porting its code into StudioVD would make the app GPL-3.0 (high). Use it only as a factual dimension reference, never as code or geometry. Example of a fact it records: ArduinoUno3 board 68.58 x 53.34 x 1.6 mm with holes at (15.24,50.8), (66.04,35.56), (66.04,7.62), (13.97,2.54) (https://raw.githubusercontent.com/nophead/NopSCADlib/HEAD/vitamins/pcbs.scad). Verify such facts against official drawings.",
+   "formats": [
+    "OpenSCAD .scad source only (STL rendered by OpenSCAD)"
+   ],
+   "approx_size": "724 files at 00ec289 (2026-09-24), source only",
+   "categories_covered": [
+    "pcbs.scad: ArduinoUno3, ArduinoNano, ArduinoLeonardo, ESP32_DOIT_V1, ESP_01, RPI_Pico, RPI3/4/0, relay boards, TP4056, MP1584EN, perfboards",
+    "stepper_motors, geared_steppers, servo_motors, bldc_motors, gear_motors",
+    "ball_bearings, linear_bearings, pulleys, belts, extrusions, extrusion_brackets, rails, rod_ends, shaft_couplings, springs, screws, nuts, washers, inserts",
+    "leds, buttons, toggles, rockers, microswitches, green_terminals, pin_headers, batteries, psus, fans, displays"
+   ],
+   "example_paths": [
+    "https://raw.githubusercontent.com/nophead/NopSCADlib/HEAD/vitamins/pcbs.scad",
+    "https://github.com/nophead/NopSCADlib/tree/master/vitamins"
+   ],
+   "reachable_from_container": true,
+   "notes": "Best breadth for maker parts, but both the license and the format (OpenSCAD, which we cannot run in-app) rule it out as a pack source."
+  },
+  {
+   "name": "BOLTS (open library of technical specifications)",
+   "url": "https://github.com/boltsparts/BOLTS",
+   "license_spdx": "GPL-3.0-only (repo LICENSE); data/*.blt files carry LGPL-2.1-or-later headers",
+   "license_evidence_url": "https://raw.githubusercontent.com/boltsparts/BOLTS/HEAD/LICENSE",
+   "redistribution_ok": "conditional",
+   "conditions": "GPL-3.0 code and LGPL-2.1+ data (read from the LICENSE file and the bearings.blt, nut.blt, hex_socket.blt, profile_i.blt headers; high). Redistribution only under those terms, with source.",
+   "effect_on_user_projects": "Do not ship its code or geometry, so the app and user projects stay free of copyleft. Use it only as a cross-check for ISO/DIN dimensions (facts).",
+   "formats": [
+    "YAML-like .blt data",
+    "FreeCAD and OpenSCAD backends (Python/.scad)"
+   ],
+   "approx_size": "1,022 files; last commit 05a2acd on 2022-11-02 (dormant)",
+   "categories_covered": [
+    "bearings",
+    "nuts, hex and hex-socket screws, washers",
+    "profiles I/C/L/Z/hollow",
+    "extrusions",
+    "pipes, flanges",
+    "batteries",
+    "connecting bars, vacuum fittings"
+   ],
+   "example_paths": [
+    "https://raw.githubusercontent.com/boltsparts/BOLTS/HEAD/data/bearings.blt",
+    "https://raw.githubusercontent.com/boltsparts/BOLTS/HEAD/data/hex_socket.blt",
+    "https://raw.githubusercontent.com/boltsparts/BOLTS/HEAD/data/extrusions.blt"
+   ],
+   "reachable_from_container": true,
+   "notes": "Dormant since 2022. bd_warehouse (Apache-2.0) covers the same families with a permissive license."
+  },
+  {
+   "name": "Adafruit_CAD_Parts",
+   "url": "https://github.com/adafruit/Adafruit_CAD_Parts",
+   "license_spdx": "MIT",
+   "license_evidence_url": "https://raw.githubusercontent.com/adafruit/Adafruit_CAD_Parts/HEAD/LICENSE",
+   "redistribution_ok": "yes",
+   "conditions": "MIT, 'Copyright (c) 2016 Adafruit Industries' (high): include the copyright and permission notice. The MIT text speaks of 'software and associated documentation files' but is applied repo-wide to the CAD files (medium on fit). It grants no trademark rights to Adafruit names or logos.",
+   "effect_on_user_projects": "None beyond carrying the MIT notice with the model. No copyleft.",
+   "formats": [
+    "STEP (485)",
+    "Fusion 360 .f3d (473) / .f3z",
+    "STL (340)",
+    "3MF (89)"
+   ],
+   "approx_size": "1,809 files at c128bce (2026-10-01); total size unknown. Examples: 610 DC Jack.step 89 KB, 1119 12mm tactile switch.step 124 KB, 324 NEMA-17.step 1.18 MB",
+   "categories_covered": [
+    "Adafruit boards (Metro 328 Uno-form-factor, Feather incl. ESP32/RP2040, QT Py, ItsyBitsy, Pico-related)",
+    "DC jack, tactile switches 6/12 mm, arcade buttons, slide and toggle switches",
+    "motors: NEMA-17, TT motor, DC toy motor, micro servos, 5 V stepper, solenoid",
+    "battery holders (2xAA, 3xAA, 3xAAA, 4xAA, 8xAA, 9 V), LiPo cells",
+    "breadboards, Perma-Proto boards, displays, sensors, speakers"
+   ],
+   "example_paths": [
+    "https://raw.githubusercontent.com/adafruit/Adafruit_CAD_Parts/c128bceb1f96b6ea8b68f250bda986ba85da24ea/610%20DC%20Jack/610%20DC%20Jack.step",
+    "https://raw.githubusercontent.com/adafruit/Adafruit_CAD_Parts/c128bceb1f96b6ea8b68f250bda986ba85da24ea/1119%20Tactile%20Switch%2012mm%20(B3F-40XX)/1119-12mm-TactileSwitch.step",
+    "https://raw.githubusercontent.com/adafruit/Adafruit_CAD_Parts/c128bceb1f96b6ea8b68f250bda986ba85da24ea/2488%20Adafruit%20Metro%20328/2488%20Adafruit%20Metro%20328.step",
+    "https://raw.githubusercontent.com/adafruit/Adafruit_CAD_Parts/c128bceb1f96b6ea8b68f250bda986ba85da24ea/3405%20ESP32%20Feather%20HUZZAH/3405%20Adafruit%20HUZZAH32%20ESP32%20Feather.step",
+    "https://raw.githubusercontent.com/adafruit/Adafruit_CAD_Parts/c128bceb1f96b6ea8b68f250bda986ba85da24ea/324%20NEMA-17%20Stepper%20Motor/324%20NEMA-17%20Stepper%20Motor.step",
+    "https://raw.githubusercontent.com/adafruit/Adafruit_CAD_Parts/c128bceb1f96b6ea8b68f250bda986ba85da24ea/3777%20TT%20Motor/3777%20TT%20Motor.step",
+    "https://raw.githubusercontent.com/adafruit/Adafruit_CAD_Parts/c128bceb1f96b6ea8b68f250bda986ba85da24ea/830%20Battery%20Holder/830%20Battery%20Holder%204xAA.step",
+    "https://raw.githubusercontent.com/adafruit/Adafruit_CAD_Parts/c128bceb1f96b6ea8b68f250bda986ba85da24ea/64%20Halfsize%20Breadboard/64%20Halfsize%20Breadboard.step"
+   ],
+   "reachable_from_container": true,
+   "notes": "The best permissive source for electromechanical maker parts: motors, servos, holders, breadboards. It has no genuine Arduino Uno/Nano or ESP32 DevKit; the Metro 328 shares the Uno footprint and form factor."
+  },
+  {
+   "name": "Espressif KiCad libraries (official ESP module models)",
+   "url": "https://github.com/espressif/kicad-libraries",
+   "license_spdx": "CC-BY-SA-4.0 WITH KiCad-libraries-exception",
+   "license_evidence_url": "https://raw.githubusercontent.com/espressif/kicad-libraries/HEAD/LICENSE.md",
+   "redistribution_ok": "conditional",
+   "conditions": "Same license and exception text as KiCad (LICENSE.md: 'These are the same license conditions as those used by KiCad project', high), so the same pack conditions apply.",
+   "effect_on_user_projects": "Same as KiCad Packages3D: the app is not affected, and .stvd designs are covered by the exception.",
+   "formats": [
+    "STEP (30)",
+    "WRL (some)"
+   ],
+   "approx_size": "30 STEP files in 3dmodels/espressif.3dshapes at dd76561 (2026-07-28); size unknown",
+   "categories_covered": [
+    "ESP32 / ESP32-S2/S3/C3/C5/C6/H2 / ESP8684 modules (WROOM, WROVER, MINI)"
+   ],
+   "example_paths": [
+    "https://raw.githubusercontent.com/espressif/kicad-libraries/HEAD/3dmodels/espressif.3dshapes/ESP32-WROOM-32E.STEP",
+    "https://raw.githubusercontent.com/espressif/kicad-libraries/HEAD/3dmodels/espressif.3dshapes/ESP32-S3-WROOM-1.STEP"
+   ],
+   "reachable_from_container": true,
+   "notes": "Modules only, no DevKit boards. A DevKit could be assembled from this module plus a procedural PCB and headers."
+  },
+  {
+   "name": "Raspberry Pi official design files (Pico / Pico 2 STEP)",
+   "url": "https://www.raspberrypi.com/licensing/",
+   "license_spdx": "LicenseRef-RaspberryPi-design-files (0BSD-style grant text)",
+   "license_evidence_url": "https://www.raspberrypi.com/licensing/",
+   "redistribution_ok": "yes",
+   "conditions": "Per the licensing page and Pico 2 datasheet, seen through search snippets only, not fetched (medium): 'Permission to use, copy, modify, and/or distribute these designs for any purpose with or without fee is hereby granted', with a no-warranty clause. Third-party manufacturers' designs are excluded. Pico 2 W design files are open except the antenna. Documentation is CC BY-SA 4.0 or CC BY-ND 4.0 depending on the document, and is not covered by this grant.",
+   "effect_on_user_projects": "None (permissive).",
+   "formats": [
+    "STEP (zip on datasheets.raspberrypi.com)",
+    "KiCad design files"
+   ],
+   "approx_size": "unknown; the FreeCAD-library re-upload Pico-R3.step is 1.72 MB",
+   "categories_covered": [
+    "Raspberry Pi Pico, Pico W, Pico 2 boards"
+   ],
+   "example_paths": [
+    "https://datasheets.raspberrypi.com/pico/ (STEP zip linked from the Pico 2 documentation; exact filename unverified)"
+   ],
+   "reachable_from_container": false,
+   "notes": "datasheets.raspberrypi.com and raspberrypi.com return 403 from this sandbox. Confirm the exact file and wording on a normal network. KiCad's own RaspberryPi_Pico.step is enough for v1."
+  },
+  {
+   "name": "McMaster-Carr CAD models",
+   "url": "https://www.mcmaster.com/termsandconditions",
+   "license_spdx": "LicenseRef-proprietary",
+   "license_evidence_url": "https://www1.mcmaster.com/termsandconditions",
+   "redistribution_ok": "no",
+   "conditions": "Terms text via search-engine excerpt; direct fetch blocked (medium-high): 'The CAD models ... are being made available to help you decide whether to purchase Products from us' and 'you shall not reproduce, display, retain copies of, redistribute or make available the CAD Models (including design drawings or prototypes built from them) to outside parties.'",
+   "effect_on_user_projects": "Not usable in packs. Users may import their own downloads locally at their own risk, but StudioVD must never re-host, link-scrape or bundle them.",
+   "formats": [
+    "STEP, IGES, SolidWorks, etc. (per-part download)"
+   ],
+   "approx_size": "unknown",
+   "categories_covered": [
+    "industrial hardware: fasteners, bearings, extrusions, gears, pneumatics, etc."
+   ],
+   "example_paths": [],
+   "reachable_from_container": false,
+   "notes": "Explicitly forbids redistribution and even keeping copies beyond purchase evaluation. Excluded."
+  },
+  {
+   "name": "TraceParts",
+   "url": "https://www.traceparts.com/en",
+   "license_spdx": "LicenseRef-proprietary",
+   "license_evidence_url": "https://info.traceparts.com/general-terms-of-use/",
+   "redistribution_ok": "no",
+   "conditions": "Via search excerpts; direct fetch blocked (medium). General terms say commercial use of the site, including 'duplicating or distributing data, programs, products, and services', needs TraceParts' express written consent. API terms (https://developers.traceparts.com/docs/api-terms-of-use): users 'may not i) distribute the Data as part of an external service, or ii) copy or post the Data on a website, or iii) distribute the Data on any storage medium whatsoever, or iv) use the Data with the aim of competing with any TraceParts service.' Manufacturers keep IP and can pull data.",
+   "effect_on_user_projects": "Not usable in packs. A user's own local download stays their responsibility.",
+   "formats": [
+    "STEP, IGES, native CAD formats"
+   ],
+   "approx_size": "unknown",
+   "categories_covered": [
+    "manufacturer catalogues: industrial components of all kinds"
+   ],
+   "example_paths": [],
+   "reachable_from_container": false,
+   "notes": "Excluded. A per-manufacturer written agreement would be the only route."
+  },
+  {
+   "name": "GrabCAD Community library",
+   "url": "https://grabcad.com/library",
+   "license_spdx": "LicenseRef-proprietary (per-uploader; site terms)",
+   "license_evidence_url": "https://grabcad.com/terms",
+   "redistribution_ok": "no",
+   "conditions": "Via search excerpts; direct fetch blocked (medium). The site licence is for 'your own benefit and non-commercial, internal use'. An older ToS says contributor content is 'for non-commercial use only, unless otherwise agreed in writing with the Contributor'. The help centre says downloads may be modified 'as long as those changes remain local to your computer'. The terms ban automated access or scraping, and the downloader warrants non-infringement.",
+   "effect_on_user_projects": "Not usable in packs, and nothing may be scraped. Users may import their own downloads locally.",
+   "formats": [
+    "many (STEP, IGES, STL, native)"
+   ],
+   "approx_size": "unknown",
+   "categories_covered": [
+    "everything, user-uploaded, mixed provenance"
+   ],
+   "example_paths": [],
+   "reachable_from_container": false,
+   "notes": "Excluded. Provenance is unknown and each model would need the individual uploader's written permission."
+  },
+  {
+   "name": "3D ContentCentral (Dassault Systemes)",
+   "url": "https://www.3dcontentcentral.com/",
+   "license_spdx": "LicenseRef-proprietary",
+   "license_evidence_url": "https://www.3dcontentcentral.com/Terms-of-use.aspx",
+   "redistribution_ok": "no",
+   "conditions": "Via a search excerpt of a possibly dated (c. 2016) terms page; direct fetch blocked (medium). Downloads are for internal computer-aided design use. Users may not distribute content 'as part of any service' or post it 'on any internet site' without the owner's permission, nor use it 'on an Internet catalog site or Internet model site'. Supplier content may not be modified or distributed for any public commercial purpose.",
+   "effect_on_user_projects": "Not usable in packs.",
+   "formats": [
+    "SolidWorks native, STEP, IGES, etc."
+   ],
+   "approx_size": "unknown",
+   "categories_covered": [
+    "supplier catalogues and user uploads"
+   ],
+   "example_paths": [],
+   "reachable_from_container": false,
+   "notes": "Excluded."
+  }
+ ],
+ "procedural_generation_assessment": "These families are better generated in-app from standard dimension tables. The approach is pure TypeScript in src/core (three math only), output as normalized GLB, content-addressed by hashing (family + params), with analytic anchors and mass. Benefits: zero download, exact anchor frames (bore axes, seating faces, thread axes), analytic volume and centroid for gravity loads, tiny .stvd assets, and no third-party license on the geometry. Most shapes need only lathe and extrude primitives (THREE.LatheGeometry, ExtrudeGeometry with holes); no B-rep kernel is needed. If booleans are required (cross holes, keyways), manifold-3d (npm 3.5.4, Apache-2.0, about 2.8 MB unpacked WASM) or three-bvh-csg (MIT) are permissive options. Do not port GPL code (NopSCADlib, BOLTS, KiCad generators). Porting bd_warehouse/cq_warehouse logic and CSVs is fine with an Apache-2.0 NOTICE. Effort is for one developer, including tests (my estimate, medium confidence):\n(1) Fasteners, 4-5 days. ISO 4762 socket head, ISO 4017/4014 hex head, ISO 7380 button, ISO 10642 countersunk, ISO 4032 nuts, ISO 7089 washers, set screws, heat-set inserts, nominal lengths. Threads cosmetic by default (minor-diameter shank plus optional helical mesh). Anchors: axis, under-head seat, tip. Sample data from bd_warehouse CSVs (Apache-2.0, https://raw.githubusercontent.com/gumyr/bd_warehouse/8e9be0645b53db3d7414f74828c2d67b0da21138/src/bd_warehouse/data/socket_head_cap_parameters.csv): ISO 4762 M3 dk 5.68 / k 3 / s 2.5; ISO 4032 M3 m 2.4 / s 5.5; ISO 7089 M3 3.2/7/0.55.\n(2) Bearings, 1-2 days. Deep-groove inner and outer rings plus ball ring, from ISO 15 boundary dimensions. Example from the bd_warehouse table: 608 = 8x22x7 mm, 0.012 kg. Anchors: bore axis, outer seat, faces. The revolute mate comes for free.\n(3) Shafts, keys, D-flats, standoffs and spacers, about 1 day. DIN 6885 keys via bd_warehouse shaft_key_parameters.csv; trivially parametric.\n(4) Spur gears and racks, 3-4 days. Involute from module m, tooth count z and 20 degree pressure angle (ISO 53 rack, ISO 54 module series). Pitch diameter d = m*z is textbook geometry. Anchors at the axis and pitch circle give gear-mate ratios for the mechanical domain (tau/omega). Reference algorithms: bd_warehouse gear.py and cq_gears (both Apache-2.0).\n(5) Pulleys and belts, about 2 days. GT2 has 2 mm pitch, pitch diameter = z*2/pi. The exact Gates tooth profile is proprietary and unknown here, so use an approximate tooth (fine for visuals and kinematics). Plain and V pulleys are trivial.\n(6) Springs, about 1 day. Helical compression and extension sweeps from wire d, mean D, free length L0 and active coils n. Stiffness k = G*d^4/(8*D^3*n) (standard textbook, e.g. Shigley) feeds the mechanical F/v block directly.\n(7) Aluminium extrusions, about 2 days. 2020/3030/4040 T-slot and V-slot as a 2D profile extruded to length. No single ISO standard exists and profiles are vendor-specific (Misumi, Bosch Rexroth, OpenBuilds). Slot dimensions must come from a vendor datasheet; I could not verify them here. Model a generic profile, and treat OpenBuilds' own license as unknown and unverified.\n(8) Pin headers and sockets, about 0.5 day. KiCad Connector_PinHeader_2.54mm alone is 278 STEP files / 306.6 MB (1x40 = 1.46 MB), yet the 1x04 model tessellates to 292 triangles. Procedural (rows, count, pitch 2.54/2.00/1.27, straight or right-angle) is far cheaper, and every pin gets an electrical port anchor.\n(9) Simple cells and envelopes, about 1 day. An 18650 cell is an 18 mm x 65 mm cylinder by its designation. Blank PCB slabs with hole patterns and an LED or resistor body could also be procedural, but KiCad already covers those well.\nTotal: about 15-20 developer-days for families 1-9, plus about 2 days for the library UI. Everything else (shaped electronics, connectors, relays, modules, boards, motors) should come from downloadable packs.",
+ "recommendation": "I recommend a 3-tier library. Every tier is on-demand except the procedural tier, which needs no download at all.\n\nTIER 1, in-app procedural (Phase 14a, no download, no third-party license). Fasteners, washers, nuts, bearings, shafts, keys, spur gears and racks, pulleys, springs, extrusions, pin headers and sockets, standoffs, 18650 cells. Generate from ISO/DIN tables (cross-check against bd_warehouse CSVs, Apache-2.0) with analytic anchors and mass. See the assessment above.\n\nTIER 2, 'Electronics' packs built from KiCad Packages3D (primary source). Pin tag 10.0.7 (master 8d4070daa0, 2026-09-13). Measured: 7,252 STEP, 3.37 GB raw, gzip ratio 5.7x, so do not mirror it whole. Curate about 1,200 parts, roughly 212 MB raw STEP (about 37 MB gzipped as STEP; GLB size similar or smaller, unmeasured), split into category packs:\n- LEDs and optos\n- Passives (resistors, capacitors, diodes, pots)\n- Switches and buttons\n- Connectors (barrel jack, USB, terminal blocks, JST)\n- Relays\n- Power (TO-220, regulators, heatsinks, fuses)\n- Batteries and holders\n- Modules (Pico variants, ESP32 modules; Espressif repo has the same license)\nBuild pipeline (CI, Linux, offline at build time): STEP to GLB tessellation with occt-import-js (already in the stack), Z-up to Y-up, mm, face colours to PBR materials. Anchors come from the paired kicad-footprints pads: pad positions become electrical port anchors, the origin becomes a 'seat on PCB' planar anchor. Add density and material, plus a schematic BlockDef template: an LED gets an electrical diode model with a light output port, a resistor gets R, a relay gets a coil plus switch.\nLicense the packs CC-BY-SA-4.0 WITH KiCad-libraries-exception. Ship LICENSE.md, the CREDITS.md files and per-asset attribution. Keep the STEP header notices in glTF asset.copyright. No encryption; signed manifests are fine. Our own JSON metadata is CC0-1.0.\n\nTIER 3, 'Boards and Electromechanical' pack from permissive sources, curated item by item with recorded provenance:\n- Adafruit_CAD_Parts (MIT): NEMA-17, TT motor, micro servos, DC jack, 12 mm tactile switch, AA holders, breadboard, Metro 328 (Uno form factor).\n- FreeCAD-library (CC-BY-3.0), with per-file author attribution from git log: Arduino Nano (Nano-Rev3_0.step), ESP32 DOIT DevKit V1, NEMA17/23, 28BYJ-48. Its provenance is uploader-asserted; flag it and pin the commit.\n- Raspberry Pi official Pico STEP (permissive grant).\nFor the Arduino Uno and any board without clean provenance, the cleanest option is a simplified StudioVD-authored envelope model (PCB slab plus headers, USB and jack). Build it procedurally from published facts (dimensions, hole positions) and license it CC0.\n\nEXCLUDE as sources:\n- McMaster-Carr, TraceParts, GrabCAD and 3D ContentCentral: their terms forbid redistribution, internet posting or scraping.\n- NopSCADlib (GPL-3.0, OpenSCAD) and BOLTS (GPL-3.0/LGPL, dormant since 2022): factual reference only.\n- KiCad generator scripts (GPL): CI-only, never in the app.\n\nRequested items, best source for each:\n- 5 mm LED: KiCad LED_THT.3dshapes/LED_D5.0mm.step (+ colour and RGB variants)\n- Axial resistor: KiCad Resistor_THT.3dshapes/R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal.step\n- Tactile button: KiCad Button_Switch_THT.3dshapes/SW_PUSH_6mm.step\n- 18650 holder: KiCad Battery.3dshapes/BatteryHolder_Keystone_1042_1x18650.step or BatteryHolder_MPD_BH-18650-PC2.step (the cell itself is procedural)\n- Arduino Uno: no clean STEP source. FreeCAD Arduino UNO.FCStd exists (FCStd only); Adafruit Metro 328 is a stand-in; or our own envelope model.\n- Arduino Nano: FreeCAD Computing/SingleBoardComputers/Arduino/Nano-Rev3_0.step (provenance caveat)\n- ESP32 DevKit: FreeCAD Computing/SingleBoardComputers/ESP32/ESP32_DOIT_DevKit_v1/ESP32_DOIT_DevKit_V1.step, or KiCad RF_Module.3dshapes/ESP32-WROOM-32.step plus a procedural PCB\n- Raspberry Pi Pico: KiCad Module.3dshapes/RaspberryPi_Pico.step\n- 2.54 mm headers: procedural, or KiCad Connector_PinHeader_2.54mm.3dshapes/PinHeader_1xNN_P2.54mm_Vertical.step\n- DC barrel jack: KiCad Connector_BarrelJack.3dshapes/BarrelJack_Horizontal.step\n- Screw terminals: KiCad TerminalBlock_Phoenix.3dshapes/TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal.step\n- Relay: KiCad Relay_THT.3dshapes/Relay_SPDT_SANYOU_SRD_Series_Form_C.step\n- TO-220 regulator: KiCad Package_TO_SOT_THT.3dshapes/TO-220-3_Vertical.step\n\nApp-side requirements implied by the licenses:\n1. Add license, attribution, source URL and upstream commit fields to every GeometryAsset in scene.json.\n2. Auto-write LICENSES/ and ATTRIBUTION.txt into every .stvd that embeds library assets. CC-BY needs attribution to travel; for CC-BY-SA, the KiCad exception covers designs but not models extracted from them.\n3. Packs download only on explicit user action (offline-first stays intact), verify sha256 and a signature, and are cached in the app data dir.\n4. Host packs as GitHub Release assets on bmisho/StudioVD or a separate bmisho/studiovd-library repo, since BY-SA allows public re-hosting.\n5. Decide StudioVD's own app license (the repo has no LICENSE yet). None of the recommended sources constrain it, as long as GPL code is not ported in.\n\nUnverified items to check on a normal network (this sandbox blocked them): the exact McMaster, GrabCAD, TraceParts and 3DCC terms pages, the Raspberry Pi licence page and STEP filename, and the FreeCAD-library total size.\n\nScratch data is in scratch:/: dl/kicad3d/all_sizes.json, dl/kicad3d/sizes_by_folder.txt, and the license copies."
+}

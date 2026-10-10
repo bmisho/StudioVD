@@ -28,14 +28,21 @@ export const ComponentDefSnapshotSchema = z
     version: z.string().max(64),
     manifestSha256: z.string().regex(/^[0-9a-f]{64}$/),
     origin: z.enum(["official", "user", "sideloaded", "project"]),
-    /**
-     * Phase 2 placeholder. Phase 9 replaces this with the strict component.json schema; until
-     * then no code path creates snapshots, so nothing unvalidated can enter a document.
-     */
+    /** Placeholder: Phase 9 replaces this with the strict component.json schema. */
     manifest: z.unknown(),
   })
   .strict()
 export type ComponentDefSnapshot = z.infer<typeof ComponentDefSnapshotSchema>
+
+/**
+ * Component definitions in a project. Must be empty until Phase 9 defines the manifest
+ * schema: an opened .stvd is untrusted (CLAUDE.md §9), so no unvalidated manifest gets in.
+ */
+export const ComponentDefsSchema = z
+  .record(ComponentDefKeySchema, ComponentDefSnapshotSchema)
+  .refine((defs) => Object.keys(defs).length === 0, {
+    message: "Library components are not supported before Phase 9",
+  })
 
 /** Which project entities an inserted component created, keyed by the manifest's local keys. */
 export const ComponentInstanceSchema = z

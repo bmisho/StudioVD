@@ -34,7 +34,7 @@ export class PanelErrorBoundary extends Component<Props, State> {
     return (
       <div
         role="alert"
-        className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center"
+        className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center select-text"
       >
         <CircleAlert className="size-5 text-destructive" aria-hidden />
         <p className="font-medium">{this.props.panelName} stopped working</p>

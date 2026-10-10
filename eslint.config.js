@@ -1,30 +1,54 @@
 // ESLint flat config. Several CLAUDE.md rules are enforced here mechanically:
-// §3 file size, named exports, no `any`/eval, Tauri imports only via src/lib/tauri,
-// and src/core purity (no React/R3F/Tauri/app layers; src/core/sim also no three.js).
+// §3 file size, named exports, no `any`/eval, Tauri only via src/lib/tauri, and src/core
+// purity (no React/R3F/DOM/Tauri/app layers; src/core/sim also no three.js). These checks
+// catch mistakes; they are not a sandbox, and review still applies.
 import js from "@eslint/js"
 import prettier from "eslint-config-prettier"
 import reactHooks from "eslint-plugin-react-hooks"
 import reactRefresh from "eslint-plugin-react-refresh"
+import { studiovdPlugin } from "./tools/eslint/boundaries.js"
 import { defineConfig, globalIgnores } from "eslint/config"
 import globals from "globals"
 import tseslint from "typescript-eslint"
 
-const TAURI = {
-  group: ["@tauri-apps/*"],
-  message: "Import Tauri APIs only through src/lib/tauri (CLAUDE.md §3).",
-}
-const CORE_PURITY = {
-  group: ["react", "react-dom", "react-dom/*", "@react-three/*", "@/app/*", "@/features/*"],
-  message: "src/core is pure TypeScript: no React, R3F or app layers (CLAUDE.md §3).",
-}
-const CORE_LAYERS = {
-  group: ["@/store/*", "@/components/*", "@/lib/*"],
-  message: "src/core must not depend on the store, UI or Tauri wrappers (CLAUDE.md §3).",
-}
-const NO_THREE = {
-  group: ["three", "three/*"],
-  message: "src/core/sim must not import three.js (CLAUDE.md §3).",
-}
+// Layer boundaries are checked on resolved import targets by a local rule (see its tests).
+const DEFAULT_EXPORTS = [
+  { selector: "ExportDefaultDeclaration", message: "Use named exports (CLAUDE.md §3)." },
+  {
+    selector: "ExportSpecifier[exported.name='default']",
+    message: "Use named exports (CLAUDE.md §3).",
+  },
+]
+const TAURI_GLOBALS = ["__TAURI__", "__TAURI_INTERNALS__"].map((name) => ({
+  name,
+  message: "Use the typed wrappers in src/lib/tauri (CLAUDE.md §3).",
+}))
+const TAURI_PROPERTIES = ["window", "globalThis"].flatMap((object) =>
+  TAURI_GLOBALS.map(({ name, message }) => ({ object, property: name, message }))
+)
+// src/core runs in workers and Node tests: no DOM or browser globals (CLAUDE.md §3).
+const DOM_GLOBALS = [
+  "window",
+  "document",
+  "navigator",
+  "location",
+  "localStorage",
+  "sessionStorage",
+  "indexedDB",
+  "fetch",
+  "XMLHttpRequest",
+  "WebSocket",
+  "requestAnimationFrame",
+  "HTMLElement",
+  "Element",
+  "Node",
+  "Event",
+].map((name) => ({ name, message: "src/core must not use DOM/browser APIs (CLAUDE.md §3)." }))
+const DOM_PROPERTIES = ["document", "window", "navigator", "location"].map((property) => ({
+  object: "globalThis",
+  property,
+  message: "src/core must not use DOM/browser APIs (CLAUDE.md §3).",
+}))
 
 export default defineConfig([
   globalIgnores([
@@ -47,7 +71,7 @@ export default defineConfig([
         tsconfigRootDir: import.meta.dirname,
       },
     },
-    plugins: { "react-hooks": reactHooks, "react-refresh": reactRefresh },
+    plugins: { "react-hooks": reactHooks, "react-refresh": reactRefresh, studiovd: studiovdPlugin },
     rules: {
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
@@ -57,28 +81,27 @@ export default defineConfig([
       "no-eval": "error",
       "no-implied-eval": "error",
       "no-new-func": "error",
-      "no-restricted-imports": ["error", { patterns: [TAURI] }],
-      "no-restricted-syntax": [
-        "error",
-        { selector: "ExportDefaultDeclaration", message: "Use named exports (CLAUDE.md §3)." },
-      ],
+      "studiovd/boundaries": "error",
+      "no-restricted-globals": ["error", ...TAURI_GLOBALS],
+      "no-restricted-properties": ["error", ...TAURI_PROPERTIES],
+      "no-restricted-syntax": ["error", ...DEFAULT_EXPORTS],
       "max-lines": ["error", { max: 200, skipBlankLines: true, skipComments: true }],
     },
   },
   {
     files: ["src/lib/tauri/**/*.{ts,tsx}"],
-    rules: { "no-restricted-imports": "off" },
+    rules: { "no-restricted-globals": "off", "no-restricted-properties": "off" },
   },
   {
-    files: ["src/core/**/*.ts"],
+    files: ["src/core/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-imports": ["error", { patterns: [TAURI, CORE_PURITY, CORE_LAYERS] }],
-    },
-  },
-  {
-    files: ["src/core/sim/**/*.ts"],
-    rules: {
-      "no-restricted-imports": ["error", { patterns: [TAURI, CORE_PURITY, CORE_LAYERS, NO_THREE] }],
+      "no-restricted-globals": ["error", ...TAURI_GLOBALS, ...DOM_GLOBALS],
+      "no-restricted-properties": ["error", ...TAURI_PROPERTIES, ...DOM_PROPERTIES],
+      "no-restricted-syntax": [
+        "error",
+        ...DEFAULT_EXPORTS,
+        { selector: "JSXElement, JSXFragment", message: "src/core must not contain JSX." },
+      ],
     },
   },
   {
@@ -90,7 +113,6 @@ export default defineConfig([
     files: ["**/*.test.{ts,tsx}", "src/test/**/*.{ts,tsx}", "tests/e2e/**/*.ts"],
     rules: {
       "max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
-      "no-restricted-imports": "off",
     },
   },
   {

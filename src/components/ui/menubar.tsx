@@ -40,7 +40,7 @@ function MenubarTrigger({
     <MenubarPrimitive.Trigger
       data-slot="menubar-trigger"
       className={cn(
-        "flex items-center rounded-sm px-2 py-1 text-sm font-medium outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
+        "flex items-center rounded-sm px-2 py-1 text-sm font-medium outline-hidden select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
         className
       )}
       {...props}
@@ -179,7 +179,10 @@ function MenubarShortcut({ className, ...props }: React.ComponentProps<"span">) 
   return (
     <span
       data-slot="menubar-shortcut"
-      className={cn("ml-auto text-xs tracking-widest text-muted-foreground", className)}
+      className={cn(
+        "ml-auto text-xs tracking-widest text-muted-foreground in-data-highlighted:text-accent-foreground",
+        className
+      )}
       {...props}
     />
   )

@@ -521,8 +521,9 @@ State
 - [x] 2.8 Branded ID types (incl. `ComponentInstanceId`, `ComponentDefKey`, `CouplingId`) +
   entity types in `src/core/schema` (zod, v1 draft)
 - [x] 2.9 Zustand store: `document` slices (project, scene, assembly, schematic, bindings,
-  components) with `immer` + `zundo`; `session` slices (selection, tool, view, test mode,
-  sim results, library jobs)
+  components) with `immer` + `zundo`; `session` slices (selection, tool, view, layout, test
+  mode, sim status, dialog). The keyed sim-results map arrives with the solver (Phase 12) and
+  library jobs with the downloader (Phase 14); nothing produces them before that
 - [x] 2.10 Undo/redo with gesture batching (pause/resume API); unit tests
 - [x] 2.11 `src/lib/tauri/` wrapper layer (stubbed commands: new/open/save/import)
 
@@ -530,8 +531,10 @@ Shell
 - [x] 2.12 Menu bar: File (New, Open, Save, Save As, Import…, Export ▸ GLB/STL, Exit), Edit
   (Undo, Redo, Delete), View (Perspective/Ortho, Split horizontal/vertical, toggle panels), Help
 - [x] 2.13 Toolbar: Select · Place Anchor · Mate · Test mode toggle · projection toggle
-- [x] 2.14 Left sidebar tabs: Scene graph (tree from store: parts, mates) · Library (placeholder
-  with sources: Installed, My components, Generators, Online catalog, Schematic primitives)
+  (WAI-ARIA toolbar: one tab stop, arrow keys; unbuilt tools say which phase delivers them)
+- [x] 2.14 Left sidebar tabs: Scene graph (tree from store: groups and parts; mates join in
+  Phase 8; keyboard-operable WAI-ARIA tree) · Library (placeholder with sources: Installed,
+  My components, Generators, Online catalog, Schematic primitives)
 - [x] 2.15 Right sidebar: Properties for current selection (placeholder inspectors)
 - [x] 2.16 Centre: resizable split 3D | Schematic (placeholders), orientation toggle, maximize a pane
 - [x] 2.17 Status bar: selection count, units, mode, sim status
@@ -602,7 +605,12 @@ Exit criteria
 ## Phase 5: Project bundle save/load
 
 - [ ] 5.1 Final `scene.json` v1 zod schema (incl. library fields from §1.3) + migration
-  framework (`vN → vN+1` functions) + tests
+  framework (`vN → vN+1` functions) + tests. Integrity checks before a file reaches the store
+  (an opened `.stvd` is untrusted): every record key equals its entity's `id`; IDs unique
+  across kinds; all references resolve (parents, materials, assets, anchors, mates, nodes);
+  no group parent cycles; asset ids match their paths; collection-size caps; keys
+  `__proto__`/`constructor`/`prototype` refused before parsing (zod records drop
+  `__proto__` silently)
 - [ ] 5.2 Rust `bundle`: zip write (deflate JSON/GLB, store PNG/JPG), atomic temp+rename,
   extract into workspace. The zip guard is a generic module (limits and allowlist as
   parameters, symlink rejection, counted bytes, reserved names) reused by library packs
@@ -821,7 +829,8 @@ Exit criteria
   fetches them on Chromium/WebView2, and `'self'` never matches `blob:`. E2E test: a textured
   GLB renders under the release CSP
 - [ ] 15.2 Capability audit (least privilege): app commands restricted via the build-time app
-  manifest, library commands for the main window only, narrow asset-protocol scopes
+  manifest, library commands for the main window only, narrow asset-protocol scopes,
+  `core:default` replaced by the individual core permissions the UI actually uses
 - [ ] 15.3 Performance pass on a 200-part reference assembly (load time, orbit fps, test-mode fps)
 - [ ] 15.4 Undo/redo coverage audit, context menus, shortcut help overlay
 - [ ] 15.5 Logging (`tauri-plugin-log`), crash reporting to local log file

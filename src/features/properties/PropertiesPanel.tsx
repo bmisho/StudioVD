@@ -1,31 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { GroupProperties } from "./GroupProperties"
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between gap-2 text-xs">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="truncate tabular-nums">{value}</span>
-    </div>
-  )
-}
-
-function ProjectProperties() {
-  const name = useDocumentStore((s) => s.doc.project.name)
-  const groupCount = useDocumentStore((s) => Object.keys(s.doc.groups).length)
-  const partCount = useDocumentStore((s) => Object.keys(s.doc.parts).length)
-  return (
-    <div className="flex flex-col gap-1.5">
-      <h3 className="text-xs font-semibold">Project</h3>
-      <Field label="Name" value={name} />
-      <Field label="Units" value="mm" />
-      <Field label="Groups" value={String(groupCount)} />
-      <Field label="Parts" value={String(partCount)} />
-    </div>
-  )
-}
+import { ProjectProperties } from "./ProjectProperties"
 
 export function PropertiesPanel() {
   const selection = useSessionStore((s) => s.selection)
@@ -38,7 +14,8 @@ export function PropertiesPanel() {
 
   return (
     <ScrollArea className="h-full">
-      <div className="p-3">{content}</div>
+      {/* Inspector values are selectable so they can be copied into bug reports. */}
+      <div className="p-3 select-text">{content}</div>
     </ScrollArea>
   )
 }

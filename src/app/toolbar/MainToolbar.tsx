@@ -11,14 +11,14 @@ import {
   Square,
   Undo2,
 } from "lucide-react"
+import { Toolbar } from "radix-ui"
 import { useStore } from "zustand"
-import { Separator } from "@/components/ui/separator"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { ToolbarButton } from "./ToolbarButton"
 
 function ToolbarDivider() {
-  return <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-5" />
+  return <Toolbar.Separator className="mx-1 h-5 w-px shrink-0 bg-border" />
 }
 
 export function MainToolbar() {
@@ -30,9 +30,10 @@ export function MainToolbar() {
   const canRedo = useStore(useDocumentStore.temporal, (s) => s.futureStates.length > 0)
 
   return (
-    <div
-      role="toolbar"
+    // Radix Toolbar: one tab stop, arrow keys / Home / End move between buttons.
+    <Toolbar.Root
       aria-label="Main toolbar"
+      loop={false}
       className="flex h-9 shrink-0 items-center gap-0.5 border-b bg-surface px-2"
     >
       <ToolbarButton command="edit.undo" icon={Undo2} disabled={!canUndo} />
@@ -52,6 +53,6 @@ export function MainToolbar() {
       />
       <div className="flex-1" />
       <ToolbarButton command="test.toggle" icon={testMode ? Square : Play} pressed={testMode} />
-    </div>
+    </Toolbar.Root>
   )
 }

@@ -2,7 +2,13 @@ import { temporal } from "zundo"
 import { create } from "zustand"
 import { immer } from "zustand/middleware/immer"
 import { APP_VERSION } from "@/core/app-info"
-import { createEmptyDocument, newId, type GroupId, type SceneDocument } from "@/core/schema"
+import {
+  createEmptyDocument,
+  NameSchema,
+  newId,
+  type GroupId,
+  type SceneDocument,
+} from "@/core/schema"
 
 /** Maximum undo depth. Snapshots share structure (immer), so each costs only what changed. */
 export const HISTORY_LIMIT = 200
@@ -12,7 +18,9 @@ export interface DocumentState {
   doc: SceneDocument
   /** Replaces the whole document (open, new). The caller decides whether to clear history. */
   replaceDocument: (doc: SceneDocument) => void
+  /** Creates a group. An unknown parent (e.g. undone meanwhile) falls back to the root. */
   createGroup: (name: string, parentId?: GroupId | null) => GroupId
+  /** Renames a group; names the schema would reject (empty, too long) are ignored. */
   renameGroup: (id: GroupId, name: string) => void
   /** Deletes groups; their children move up to the deleted group's parent. */
   deleteGroups: (ids: readonly GroupId[]) => void
@@ -30,18 +38,24 @@ export function createDocumentStore(initial?: SceneDocument) {
         replaceDocument: (doc) => set({ doc }),
 
         createGroup: (name, parentId = null) => {
+          // Store actions must never produce a document the schema rejects (scene.json is the
+          // contract). A bad name here is a programming error, not user input.
+          const valid = NameSchema.parse(name)
           const id = newId<GroupId>()
           set((s) => {
-            s.doc.groups[id] = { id, name, parentId }
+            const parent =
+              parentId !== null && Object.hasOwn(s.doc.groups, parentId) ? parentId : null
+            s.doc.groups[id] = { id, name: valid, parentId: parent }
           })
           return id
         },
 
         renameGroup: (id, name) => {
-          const trimmed = name.trim()
+          const parsed = NameSchema.safeParse(name)
+          if (!parsed.success) return
           set((s) => {
-            const group = s.doc.groups[id]
-            if (group && trimmed.length > 0 && group.name !== trimmed) group.name = trimmed
+            const group = Object.hasOwn(s.doc.groups, id) ? s.doc.groups[id] : undefined
+            if (group && group.name !== parsed.data) group.name = parsed.data
           })
         },
 

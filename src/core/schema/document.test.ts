@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { createEmptyDocument, parseDocument, type SceneDocument } from "./document"
 import { newId, type GroupId, type PartId } from "./ids"
+import { AssetLicenseSchema } from "./scene"
 
 const valid = (): SceneDocument => createEmptyDocument("0.1.0")
 
@@ -61,6 +62,30 @@ describe("scene.json v1 schema", () => {
     const id = newId<GroupId>()
     doc.groups[id] = { id, name: "   ", parentId: null }
     expect(parseDocument(doc).ok).toBe(false)
+  })
+
+  it("rejects component definitions until the Phase 9 manifest schema exists", () => {
+    const key = "std/m3@1.0.0#0123456789ab"
+    const def = { key, id: "std/m3", version: "1.0.0", manifestSha256: "a".repeat(64) }
+    const doc = {
+      ...valid(),
+      componentDefs: { [key]: { ...def, origin: "official", manifest: {} } },
+    }
+    expect(parseDocument(doc).ok).toBe(false)
+  })
+
+  it("accepts only https source URLs in licence metadata", () => {
+    const license = (sourceUrl: string) =>
+      AssetLicenseSchema.safeParse({ spdx: "CC0-1.0", creators: [], sourceUrl }).success
+    expect(license("https://github.com/org/repo")).toBe(true)
+    for (const url of [
+      "javascript:alert(1)",
+      "data:text/html,x",
+      "file:///etc/passwd",
+      "http://x.org",
+    ]) {
+      expect(license(url)).toBe(false)
+    }
   })
 
   it("never throws on garbage input", () => {

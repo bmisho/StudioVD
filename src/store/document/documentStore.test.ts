@@ -48,3 +48,21 @@ describe("document store", () => {
     expect(store.getState().doc.groups[id]?.name).toBe("Frame")
   })
 })
+
+describe("document store contract with scene.json", () => {
+  it("never writes a name the schema rejects", () => {
+    const store = createDocumentStore()
+    const id = store.getState().createGroup("Frame")
+    store.getState().renameGroup(id, "x".repeat(121))
+    expect(store.getState().doc.groups[id]?.name).toBe("Frame")
+    expect(() => store.getState().createGroup("   ")).toThrow()
+  })
+
+  it("puts a group whose parent no longer exists at the root", () => {
+    const store = createDocumentStore()
+    const id = store.getState().createGroup("Child", "gone" as GroupId)
+    expect(store.getState().doc.groups[id]?.parentId).toBeNull()
+    const proto = store.getState().createGroup("Child 2", "constructor" as GroupId)
+    expect(store.getState().doc.groups[proto]?.parentId).toBeNull()
+  })
+})

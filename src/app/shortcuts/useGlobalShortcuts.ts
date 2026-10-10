@@ -27,6 +27,7 @@ export function buildShortcutMap(registry: CommandRegistry): Map<string, Command
  *   Ctrl+Z / Delete / Escape keep their local meaning (text editing, closing the overlay).
  * - Escape on a menu-bar trigger only leaves the menu bar (as on Windows); it must not also
  *   clear the selection. Every other shortcut works from the menu bar.
+ * - Auto-repeat only re-runs commands marked `repeatable`.
  */
 export function useGlobalShortcuts(registry: CommandRegistry): void {
   useEffect(() => {
@@ -46,6 +47,8 @@ export function useGlobalShortcuts(registry: CommandRegistry): void {
       if (local && !command.allowInTextInput) return
       // Swallow the browser default (Ctrl+S "save page", Ctrl+O, …) even when disabled.
       event.preventDefault()
+      // A held key auto-repeats: fine for undo/redo, not for "new group" or "save".
+      if (event.repeat && !command.repeatable) return
       registry.run(command.id)
     }
     window.addEventListener("keydown", onKeyDown)

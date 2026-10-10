@@ -30,6 +30,8 @@ export interface SessionState {
   dialog: DialogId | null
 
   select: (items: SelectionItem[]) => void
+  /** Ctrl+click / Ctrl+Space: adds the item to the selection or removes it. */
+  toggleSelected: (item: SelectionItem) => void
   clearSelection: () => void
   setTool: (tool: Tool) => void
   toggleProjection: () => void
@@ -38,6 +40,8 @@ export interface SessionState {
   toggleMaximize: (pane: Pane) => void
   toggleLeftPanel: () => void
   toggleRightPanel: () => void
+  /** Syncs state when the user collapses or re-opens a sidebar by dragging its edge. */
+  setPanelOpen: (side: "left" | "right", open: boolean) => void
   toggleTestMode: () => void
   openDialog: (dialog: DialogId) => void
   closeDialog: () => void
@@ -61,6 +65,15 @@ export function createSessionStore() {
     ...initialSessionState,
 
     select: (items) => set({ selection: items }),
+    toggleSelected: (item) =>
+      set((s) => {
+        const present = s.selection.some((i) => i.kind === item.kind && i.id === item.id)
+        return {
+          selection: present
+            ? s.selection.filter((i) => !(i.kind === item.kind && i.id === item.id))
+            : [...s.selection, item],
+        }
+      }),
     clearSelection: () => set({ selection: [] }),
     setTool: (tool) => set({ activeTool: tool }),
     toggleProjection: () =>
@@ -75,6 +88,8 @@ export function createSessionStore() {
       set((s) => ({ maximizedPane: s.maximizedPane === pane ? null : pane })),
     toggleLeftPanel: () => set((s) => ({ leftPanelOpen: !s.leftPanelOpen })),
     toggleRightPanel: () => set((s) => ({ rightPanelOpen: !s.rightPanelOpen })),
+    setPanelOpen: (side, open) =>
+      set(side === "left" ? { leftPanelOpen: open } : { rightPanelOpen: open }),
     toggleTestMode: () => set((s) => ({ testMode: !s.testMode })),
     openDialog: (dialog) => set({ dialog }),
     closeDialog: () => set({ dialog: null }),

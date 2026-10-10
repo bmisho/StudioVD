@@ -72,14 +72,18 @@ docs/research/    Research behind PLAN.md decisions (not shipped; values need re
 
 - **File size: max ~200 lines per file** (components, hooks, and modules alike). Over that,
   split it. Generated shadcn files are exempt.
-- One React component per file. Named exports only (no default exports, except where a
-  tool requires one).
+- One exported React component per file. A small private presentational helper used only in
+  that file (a table row, a divider) may sit beside it; anything with state, effects or logic
+  gets its own file. Named exports only (no default exports, except where a tool requires one).
 - Components render; they do not own business logic. Logic goes in `core/` (pure, unit
   tested) or in store actions.
 - `src/core/**` must not import React, R3F, drei, DOM APIs, or `@tauri-apps/*`.
   `src/core/sim/**` must not import three.js either.
 - **Never import `@tauri-apps/api` or plugins outside `src/lib/tauri/`.** This keeps the
   UI runnable in a plain browser for E2E tests with mocked IPC.
+- These boundaries are linted on the *resolved* import target (relative paths, dynamic
+  `import()`, re-exports) by `tools/eslint/boundaries.js`, plus restricted DOM/Tauri globals
+  and no JSX in `src/core`. Lint catches mistakes; it is not a sandbox.
 - No `any` (use `unknown` + narrowing). No non-null assertions without a comment saying why.
 - No `eval`, `new Function`, or string-to-code. User-defined block behaviour uses a sandboxed
   expression parser.
@@ -101,8 +105,14 @@ Three kinds of state. Do not mix them.
 
 Further rules:
 - Subscribe with narrow selectors (`useStore(s => s.parts[id])`, `useShallow` for objects).
-- Continuous gestures (gizmo drags, node drags, slider scrubs) must produce **one** undo
-  entry: pause history tracking on start, resume on end.
+- Continuous gestures (gizmo drags, node drags, slider scrubs, typing in an inspector) must
+  produce **one** undo entry: `documentHistory.beginGesture()` on start returns a token, and
+  only that token can end or cancel the gesture. An unchanged document adds no entry.
+- Session state that points into the document (selection) is pruned when the document
+  changes (undo, redo, delete, open), so commands never act on entities that no longer exist.
+- Never use a React `key` to force-remount layout containers (panels, the 3D canvas, the
+  schematic). A remount destroys the WebGL context and every GPU resource, and resets panel
+  sizes and tabs. Show/hide through the panel API (collapse/expand) plus `inert`.
 - Never put geometry buffers, textures, or three.js objects in the store. Store asset IDs.
 - Simulation results live in the session store keyed by node/port ID, not inside React Flow
   node `data` (that would re-render the whole graph on every solve).
@@ -177,6 +187,15 @@ Keyboard: all shortcuts go through the command registry (`src/app/commands`). In
 open menus/dialogs only commands marked `allowInTextInput` fire; Escape on the menu bar only
 releases focus. Never add a raw `keydown` listener for an app shortcut.
 
+Composite widgets (tree, toolbar, tabs, menus) follow their WAI-ARIA pattern: one tab stop
+(roving tabindex) and arrow keys inside. The widget handles and `preventDefault`s only its own
+keys (arrows, Home/End, Space/Enter); everything else (Delete, Escape, Ctrl+...) bubbles to the
+registry. Disabled toolbar items use `aria-disabled`, not `disabled`, so they stay focusable
+and the tooltip can say why. Dialogs return focus to whatever opened them.
+
+Focus rings use the full `ring` token, never an opacity variant (`ring-ring/50` falls below
+3:1). Sky-600 is 4.10:1 on white, 3.91:1 on `surface` and 3.57:1 on `accent`.
+
 UI density: this is a desktop tool. Use compact sizes (`text-xs`/`text-sm`, 28-32 px
 controls), `tabular-nums` for numeric readouts, Inter (bundled locally) for UI text.
 No hard-coded hex values in components; use Tailwind theme tokens.
@@ -207,6 +226,8 @@ Testing notes:
 - shadcn/ui: components in `src/components/ui/` come from `shadcn-ui/ui@e94cebe`
   (`apps/v4/registry/new-york-v4/ui`), with `cn`/registry imports rewritten to `@/lib/utils`
   and `@/components/ui`. Add more with `npx shadcn@latest add <name>` on a normal network.
+  Local edits to keep when re-adding a component: full-opacity `ring-2` focus rings, the
+  menubar trigger focus ring, and menu shortcuts in `accent-foreground` on highlighted items.
 
 Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev`.
 

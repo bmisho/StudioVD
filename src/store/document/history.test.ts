@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest"
+import { APP_VERSION } from "@/core/app-info"
+import { createEmptyDocument } from "@/core/schema"
 import { createDocumentStore, HISTORY_LIMIT } from "./documentStore"
 import { createHistory } from "./history"
 
@@ -7,7 +9,8 @@ function setup() {
   const history = createHistory(store)
   const id = store.getState().createGroup("Frame")
   history.clear()
-  return { store, history, id, name: () => store.getState().doc.groups[id]?.name }
+  const past = () => store.temporal.getState().pastStates.length
+  return { store, history, id, past, name: () => store.getState().doc.groups[id]?.name }
 }
 
 describe("history", () => {
@@ -23,29 +26,31 @@ describe("history", () => {
   })
 
   it("collapses a gesture into exactly one undo entry", () => {
-    const { store, history, id, name } = setup()
-    history.beginGesture()
+    const { store, history, id, name, past } = setup()
+    const token = history.beginGesture()
     for (const n of ["F", "Fr", "Fra", "Fram", "Frame 2"]) store.getState().renameGroup(id, n)
-    history.endGesture()
-    expect(store.temporal.getState().pastStates).toHaveLength(1)
+    history.endGesture(token)
+    expect(past()).toBe(1)
     history.undo()
     expect(name()).toBe("Frame")
     history.redo()
     expect(name()).toBe("Frame 2")
   })
 
-  it("adds nothing when a gesture changes nothing", () => {
-    const { history } = setup()
-    history.beginGesture()
-    history.endGesture()
-    expect(history.canUndo()).toBe(false)
+  it("adds nothing when a gesture ends where it started, even via other values", () => {
+    const { store, history, id, past } = setup()
+    const token = history.beginGesture()
+    store.getState().renameGroup(id, "Typo")
+    store.getState().renameGroup(id, "Frame") // typed back: structurally unchanged
+    history.endGesture(token)
+    expect(past()).toBe(0)
   })
 
   it("restores the start state when a gesture is cancelled", () => {
     const { store, history, id, name } = setup()
-    history.beginGesture()
+    const token = history.beginGesture()
     store.getState().renameGroup(id, "Typo")
-    history.cancelGesture()
+    history.cancelGesture(token)
     expect(name()).toBe("Frame")
     expect(history.canUndo()).toBe(false)
     expect(history.isInGesture()).toBe(false)
@@ -56,41 +61,71 @@ describe("history", () => {
     store.getState().renameGroup(id, "A")
     history.undo()
     expect(history.canRedo()).toBe(true)
-    history.beginGesture()
+    const token = history.beginGesture()
     store.getState().renameGroup(id, "B")
-    history.endGesture()
+    history.endGesture(token)
     expect(history.canRedo()).toBe(false)
   })
 
-  it("ignores nested begins and blocks undo/redo during a gesture", () => {
+  it("refuses a second gesture and blocks undo/redo during one", () => {
     const { store, history, id, name } = setup()
     store.getState().renameGroup(id, "A")
-    history.beginGesture()
-    history.beginGesture()
+    const token = history.beginGesture()
+    expect(history.beginGesture()).toBeNull()
     store.getState().renameGroup(id, "B")
     history.undo() // must not fire mid-gesture
     expect(name()).toBe("B")
-    history.endGesture()
-    expect(history.isInGesture()).toBe(false)
+    history.endGesture(token)
     history.undo()
     expect(name()).toBe("A")
   })
 
-  it("keeps tracking normally after a gesture", () => {
-    const { store, history, id } = setup()
-    history.beginGesture()
+  it("only lets the owner end or cancel a gesture", () => {
+    const { store, history, id, name, past } = setup()
+    const token = history.beginGesture()
     store.getState().renameGroup(id, "B")
-    history.endGesture()
+    history.endGesture(Symbol("someone else"))
+    history.cancelGesture(null)
+    expect(history.isInGesture()).toBe(true)
+    expect(name()).toBe("B")
+    history.endGesture(token)
+    expect(past()).toBe(1)
+  })
+
+  it("abandons an open gesture on clear (New/Open) without leaking the old document", () => {
+    const { store, history, id, past } = setup()
+    const token = history.beginGesture()
+    store.getState().renameGroup(id, "Old project edit")
+    store.getState().replaceDocument(createEmptyDocument(APP_VERSION, "New project"))
+    history.clear()
+    expect(history.isInGesture()).toBe(false)
+
+    const fresh = store.getState().createGroup("Fresh")
+    expect(past()).toBe(1) // tracking resumed: the new edit is recorded
+
+    history.endGesture(token) // stale owner: must not push the old document
+    history.cancelGesture(token)
+    expect(past()).toBe(1)
+    history.undo()
+    expect(store.getState().doc.project.name).toBe("New project")
+    expect(store.getState().doc.groups[fresh]).toBeUndefined()
+  })
+
+  it("keeps tracking normally after a gesture", () => {
+    const { store, history, id, past } = setup()
+    const token = history.beginGesture()
+    store.getState().renameGroup(id, "B")
+    history.endGesture(token)
     store.getState().renameGroup(id, "C")
-    expect(store.temporal.getState().pastStates).toHaveLength(2)
+    expect(past()).toBe(2)
   })
 
   it("caps history at HISTORY_LIMIT entries, gestures included", () => {
-    const { store, history, id } = setup()
+    const { store, history, id, past } = setup()
     for (let i = 0; i < HISTORY_LIMIT + 5; i++) store.getState().renameGroup(id, `N${i}`)
-    history.beginGesture()
+    const token = history.beginGesture()
     store.getState().renameGroup(id, "last")
-    history.endGesture()
-    expect(store.temporal.getState().pastStates).toHaveLength(HISTORY_LIMIT)
+    history.endGesture(token)
+    expect(past()).toBe(HISTORY_LIMIT)
   })
 })

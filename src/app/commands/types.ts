@@ -24,6 +24,7 @@ export type CommandId =
   | "view.maximizeSchematic"
   | "view.toggleLeftPanel"
   | "view.toggleRightPanel"
+  | "view.focusMenuBar"
   | "tool.select"
   | "tool.anchor"
   | "tool.mate"
@@ -37,6 +38,8 @@ export interface Command {
   shortcuts?: readonly string[]
   /** Whether the shortcut fires while typing in a text field (e.g. Ctrl+S). */
   allowInTextInput?: boolean
+  /** Whether holding the shortcut auto-repeats the command (undo/redo). Default false. */
+  repeatable?: boolean
   run: () => void | Promise<void>
   isEnabled?: () => boolean
   /** For toggle commands rendered as checkbox items. */
@@ -61,8 +64,10 @@ export interface CommandDeps {
   history: History
   session: SessionStore
   backend: Backend
-  /** Surfaces a failed backend call to the user (toast in the app). */
-  reportError: (error: AppError) => void
+  /** Surfaces a failed backend call to the user; `action` names what failed ("Save"). */
+  reportError: (error: AppError, action: string) => void
+  /** Moves keyboard focus to the menu bar (F10, as on Windows/Linux desktops). */
+  focusMenuBar: () => void
   /** Opens a modal dialog owned by the shell. */
   openDialog: (dialog: "about") => void
 }

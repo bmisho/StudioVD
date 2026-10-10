@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog"
 import { APP_NAME, APP_VERSION } from "@/core/app-info"
 import { getAppInfo, type AppInfo } from "@/lib/tauri/commands"
+import { restoreDialogFocus } from "./focusReturn"
 import { useSessionStore } from "@/store/session/sessionStore"
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -41,7 +42,7 @@ export function AboutDialog() {
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && closeDialog()}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="select-text sm:max-w-sm" onCloseAutoFocus={restoreDialogFocus}>
         <DialogHeader>
           <DialogTitle>{APP_NAME}</DialogTitle>
           <DialogDescription>

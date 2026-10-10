@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { buildSceneTree } from "@/core/scene/sceneTree"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
-import { SceneTreeRow } from "./SceneTreeRow"
+import { SceneTree } from "./SceneTree"
 
 export function SceneGraphPanel() {
   const registry = useCommands()
@@ -23,6 +23,7 @@ export function SceneGraphPanel() {
           <Button
             variant="ghost"
             size="icon-xs"
+            className="size-7"
             aria-label="New group"
             title="New group (Ctrl+G)"
             onClick={() => registry.run("edit.newGroup")}
@@ -32,6 +33,7 @@ export function SceneGraphPanel() {
           <Button
             variant="ghost"
             size="icon-xs"
+            className="size-7"
             aria-label="Delete selected"
             title="Delete (Delete)"
             disabled={!hasGroupSelected}
@@ -48,11 +50,7 @@ export function SceneGraphPanel() {
             organise the assembly.
           </p>
         ) : (
-          <ul role="tree" aria-label="Scene graph" className="p-1">
-            {tree.map((node) => (
-              <SceneTreeRow key={node.id} node={node} level={1} />
-            ))}
-          </ul>
+          <SceneTree tree={tree} />
         )}
       </ScrollArea>
     </div>

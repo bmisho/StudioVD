@@ -27,6 +27,11 @@ describe("App shell", () => {
     expect(screen.getByRole("region", { name: "3D View" })).toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Schematic" })).toBeInTheDocument()
     expect(screen.getByRole("complementary", { name: "Properties" })).toBeInTheDocument()
+    expect(screen.getByRole("complementary", { name: "Scene and Library" })).toBeInTheDocument()
+    expect(screen.getByRole("main", { name: "Workspace" })).toBeInTheDocument()
+    // dom-testing-library also counts pane <header>s inside <section> as banners (browsers
+    // don't), so check the app header by position: it comes first.
+    expect(screen.getAllByRole("banner")[0]).toContainElement(screen.getByRole("menubar"))
     expect(screen.getByRole("contentinfo", { name: "Status bar" })).toBeInTheDocument()
   })
 
@@ -81,6 +86,17 @@ describe("App shell", () => {
     await user.click(screen.getByText("Group 1"))
     await user.keyboard("{Delete}")
     expect(groupNames()).toEqual([])
+  })
+
+  it("forgets a selection that undo removed, so Ctrl+G does not nest in a ghost", async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole("button", { name: "New group" })) // selected
+    await user.keyboard("{Control>}z{/Control}")
+    expect(screen.getByRole("contentinfo", { name: "Status bar" })).toHaveTextContent("Selected 0")
+    await user.keyboard("{Control>}g{/Control}")
+    const groups = Object.values(useDocumentStore.getState().doc.groups)
+    expect(groups.map((g) => g.parentId)).toEqual([null])
   })
 
   it("maximizes and restores the 3D view from its pane header", async () => {

@@ -14,9 +14,12 @@ export function App() {
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className="flex h-full flex-col select-none">
-        <AppMenuBar />
-        <MainToolbar />
+      {/* Chrome regions opt out of text selection; inspectors and messages stay selectable. */}
+      <div className="flex h-full flex-col">
+        <header className="shrink-0 select-none">
+          <AppMenuBar />
+          <MainToolbar />
+        </header>
         <WorkspaceLayout />
         <StatusBar />
       </div>

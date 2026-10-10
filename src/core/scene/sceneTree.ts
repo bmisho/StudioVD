@@ -13,7 +13,7 @@ export function buildSceneTree(doc: Pick<SceneDocument, "groups" | "parts">): Sc
   const groups = Object.values(doc.groups)
   const parts = Object.values(doc.parts)
   const parentOf = (parentId: GroupId | null): GroupId | null =>
-    parentId !== null && doc.groups[parentId] ? parentId : null
+    parentId !== null && Object.hasOwn(doc.groups, parentId) ? parentId : null
 
   const childGroups = new Map<GroupId | null, typeof groups>()
   for (const g of groups) {

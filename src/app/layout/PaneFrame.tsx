@@ -8,26 +8,29 @@ import { PanelErrorBoundary } from "./PanelErrorBoundary"
 interface PaneFrameProps {
   pane: Pane
   title: string
+  /** Collapsed to zero size: removed from the Tab order and accessibility tree. */
+  hidden?: boolean
   children: ReactNode
 }
 
 /** Header (title + maximize/restore) around one of the two central panes. */
-export function PaneFrame({ pane, title, children }: PaneFrameProps) {
+export function PaneFrame({ pane, title, hidden = false, children }: PaneFrameProps) {
   const maximized = useSessionStore((s) => s.maximizedPane === pane)
   const toggleMaximize = useSessionStore((s) => s.toggleMaximize)
   const Icon = maximized ? Minimize2 : Maximize2
   const action = maximized ? `Restore ${title}` : `Maximize ${title}`
 
   return (
-    <section aria-label={title} className="flex h-full min-h-0 min-w-0 flex-col">
+    <section aria-label={title} inert={hidden} className="flex h-full min-h-0 min-w-0 flex-col">
       <header
-        className="flex h-9 shrink-0 items-center justify-between border-b bg-surface pr-1.5 pl-3"
+        className="flex h-9 shrink-0 items-center justify-between border-b bg-surface pr-1 pl-3 select-none"
         onDoubleClick={() => toggleMaximize(pane)}
       >
         <h2 className="text-xs font-medium text-muted-foreground">{title}</h2>
         <Button
           variant="ghost"
           size="icon-xs"
+          className="size-7"
           aria-label={action}
           title={action}
           onClick={() => toggleMaximize(pane)}

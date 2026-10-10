@@ -3,6 +3,8 @@
 
 export interface KeyLike {
   key: string
+  /** Physical key (KeyboardEvent.code), used when `key` is a non-Latin character. */
+  code: string
   ctrlKey: boolean
   altKey: boolean
   shiftKey: boolean
@@ -40,6 +42,25 @@ function normalizeKey(key: string): string {
   return NAMED_KEYS.get(key.toLowerCase()) ?? key
 }
 
+const PHYSICAL_KEY = /^(?:Key([A-Z])|Digit([0-9]))$/
+
+/**
+ * The key a combo is bound to. Latin layouts (QWERTY, AZERTY, QWERTZ…) use the character, so
+ * AZERTY's Ctrl+Z is the key labelled Z. Non-Latin layouts (Cyrillic, Greek, Hebrew…) report
+ * characters like "я" for Ctrl+Z, so with Ctrl/Alt held we fall back to the physical key, as
+ * native Windows/Linux accelerators do.
+ */
+function bindingKey(event: KeyLike): string {
+  const key = normalizeKey(event.key)
+  const nonLatin = key.length === 1 && !/^[\x20-\x7e]$/.test(key)
+  if (nonLatin && (event.ctrlKey || event.altKey)) {
+    const match = PHYSICAL_KEY.exec(event.code)
+    const physical = match?.[1] ?? match?.[2]
+    if (physical) return physical
+  }
+  return key
+}
+
 /**
  * Converts a keyboard event into a canonical combo, or null for bare modifier presses and
  * Meta (Super/Windows key) combos, which belong to the OS on Windows and Linux.
@@ -50,7 +71,7 @@ export function comboFromEvent(event: KeyLike): string | null {
   if (event.ctrlKey) parts.push("Ctrl")
   if (event.altKey) parts.push("Alt")
   if (event.shiftKey) parts.push("Shift")
-  parts.push(normalizeKey(event.key))
+  parts.push(bindingKey(event))
   return parts.join("+")
 }
 

@@ -1,68 +1,94 @@
 import type { SceneDocument } from "@/core/schema"
+import { deepEqual } from "@/core/util/deepEqual"
 import { HISTORY_LIMIT, useDocumentStore, type DocumentStore } from "./documentStore"
+
+/** Proof of gesture ownership: only the code that began a gesture can end or cancel it. */
+export type GestureToken = symbol
 
 export interface History {
   undo: () => void
   redo: () => void
   canUndo: () => boolean
   canRedo: () => boolean
-  /** Drops all undo/redo entries (after New/Open). */
+  /**
+   * Drops all undo/redo entries and abandons any open gesture (New/Open). Without the
+   * abandon, a gesture open across a document swap would push the OLD document as an undo
+   * entry and leave tracking paused.
+   */
   clear: () => void
   /**
-   * Starts a continuous gesture (drag, slider scrub, live rename). Changes made until
-   * `endGesture` collapse into ONE undo entry (CLAUDE.md §4). Nested calls are ignored.
+   * Starts a continuous gesture (drag, slider scrub, live rename). Changes until `endGesture`
+   * collapse into ONE undo entry (CLAUDE.md §4). Returns null if another gesture is active.
    */
-  beginGesture: () => void
-  /** Commits the gesture as a single undo entry, or nothing if the document did not change. */
-  endGesture: () => void
+  beginGesture: () => GestureToken | null
+  /** Commits the gesture as one undo entry, or nothing if the document ends up unchanged. */
+  endGesture: (token: GestureToken | null) => void
   /** Aborts the gesture and restores the document as it was at `beginGesture`. */
-  cancelGesture: () => void
+  cancelGesture: (token: GestureToken | null) => void
   isInGesture: () => boolean
+}
+
+interface OpenGesture {
+  token: GestureToken
+  start: SceneDocument
 }
 
 export function createHistory(store: DocumentStore): History {
   const temporal = store.temporal
-  let gestureStart: SceneDocument | null = null
+  let gesture: OpenGesture | null = null
+
+  const close = (token: GestureToken | null): OpenGesture | null => {
+    if (gesture === null || token === null || gesture.token !== token) return null
+    const closed = gesture
+    gesture = null
+    temporal.getState().resume()
+    return closed
+  }
 
   return {
     undo: () => {
-      if (gestureStart === null) temporal.getState().undo()
+      if (gesture === null) temporal.getState().undo()
     },
     redo: () => {
-      if (gestureStart === null) temporal.getState().redo()
+      if (gesture === null) temporal.getState().redo()
     },
     canUndo: () => temporal.getState().pastStates.length > 0,
     canRedo: () => temporal.getState().futureStates.length > 0,
-    clear: () => temporal.getState().clear(),
 
-    beginGesture: () => {
-      if (gestureStart !== null) return
-      gestureStart = store.getState().doc
-      temporal.getState().pause()
+    clear: () => {
+      gesture = null
+      temporal.getState().resume()
+      temporal.getState().clear()
     },
 
-    endGesture: () => {
-      if (gestureStart === null) return
-      const start = gestureStart
-      gestureStart = null
-      temporal.getState().resume()
-      if (store.getState().doc === start) return
+    beginGesture: () => {
+      if (gesture !== null) return null
+      gesture = { token: Symbol("gesture"), start: store.getState().doc }
+      temporal.getState().pause()
+      return gesture.token
+    },
+
+    endGesture: (token) => {
+      const closed = close(token)
+      if (!closed) return
+      // Structural, not reference, equality: typing a name and then retyping the original
+      // must not leave a phantom undo step.
+      if (deepEqual(store.getState().doc, closed.start)) return
       // zundo has no public "push" API; its temporal store is a plain zustand store.
       temporal.setState((t) => ({
-        pastStates: [...t.pastStates, { doc: start }].slice(-HISTORY_LIMIT),
+        pastStates: [...t.pastStates, { doc: closed.start }].slice(-HISTORY_LIMIT),
         futureStates: [],
       }))
     },
 
-    cancelGesture: () => {
-      if (gestureStart === null) return
-      const start = gestureStart
-      gestureStart = null
+    cancelGesture: (token) => {
+      if (gesture === null || gesture.token !== token) return
+      const start = gesture.start
       store.setState({ doc: start }) // still paused: not recorded
-      temporal.getState().resume()
+      close(token)
     },
 
-    isInGesture: () => gestureStart !== null,
+    isInGesture: () => gesture !== null,
   }
 }
 

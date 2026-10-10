@@ -1,6 +1,9 @@
 import type { Command, CommandDeps } from "./types"
 
-export function viewCommands({ session, openDialog }: CommandDeps): Command[] {
+/** Not built yet: visible but disabled, with the phase that delivers it. */
+const later = (phase: number) => ({ isEnabled: () => false, availableInPhase: phase })
+
+export function viewCommands({ session, openDialog, focusMenuBar }: CommandDeps): Command[] {
   const s = () => session.getState()
   return [
     {
@@ -47,14 +50,22 @@ export function viewCommands({ session, openDialog }: CommandDeps): Command[] {
       run: () => s().toggleRightPanel(),
       isChecked: () => s().rightPanelOpen,
     },
+    {
+      id: "view.focusMenuBar",
+      label: "Focus Menu Bar",
+      shortcuts: ["F10"],
+      allowInTextInput: true,
+      run: focusMenuBar,
+    },
     { id: "tool.select", label: "Select", run: () => s().setTool("select") },
-    { id: "tool.anchor", label: "Place Anchor", run: () => s().setTool("anchor") },
-    { id: "tool.mate", label: "Mate", run: () => s().setTool("mate") },
+    { id: "tool.anchor", label: "Place Anchor", run: () => s().setTool("anchor"), ...later(7) },
+    { id: "tool.mate", label: "Mate", run: () => s().setTool("mate"), ...later(8) },
     {
       id: "test.toggle",
       label: "Test Mode",
       run: () => s().toggleTestMode(),
       isChecked: () => s().testMode,
+      ...later(3),
     },
     { id: "help.about", label: "About StudioVD", run: () => openDialog("about") },
   ]

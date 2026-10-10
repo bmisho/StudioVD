@@ -5,7 +5,6 @@ import {
   AssetIdSchema,
   BindingIdSchema,
   BlockDefIdSchema,
-  ComponentDefKeySchema,
   ComponentInstanceIdSchema,
   CouplingIdSchema,
   EdgeIdSchema,
@@ -16,7 +15,7 @@ import {
   PartIdSchema,
   TextureIdSchema,
 } from "./ids"
-import { ComponentDefSnapshotSchema, ComponentInstanceSchema, LicenseTextSchema } from "./library"
+import { ComponentDefsSchema, ComponentInstanceSchema, LicenseTextSchema } from "./library"
 import { NameSchema, Vec3Schema } from "./primitives"
 import {
   BindingSchema,
@@ -61,7 +60,7 @@ export const SceneDocumentSchema = z
       })
       .strict(),
     bindings: z.record(BindingIdSchema, BindingSchema),
-    componentDefs: z.record(ComponentDefKeySchema, ComponentDefSnapshotSchema),
+    componentDefs: ComponentDefsSchema,
     components: z.record(ComponentInstanceIdSchema, ComponentInstanceSchema),
     licenseTexts: z.record(z.string().regex(/^[0-9a-f]{64}$/), LicenseTextSchema),
     simulation: z

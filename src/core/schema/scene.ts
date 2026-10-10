@@ -14,7 +14,11 @@ export const AssetLicenseSchema = z
   .object({
     spdx: SpdxSchema,
     creators: z.array(z.string().max(200)).max(32),
-    sourceUrl: z.string().url().max(2048).optional(),
+    /** Where the asset came from. https only: the UI may render it as a link (CLAUDE.md §9). */
+    sourceUrl: z
+      .url({ protocol: /^https$/ })
+      .max(2048)
+      .optional(),
     sourceRevision: z.string().max(128).optional(),
     modifications: z.string().max(1000).optional(),
     licenseTextSha256: z

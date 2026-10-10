@@ -55,3 +55,10 @@ describe("buildSceneTree", () => {
     expect(buildSceneTree({ groups: {}, parts: {} })).toEqual([])
   })
 })
+
+describe("buildSceneTree with hostile ids", () => {
+  it("does not treat prototype keys as existing parents", () => {
+    const tree = buildSceneTree({ groups: {}, parts: { [pid("p1")]: part("p1", "constructor") } })
+    expect(tree.map((n) => n.id)).toEqual(["p1"])
+  })
+})

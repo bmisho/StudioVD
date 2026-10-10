@@ -10,6 +10,7 @@ import {
 
 const key = (k: string, mods: Partial<KeyLike> = {}): KeyLike => ({
   key: k,
+  code: "",
   ctrlKey: false,
   altKey: false,
   shiftKey: false,
@@ -28,6 +29,22 @@ describe("comboFromEvent", () => {
     expect(comboFromEvent(key("Delete"))).toBe("Delete")
     expect(comboFromEvent(key("Escape"))).toBe("Escape")
     expect(comboFromEvent(key(" "))).toBe("Space")
+  })
+
+  it("falls back to the physical key on non-Latin layouts", () => {
+    // Russian, Greek and Hebrew layouts: the physical Z key.
+    expect(comboFromEvent(key("я", { code: "KeyZ", ctrlKey: true }))).toBe("Ctrl+Z")
+    expect(comboFromEvent(key("ζ", { code: "KeyZ", ctrlKey: true }))).toBe("Ctrl+Z")
+    expect(comboFromEvent(key("ז", { code: "KeyZ", ctrlKey: true, shiftKey: true }))).toBe(
+      "Ctrl+Shift+Z"
+    )
+    // Typing a non-Latin letter without Ctrl/Alt is text, not a shortcut.
+    expect(comboFromEvent(key("я", { code: "KeyZ" }))).toBe("Я")
+  })
+
+  it("keeps the character on Latin layouts (AZERTY's Z is not the QWERTY Z position)", () => {
+    expect(comboFromEvent(key("z", { code: "KeyW", ctrlKey: true }))).toBe("Ctrl+Z")
+    expect(comboFromEvent(key("y", { code: "KeyZ", ctrlKey: true }))).toBe("Ctrl+Y") // QWERTZ
   })
 
   it("ignores bare modifiers and Meta (OS-owned on Windows/Linux)", () => {

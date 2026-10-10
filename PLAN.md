@@ -545,7 +545,7 @@ Exit criteria
 - [x] 2.20 Unit tests (store, undo batching), component tests (shell renders, menus open),
   Playwright smoke (layout visible, panels resize), `npm run build`, `cargo check`
 - [x] 2.21 Screenshots of the shell for review (`docs/screenshots/phase-2-*.png`)
-- [ ] ⛔ 2.22 **User approval**
+- [x] ⛔ 2.22 **User approval**
 
 ## Phase 3: Core 3D & physics
 

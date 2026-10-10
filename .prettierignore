@@ -1,0 +1,9 @@
+dist
+coverage
+src-tauri
+docs
+node_modules
+package-lock.json
+playwright-report
+test-results
+*.md

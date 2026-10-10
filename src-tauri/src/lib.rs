@@ -1,14 +1,22 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+mod commands;
+mod error;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let result = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .invoke_handler(tauri::generate_handler![
+            commands::app::app_info,
+            commands::project::project_new,
+            commands::project::project_open,
+            commands::project::project_save,
+            commands::project::project_save_as,
+            commands::project::import_files,
+            commands::project::export_scene,
+        ])
+        .run(tauri::generate_context!());
+    if let Err(e) = result {
+        eprintln!("StudioVD failed to start: {e}");
+        std::process::exit(1);
+    }
 }

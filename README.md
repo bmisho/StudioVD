@@ -16,8 +16,11 @@ Tailwind CSS + shadcn/ui, and Zustand.
 ```bash
 npm install
 npm run tauri dev     # desktop app
-npm run dev           # frontend only, in a browser (no Tauri APIs)
+npm run dev           # frontend only, in a browser (backend calls report "unavailable")
+npm run check         # lint + typecheck + unit tests
+npm run test:e2e      # Playwright end-to-end tests (mocked Tauri backend)
 npm run build         # typecheck + production frontend build
+cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test
 ```
 
 Linux needs the WebKitGTK toolchain:

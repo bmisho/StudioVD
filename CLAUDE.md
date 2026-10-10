@@ -170,24 +170,43 @@ only cue: each domain also has a distinct line pattern and port shape.
 | Light (flux) | `#A16207` (yellow-700) 4.92:1 | dotted |
 | Data / signal | `#7C3AED` (violet-600) 5.70:1 | short dash |
 
+Never put `muted-foreground` text on `accent` or `secondary` surfaces (4.15:1 and 4.34:1, below
+AA); selected rows use `accent-foreground`. `--muted` is slate-50 (not slate-100) for this reason.
+
+Keyboard: all shortcuts go through the command registry (`src/app/commands`). In text fields and
+open menus/dialogs only commands marked `allowInTextInput` fire; Escape on the menu bar only
+releases focus. Never add a raw `keydown` listener for an app shortcut.
+
 UI density: this is a desktop tool. Use compact sizes (`text-xs`/`text-sm`, 28-32 px
 controls), `tabular-nums` for numeric readouts, Inter (bundled locally) for UI text.
 No hard-coded hex values in components; use Tailwind theme tokens.
 
 ## 8. Commands & verification
 
-Current:
-- `npm run dev`: Vite dev server only (browser, no Tauri APIs)
+- `npm run dev`: Vite dev server only (browser, no Tauri APIs; backend calls return `unavailable`)
 - `npm run tauri dev`: full desktop app
+- `npm run lint` / `npm run typecheck` / `npm test` (Vitest) / `npm run check` (all three)
+- `npm run format` / `npm run format:check` (Prettier; Markdown is excluded to protect LaTeX)
+- `npm run test:e2e`: Playwright against the dev server with a mocked Tauri backend
+  (`tests/e2e/fixtures.ts`). `E2E_BROWSERS=chromium,webkit` runs WebKit too (CI does).
 - `npm run build`: typecheck + production frontend build
-- `cd src-tauri && cargo check` / `cargo test`
+- `cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test`
 
-Added in Phase 2 (keep this list updated): `npm run lint`, `npm run typecheck`, `npm test`
-(Vitest), `npm run test:e2e` (Playwright, browser with mocked Tauri IPC), `cargo clippy`.
+Before every commit: lint, typecheck, unit tests, and `cargo clippy`/`cargo test` must pass.
+Before closing a phase: also E2E and a full `npm run build`. Physics and solver behaviour is
+tested headlessly (Rapier and the solver run in Node), not by eyeballing the viewport.
+CI (`.github/workflows/ci.yml`) runs all of this on Linux, plus the Rust checks on Windows.
 
-Before every commit: lint, typecheck, unit tests, and `cargo check` must pass. Before closing
-a phase: also E2E and a full `npm run build`. Physics and solver behaviour is tested
-headlessly (Rapier and the solver run in Node), not by eyeballing the viewport.
+Testing notes:
+- jsdom gives every element a 0×0 rect at (0,0), so react-resizable-panels treats any simulated
+  pointer press as a hit on a resize handle and steals focus. Component tests focus inputs
+  programmatically; real-mouse flows belong in Playwright.
+- A regression test must be shown to fail without its fix before it counts.
+- `@playwright/test` is pinned to 1.56.1 because the dev sandbox ships Chromium build 1194. CI
+  installs browsers itself, so bumping it only breaks local sandbox runs.
+- shadcn/ui: components in `src/components/ui/` come from `shadcn-ui/ui@e94cebe`
+  (`apps/v4/registry/new-york-v4/ui`), with `cn`/registry imports rewritten to `@/lib/utils`
+  and `@/components/ui`. Add more with `npx shadcn@latest add <name>` on a normal network.
 
 Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev`.
 

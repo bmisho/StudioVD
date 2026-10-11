@@ -19,27 +19,27 @@ test.describe("keyboard and focus", () => {
 
   test("the scene tree works from the keyboard", async ({ page }) => {
     await page.keyboard.press("Control+g") // Group 1
-    await page.keyboard.press("Control+g") // Group 2, inside the selected Group 1
+    await page.keyboard.press("Control+g") // Group 2, wrapping the selected Group 1
     const tree = page.getByRole("tree", { name: "Scene graph" })
     const row = (name: string) => tree.getByRole("treeitem", { name })
 
-    await row("Group 1").click()
-    await expect(row("Group 1")).toBeFocused()
-    await page.keyboard.press("ArrowDown")
+    await row("Group 2").click()
     await expect(row("Group 2")).toBeFocused()
-    await expect(row("Group 2")).toHaveAttribute("aria-selected", "true")
-    await expect(page.getByLabel("Name")).toHaveValue("Group 2") // selection follows focus
+    await page.keyboard.press("ArrowDown")
+    await expect(row("Group 1")).toBeFocused()
+    await expect(row("Group 1")).toHaveAttribute("aria-selected", "true")
+    await expect(page.getByLabel("Name")).toHaveValue("Group 1") // selection follows focus
 
     await page.keyboard.press("ArrowLeft") // to the parent
-    await expect(row("Group 1")).toBeFocused()
+    await expect(row("Group 2")).toBeFocused()
     await page.keyboard.press("ArrowLeft") // collapse
-    await expect(row("Group 2")).toBeHidden()
+    await expect(row("Group 1")).toBeHidden()
     await page.keyboard.press("ArrowRight") // expand
-    await expect(row("Group 2")).toBeVisible()
+    await expect(row("Group 1")).toBeVisible()
 
     await page.keyboard.press("Delete") // bubbles to the command registry
-    await expect(row("Group 1")).toBeHidden()
-    await expect(row("Group 2")).toHaveAttribute("aria-level", "1") // reparented to the root
+    await expect(row("Group 2")).toBeHidden()
+    await expect(row("Group 1")).toHaveAttribute("aria-level", "1") // reparented to the root
   })
 
   test("the toolbar is one tab stop with arrow-key navigation", async ({ page }) => {

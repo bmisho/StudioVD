@@ -57,6 +57,8 @@ export interface ViewportProbeApi {
   partPose(id: string): PartPoseState | null
   /** What a part draws: its triangle count, and whether that is the loaded asset (not its box). */
   partMesh(id: string): { triangles: number; loaded: boolean } | null
+  /** The transform gizmo handle under the pointer ("X", "XY", …), or null. */
+  gizmoAxis(): string | null
 }
 
 declare global {

@@ -1,4 +1,5 @@
 import { editCommands } from "./editCommands"
+import { partCommands } from "./partCommands"
 import { fileCommands } from "./fileCommands"
 import { testCommands } from "./testCommands"
 import type { Command, CommandDeps, CommandId } from "./types"
@@ -21,6 +22,7 @@ export function createCommandRegistry(deps: CommandDeps): CommandRegistry {
   const list = [
     ...fileCommands(deps),
     ...editCommands(deps),
+    ...partCommands(deps),
     ...viewCommands(deps),
     ...viewOrientationCommands(deps),
     ...navigationCommands(deps),

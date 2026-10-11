@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber"
 import type { Group } from "three"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { CameraRigController } from "./camera/CameraRigController"
+import { PartTransformGizmo } from "./gizmos/PartTransformGizmo"
 import { createCameraRig } from "./camera/createCameraRig"
 import { PartsLayer } from "./parts/PartsLayer"
 import { createViewportMissHandler } from "./picking/viewportMiss"
@@ -60,6 +61,7 @@ export function Viewport3D() {
             <SceneDressing />
           </Suspense>
           <PartsLayer />
+          <PartTransformGizmo />
           {testMode && (
             <Suspense fallback={null}>
               <PhysicsLayer />

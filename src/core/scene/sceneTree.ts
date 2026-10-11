@@ -2,7 +2,7 @@ import type { GroupId, PartId, SceneDocument } from "@/core/schema"
 
 export type SceneTreeNode =
   | { kind: "group"; id: GroupId; name: string; children: SceneTreeNode[] }
-  | { kind: "part"; id: PartId; name: string }
+  | { kind: "part"; id: PartId; name: string; hidden?: true; grounded?: true }
 
 /**
  * Builds the scene-graph tree: groups first, then parts, each in document order.
@@ -35,7 +35,13 @@ export function buildSceneTree(doc: Pick<SceneDocument, "groups" | "parts">): Sc
       nodes.push({ kind: "group", id: g.id, name: g.name, children: build(g.id) })
     }
     for (const p of childParts.get(parent) ?? []) {
-      nodes.push({ kind: "part", id: p.id, name: p.name })
+      nodes.push({
+        kind: "part",
+        id: p.id,
+        name: p.name,
+        ...(p.visible ? {} : { hidden: true }),
+        ...(p.grounded ? { grounded: true } : {}),
+      })
     }
     return nodes
   }

@@ -4,6 +4,7 @@ import type { Group } from "three"
 import { hoverTargetForMove, selectionChangeForClick } from "@/core/scene/pickPolicy"
 import { useSessionStore, type SessionStore } from "@/store/session/sessionStore"
 import { useViewport } from "../ViewportContext"
+import { gizmoState } from "../gizmos/gizmoState"
 import { applySelectionChange } from "./applySelectionChange"
 import { viewportHover, type HoverStore } from "./hoverStore"
 import { pickRefOf } from "./pickTarget"
@@ -43,6 +44,7 @@ export function PickRoot(props: PickRootProps) {
   }
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
+    if (gizmoState.ownsClick()) return // the click belongs to a gizmo handle
     const n = e.nativeEvent
     const target = pickRefOf(e.object)
     const additive = n.ctrlKey || n.metaKey // same rule as SceneTreeRow

@@ -9,6 +9,7 @@ import { readSceneTokens } from "../theme/sceneTokens"
 import { useViewport } from "../ViewportContext"
 import { viewportHover } from "../picking/hoverStore"
 import { countColour, summarizePixels } from "./pixelStats"
+import { gizmoState } from "../gizmos/gizmoState"
 import { partMesh, partPose, pickAt, projectPart, projectPoint } from "./probeQueries"
 import "./probeTypes"
 
@@ -65,6 +66,7 @@ export function ViewportProbe() {
       hoveredId: () => viewportHover.get()?.id ?? null,
       partPose,
       partMesh,
+      gizmoAxis: () => gizmoState.axis(),
       dragReady: () => partGrab.current !== null,
       parts: () =>
         Object.values(useDocumentStore.getState().doc.parts).map(({ id, name }) => ({ id, name })),

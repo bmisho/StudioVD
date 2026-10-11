@@ -1,6 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { GroupProperties } from "./GroupProperties"
+import { PartProperties } from "./PartProperties"
 import { ProjectProperties } from "./ProjectProperties"
 
 export function PropertiesPanel() {
@@ -10,6 +11,7 @@ export function PropertiesPanel() {
   let content
   if (selection.length === 0) content = <ProjectProperties />
   else if (single?.kind === "group") content = <GroupProperties key={single.id} id={single.id} />
+  else if (single?.kind === "part") content = <PartProperties key={single.id} id={single.id} />
   else {
     const n = selection.length
     content = (

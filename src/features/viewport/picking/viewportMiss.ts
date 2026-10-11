@@ -1,5 +1,6 @@
 import { selectionChangeForClick } from "@/core/scene/pickPolicy"
 import type { SelectionItem, SessionStore } from "@/store/session/sessionStore"
+import { gizmoState } from "../gizmos/gizmoState"
 import { applySelectionChange } from "./applySelectionChange"
 
 /**
@@ -8,7 +9,8 @@ import { applySelectionChange } from "./applySelectionChange"
  * only a plain primary click (Ctrl+click on empty space keeps the selection).
  */
 export function createViewportMissHandler(session: SessionStore) {
-  return (event: MouseEvent) =>
+  return (event: MouseEvent) => {
+    if (gizmoState.ownsClick()) return // a click on a gizmo handle is not a click on empty space
     applySelectionChange(
       session,
       selectionChangeForClick<SelectionItem>({
@@ -19,4 +21,5 @@ export function createViewportMissHandler(session: SessionStore) {
         target: null,
       })
     )
+  }
 }

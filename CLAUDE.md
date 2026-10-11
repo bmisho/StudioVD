@@ -249,7 +249,8 @@ Testing notes:
   (`apps/v4/registry/new-york-v4/ui`), with `cn`/registry imports rewritten to `@/lib/utils`
   and `@/components/ui`. Add more with `npx shadcn@latest add <name>` on a normal network.
   Local edits to keep when re-adding a component: full-opacity `ring-2` focus rings, the
-  menubar trigger focus ring, and menu shortcuts in `accent-foreground` on highlighted items.
+  menubar trigger focus ring, menu shortcuts in `accent-foreground` on highlighted items, and
+  the switch's unchecked track in `muted-foreground` (`input` is 1.48:1, below 3:1).
 
 Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev`.
 

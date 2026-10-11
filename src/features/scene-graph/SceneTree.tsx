@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from "react"
 import type { SceneTreeNode } from "@/core/scene/sceneTree"
 import { treeMove, visibleRows, type TreeKey, type VisibleRow } from "@/core/scene/treeNav"
+import type { PartId } from "@/core/schema"
+import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore, type SelectionItem } from "@/store/session/sessionStore"
 import { SceneTreeRow } from "./SceneTreeRow"
 
@@ -32,6 +34,11 @@ export function SceneTree({ tree }: { tree: SceneTreeNode[] }) {
   const toggleSelected = useSessionStore((s) => s.toggleSelected)
   const selectedKeys = useMemo(() => new Set(selection.map(keyOf)), [selection])
   const rowEls = useRef(new Map<string, HTMLElement>())
+  const toggleVisible = useCallback((id: string) => {
+    const { doc, setPartsVisible } = useDocumentStore.getState()
+    const part = doc.parts[id as PartId]
+    if (part) setPartsVisible([part.id], !part.visible)
+  }, [])
 
   // The tab stop: the last focused row while it is visible, else the first selected, else first.
   const tabStopId =
@@ -96,6 +103,7 @@ export function SceneTree({ tree }: { tree: SceneTreeNode[] }) {
           tabStop={row.node.id === tabStopId}
           onSelect={onSelect}
           onToggleExpanded={toggleExpanded}
+          onToggleVisible={toggleVisible}
           onFocusRow={setActiveId}
           rowRef={(el) => {
             if (el) rowEls.current.set(row.node.id, el)

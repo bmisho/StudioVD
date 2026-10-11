@@ -51,6 +51,9 @@ export function AppMenuBar() {
           <MenubarSeparator />
           <CommandMenuItem id="edit.newGroup" />
           <CommandMenuItem id="edit.delete" />
+          <CommandMenuItem id="part.toggleGrounded" />
+          <MenubarSeparator />
+          <CommandRadioGroup ids={["transform.translate", "transform.rotate"]} />
           <CommandMenuItem id="edit.clearSelection" />
         </MenubarContent>
       </MenubarMenu>
@@ -59,6 +62,9 @@ export function AppMenuBar() {
         <MenubarTrigger className={triggerClass}>View</MenubarTrigger>
         <MenubarContent>
           <CommandMenuItem id="view.fitAll" />
+          <CommandMenuItem id="view.toggleVisibility" />
+          <CommandMenuItem id="view.showAll" />
+          <CommandMenuItem id="view.isolate" />
           <MenubarSub>
             <MenubarSubTrigger>Standard Views</MenubarSubTrigger>
             <MenubarSubContent>

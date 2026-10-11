@@ -38,14 +38,15 @@ describe("command registry", () => {
     await vi.waitFor(() => expect(backend.exportScene).toHaveBeenCalledWith("stl"))
   })
 
-  it("creates numbered groups, nests under the selected group and selects the new one", () => {
+  it("New Group wraps the selection in a numbered group and selects it", () => {
     const { registry, document, session } = setup()
-    registry.run("edit.newGroup")
-    registry.run("edit.newGroup")
+    registry.run("edit.newGroup") // nothing selected: an empty group at the root
+    registry.run("edit.newGroup") // Group 1 selected: wrapped by Group 2
     const groups = Object.values(document.getState().doc.groups)
     expect(groups.map((g) => g.name)).toEqual(["Group 1", "Group 2"])
-    const second = groups[1]
-    expect(second?.parentId).toBe(groups[0]?.id)
+    const [first, second] = groups
+    expect(second?.parentId).toBeNull()
+    expect(first?.parentId).toBe(second?.id)
     expect(session.getState().selection).toEqual([{ kind: "group", id: second?.id }])
   })
 

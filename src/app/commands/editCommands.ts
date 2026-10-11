@@ -1,10 +1,16 @@
-import type { GroupId } from "@/core/schema"
+import type { GroupId, PartId } from "@/core/schema"
 import type { Command, CommandDeps } from "./types"
 
 function selectedGroupIds(deps: CommandDeps): GroupId[] {
   return deps.session
     .getState()
     .selection.flatMap((item) => (item.kind === "group" ? [item.id] : []))
+}
+
+function selectedDirectPartIds(deps: CommandDeps): PartId[] {
+  return deps.session
+    .getState()
+    .selection.flatMap((item) => (item.kind === "part" ? [item.id] : []))
 }
 
 function nextGroupName(deps: CommandDeps): string {
@@ -37,21 +43,26 @@ export function editCommands(deps: CommandDeps): Command[] {
       id: "edit.delete",
       label: "Delete",
       shortcuts: ["Delete"],
+      // Parts go with their anchors and mates; a deleted group's children move up a level.
       run: () => {
-        const ids = selectedGroupIds(deps)
-        if (ids.length === 0) return
-        document.getState().deleteGroups(ids)
+        const parts = selectedDirectPartIds(deps)
+        const groups = selectedGroupIds(deps)
+        if (parts.length === 0 && groups.length === 0) return
+        document.getState().deleteParts(parts)
+        document.getState().deleteGroups(groups)
         session.getState().clearSelection()
       },
-      isEnabled: () => selectedGroupIds(deps).length > 0,
+      isEnabled: () => selectedDirectPartIds(deps).length + selectedGroupIds(deps).length > 0,
     },
     {
       id: "edit.newGroup",
       label: "New Group",
       shortcuts: ["Ctrl+G"],
+      // Groups the selected parts and groups (under their shared parent); with nothing
+      // selected, an empty group at the root.
       run: () => {
-        const parent = selectedGroupIds(deps)[0] ?? null
-        const id = document.getState().createGroup(nextGroupName(deps), parent)
+        const items = session.getState().selection
+        const id = document.getState().groupItems(items, nextGroupName(deps))
         session.getState().select([{ kind: "group", id }])
       },
     },

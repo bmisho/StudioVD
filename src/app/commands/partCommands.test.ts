@@ -1,0 +1,60 @@
+import { describe, expect, it } from "vitest"
+import { createTestRig } from "@/core/scene/testRig"
+import { setupRegistry } from "./registryTestSetup"
+
+function withRig() {
+  const t = setupRegistry()
+  const rig = createTestRig()
+  t.document.getState().insertEntities(rig)
+  const [base, leaf] = rig.parts
+  if (!base || !leaf) throw new Error("rig incomplete")
+  return { ...t, base: base.id, leaf: leaf.id }
+}
+
+describe("part commands", () => {
+  it("hide/show acts on parts below a selected group, hiding a mixed selection first", () => {
+    const t = withRig()
+    expect(t.registry.isEnabled("view.toggleVisibility")).toBe(false)
+    t.session.getState().select([{ kind: "part", id: t.leaf }])
+    t.registry.run("edit.newGroup") // the leaf moves into Group 1, which is selected
+    t.document.getState().setPartsVisible([t.base], false)
+    t.session.getState().select([{ kind: "part", id: t.base }, ...t.session.getState().selection])
+    t.registry.run("view.toggleVisibility")
+    const parts = () => t.document.getState().doc.parts
+    expect([parts()[t.base]?.visible, parts()[t.leaf]?.visible]).toEqual([false, false])
+    t.registry.run("view.toggleVisibility")
+    expect([parts()[t.base]?.visible, parts()[t.leaf]?.visible]).toEqual([true, true])
+    t.document.getState().setPartsVisible([t.leaf], false)
+    t.registry.run("view.showAll")
+    expect(parts()[t.leaf]?.visible).toBe(true)
+    expect(t.registry.isEnabled("view.showAll")).toBe(false)
+  })
+
+  it("isolate toggles a view filter; grounded is checked only when all are grounded", () => {
+    const t = withRig()
+    t.session.getState().select([{ kind: "part", id: t.leaf }])
+    t.registry.run("view.isolate")
+    expect(t.session.getState().isolated).toEqual([t.leaf])
+    expect(t.registry.get("view.isolate").isChecked?.()).toBe(true)
+    t.registry.run("view.isolate")
+    expect(t.session.getState().isolated).toBeNull()
+
+    t.session.getState().select([
+      { kind: "part", id: t.base },
+      { kind: "part", id: t.leaf },
+    ])
+    expect(t.registry.get("part.toggleGrounded").isChecked?.()).toBe(false)
+    t.registry.run("part.toggleGrounded")
+    expect(t.registry.get("part.toggleGrounded").isChecked?.()).toBe(true)
+  })
+
+  it("Delete removes selected parts with their mates, then clears the selection", () => {
+    const t = withRig()
+    t.session.getState().select([{ kind: "part", id: t.leaf }])
+    expect(t.registry.isEnabled("edit.delete")).toBe(true)
+    t.registry.run("edit.delete")
+    expect(Object.keys(t.document.getState().doc.parts)).toEqual([t.base])
+    expect(t.document.getState().doc.mates).toEqual({})
+    expect(t.session.getState().selection).toEqual([])
+  })
+})

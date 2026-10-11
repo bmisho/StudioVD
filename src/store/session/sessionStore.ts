@@ -9,6 +9,7 @@ export type SplitOrientation = "horizontal" | "vertical"
 export type Pane = "viewport" | "schematic"
 export type SimStatus = "idle" | "solving" | "error"
 export type DialogId = "about"
+export type GizmoMode = "translate" | "rotate"
 /** WebGL context of the 3D view: not created yet (e.g. the pane is collapsed), working, or lost. */
 export type ViewportGpu = "starting" | "ready" | "lost"
 
@@ -33,6 +34,10 @@ export interface SessionState {
   /** Modal dialog currently open, if any. */
   dialog: DialogId | null
   viewportGpu: ViewportGpu
+  /** View > Isolate: only these parts are drawn (a view filter, not a document change). */
+  isolated: readonly PartId[] | null
+  /** What the transform gizmo on a selected part does. */
+  gizmoMode: GizmoMode
 
   select: (items: SelectionItem[]) => void
   /** Ctrl+click / Ctrl+Space: adds the item to the selection or removes it. */
@@ -52,6 +57,9 @@ export interface SessionState {
   openDialog: (dialog: DialogId) => void
   closeDialog: () => void
   setViewportGpu: (state: ViewportGpu) => void
+  /** Isolates `ids`; when already isolating (or `ids` is empty), shows everything again. */
+  toggleIsolation: (ids: readonly PartId[]) => void
+  setGizmoMode: (mode: GizmoMode) => void
 }
 
 export const initialSessionState = {
@@ -67,6 +75,8 @@ export const initialSessionState = {
   simStatus: "idle",
   dialog: null,
   viewportGpu: "starting",
+  isolated: null,
+  gizmoMode: "translate",
 } satisfies Partial<SessionState>
 
 export function createSessionStore() {
@@ -104,6 +114,9 @@ export function createSessionStore() {
     openDialog: (dialog) => set({ dialog }),
     closeDialog: () => set({ dialog: null }),
     setViewportGpu: (viewportGpu) => set({ viewportGpu }),
+    toggleIsolation: (ids) =>
+      set((s) => ({ isolated: s.isolated !== null || ids.length === 0 ? null : [...ids] })),
+    setGizmoMode: (gizmoMode) => set({ gizmoMode }),
   }))
 }
 

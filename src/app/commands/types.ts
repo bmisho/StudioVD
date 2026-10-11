@@ -29,6 +29,12 @@ export type CommandId =
   | "view.toggleLeftPanel"
   | "view.toggleRightPanel"
   | "view.focusMenuBar"
+  | "view.toggleVisibility"
+  | "view.showAll"
+  | "view.isolate"
+  | "part.toggleGrounded"
+  | "transform.translate"
+  | "transform.rotate"
   | `view.orient.${StandardView}`
   | `view.navigation.${NavigationPresetId}`
   | "tool.select"

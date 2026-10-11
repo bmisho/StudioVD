@@ -1,17 +1,24 @@
-import { Suspense, useCallback, useMemo, useRef, useState } from "react"
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from "react"
 import { Canvas } from "@react-three/fiber"
 import type { Group } from "three"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { CameraRigController } from "./camera/CameraRigController"
 import { createCameraRig } from "./camera/createCameraRig"
+import { PartsLayer } from "./parts/PartsLayer"
+import { createViewportMissHandler } from "./picking/viewportMiss"
 import { ContextLossGuard } from "./renderer/ContextLossGuard"
 import { DprWatcher } from "./renderer/DprWatcher"
 import { DPR, GL_PARAMS, frameloopFor } from "./renderer/rendererConfig"
 import { SceneBackground } from "./renderer/SceneBackground"
 import { SceneDressing } from "./scene/SceneDressing"
 import { ViewportProbe } from "./testing/ViewportProbe"
-import { ViewportContext } from "./ViewportContext"
+import { ViewportContext, type PartGrabHandler } from "./ViewportContext"
 import { ViewportStatusOverlay } from "./ViewportStatusOverlay"
+
+// Rapier (WASM inlined in its JS) loads on the first entry into test mode, not at startup.
+const PhysicsLayer = lazy(() =>
+  import("@/features/physics/PhysicsLayer").then((m) => ({ default: m.PhysicsLayer }))
+)
 
 /**
  * The 3D view. Mounted once by CenterSplit and never remounted by layout changes (a
@@ -22,7 +29,9 @@ export function Viewport3D() {
   const testMode = useSessionStore((s) => s.testMode)
   const [rig] = useState(createCameraRig)
   const partsRoot = useRef<Group>(null)
-  const context = useMemo(() => ({ rig, partsRoot }), [rig])
+  const partGrab = useRef<PartGrabHandler>(null)
+  const context = useMemo(() => ({ rig, partsRoot, partGrab }), [rig])
+  const onPointerMissed = useMemo(() => createViewportMissHandler(useSessionStore), [])
   const [failed, setFailed] = useState(false)
   const giveUp = useCallback(() => setFailed(true), [])
   // The context never came back: the panel boundary's "Reload panel" mounts a fresh one.
@@ -36,6 +45,8 @@ export function Viewport3D() {
         gl={GL_PARAMS}
         dpr={DPR}
         frameloop={frameloopFor(testMode)}
+        raycaster={{ firstHitOnly: true }}
+        onPointerMissed={onPointerMissed}
         fallback={<p className="p-4 text-xs text-muted-foreground">The 3D view needs WebGL 2.</p>}
       >
         <ViewportContext value={context}>
@@ -48,7 +59,12 @@ export function Viewport3D() {
           <Suspense fallback={null}>
             <SceneDressing />
           </Suspense>
-          <group ref={partsRoot} name="parts" />
+          <PartsLayer />
+          {testMode && (
+            <Suspense fallback={null}>
+              <PhysicsLayer />
+            </Suspense>
+          )}
           {import.meta.env.DEV && <ViewportProbe />}
         </ViewportContext>
       </Canvas>

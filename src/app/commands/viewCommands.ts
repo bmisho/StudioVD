@@ -64,13 +64,6 @@ export function viewCommands({
     { id: "tool.select", label: "Select", run: () => s().setTool("select") },
     { id: "tool.anchor", label: "Place Anchor", run: () => s().setTool("anchor"), ...later(7) },
     { id: "tool.mate", label: "Mate", run: () => s().setTool("mate"), ...later(8) },
-    {
-      id: "test.toggle",
-      label: "Test Mode",
-      run: () => s().toggleTestMode(),
-      isChecked: () => s().testMode,
-      ...later(3),
-    },
     { id: "help.about", label: "About StudioVD", run: () => openDialog("about") },
   ]
 }

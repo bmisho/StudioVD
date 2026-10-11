@@ -1,62 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { buildShortcutMap } from "@/app/shortcuts/useGlobalShortcuts"
-import type { AppError, Result } from "@/lib/tauri/result"
-import { createDocumentStore } from "@/store/document/documentStore"
-import { createHistory } from "@/store/document/history"
-import { createSessionStore } from "@/store/session/sessionStore"
-import { createPreferencesStore } from "@/store/preferences/preferencesStore"
-import { createViewportBridge } from "@/features/viewport/viewportBridge"
-import { createCommandRegistry } from "./registry"
-import type { Backend } from "./types"
-
-const notImplemented: Result<void> = {
-  ok: false,
-  error: { kind: "notImplemented", message: "Saving projects arrives in Phase 5." },
-}
-
-function setup(overrides: Partial<Backend> = {}) {
-  const document = createDocumentStore()
-  const session = createSessionStore()
-  const reportError = vi.fn<(e: AppError, action: string) => void>()
-  const openDialog = vi.fn()
-  const focusMenuBar = vi.fn()
-  const backend: Backend = {
-    newProject: vi.fn(() => Promise.resolve(notImplemented)),
-    openProject: vi.fn(() => Promise.resolve(notImplemented)),
-    saveProject: vi.fn(() => Promise.resolve(notImplemented)),
-    saveProjectAs: vi.fn(() => Promise.resolve(notImplemented)),
-    importFiles: vi.fn(() => Promise.resolve(notImplemented)),
-    exportScene: vi.fn(() => Promise.resolve(notImplemented)),
-    closeWindow: vi.fn(() => Promise.resolve({ ok: true as const, value: undefined })),
-    ...overrides,
-  }
-  const history = createHistory(document)
-  const preferences = createPreferencesStore(null)
-  const viewport = createViewportBridge()
-  const registry = createCommandRegistry({
-    document,
-    history,
-    session,
-    preferences,
-    viewport,
-    backend,
-    reportError,
-    openDialog,
-    focusMenuBar,
-  })
-  return {
-    registry,
-    document,
-    session,
-    backend,
-    reportError,
-    openDialog,
-    focusMenuBar,
-    history,
-    preferences,
-    viewport,
-  }
-}
+import type { Result } from "@/lib/tauri/result"
+import { notImplemented, setupRegistry as setup } from "./registryTestSetup"
 
 describe("command registry", () => {
   it("has unique ids, labels and conflict-free, valid shortcuts", () => {
@@ -129,7 +74,6 @@ describe("command registry", () => {
   it("keeps not-yet-built commands visibly disabled, with their phase", () => {
     const { registry, session } = setup()
     for (const [id, phase] of [
-      ["test.toggle", 3],
       ["tool.anchor", 7],
       ["tool.mate", 8],
     ] as const) {
@@ -167,7 +111,7 @@ describe("3D view commands", () => {
     expect(registry.isEnabled("view.fitAll")).toBe(false)
     expect(registry.isEnabled("view.orient.top")).toBe(false)
 
-    const impl = { fitAll: vi.fn(), setView: vi.fn() }
+    const impl = { fitAll: vi.fn(), fitAllNextFrame: vi.fn(), setView: vi.fn() }
     const detach = viewport.attach(impl)
     expect(registry.run("view.fitAll")).toBe(true)
     expect(impl.fitAll).toHaveBeenCalledOnce()

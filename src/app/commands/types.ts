@@ -35,6 +35,8 @@ export type CommandId =
   | "tool.anchor"
   | "tool.mate"
   | "test.toggle"
+  | "test.reset"
+  | "dev.insertTestRig"
   | "help.about"
 
 export interface Command {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { verticalGradientRGBA } from "@/core/math/colorGradient"
-import { summarizePixels } from "./pixelStats"
+import { countColour, summarizePixels } from "./pixelStats"
 
 const top = [248, 250, 252] as const
 const bottom = [226, 232, 240] as const
@@ -33,5 +33,15 @@ describe("summarizePixels", () => {
     const px = gradientBuffer(10, 10)
     px[0] = (px[0] ?? 0) + 1
     expect(summarizePixels(px, 10, 10, { top, bottom }).nonBackgroundFraction).toBe(0)
+  })
+})
+
+describe("countColour", () => {
+  it("counts pixels within the tolerance of a colour", () => {
+    const px = new Uint8Array([
+      14, 165, 233, 255, 16, 167, 235, 255, 20, 165, 233, 255, 0, 0, 0, 255,
+    ])
+    expect(countColour(px, [14, 165, 233])).toBe(2)
+    expect(countColour(px, [14, 165, 233], 6)).toBe(3)
   })
 })

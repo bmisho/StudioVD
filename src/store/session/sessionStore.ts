@@ -27,6 +27,8 @@ export interface SessionState {
   leftPanelOpen: boolean
   rightPanelOpen: boolean
   testMode: boolean
+  /** Bumped by "Reset to Design Pose": the physics world restarts from the design pose. */
+  testRun: number
   simStatus: SimStatus
   /** Modal dialog currently open, if any. */
   dialog: DialogId | null
@@ -46,6 +48,7 @@ export interface SessionState {
   /** Syncs state when the user collapses or re-opens a sidebar by dragging its edge. */
   setPanelOpen: (side: "left" | "right", open: boolean) => void
   toggleTestMode: () => void
+  restartTestMode: () => void
   openDialog: (dialog: DialogId) => void
   closeDialog: () => void
   setViewportGpu: (state: ViewportGpu) => void
@@ -60,6 +63,7 @@ export const initialSessionState = {
   leftPanelOpen: true,
   rightPanelOpen: true,
   testMode: false,
+  testRun: 0,
   simStatus: "idle",
   dialog: null,
   viewportGpu: "starting",
@@ -96,6 +100,7 @@ export function createSessionStore() {
     setPanelOpen: (side, open) =>
       set(side === "left" ? { leftPanelOpen: open } : { rightPanelOpen: open }),
     toggleTestMode: () => set((s) => ({ testMode: !s.testMode })),
+    restartTestMode: () => set((s) => (s.testMode ? { testRun: s.testRun + 1 } : {})),
     openDialog: (dialog) => set({ dialog }),
     closeDialog: () => set({ dialog: null }),
     setViewportGpu: (viewportGpu) => set({ viewportGpu }),

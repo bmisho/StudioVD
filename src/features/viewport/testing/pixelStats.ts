@@ -43,3 +43,17 @@ export function summarizePixels(
     nonBackgroundFraction: width * height === 0 ? 0 : different / (width * height),
   }
 }
+
+/** Pixels whose RGB is within `tolerance` (per channel) of `colour`. */
+export function countColour(rgba: Uint8Array, colour: RGB8, tolerance = 2): number {
+  let n = 0
+  for (let i = 0; i < rgba.length; i += 4) {
+    if (
+      Math.abs((rgba[i] ?? 0) - colour[0]) <= tolerance &&
+      Math.abs((rgba[i + 1] ?? 0) - colour[1]) <= tolerance &&
+      Math.abs((rgba[i + 2] ?? 0) - colour[2]) <= tolerance
+    )
+      n++
+  }
+  return n
+}

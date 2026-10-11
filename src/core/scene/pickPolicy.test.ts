@@ -1,0 +1,55 @@
+import { describe, expect, it } from "vitest"
+import { hoverTargetForMove, selectionChangeForClick, type ViewportClick } from "./pickPolicy"
+import type { SelectionRef } from "./selection"
+
+const part: SelectionRef = { kind: "part", id: "p1" }
+const click = (over: Partial<ViewportClick<SelectionRef>>): ViewportClick<SelectionRef> => ({
+  type: "click",
+  button: 0,
+  delta: 0,
+  additive: false,
+  target: part,
+  ...over,
+})
+
+describe("selectionChangeForClick", () => {
+  it("a plain click on a part replaces the selection", () => {
+    expect(selectionChangeForClick(click({}))).toEqual({ type: "replace", item: part })
+  })
+
+  it("Ctrl+click toggles, within the 2 px slop", () => {
+    expect(selectionChangeForClick(click({ delta: 2, additive: true }))).toEqual({
+      type: "toggle",
+      item: part,
+    })
+  })
+
+  it("ignores drags beyond the slop and non-primary buttons", () => {
+    expect(selectionChangeForClick(click({ delta: 3 }))).toEqual({ type: "none" })
+    expect(selectionChangeForClick(click({ button: 1 }))).toEqual({ type: "none" })
+  })
+
+  it("ignores right-click and double-click misses", () => {
+    expect(selectionChangeForClick(click({ type: "contextmenu", target: null }))).toEqual({
+      type: "none",
+    })
+    expect(selectionChangeForClick(click({ type: "dblclick", target: null }))).toEqual({
+      type: "none",
+    })
+  })
+
+  it("a plain click on empty space clears; Ctrl+click there keeps the selection", () => {
+    expect(selectionChangeForClick(click({ target: null }))).toEqual({ type: "clear" })
+    expect(selectionChangeForClick(click({ target: null, additive: true }))).toEqual({
+      type: "none",
+    })
+  })
+})
+
+describe("hoverTargetForMove", () => {
+  it("pre-highlights only while no button is held", () => {
+    expect(hoverTargetForMove(0, part)).toBe(part)
+    expect(hoverTargetForMove(4, part)).toBeNull() // middle-button orbit
+    expect(hoverTargetForMove(1, part)).toBeNull() // left drag (test-mode grab)
+  })
+})

@@ -10,7 +10,14 @@ export function PropertiesPanel() {
   let content
   if (selection.length === 0) content = <ProjectProperties />
   else if (single?.kind === "group") content = <GroupProperties key={single.id} id={single.id} />
-  else content = <p className="text-xs text-muted-foreground">{selection.length} items selected</p>
+  else {
+    const n = selection.length
+    content = (
+      <p className="text-xs text-muted-foreground">
+        {n} {n === 1 ? "item" : "items"} selected
+      </p>
+    )
+  }
 
   return (
     <ScrollArea className="h-full">

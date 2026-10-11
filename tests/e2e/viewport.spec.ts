@@ -1,18 +1,10 @@
 import type { Page } from "@playwright/test"
 import type { ViewportCameraState } from "../../src/features/viewport/testing/probeTypes"
 import { expect, test } from "./fixtures"
+import { waitForViewport } from "./viewportHelpers"
 
 // Camera moves are immediate with reduced motion, so their end state can be asserted.
 test.use({ contextOptions: { reducedMotion: "reduce" } })
-
-async function waitForViewport(page: Page) {
-  await expect(page.getByTestId("viewport-canvas").locator("canvas")).toHaveAttribute(
-    "data-engine",
-    /^three\.js r\d+$/,
-    { timeout: 20_000 }
-  )
-  await page.waitForFunction(() => window.__STUDIOVD_VIEWPORT__?.environmentReady() === true)
-}
 
 const camera = (page: Page) =>
   page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.camera()) as Promise<ViewportCameraState>

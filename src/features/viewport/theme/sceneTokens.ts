@@ -10,6 +10,7 @@ export const SCENE_TOKEN_VARS = {
   axisX: "--axis-x",
   axisY: "--axis-y",
   axisZ: "--axis-z",
+  partDefault: "--part-default",
   surface: "--background",
   text: "--foreground",
   hover: "--accent",

@@ -7,6 +7,7 @@ import {
   MousePointer2,
   Play,
   Redo2,
+  RotateCcw,
   Rows2,
   Square,
   Undo2,
@@ -52,6 +53,7 @@ export function MainToolbar() {
         pressed={vertical}
       />
       <div className="flex-1" />
+      <ToolbarButton command="test.reset" icon={RotateCcw} disabled={!testMode} />
       <ToolbarButton command="test.toggle" icon={testMode ? Square : Play} pressed={testMode} />
     </Toolbar.Root>
   )

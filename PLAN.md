@@ -96,14 +96,16 @@ flowchart LR
    between dynamic bodies, and its JS build has **no convex decomposition** (verified in
    `@dimforge/rapier3d-compat` 0.19.2). So: grounded bodies may use trimesh; dynamic bodies use
    convex hull (default) or convex decomposition computed in Rust (`parry3d`), cached in the bundle.
-7. **Mated pairs don't collide by default** (`ImpulseJoint.setContactsEnabled(false)`), and
+7. **Mated pairs don't collide by default** (joint `setContactsEnabled(false)`), and
    pairs already interpenetrating when test mode starts (zero-clearance CAD fits) are filtered
    with `useFilterContactPair` (verified present in `@react-three/rapier` 2.2.0) and reported.
    Without this, a shaft modelled exactly in its bore makes the assembly explode on start.
-8. **Mouse drag = force-limited spring, not teleport.** Each physics step applies an impulse
-   toward the cursor target at the grab point, clamped to a max force, with CCD on. When a
-   collision blocks the part, the spring just stretches; the part stays blocked. Setting
-   positions directly would tunnel through other parts.
+8. **Mouse drag = force-limited spring, not teleport.** Before each physics step a
+   speed-limited, critically damped spring force pulls the grab point toward the cursor
+   target (§2). When a collision blocks the part, the spring just stretches; the part stays
+   blocked. Setting positions directly would tunnel through other parts. Contacts are found
+   ahead of time (5 mm predictive contacts, speed limit 600 mm/s at 120 Hz steps), which
+   verified better than Rapier's CCD for a rotating part pushed into a stop.
 9. **Simulation = steady-state, multi-domain, effort/flow formulation** (see §3).
 10. **Every Tauri call goes through `src/lib/tauri/`** so the full UI runs in a browser with
     `mockIPC` for Playwright tests.
@@ -112,6 +114,15 @@ flowchart LR
 12. **Downloaded content is data only; behaviour is app code.** Packs reference simulation
     models, generators and schematic symbols built into the app by ID@major. No pack can
     execute code (§4.7).
+13. **Joints: multibody for the tree, impulse only for loops; bodies start unrotated.**
+    Verified in the Phase 3 spike (rapier3d-compat 0.19.2): reduced-coordinate multibody
+    joints keep a hinge exact (separation about 1e-5 mm) where impulse joints opened by
+    0.05-0.7 mm under a drag load. A multibody must be a tree, so a joint that closes a loop
+    (four-bar linkage) stays an impulse joint. `JointData.revolute` uses ONE local axis for
+    both bodies and its `frame1`/`frame2` have no effect, so every body starts with an identity
+    rotation and the part's rotation goes on its collider (otherwise a hinge between
+    differently rotated parts jumps 42-48° on the first step). Rapier ignores body damping on
+    multibody links, so damping is applied as forces.
 
 ### 1.2 Project bundle (`.stvd`)
 
@@ -202,6 +213,22 @@ $$\tau=\hat{\mathbf a}\cdot\sum_i(\mathbf c_i-\mathbf p)\times m_i\mathbf g \qqu
 **Perspective ↔ orthographic** without a visual jump: at target distance $d$ with vertical FOV
 $\theta$, the visible height is $h=2d\tan(\theta/2)$; set the orthographic camera so
 $(\text{top}-\text{bottom})/\text{zoom}=h$, and the reverse when switching back.
+
+**Test-mode drag** (Phase 3, `src/core/physics/dragSpring.ts`). Grab point $\mathbf x$ moving
+at $\mathbf v$, cursor target $\mathbf x_t$, $\omega=2\pi f$ with $f=8$ Hz, damping ratio
+$\zeta=1$; $\operatorname{clamp}(\mathbf u, L)$ shortens $\mathbf u$ to length $L$ at most:
+
+$$\mathbf v_{\text{des}}=\operatorname{clamp}\!\Big(\frac{\omega}{2\zeta}\,(\mathbf x_t-\mathbf x),\;v_{\max}\Big),\qquad\mathbf F=\operatorname{clamp}\!\big(2\zeta\,m_{\text{eff}}\,\omega\,(\mathbf v_{\text{des}}-\mathbf v),\;m_{\text{eff}}\,a_{\max}\big)$$
+
+Below the limits this is the spring-damper $\mathbf F=k(\mathbf x_t-\mathbf x)-c\,\mathbf v$ with
+$k=m_{\text{eff}}\,\omega^2$ and $c=2\zeta\,m_{\text{eff}}\,\omega$ ($v_{\max}=600$ mm/s,
+$a_{\max}=20\,000$ mm/s²). The effective mass at distance $r$ from the centre of mass is
+bounded below by $1/m_{\text{eff}}=1/m+r^2/I_{\min}$; joints only make a part feel heavier,
+so the explicit damping term stays stable ($\omega\,\Delta t=0.42<1$ at $\Delta t=1/120$ s).
+Released parts stop through viscous damping applied as forces, $\mathbf F=-d\,m\,\mathbf v$
+and $\boldsymbol\tau=-d\,\mathbf I\,\boldsymbol\omega$ with $d=10\ \text{s}^{-1}$
+($d\,\Delta t=0.083<2$). The Phase 3 test rig's hinge stop is at
+$\varphi_{\text{stop}}=-\big(90^\circ+\arcsin\tfrac{0.5}{60.5}\big)=-90.4735^\circ$.
 
 **Light between parts** (Phase 13 optical binding). An emitter anchor with on-axis luminous
 intensity $I_v$ (cd) and a sensor anchor at distance $d$ (m): the illuminance at the sensor is
@@ -447,10 +474,10 @@ version change is offered as Replace.
 
 | Risk | Mitigation |
 |---|---|
-| Impulse joints are slightly soft and drift under strong drag forces | Force-clamped drag spring, more solver iterations, fixed mates merged into rigid bodies; headless drift tests |
-| Thin parts tunnel when dragged fast | CCD on dynamic bodies + velocity clamp |
+| Impulse joints are slightly soft and drift under strong drag forces | **Verified in Phase 3:** impulse joints opened 0.05-0.7 mm; multibody joints (tree edges) stay at ~1e-5 mm, so impulse joints are used only to close loops. Force-clamped drag spring, fixed mates merged into rigid bodies, headless drift tests. Loop-closing joints remain soft: Phase 10 measures them |
+| Thin parts tunnel when dragged fast | **Verified in Phase 3:** with Rapier's default prediction distance a hinged leaf overshot its stop by 10-19°; 5 mm predictive contacts, 120 Hz steps, stiffer contacts (120 Hz) and a 600 mm/s drag speed limit hold it to 0.016° (0.017 mm). Rapier CCD did not help here |
 | Zero-clearance CAD fits interpenetrate at start | Contacts off for mated pairs; start-of-test interference scan → filtered + reported |
-| Rapier JS joints and arbitrary part orientations: a hinge may "jump" if local frames are wrong | Phase 3 headless test creates a hinge between differently-rotated bodies and asserts zero initial correction (`JointData.frame1/frame2` exist; behaviour to be verified) |
+| Rapier JS joints and arbitrary part orientations: a hinge may "jump" if local frames are wrong | **Verified in Phase 3:** it does (42-48°), and `JointData.frame1/frame2` have no effect. Bodies start with identity rotation and carry the part rotation on their colliders; a headless test asserts no jump for differently rotated, tilted bodies |
 | Rapier has no gear, belt, rack-pinion or screw coupling between joints | Phase 10 spike: velocity-level coupling impulses in `useBeforePhysicsStep`; fallback = coupling only in the schematic + readouts in test mode |
 | Belts, tubes and springs change shape, but parts are rigid | "Derived connector geometry": regenerated from its end anchors, visual only, no collider |
 | WebView differences: Windows uses WebView2 (Chromium, strong WebGL); Linux uses WebKitGTK (the weakest WebGL host, some GPU/driver combos need `WEBKIT_DISABLE_DMABUF_RENDERER=1`) | WebGL2 only; E2E runs on Playwright Chromium (≈ WebView2) and WebKit (≈ WebKitGTK); Phase 3 gate includes a real run on Windows and Linux |
@@ -550,32 +577,51 @@ Exit criteria
 ## Phase 3: Core 3D & physics
 
 Viewport
-- [ ] 3.1 R3F `<Canvas>`: WebGL2, `frameloop="demand"`, DPR [1, 2], Khronos Neutral tone
+- [x] 3.1 R3F `<Canvas>`: WebGL2, `frameloop="demand"`, DPR [1, 2], Khronos Neutral tone
   mapping, sRGB output, gradient background
-- [ ] 3.2 Infinite grid (mm: 10 mm minor / 100 mm major, distance fade) + axis triad + view cube
-- [ ] 3.3 Lighting: hemisphere + key/fill directional + local `RoomEnvironment` PMREM (no network)
-- [ ] 3.4 `CameraControls`: SolidWorks-style default (middle-drag orbit, Ctrl+middle pan, wheel
+- [x] 3.2 Infinite grid (mm: 10 mm minor / 100 mm major, distance fade) + axis triad + view cube
+- [x] 3.3 Lighting: hemisphere + key/fill directional + local `RoomEnvironment` PMREM (no network)
+- [x] 3.4 `CameraControls`: SolidWorks-style default (middle-drag orbit, Ctrl+middle pan, wheel
   zoom; left click reserved for pick), presets for Fusion 360 / Onshape / Blender in settings,
   zoom-to-cursor, fit-all (F/Home)
-- [ ] 3.5 Perspective ↔ orthographic toggle preserving framing (§2 formula, unit tested)
-- [ ] 3.6 Hover + click selection (synced to store; highlight in `highlight-3d`)
+- [x] 3.5 Perspective ↔ orthographic toggle preserving framing (§2 formula, unit tested)
+- [x] 3.6 Hover + click selection (synced to store; highlight in `highlight-3d`): one pick
+  root with BVH raycasts, 2 px click slop, Ctrl+click toggles, group selection lights its
+  parts; selected = 25 % tint + 3 px outline, hover = 2 px outline (inverted hull, constant
+  CSS px at any DPR)
 
 Physics spike
-- [ ] 3.7 `<Physics>`: gravity 0, fixed 60 Hz step, `lengthUnit` tuned for mm, paused outside test mode
-- [ ] 3.8 Two blocks: base (fixed) + leaf (dynamic) joined by a revolute joint on the base's top
+- [x] 3.7 `<Physics>`: gravity 0, fixed step, `lengthUnit` tuned for mm, paused outside test
+  mode. As built: 120 Hz steps (2 per frame; 60 Hz overshot the stop), `lengthUnit` 10,
+  5 mm predictive contacts, 120 Hz contact stiffness (values and sweeps in
+  `src/features/physics/physicsConfig.ts`). The world exists only in test mode; Rapier's WASM
+  loads on first use
+- [x] 3.8 Two blocks: base (fixed) + leaf (dynamic) joined by a revolute joint on the base's top
   edge with a 1 mm gap; contacts **enabled** for this pair so the leaf swinging down hits the
-  base's side face. Optional third obstacle block.
-- [ ] 3.9 Drag controller: grab point from raycast, camera-facing drag plane, force-clamped spring
-  impulse in `useBeforePhysicsStep`, high damping so parts stop on release, CCD + velocity clamp
-- [ ] 3.10 Test-mode enter/exit with *Reset to design pose*
+  base's side face. Built as real document entities (Help > Insert Physics Test Rig, one undo
+  entry). The optional third obstacle block was not built
+- [x] 3.9 Drag controller: grab point from raycast, camera-facing drag plane, force-clamped spring
+  in `useBeforePhysicsStep`, damping so parts stop on release. As built: a speed-limited,
+  critically damped spring force (§2) instead of "CCD + velocity clamp": Rapier's CCD did not
+  stop the overshoot, and multibody link velocities cannot be set, so the speed limit lives in
+  the spring and predictive contacts catch the collision
+- [x] 3.10 Test-mode enter/exit with *Reset to design pose* (plus a Reset to Design Pose
+  command while testing)
 
 Exit criteria
-- [ ] 3.11 Headless Vitest (Rapier in Node): (a) pushing the leaf into the base never passes the
-  geometric stop angle; (b) hinge anchor separation stays < 0.01 mm; (c) a hinge between
-  differently-rotated bodies produces no initial jump; (d) released part comes to rest
-- [ ] 3.12 Unit tests: drag spring math, ortho/perspective conversion
-- [ ] 3.13 Playwright: canvas renders (headless WebGL), screenshot
-- [ ] 3.14 Manual check of `npm run tauri dev` on Windows and Linux
+- [x] 3.11 Headless Vitest (Rapier in Node): (a) pushing the leaf into the base never passes the
+  geometric stop angle by more than 0.05 mm at the tip (Rapier's allowed penetration is
+  0.01 mm; measured 0.017 mm); (b) hinge anchor separation stays < 0.01 mm (measured
+  ~1e-5 mm); (c) a hinge between differently-rotated bodies produces no initial jump;
+  (d) released part comes to rest. Each test was shown to fail with its fix reverted
+- [x] 3.12 Unit tests: drag spring math, ortho/perspective conversion
+- [x] 3.13 Playwright: canvas renders (headless WebGL), screenshot; plus selection and
+  test-mode drag specs (`docs/screenshots/phase-3-*.png`)
+- [ ] 3.14 Manual check of `npm run tauri dev` on Windows and Linux. **Linux done** (WebKitGTK
+  2.52 under Xvfb with software GL, real mouse input via XTest): shell, 3D view, test rig,
+  selection and hover highlights, test-mode drag stopped by the base, pose restored on exit
+  (`docs/screenshots/phase-3-linux-*.png`). **Windows not checked**: no Windows machine here;
+  CI only runs the Rust checks on Windows
 - [ ] ⛔ 3.15 **User approval**
 
 ## Phase 4: Import pipeline & geometry assets
@@ -701,7 +747,8 @@ Exit criteria
 ## Phase 10: Kinematic test mode at assembly scale
 
 - [ ] 10.1 Build Rapier world from the assembly graph: rigid groups → bodies (compound colliders),
-  grounded → fixed, mates → joints with per-body local frames + limits
+  grounded → fixed, mates → joints + limits (multibody tree, impulse loop closures, identity
+  body rotations: decision 13; the Phase 3 builder already does this for revolute mates)
 - [ ] 10.2 Collider strategy per part: trimesh (grounded only) / hull (default) / decomposed / box /
   none; Rust `parry3d` convex decomposition command, async with progress, cached in `colliders/`
 - [ ] 10.3 Start-of-test interference scan: penetrating pairs filtered via `useFilterContactPair`

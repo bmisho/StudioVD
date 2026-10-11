@@ -21,6 +21,16 @@ export interface ViewportCameraState {
   visibleHeight: number
 }
 
+export interface ClientPoint {
+  x: number
+  y: number
+}
+
+export interface PartPoseState {
+  position: [number, number, number]
+  quaternion: [number, number, number, number]
+}
+
 export interface ViewportProbeApi {
   framesRendered(): number
   /** Renders a frame and summarises its pixels in the same task; null while the context is lost. */
@@ -29,6 +39,20 @@ export interface ViewportProbeApi {
   environmentReady(): boolean
   loseContext(): void
   restoreContext(): void
+  /** Client (page) coordinates of a world point (mm), as the camera sees it now. */
+  project(pointMm: [number, number, number]): ClientPoint
+  /** Client coordinates of the centre of a part's current bounding box; null if not shown. */
+  projectPart(id: string): ClientPoint | null
+  /** What a click at client coordinates would pick: the part id, or null. */
+  pickAt(x: number, y: number): string | null
+  /** The part the viewport pre-highlights (hover), or null. */
+  hoveredId(): string | null
+  /** Renders a frame and counts pixels within `tolerance` of the 3D highlight colour. */
+  highlightPixels(tolerance?: number): number
+  /** Document parts, in insertion order. */
+  parts(): { id: string; name: string }[]
+  /** A part's live pose (moves in test mode), or null if not shown. */
+  partPose(id: string): PartPoseState | null
 }
 
 declare global {

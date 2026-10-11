@@ -1,5 +1,6 @@
 import { editCommands } from "./editCommands"
 import { fileCommands } from "./fileCommands"
+import { testCommands } from "./testCommands"
 import type { Command, CommandDeps, CommandId } from "./types"
 import { viewCommands } from "./viewCommands"
 import { navigationCommands, viewOrientationCommands } from "./viewOrientationCommands"
@@ -23,6 +24,7 @@ export function createCommandRegistry(deps: CommandDeps): CommandRegistry {
     ...viewCommands(deps),
     ...viewOrientationCommands(deps),
     ...navigationCommands(deps),
+    ...testCommands(deps),
   ]
   const byId = new Map(list.map((c) => [c.id, c]))
   if (byId.size !== list.length) throw new Error("Duplicate command id in registry")

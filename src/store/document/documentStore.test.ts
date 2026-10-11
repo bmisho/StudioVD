@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { GroupId } from "@/core/schema"
+import { createTestRig } from "@/core/scene/testRig"
 import { createDocumentStore } from "./documentStore"
 
 describe("document store", () => {
@@ -64,5 +65,39 @@ describe("document store contract with scene.json", () => {
     expect(store.getState().doc.groups[id]?.parentId).toBeNull()
     const proto = store.getState().createGroup("Child 2", "constructor" as GroupId)
     expect(store.getState().doc.groups[proto]?.parentId).toBeNull()
+  })
+})
+
+describe("insertEntities", () => {
+  it("inserts a whole batch as one undo entry", () => {
+    const store = createDocumentStore()
+    const rig = createTestRig()
+    store.getState().insertEntities(rig)
+    const doc = store.getState().doc
+    expect(Object.keys(doc.parts)).toEqual(rig.parts.map((p) => p.id))
+    expect(Object.keys(doc.mates)).toHaveLength(1)
+    expect(store.temporal.getState().pastStates).toHaveLength(1)
+
+    store.temporal.getState().undo()
+    expect(store.getState().doc.parts).toEqual({})
+    expect(store.getState().doc.assets).toEqual({})
+  })
+
+  it("throws on an invalid batch and leaves the document untouched", () => {
+    const store = createDocumentStore()
+    const rig = createTestRig()
+    const before = store.getState().doc
+    expect(() => store.getState().insertEntities({ parts: rig.parts })).toThrow(/unknown asset/)
+    expect(store.getState().doc).toBe(before)
+    expect(store.temporal.getState().pastStates).toHaveLength(0)
+  })
+
+  it("reuses an asset that is already in the document", () => {
+    const store = createDocumentStore()
+    store.getState().insertEntities(createTestRig())
+    const assets = store.getState().doc.assets
+    store.getState().insertEntities(createTestRig())
+    expect(store.getState().doc.assets).toBe(assets) // content addressed: same entries
+    expect(Object.keys(store.getState().doc.parts)).toHaveLength(4)
   })
 })

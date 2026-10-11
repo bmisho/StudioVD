@@ -2,6 +2,7 @@ import { temporal } from "zundo"
 import { create } from "zustand"
 import { immer } from "zustand/middleware/immer"
 import { APP_VERSION } from "@/core/app-info"
+import { entityBatchProblems, type EntityBatch } from "@/core/scene/entityBatch"
 import {
   createEmptyDocument,
   NameSchema,
@@ -24,6 +25,11 @@ export interface DocumentState {
   renameGroup: (id: GroupId, name: string) => void
   /** Deletes groups; their children move up to the deleted group's parent. */
   deleteGroups: (ids: readonly GroupId[]) => void
+  /**
+   * Inserts assets, parts, anchors and mates as ONE undo entry. Throws on an invalid batch
+   * (duplicate id, dangling reference): callers build batches, users never type them.
+   */
+  insertEntities: (batch: EntityBatch) => void
 }
 
 /** Only `doc` is recorded in history; actions are functions and never change. */
@@ -32,7 +38,7 @@ type HistoryState = Pick<DocumentState, "doc">
 export function createDocumentStore(initial?: SceneDocument) {
   return create<DocumentState>()(
     temporal(
-      immer((set) => ({
+      immer((set, get) => ({
         doc: initial ?? createEmptyDocument(APP_VERSION),
 
         replaceDocument: (doc) => set({ doc }),
@@ -72,6 +78,18 @@ export function createDocumentStore(initial?: SceneDocument) {
               }
               delete s.doc.groups[id]
             }
+          })
+        },
+
+        insertEntities: (batch) => {
+          const problems = entityBatchProblems(get().doc, batch)
+          if (problems.length > 0) throw new Error(`Invalid entity batch: ${problems.join("; ")}`)
+          set((s) => {
+            for (const a of batch.assets ?? [])
+              if (!Object.hasOwn(s.doc.assets, a.id)) s.doc.assets[a.id] = a
+            for (const p of batch.parts ?? []) s.doc.parts[p.id] = p
+            for (const a of batch.anchors ?? []) s.doc.anchors[a.id] = a
+            for (const m of batch.mates ?? []) s.doc.mates[m.id] = m
           })
         },
       })),

@@ -51,6 +51,7 @@ src/
     library/      Library tab, insertion drag, credits dialog
   core/           PURE TypeScript. No React, no R3F, no DOM, no Tauri
     math/         Frames, transforms, fitting (three math types allowed)
+    physics/      Drag spring, damping, joint tree, physics model from the document (no Rapier)
     sim/          Netlist compiler, MNA solver, signal propagation (no three.js at all)
     generators/   Parametric standard parts: <id>/v<major>.ts (pure, runs in a worker)
     schema/       zod schemas for scene.json, component.json, packs, catalog + migrations
@@ -102,6 +103,8 @@ Four kinds of state. Do not mix them.
    projection, panel layout, test-mode flag, simulation *results*.
 3. **Transient per-frame state** (plain mutable objects or refs, **never Zustand**): live
    physics poses, drag targets, hover candidates. Read in `useFrame`, sampled when needed.
+   Test mode writes poses straight into the parts' scene objects (`partObjects.ts`) after
+   every step; the viewport hover is a tiny observable (`hoverStore.ts`), not Zustand.
 4. **Preferences** (per machine, not per project; Zustand persisted to the webview's
    localStorage, zod-validated, every access guarded): mouse navigation preset, zoom
    settings. Never in `scene.json`, never undoable.
@@ -129,6 +132,16 @@ Further rules:
 - Part transforms are **rigid only** (position + quaternion). Scale is baked into geometry at
   import, never applied to parts (it breaks colliders and anchor frames).
 - Rapier world gravity is **zero**. Gravity exists only in the simulation solver.
+- The Rapier world is in **mm, kg, s** (forces in kg·mm/s², inertia in kg·mm²); conversions go
+  through `units.ts`. Its settings (`physicsConfig.ts`: 120 Hz steps, `lengthUnit` 10, 5 mm
+  predictive contacts) came from measured sweeps: change them only with the headless rig
+  tests (`hingeRig.test.ts`) passing.
+- Rapier bodies start with an **identity rotation** at the part's position; the part's
+  rotation goes on its collider and the visual pose is body ∘ design rotation. Rapier's
+  revolute `JointData` uses one local axis for both bodies, so rotated bodies would jump.
+- Joints: **multibody** for the spanning tree (exact hinges), impulse joints only to close
+  loops (`core/physics/jointTree.ts`). Rapier ignores body damping on multibody links, so
+  damping is applied as forces before every step.
 
 ## 6. Rendering & performance rules
 

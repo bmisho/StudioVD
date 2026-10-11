@@ -8,12 +8,18 @@ import type { Direction } from "@/core/math/standardViews"
 export interface ViewportApi {
   isReady(): boolean
   fitAll(animate?: boolean): void
+  /**
+   * Fit-all on the next rendered frame, once a document change has reached the scene (a
+   * command that inserts parts runs before React has mounted them).
+   */
+  fitAllAfterChange(): void
   /** Looks along `direction` (from the target towards the camera). */
   setView(direction: Direction): void
 }
 
 export interface ViewportImpl {
   fitAll(animate: boolean): void
+  fitAllNextFrame(animate: boolean): void
   setView(direction: Direction, animate: boolean): void
 }
 
@@ -27,6 +33,7 @@ export function createViewportBridge(): ViewportApi & { attach(impl: ViewportImp
   return {
     isReady: () => current !== null,
     fitAll: (animate = prefersMotion()) => current?.fitAll(animate),
+    fitAllAfterChange: () => current?.fitAllNextFrame(prefersMotion()),
     setView: (direction) => current?.setView(direction, prefersMotion()),
     attach(impl) {
       current = impl

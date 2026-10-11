@@ -99,6 +99,8 @@ export function AppMenuBar() {
       <MenubarMenu>
         <MenubarTrigger className={triggerClass}>Help</MenubarTrigger>
         <MenubarContent>
+          <CommandMenuItem id="dev.insertTestRig" />
+          <MenubarSeparator />
           <CommandMenuItem id="help.about" />
         </MenubarContent>
       </MenubarMenu>

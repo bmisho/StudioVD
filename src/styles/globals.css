@@ -48,6 +48,9 @@
   --axis-x: #dc2626; /* red-600 */
   --axis-y: #15803d; /* green-700 */
   --axis-z: #2563eb; /* blue-600 */
+  /* Parts without a material (until the Phase 6 material library): slate-400, so lit faces
+     stay distinct from the slate-50 -> slate-200 viewport gradient. */
+  --part-default: #94a3b8;
 
   /* Schematic domains (each >= 3:1 on white; always paired with a line pattern) */
   --domain-electrical: #ea580c;

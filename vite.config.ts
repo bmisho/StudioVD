@@ -26,6 +26,9 @@ export default defineConfig({
     watch: { ignored: ["**/src-tauri/**"] },
   },
 
+  // Module workers: the import worker code-splits (occt-import-js loads on demand).
+  worker: { format: "es" },
+
   build: {
     // The 500 kB default targets websites. This bundle loads from local disk inside the
     // desktop app; heavy work (STEP import, solver) is split into workers instead.

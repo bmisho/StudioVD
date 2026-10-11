@@ -1,6 +1,7 @@
 import type { Mesh, Object3D } from "three"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import type { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js"
+import { decodeUri } from "@/core/import/externalRefs"
 import type { Vec3 } from "@/core/schema"
 import { fromGeometry, type ParsedMesh } from "./parsedMesh"
 import { glbChunks, packGlb, stripTextures } from "./gltfJson"
@@ -40,9 +41,7 @@ export async function parseGltf(input: GltfInput): Promise<ParsedMesh[]> {
         if (!buffer.uri || buffer.uri.startsWith("data:")) continue
         if (!input.resource)
           throw new Error(`${input.fileName} needs ${buffer.uri}, which is not available.`)
-        const url = URL.createObjectURL(
-          new Blob([await input.resource(decodeURIComponent(buffer.uri))])
-        )
+        const url = URL.createObjectURL(new Blob([await input.resource(decodeUri(buffer.uri))]))
         blobUrls.push(url)
         buffer.uri = url
       }

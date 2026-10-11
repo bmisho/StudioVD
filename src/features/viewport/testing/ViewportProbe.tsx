@@ -9,7 +9,7 @@ import { readSceneTokens } from "../theme/sceneTokens"
 import { useViewport } from "../ViewportContext"
 import { viewportHover } from "../picking/hoverStore"
 import { countColour, summarizePixels } from "./pixelStats"
-import { partPose, pickAt, projectPart, projectPoint } from "./probeQueries"
+import { partMesh, partPose, pickAt, projectPart, projectPoint } from "./probeQueries"
 import "./probeTypes"
 
 function rgb8(css: string): RGB8 {
@@ -64,6 +64,7 @@ export function ViewportProbe() {
       pickAt: (x, y) => pickAt(get(), partsRoot.current, x, y),
       hoveredId: () => viewportHover.get()?.id ?? null,
       partPose,
+      partMesh,
       dragReady: () => partGrab.current !== null,
       parts: () =>
         Object.values(useDocumentStore.getState().doc.parts).map(({ id, name }) => ({ id, name })),

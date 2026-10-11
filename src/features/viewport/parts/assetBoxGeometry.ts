@@ -5,8 +5,8 @@ import { ensureBoundsTree } from "../picking/bvh"
 const cache = new Map<AssetId, BufferGeometry>()
 
 /**
- * Phase 3 stand-in geometry: the asset's bounding box. Phase 4 keeps it as the Suspense
- * fallback while the GLB loads (and for a missing/corrupt asset file), so it is not throwaway.
+ * The asset's bounding box: drawn while the GLB loads, for a missing or broken asset file,
+ * and for the test rig's placeholder assets.
  * Cached per content-addressed asset id: same asset, same GPU buffers.
  */
 export function assetBoxGeometry(asset: GeometryAsset): BufferGeometry {

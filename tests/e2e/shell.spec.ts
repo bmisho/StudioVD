@@ -71,9 +71,11 @@ test.describe("commands and the backend", () => {
     expect(await backendCalls(page)).toContain("project_save")
   })
 
-  test("Ctrl+I triggers Import", async ({ page }) => {
+  test("Ctrl+I opens the file picker in the backend", async ({ page }) => {
     await page.keyboard.press("Control+i")
-    await expect(page.getByText("Importing CAD files arrives in Phase 4.")).toBeVisible()
+    await expect.poll(() => backendCalls(page)).toContain("pick_import_files")
+    // The mocked picker returns no files (cancelled): no dialog opens.
+    await expect(page.getByRole("dialog", { name: "Import" })).toBeHidden()
   })
 
   test("Help > About reads app info over IPC", async ({ page }) => {

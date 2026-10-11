@@ -57,6 +57,9 @@ export interface TestRig {
 const placeholderAssetId = (n: number) =>
   AssetIdSchema.parse(`7e57${n.toString(16).padStart(60, "0")}`)
 
+/** Whether `id` is a test-rig placeholder: drawn as its box, no file to load. */
+export const isPlaceholderAssetId = (id: string): boolean => /^7e570{52}[0-9a-f]{8}$/.test(id)
+
 const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 
 function boxEntities(box: RigBox, n: number): { asset: GeometryAsset; part: Part } {

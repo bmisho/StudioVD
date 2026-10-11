@@ -4,8 +4,8 @@ import { HULL_NORMAL } from "./hullOutlineMaterial"
 
 /**
  * Adds the outline attribute to `geometry` once (in place, so the part and its outline share
- * one GPU buffer set). O(triangles): fine for Phase 3 boxes; Phase 4 computes it in the import
- * worker and stores it in the normalized GLB (`_HULLNORMAL`), so this becomes a lookup.
+ * one GPU buffer set). O(triangles), but only bounding boxes need it: loaded assets carry the
+ * attribute from their GLB (`_HULLNORMAL`, computed at import), so for them this is a lookup.
  */
 export function ensureHullNormals(geometry: BufferGeometry): BufferGeometry {
   if (geometry.getAttribute(HULL_NORMAL)) return geometry

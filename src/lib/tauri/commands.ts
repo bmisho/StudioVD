@@ -19,7 +19,4 @@ export const openProject = (): Promise<Result<void>> => call<void>("project_open
 export const saveProject = (): Promise<Result<void>> => call<void>("project_save")
 export const saveProjectAs = (): Promise<Result<void>> => call<void>("project_save_as")
 
-// Import / export: stubs in Phase 2, real in Phase 4.
-export const importFiles = (): Promise<Result<void>> => call<void>("import_files")
-export const exportScene = (format: "glb" | "stl"): Promise<Result<void>> =>
-  call<void>("export_scene", { format })
+// Import, assets and export: see files.ts.

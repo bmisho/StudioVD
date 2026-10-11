@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js"
+import { DRACO_GLTF_CONFIG, DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js"
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js"
 import occtWasmUrl from "occt-import-js/dist/occt-import-js.wasm?url"
 import { runImport } from "@/features/import/runImport"
@@ -15,8 +15,8 @@ const post = (message: ImportMessage, transfer: Transferable[] = []) =>
 
 const decoders = {
   occt: () => import("occt-import-js").then((m) => m.default({ locateFile: () => occtWasmUrl })),
-  // Bundled decoder files in public/draco (no CDN, CLAUDE.md §6).
-  draco: () => new DRACOLoader().setDecoderPath(new URL("/draco/", scope.location.origin).href),
+  // three's own glTF decoder files, bundled by Vite through import.meta.url (no CDN, §6).
+  draco: () => new DRACOLoader().setDecoderPath(DRACO_GLTF_CONFIG),
   meshopt: MeshoptDecoder,
 }
 

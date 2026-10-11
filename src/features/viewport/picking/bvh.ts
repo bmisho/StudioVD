@@ -15,7 +15,7 @@ export function installBvh(): void {
   Mesh.prototype.raycast = acceleratedRaycast
 }
 
-/** Builds the BVH once per geometry (Phase 4: built in the import worker and transferred). */
+/** Builds the BVH once per geometry (loaded assets bring theirs from the asset worker). */
 export function ensureBoundsTree(geometry: BufferGeometry): void {
   installBvh()
   if (!geometry.boundsTree) geometry.computeBoundsTree()

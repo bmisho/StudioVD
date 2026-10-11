@@ -6,9 +6,8 @@ import { PartHighlight, type HighlightState } from "../highlight/PartHighlight"
 import { viewportHover } from "../picking/hoverStore"
 import { setPickRef } from "../picking/pickTarget"
 import { useIsHovered } from "../picking/useIsHovered"
-import { assetBoxGeometry } from "./assetBoxGeometry"
-import { defaultPartMaterial } from "./defaultPartMaterial"
 import { registerPartObject } from "./partObjects"
+import { useAssetDisplay } from "./useAssetDisplay"
 
 interface PartViewProps {
   part: Part
@@ -21,7 +20,7 @@ interface PartViewProps {
 export const PartView = memo(function PartView({ part, asset, selected }: PartViewProps) {
   const item = useMemo<SelectionItem>(() => ({ kind: "part", id: part.id }), [part.id])
   const hovered = useIsHovered(item)
-  const geometry = assetBoxGeometry(asset)
+  const { geometry, material } = useAssetDisplay(asset)
   // React 19 ref callback with cleanup: the pick mark and the registry entry live exactly as
   // long as the group.
   const register = useCallback(
@@ -42,8 +41,8 @@ export const PartView = memo(function PartView({ part, asset, selected }: PartVi
 
   return (
     <group ref={register} position={part.pose.positionMm} quaternion={part.pose.quaternion}>
-      {/* Phase 6 resolves part.materialId; one shared neutral material until then. */}
-      <mesh geometry={geometry} material={defaultPartMaterial()} />
+      {/* Source colours until Phase 6 resolves part.materialId. */}
+      <mesh geometry={geometry} material={material} />
       <PartHighlight geometry={geometry} state={state} />
     </group>
   )

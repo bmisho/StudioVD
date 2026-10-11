@@ -55,6 +55,8 @@ export interface ViewportProbeApi {
   parts(): { id: string; name: string }[]
   /** A part's live pose (moves in test mode), or null if not shown. */
   partPose(id: string): PartPoseState | null
+  /** What a part draws: its triangle count, and whether that is the loaded asset (not its box). */
+  partMesh(id: string): { triangles: number; loaded: boolean } | null
 }
 
 declare global {

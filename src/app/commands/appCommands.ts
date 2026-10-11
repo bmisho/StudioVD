@@ -1,4 +1,6 @@
 import { toast } from "sonner"
+import { exportScene } from "@/features/export/exportService"
+import { chooseImportFiles } from "@/features/import/importService"
 import { viewportBridge } from "@/features/viewport/viewportBridge"
 import * as tauri from "@/lib/tauri/commands"
 import type { AppError } from "@/lib/tauri/result"
@@ -33,8 +35,11 @@ export const appCommands = createCommandRegistry({
     openProject: tauri.openProject,
     saveProject: tauri.saveProject,
     saveProjectAs: tauri.saveProjectAs,
-    importFiles: tauri.importFiles,
-    exportScene: tauri.exportScene,
+    importFiles: () => {
+      rememberDialogReturnFocus()
+      return chooseImportFiles()
+    },
+    exportScene,
     closeWindow: closeMainWindow,
   },
   reportError,

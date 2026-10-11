@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { readFileSync } from "node:fs"
 import occtInit from "occt-import-js"
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js"
 import { describe, expect, it } from "vitest"
 import { decodeGlb } from "@/core/geometry/glbRead"
 import { DEFAULT_IMPORT_OPTIONS, type ImportFormat } from "@/core/import/importOptions"
@@ -77,6 +78,26 @@ describe("runImport", () => {
     expect(plate?.asset.bboxMm.max.map((v) => Math.round(v))).toEqual([20, 5, 25])
     expect(peg?.asset.offsetMm.map((v) => Math.round(v))).toEqual([100, 20, 0])
     expect(decodeGlb(plate?.asset.glb ?? new Uint8Array()).baseColor?.[2]).toBeCloseTo(0.8, 5)
+  })
+
+  it("meshopt-compressed, quantized GLB decodes to the same parts as the plain one", async () => {
+    const plain = await runImport(job("sample.glb", "glb", fixture("sample.glb")), decoders)
+    const packed = await runImport(
+      job("sample-meshopt.glb", "glb", fixture("sample-meshopt.glb")),
+      {
+        ...decoders,
+        meshopt: MeshoptDecoder,
+      }
+    )
+    expect(packed.parts.map((p) => p.name)).toEqual(plain.parts.map((p) => p.name))
+    for (const [i, part] of packed.parts.entries()) {
+      const reference = plain.parts[i]?.asset
+      part.asset.offsetMm.forEach((v, k) => expect(v).toBeCloseTo(reference?.offsetMm[k] ?? NaN, 1))
+      expect(part.asset.triangleCount).toBe(reference?.triangleCount)
+      // KHR_mesh_quantization snaps vertices to a ~0.01 mm grid: volumes agree to 0.5 %.
+      const ratio = (part.asset.volumeMm3 ?? 0) / (reference?.volumeMm3 ?? NaN)
+      expect(Math.abs(ratio - 1)).toBeLessThan(0.005)
+    }
   })
 
   it("OBJ with MTL: one part per object, Kd colour linearized; single split merges", async () => {

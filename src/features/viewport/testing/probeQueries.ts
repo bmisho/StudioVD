@@ -1,5 +1,7 @@
 import type { RootState } from "@react-three/fiber"
-import { Box3, Vector2, Vector3, type Object3D } from "three"
+import { Box3, Vector2, Vector3, type Mesh, type Object3D } from "three"
+import { useDocumentStore } from "@/store/document/documentStore"
+import { assetCache } from "../parts/assetCache"
 import { partObject } from "../parts/partObjects"
 import { pickRefOf } from "../picking/pickTarget"
 import type { ClientPoint, PartPoseState } from "./probeTypes"
@@ -49,4 +51,17 @@ export function partPose(id: string): PartPoseState | null {
   const p = object.position
   const q = object.quaternion
   return { position: [p.x, p.y, p.z], quaternion: [q.x, q.y, q.z, q.w] }
+}
+
+export function partMesh(id: string): { triangles: number; loaded: boolean } | null {
+  const object = partObject(id as Parameters<typeof partObject>[0])
+  const mesh = object?.children.find((c): c is Mesh => (c as Mesh).isMesh === true)
+  const { doc } = useDocumentStore.getState()
+  const part = Object.hasOwn(doc.parts, id) ? doc.parts[id as keyof typeof doc.parts] : undefined
+  if (!mesh || !part) return null
+  const index = mesh.geometry.getIndex()
+  return {
+    triangles: (index ? index.count : mesh.geometry.getAttribute("position").count) / 3,
+    loaded: assetCache.get(part.assetId)?.geometry === mesh.geometry,
+  }
 }

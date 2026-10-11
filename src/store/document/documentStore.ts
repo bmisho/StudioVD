@@ -26,7 +26,7 @@ export interface DocumentState {
   /** Deletes groups; their children move up to the deleted group's parent. */
   deleteGroups: (ids: readonly GroupId[]) => void
   /**
-   * Inserts assets, parts, anchors and mates as ONE undo entry. Throws on an invalid batch
+   * Inserts assets, groups, parts, anchors and mates as ONE undo entry. Throws on an invalid batch
    * (duplicate id, dangling reference): callers build batches, users never type them.
    */
   insertEntities: (batch: EntityBatch) => void
@@ -87,6 +87,7 @@ export function createDocumentStore(initial?: SceneDocument) {
           set((s) => {
             for (const a of batch.assets ?? [])
               if (!Object.hasOwn(s.doc.assets, a.id)) s.doc.assets[a.id] = a
+            for (const g of batch.groups ?? []) s.doc.groups[g.id] = g
             for (const p of batch.parts ?? []) s.doc.parts[p.id] = p
             for (const a of batch.anchors ?? []) s.doc.anchors[a.id] = a
             for (const m of batch.mates ?? []) s.doc.mates[m.id] = m

@@ -51,3 +51,32 @@ describe("entityBatchProblems", () => {
     ])
   })
 })
+
+describe("entityBatchProblems: groups", () => {
+  const group = (id: string, parentId: string | null) => ({
+    id: id as GroupId,
+    name: id,
+    parentId: parentId as GroupId | null,
+  })
+
+  it("accepts groups whose parents come earlier in the batch, and parts inside them", () => {
+    const rig = createTestRig()
+    const parts = rig.parts.map((p) => ({ ...p, parentId: "inner" as GroupId }))
+    const batch = {
+      assets: rig.assets,
+      groups: [group("outer", null), group("inner", "outer")],
+      parts,
+    }
+    expect(entityBatchProblems(createEmptyDocument("0.1.0"), batch)).toEqual([])
+  })
+
+  it("rejects unknown parents, parents listed later and duplicate groups", () => {
+    const doc = createEmptyDocument("0.1.0")
+    doc.groups["kept" as GroupId] = group("kept", null)
+    expect(
+      entityBatchProblems(doc, {
+        groups: [group("child", "later"), group("later", null), group("kept", null)],
+      })
+    ).toEqual(["group child: unknown parent", "group kept already exists"])
+  })
+})

@@ -13,7 +13,9 @@ export function cubeStep(size = 10) {
   const h = size / 2
   const corners = []
   for (const x of [-h, h]) for (const y of [-h, h]) for (const z of [-h, h]) corners.push([x, y, z])
-  const pts = corners.map((c) => add(`CARTESIAN_POINT('',(${c.map((v) => v.toFixed(3)).join(",")}))`))
+  const pts = corners.map((c) =>
+    add(`CARTESIAN_POINT('',(${c.map((v) => v.toFixed(3)).join(",")}))`)
+  )
   // Each face: 4 corner indices in counter-clockwise order seen from outside (bits: x y z).
   const faces = [
     [0, 1, 3, 2], // -x
@@ -50,14 +52,18 @@ export function cubeStep(size = 10) {
   const mm = add("(LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.))")
   const rad = add("(NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.))")
   const sr = add("(NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT())")
-  const unc = add(`UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-07),${mm},'distance_accuracy_value','')`)
+  const unc = add(
+    `UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-07),${mm},'distance_accuracy_value','')`
+  )
   const origin = add("CARTESIAN_POINT('',(0.,0.,0.))")
   const zDir = add("DIRECTION('',(0.,0.,1.))")
   const xDir = add("DIRECTION('',(1.,0.,0.))")
   const placement = add(`AXIS2_PLACEMENT_3D('',${origin},${zDir},${xDir})`)
   const shapeRep = add(`FACETED_BREP_SHAPE_REPRESENTATION('Cube',(${placement},${brep}),${ctx})`)
   const appCtx = add("APPLICATION_CONTEXT('automotive design')")
-  add(`APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000,${appCtx})`)
+  add(
+    `APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000,${appCtx})`
+  )
   const prodCtx = add(`PRODUCT_CONTEXT('',${appCtx},'mechanical')`)
   const product = add(`PRODUCT('Cube','Cube','',(${prodCtx}))`)
   const formation = add(`PRODUCT_DEFINITION_FORMATION('','',${product})`)

@@ -9,10 +9,22 @@ function box(sx, sy, sz) {
   const pos = []
   const nor = []
   const idx = []
-  const faces = [[0, 1, 1, 2], [0, -1, 2, 1], [1, 1, 2, 0], [1, -1, 0, 2], [2, 1, 0, 1], [2, -1, 1, 0]]
+  const faces = [
+    [0, 1, 1, 2],
+    [0, -1, 2, 1],
+    [1, 1, 2, 0],
+    [1, -1, 0, 2],
+    [2, 1, 0, 1],
+    [2, -1, 1, 0],
+  ]
   for (const [axis, sign, u, v] of faces) {
     const base = pos.length / 3
-    for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+    for (const [a, b] of [
+      [-1, -1],
+      [1, -1],
+      [1, 1],
+      [-1, 1],
+    ]) {
       const p = [0, 0, 0]
       const n = [0, 0, 0]
       p[axis] = sign * h[axis]
@@ -43,11 +55,31 @@ export function sampleGlb() {
   const gltfMeshes = meshes.map((m, i) => {
     const min = [0, 1, 2].map((k) => Math.min(...m.pos.filter((_, j) => j % 3 === k)))
     const max = [0, 1, 2].map((k) => Math.max(...m.pos.filter((_, j) => j % 3 === k)))
-    accessors.push({ bufferView: push(m.pos, 34962), componentType: 5126, count: m.pos.length / 3, type: "VEC3", min, max })
-    accessors.push({ bufferView: push(m.nor, 34962), componentType: 5126, count: m.nor.length / 3, type: "VEC3" })
-    accessors.push({ bufferView: push(m.idx, 34963), componentType: 5123, count: m.idx.length, type: "SCALAR" })
+    accessors.push({
+      bufferView: push(m.pos, 34962),
+      componentType: 5126,
+      count: m.pos.length / 3,
+      type: "VEC3",
+      min,
+      max,
+    })
+    accessors.push({
+      bufferView: push(m.nor, 34962),
+      componentType: 5126,
+      count: m.nor.length / 3,
+      type: "VEC3",
+    })
+    accessors.push({
+      bufferView: push(m.idx, 34963),
+      componentType: 5123,
+      count: m.idx.length,
+      type: "SCALAR",
+    })
     const a = accessors.length - 3
-    return { name: ["PlateMesh", "PegMesh"][i], primitives: [{ attributes: { POSITION: a, NORMAL: a + 1 }, indices: a + 2, material: i }] }
+    return {
+      name: ["PlateMesh", "PegMesh"][i],
+      primitives: [{ attributes: { POSITION: a, NORMAL: a + 1 }, indices: a + 2, material: i }],
+    }
   })
   const s = Math.SQRT1_2
   const json = {
@@ -61,8 +93,22 @@ export function sampleGlb() {
     ],
     meshes: gltfMeshes,
     materials: [
-      { name: "Blue", pbrMetallicRoughness: { baseColorFactor: [0.1, 0.3, 0.8, 1], metallicFactor: 0, roughnessFactor: 0.5 } },
-      { name: "Orange", pbrMetallicRoughness: { baseColorFactor: [0.9, 0.4, 0.05, 1], metallicFactor: 0, roughnessFactor: 0.5 } },
+      {
+        name: "Blue",
+        pbrMetallicRoughness: {
+          baseColorFactor: [0.1, 0.3, 0.8, 1],
+          metallicFactor: 0,
+          roughnessFactor: 0.5,
+        },
+      },
+      {
+        name: "Orange",
+        pbrMetallicRoughness: {
+          baseColorFactor: [0.9, 0.4, 0.05, 1],
+          metallicFactor: 0,
+          roughnessFactor: 0.5,
+        },
+      },
     ],
     accessors,
     bufferViews: views,

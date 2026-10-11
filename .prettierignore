@@ -7,3 +7,5 @@ package-lock.json
 playwright-report
 test-results
 *.md
+# Vendored copies, kept byte-identical to their packages (tools/vendor/vendored.test.js)
+public

@@ -622,7 +622,7 @@ Exit criteria
   selection and hover highlights, test-mode drag stopped by the base, pose restored on exit
   (`docs/screenshots/phase-3-linux-*.png`). **Windows not checked**: no Windows machine here;
   CI only runs the Rust checks on Windows
-- [ ] ⛔ 3.15 **User approval**
+- [x] ⛔ 3.15 **User approval** (2026-10-11, with 3.14 Windows still open)
 
 ## Phase 4: Import pipeline & geometry assets
 

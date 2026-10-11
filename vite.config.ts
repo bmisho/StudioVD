@@ -28,6 +28,10 @@ export default defineConfig({
 
   // Module workers: the import worker code-splits (occt-import-js loads on demand).
   worker: { format: "es" },
+  // The dev dependency scan starts from index.html and does not follow `new Worker(...)`, so
+  // worker-only deps (occt-import-js, three's loaders) were found at runtime, re-optimized,
+  // and every open page reloaded (it broke parallel E2E runs). Scan the workers up front.
+  optimizeDeps: { entries: ["index.html", "src/workers/*.worker.ts"] },
 
   build: {
     // The 500 kB default targets websites. This bundle loads from local disk inside the

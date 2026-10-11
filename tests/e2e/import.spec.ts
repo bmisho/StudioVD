@@ -26,6 +26,8 @@ async function importVia(page: Page, files: { name: string; base64: string }[]) 
 }
 
 test.describe("import", () => {
+  // occt's 7.6 MB of WASM compiles in each import worker: slow CI runners need the headroom.
+  test.describe.configure({ timeout: 60_000 })
   test("STEP + STL: real geometry, one undo entry, stored once", async ({ page }) => {
     await waitForViewport(page)
     const dialog = await importVia(page, [fixtureFile("cube.step"), fixtureFile("bracket.stl")])

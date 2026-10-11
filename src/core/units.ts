@@ -15,3 +15,18 @@ export const newtonsToWorldForce = (n: number): number => n * MM_PER_M
 
 /** kg·mm/s² -> N. */
 export const worldForceToNewtons = (f: number): number => f / MM_PER_M
+
+/** Length units offered when a source file does not state its own (STL, OBJ). */
+export const LENGTH_UNITS = ["mm", "cm", "m", "in", "ft"] as const
+export type LengthUnit = (typeof LENGTH_UNITS)[number]
+
+/** Millimetres per unit. The inch is exact by definition (1959): 25.4 mm. */
+export const MM_PER_UNIT: Readonly<Record<LengthUnit, number>> = {
+  mm: 1,
+  cm: 10,
+  m: 1000,
+  in: 25.4,
+  ft: 304.8,
+}
+
+export const toMm = (value: number, unit: LengthUnit): number => value * MM_PER_UNIT[unit]

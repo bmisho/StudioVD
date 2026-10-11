@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest"
-import { densityKgM3ToKgMm3, mmToM, mToMm, newtonsToWorldForce, worldForceToNewtons } from "./units"
+import {
+  densityKgM3ToKgMm3,
+  mmToM,
+  mToMm,
+  newtonsToWorldForce,
+  toMm,
+  worldForceToNewtons,
+} from "./units"
 
 describe("units", () => {
   it("converts lengths both ways", () => {
@@ -17,5 +24,13 @@ describe("units", () => {
   it("converts forces: 1 N = 1000 kg·mm/s²", () => {
     expect(newtonsToWorldForce(2)).toBe(2000)
     expect(worldForceToNewtons(500)).toBe(0.5)
+  })
+})
+
+describe("length units", () => {
+  it("converts every import unit to millimetres", () => {
+    expect([toMm(2, "mm"), toMm(2, "cm"), toMm(2, "m"), toMm(2, "in"), toMm(1, "ft")]).toEqual([
+      2, 20, 2000, 50.8, 304.8,
+    ])
   })
 })

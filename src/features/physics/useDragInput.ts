@@ -4,17 +4,19 @@ import { Plane, Vector2, Vector3 } from "three"
 import { eventElement } from "@/features/viewport/camera/useControlsLifecycle"
 import { useViewport } from "@/features/viewport/ViewportContext"
 import type { PhysicsScene } from "./buildPhysicsScene"
-import { beginDrag, type Drag } from "./physicsStep"
+import { beginDrag, grabPoint, type Drag } from "./physicsStep"
 
 const ndc = new Vector2()
 const hit = new Vector3()
+const forward = new Vector3()
+const grab = new Vector3()
 
 /**
  * Test-mode mouse drag (PLAN 3.9): a primary press on a movable part grabs it at the hit
- * point; the cursor then moves a target on the camera-facing plane through that point, and
+ * point; the cursor then moves a target on the camera-facing plane through the grab point, and
  * the drag spring (physicsStep) pulls the part toward it. Pointer capture keeps the drag
- * alive outside the canvas. The target is re-projected every frame, so orbiting with the
- * middle button while holding a part keeps it under the cursor.
+ * alive outside the canvas. Plane and target are refitted every frame, so orbiting while
+ * holding a part keeps it under the cursor instead of pulling it along the view ray.
  */
 export function useDragInput(
   scene: RefObject<PhysicsScene | null>,
@@ -23,7 +25,6 @@ export function useDragInput(
   const { partGrab } = useViewport()
   const connected = useThree((s): unknown => s.events.connected)
   const gl = useThree((s) => s.gl)
-  const get = useThree((s) => s.get)
   const cursor = useRef<{ x: number; y: number } | null>(null)
   const plane = useRef(new Plane())
 
@@ -44,8 +45,6 @@ export function useDragInput(
       const entry = item.kind === "part" ? scene.current?.bodies.get(item.id) : undefined
       if (!entry?.body.isDynamic()) return
       drag.current = beginDrag(entry, [e.point.x, e.point.y, e.point.z])
-      const forward = get().camera.getWorldDirection(new Vector3())
-      plane.current.setFromNormalAndCoplanarPoint(forward, e.point)
       cursor.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY }
       el.setPointerCapture(e.nativeEvent.pointerId)
       window.addEventListener("pointermove", move)
@@ -57,12 +56,16 @@ export function useDragInput(
       partGrab.current = null
       end()
     }
-  }, [connected, gl, get, partGrab, scene, drag])
+  }, [connected, gl, partGrab, scene, drag])
 
   useFrame(({ camera, raycaster }) => {
     const current = drag.current
     const at = cursor.current
     if (!current || !at) return
+    plane.current.setFromNormalAndCoplanarPoint(
+      camera.getWorldDirection(forward),
+      grab.set(...grabPoint(current))
+    )
     const rect = eventElement(connected, gl.domElement).getBoundingClientRect()
     ndc.set(((at.x - rect.left) / rect.width) * 2 - 1, -((at.y - rect.top) / rect.height) * 2 + 1)
     raycaster.setFromCamera(ndc, camera)

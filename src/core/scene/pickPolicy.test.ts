@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { hoverTargetForMove, selectionChangeForClick, type ViewportClick } from "./pickPolicy"
+import {
+  hoverTargetForMove,
+  periodicRefreshDue,
+  selectionChangeForClick,
+  type ViewportClick,
+} from "./pickPolicy"
 import type { SelectionRef } from "./selection"
 
 const part: SelectionRef = { kind: "part", id: "p1" }
@@ -51,5 +56,18 @@ describe("hoverTargetForMove", () => {
     expect(hoverTargetForMove(0, part)).toBe(part)
     expect(hoverTargetForMove(4, part)).toBeNull() // middle-button orbit
     expect(hoverTargetForMove(1, part)).toBeNull() // left drag (test-mode grab)
+  })
+})
+
+describe("periodicRefreshDue", () => {
+  it("is due every period, and never without one (design mode)", () => {
+    expect(periodicRefreshDue(150, 100, 100)).toBe(false)
+    expect(periodicRefreshDue(200, 100, 100)).toBe(true)
+    expect(periodicRefreshDue(1e6, 0)).toBe(false)
+  })
+
+  it("does not stall when the clock restarts (frameloop switch resets R3F's clock)", () => {
+    // Two minutes of design-mode orbiting, then test mode restarts the clock at 0.
+    expect(periodicRefreshDue(16, 120_000, 100)).toBe(true)
   })
 })

@@ -1,6 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useRef } from "react"
 import { Matrix4 } from "three"
+import { periodicRefreshDue } from "@/core/scene/pickPolicy"
 
 /**
  * R3F raycasts only on DOM pointer events. When the camera moves under a still cursor
@@ -19,6 +20,14 @@ export function useHoverRefresh(options: { periodicMs?: number } = {}): void {
   const inside = useRef(false)
   const lastView = useRef(new Matrix4())
   const lastProjection = useRef(new Matrix4())
+  // Entering or leaving test mode moves parts (leaving restores the design pose) without a
+  // camera change: refresh once on the next frame.
+  const forced = useRef(false)
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(() => {
+    forced.current = true
+    invalidate()
+  }, [periodicMs, invalidate])
 
   useEffect(() => {
     if (!(connected instanceof HTMLElement)) return
@@ -36,16 +45,20 @@ export function useHoverRefresh(options: { periodicMs?: number } = {}): void {
     }
   }, [connected])
 
-  useFrame(({ camera, events, clock }) => {
+  useFrame(({ camera, events, scene }) => {
     camera.updateMatrixWorld() // controls moved it this frame; render() would do this later
     const viewChanged = !lastView.current.equals(camera.matrixWorld)
     const projectionChanged = !lastProjection.current.equals(camera.projectionMatrix)
-    const now = clock.elapsedTime * 1000
-    const periodic = periodicMs !== undefined && now - lastPeriodic.current >= periodicMs
-    if (!viewChanged && !projectionChanged && !periodic) return
+    // Wall clock, not R3F's: that one restarts at 0 whenever the frameloop changes.
+    const now = performance.now()
+    const periodic = periodicRefreshDue(now, lastPeriodic.current, periodicMs)
+    if (!viewChanged && !projectionChanged && !periodic && !forced.current) return
+    forced.current = false
     lastPeriodic.current = now
     lastView.current.copy(camera.matrixWorld)
     lastProjection.current.copy(camera.projectionMatrix)
-    if (inside.current) events.update?.()
+    if (!inside.current) return
+    scene.updateMatrixWorld() // parts moved since the last render (physics, pose restore)
+    events.update?.()
   })
 }

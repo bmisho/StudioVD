@@ -37,6 +37,7 @@ export function pickAt(state: RootState, root: Object3D | null, x: number, y: nu
   const rect = state.gl.domElement.getBoundingClientRect()
   ndc.set(((x - rect.left) / rect.width) * 2 - 1, -((y - rect.top) / rect.height) * 2 + 1)
   state.camera.updateMatrixWorld()
+  root.updateMatrixWorld() // poses may have changed since the last render
   state.raycaster.setFromCamera(ndc, state.camera)
   const hit = state.raycaster.intersectObject(root, true)[0]
   return hit ? (pickRefOf(hit.object)?.id ?? null) : null

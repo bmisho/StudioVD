@@ -49,6 +49,8 @@ export interface ViewportProbeApi {
   hoveredId(): string | null
   /** Renders a frame and counts pixels within `tolerance` of the 3D highlight colour. */
   highlightPixels(tolerance?: number): number
+  /** Test mode: the physics world is built and a press on a part starts a drag. */
+  dragReady(): boolean
   /** Document parts, in insertion order. */
   parts(): { id: string; name: string }[]
   /** A part's live pose (moves in test mode), or null if not shown. */

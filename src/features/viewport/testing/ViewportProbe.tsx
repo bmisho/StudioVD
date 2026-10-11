@@ -24,7 +24,7 @@ function rgb8(css: string): RGB8 {
  */
 export function ViewportProbe() {
   const get = useThree((s) => s.get)
-  const { rig, partsRoot } = useViewport()
+  const { rig, partsRoot, partGrab } = useViewport()
   const frames = useRef(0)
   useFrame(() => {
     frames.current += 1 // does not force frames in demand mode
@@ -64,6 +64,7 @@ export function ViewportProbe() {
       pickAt: (x, y) => pickAt(get(), partsRoot.current, x, y),
       hoveredId: () => viewportHover.get()?.id ?? null,
       partPose,
+      dragReady: () => partGrab.current !== null,
       parts: () =>
         Object.values(useDocumentStore.getState().doc.parts).map(({ id, name }) => ({ id, name })),
       camera: () => {
@@ -87,7 +88,7 @@ export function ViewportProbe() {
     return () => {
       delete window.__STUDIOVD_VIEWPORT__
     }
-  }, [get, rig, partsRoot])
+  }, [get, rig, partsRoot, partGrab])
 
   return null
 }

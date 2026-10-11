@@ -40,3 +40,13 @@ export function selectionChangeForClick<T extends SelectionRef>(
 export function hoverTargetForMove<T>(buttons: number, target: T): T | null {
   return buttons === 0 ? target : null
 }
+
+/**
+ * Whether a periodic hover refresh (test mode: parts move under a still cursor) is due.
+ * A clock that went backwards (R3F resets its clock whenever the frameloop changes) makes it
+ * due at once instead of stalling until the new clock catches up with the old timestamp.
+ */
+export function periodicRefreshDue(nowMs: number, lastMs: number, periodMs?: number): boolean {
+  if (periodMs === undefined) return false
+  return nowMs < lastMs || nowMs - lastMs >= periodMs
+}

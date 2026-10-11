@@ -1,5 +1,13 @@
 import { expect, test } from "./fixtures"
-import { angleZDeg, insertTestRig, partPose, project, waitForViewport } from "./viewportHelpers"
+import {
+  angleZDeg,
+  enterTestMode,
+  hoveredId,
+  insertTestRig,
+  partPose,
+  project,
+  waitForViewport,
+} from "./viewportHelpers"
 
 // PLAN 3.9-3.10: test mode runs Rapier; a mouse drag swings the hinged leaf until it hits the
 // base, and leaving test mode puts every part back at its design pose. The strict physics
@@ -21,8 +29,7 @@ test("test mode: dragging the leaf into the base stops it at the face", async ({
   const design = await partPose(page, leaf)
   await page.keyboard.press("Control+1") // front view: the drag plane is the hinge's plane
 
-  await page.getByRole("button", { name: "Test Mode" }).click()
-  await expect(page.getByText("Mode Test")).toBeVisible()
+  await enterTestMode(page)
   const frames = () => page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.framesRendered() ?? 0)
   const before = await frames()
   await expect.poll(frames).toBeGreaterThan(before + 5) // renders continuously
@@ -71,4 +78,35 @@ test("test mode: dragging the leaf into the base stops it at the face", async ({
   const idle = await frames()
   await page.waitForTimeout(500)
   expect(await frames()).toBe(idle)
+})
+
+test("leaving test mode from the keyboard refreshes the hover under a still cursor", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await waitForViewport(page)
+  const { leaf } = await insertTestRig(page)
+  await page.keyboard.press("Control+1")
+  await enterTestMode(page)
+  const grab = await project(page, [115, 85, 30])
+  await page.mouse.move(grab.x, grab.y)
+  await page.mouse.down()
+  await page.mouse.move(grab.x - 240, grab.y + 360, { steps: 12 })
+  await expect.poll(async () => angleZDeg(await partPose(page, leaf))).toBeLessThan(-89)
+  await page.mouse.up()
+  // Hover the leaf where it hangs now, then leave test mode without touching the mouse.
+  const hanging = await project(page, [64.5, 50, 30])
+  await page.mouse.move(hanging.x, hanging.y)
+  await expect.poll(() => hoveredId(page)).toBe(leaf)
+  await page.getByRole("button", { name: "Test Mode" }).focus()
+  await page.keyboard.press("Enter")
+  await expect(page.getByText("Mode Design")).toBeVisible()
+  // The leaf is back on top of the base; nothing is under the cursor any more.
+  const pickAtCursor = () =>
+    page.evaluate(([x, y]) => window.__STUDIOVD_VIEWPORT__?.pickAt(x, y) ?? null, [
+      hanging.x,
+      hanging.y,
+    ] as const)
+  await expect.poll(pickAtCursor).toBeNull()
+  await expect.poll(() => hoveredId(page)).toBeNull()
 })

@@ -49,3 +49,10 @@ export function angleZDeg(pose: PartPoseState): number {
   const [, , z, w] = pose.quaternion
   return (2 * Math.atan2(z, w) * 180) / Math.PI
 }
+
+/** Clicks the toolbar's Test Mode button and waits until parts can be dragged. */
+export async function enterTestMode(page: Page) {
+  await page.getByRole("button", { name: "Test Mode" }).click()
+  await expect(page.getByText("Mode Test")).toBeVisible()
+  await page.waitForFunction(() => window.__STUDIOVD_VIEWPORT__?.dragReady() === true)
+}

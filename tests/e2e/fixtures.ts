@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from "@playwright/test"
+import { test as base, expect, type BrowserContext, type Page } from "@playwright/test"
 
 /**
  * Replaces the Tauri backend before the app loads (the browser equivalent of `mockIPC`):
@@ -52,7 +52,36 @@ async function installTauriMock(page: Page): Promise<void> {
   })
 }
 
-export const test = base.extend({
+/**
+ * The webview never touches the network (CLAUDE.md §6): every test fails if the page, a
+ * worker or a WebSocket reaches another origin. Vite's own HMR socket is same-origin.
+ */
+const offlineGuard = async (
+  { context, baseURL }: { context: BrowserContext; baseURL: string | undefined },
+  use: (value: undefined) => Promise<void>
+) => {
+  const origin = new URL(baseURL ?? "http://localhost:1420").origin
+  const blocked: string[] = []
+  await context.route(
+    (url) => url.origin !== origin,
+    (route) => {
+      blocked.push(route.request().url())
+      return route.abort("blockedbyclient")
+    }
+  )
+  await context.routeWebSocket(
+    (url) => url.origin.replace(/^ws/, "http") !== origin,
+    (ws) => {
+      blocked.push(ws.url())
+      return ws.close()
+    }
+  )
+  await use(undefined)
+  expect(blocked, "the webview makes no network requests (CLAUDE.md §6)").toEqual([])
+}
+
+export const test = base.extend<{ offlineGuard: undefined }>({
+  offlineGuard: [offlineGuard, { auto: true }],
   page: async ({ page }, use) => {
     await installTauriMock(page)
     await page.goto("/")

@@ -134,6 +134,8 @@ test.describe("keyboard ownership", () => {
     await expect(page.getByRole("menu")).toHaveCount(2)
     await page.keyboard.press("Escape") // Radix closes the whole menu stack
     await expect(page.getByRole("menu")).toHaveCount(0)
+    // Radix returns focus to the trigger in a timeout after the menu unmounts.
+    await expect(page.getByRole("menuitem", { name: "File" })).toBeFocused()
     await page.keyboard.press("Escape") // focus is on the File trigger: only leave the bar
     await expect(status).toContainText("Selected 1")
     expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true)

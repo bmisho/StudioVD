@@ -4,6 +4,8 @@ import type { AppError, Result } from "@/lib/tauri/result"
 import { createDocumentStore } from "@/store/document/documentStore"
 import { createHistory } from "@/store/document/history"
 import { createSessionStore } from "@/store/session/sessionStore"
+import { createPreferencesStore } from "@/store/preferences/preferencesStore"
+import { createViewportBridge } from "@/features/viewport/viewportBridge"
 import { createCommandRegistry } from "./registry"
 import type { Backend } from "./types"
 
@@ -29,16 +31,31 @@ function setup(overrides: Partial<Backend> = {}) {
     ...overrides,
   }
   const history = createHistory(document)
+  const preferences = createPreferencesStore(null)
+  const viewport = createViewportBridge()
   const registry = createCommandRegistry({
     document,
     history,
     session,
+    preferences,
+    viewport,
     backend,
     reportError,
     openDialog,
     focusMenuBar,
   })
-  return { registry, document, session, backend, reportError, openDialog, focusMenuBar, history }
+  return {
+    registry,
+    document,
+    session,
+    backend,
+    reportError,
+    openDialog,
+    focusMenuBar,
+    history,
+    preferences,
+    viewport,
+  }
 }
 
 describe("command registry", () => {
@@ -112,7 +129,6 @@ describe("command registry", () => {
   it("keeps not-yet-built commands visibly disabled, with their phase", () => {
     const { registry, session } = setup()
     for (const [id, phase] of [
-      ["view.fitAll", 3],
       ["test.toggle", 3],
       ["tool.anchor", 7],
       ["tool.mate", 8],
@@ -141,5 +157,43 @@ describe("command registry", () => {
     expect(openDialog).toHaveBeenCalledWith("about")
     registry.run("view.focusMenuBar")
     expect(focusMenuBar).toHaveBeenCalledOnce()
+  })
+})
+
+describe("3D view commands", () => {
+  it("are disabled until a viewport attaches, then drive it", () => {
+    const { registry, viewport } = setup()
+    expect(registry.get("view.fitAll").shortcuts).toEqual(["F", "Home"])
+    expect(registry.isEnabled("view.fitAll")).toBe(false)
+    expect(registry.isEnabled("view.orient.top")).toBe(false)
+
+    const impl = { fitAll: vi.fn(), setView: vi.fn() }
+    const detach = viewport.attach(impl)
+    expect(registry.run("view.fitAll")).toBe(true)
+    expect(impl.fitAll).toHaveBeenCalledOnce()
+    registry.run("view.orient.top")
+    expect(impl.setView).toHaveBeenCalledWith([0, 1, 0], expect.any(Boolean))
+
+    detach()
+    expect(registry.isEnabled("view.fitAll")).toBe(false)
+  })
+
+  it("binds standard views to Ctrl+1..7", () => {
+    const { registry } = setup()
+    const views = ["front", "back", "left", "right", "top", "bottom", "isometric"] as const
+    views.forEach((v, i) => {
+      expect(registry.get(`view.orient.${v}`).shortcuts).toEqual([`Ctrl+${i + 1}`])
+    })
+  })
+
+  it("switches the mouse navigation preset as a radio group", () => {
+    const { registry, preferences } = setup()
+    expect(registry.get("view.navigation.solidworks").isChecked?.()).toBe(true)
+    registry.run("view.navigation.onshape")
+    expect(preferences.getState().navigationPreset).toBe("onshape")
+    const checked = registry.list.filter(
+      (c) => c.id.startsWith("view.navigation.") && c.isChecked?.()
+    )
+    expect(checked.map((c) => c.id)).toEqual(["view.navigation.onshape"])
   })
 })

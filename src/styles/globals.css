@@ -41,6 +41,13 @@
   --highlight-3d: #0ea5e9; /* sky-500: 3D selection and anchor glyphs only, never text */
   --viewport-top: #f8fafc;
   --viewport-bottom: #e2e8f0;
+  /* 3D grid lines are decorative. Axis colours are >= 3.9:1 across the whole viewport
+     gradient, and white axis labels on them >= 4.83:1 (green-600 would be 2.67:1). */
+  --grid-minor: #cbd5e1; /* slate-300 */
+  --grid-major: #94a3b8; /* slate-400 */
+  --axis-x: #dc2626; /* red-600 */
+  --axis-y: #15803d; /* green-700 */
+  --axis-z: #2563eb; /* blue-600 */
 
   /* Schematic domains (each >= 3:1 on white; always paired with a line pattern) */
   --domain-electrical: #ea580c;

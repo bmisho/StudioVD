@@ -2,6 +2,7 @@ import { editCommands } from "./editCommands"
 import { fileCommands } from "./fileCommands"
 import type { Command, CommandDeps, CommandId } from "./types"
 import { viewCommands } from "./viewCommands"
+import { navigationCommands, viewOrientationCommands } from "./viewOrientationCommands"
 
 export interface CommandRegistry {
   readonly list: readonly Command[]
@@ -16,7 +17,13 @@ export function isCommandEnabled(command: Command): boolean {
 }
 
 export function createCommandRegistry(deps: CommandDeps): CommandRegistry {
-  const list = [...fileCommands(deps), ...editCommands(deps), ...viewCommands(deps)]
+  const list = [
+    ...fileCommands(deps),
+    ...editCommands(deps),
+    ...viewCommands(deps),
+    ...viewOrientationCommands(deps),
+    ...navigationCommands(deps),
+  ]
   const byId = new Map(list.map((c) => [c.id, c]))
   if (byId.size !== list.length) throw new Error("Duplicate command id in registry")
 

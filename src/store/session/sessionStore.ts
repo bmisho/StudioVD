@@ -9,6 +9,8 @@ export type SplitOrientation = "horizontal" | "vertical"
 export type Pane = "viewport" | "schematic"
 export type SimStatus = "idle" | "solving" | "error"
 export type DialogId = "about"
+/** WebGL context of the 3D view: not created yet (e.g. the pane is collapsed), working, or lost. */
+export type ViewportGpu = "starting" | "ready" | "lost"
 
 export type SelectionItem =
   | { kind: "group"; id: GroupId }
@@ -28,6 +30,7 @@ export interface SessionState {
   simStatus: SimStatus
   /** Modal dialog currently open, if any. */
   dialog: DialogId | null
+  viewportGpu: ViewportGpu
 
   select: (items: SelectionItem[]) => void
   /** Ctrl+click / Ctrl+Space: adds the item to the selection or removes it. */
@@ -45,6 +48,7 @@ export interface SessionState {
   toggleTestMode: () => void
   openDialog: (dialog: DialogId) => void
   closeDialog: () => void
+  setViewportGpu: (state: ViewportGpu) => void
 }
 
 export const initialSessionState = {
@@ -58,6 +62,7 @@ export const initialSessionState = {
   testMode: false,
   simStatus: "idle",
   dialog: null,
+  viewportGpu: "starting",
 } satisfies Partial<SessionState>
 
 export function createSessionStore() {
@@ -93,6 +98,7 @@ export function createSessionStore() {
     toggleTestMode: () => set((s) => ({ testMode: !s.testMode })),
     openDialog: (dialog) => set({ dialog }),
     closeDialog: () => set({ dialog: null }),
+    setViewportGpu: (viewportGpu) => set({ viewportGpu }),
   }))
 }
 

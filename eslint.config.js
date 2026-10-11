@@ -11,6 +11,21 @@ import { defineConfig, globalIgnores } from "eslint/config"
 import globals from "globals"
 import tseslint from "typescript-eslint"
 
+// drei exports that are known not to fetch from the network (CLAUDE.md §6). Environment,
+// Stage, Text, useGLTF/Gltf (DRACO), Ktx2, DetectGPU, Cloud and Matcap/Normal textures load
+// from CDNs. Read the module source before adding a name.
+const DREI_OFFLINE_ALLOWLIST = {
+  paths: [
+    {
+      name: "@react-three/drei",
+      allowImportNames: ["CameraControlsImpl", "GizmoHelper", "GizmoViewcube", "GizmoViewport"],
+      message: "drei export not on the offline allowlist (CLAUDE.md §6). See eslint.config.js.",
+    },
+  ],
+  patterns: [
+    { group: ["@react-three/drei/*"], message: "Import drei only through its allowlisted barrel." },
+  ],
+}
 // Layer boundaries are checked on resolved import targets by a local rule (see its tests).
 const DEFAULT_EXPORTS = [
   { selector: "ExportDefaultDeclaration", message: "Use named exports (CLAUDE.md §3)." },
@@ -82,6 +97,7 @@ export default defineConfig([
       "no-implied-eval": "error",
       "no-new-func": "error",
       "studiovd/boundaries": "error",
+      "no-restricted-imports": ["error", DREI_OFFLINE_ALLOWLIST],
       "no-restricted-globals": ["error", ...TAURI_GLOBALS],
       "no-restricted-properties": ["error", ...TAURI_PROPERTIES],
       "no-restricted-syntax": ["error", ...DEFAULT_EXPORTS],
@@ -103,6 +119,13 @@ export default defineConfig([
         { selector: "JSXElement, JSXFragment", message: "src/core must not contain JSX." },
       ],
     },
+  },
+  {
+    // R3F scene code mutates three.js objects (scene, cameras, controls, materials) from
+    // effects and useFrame by design; they are not React state, and the React Compiler is not
+    // used. The rule stays on everywhere else.
+    files: ["src/features/viewport/**/*.{ts,tsx}", "src/features/physics/**/*.{ts,tsx}"],
+    rules: { "react-hooks/immutability": "off" },
   },
   {
     // Generated shadcn/ui primitives (CLAUDE.md §3 exempts them from the size limit).

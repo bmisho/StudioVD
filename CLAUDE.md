@@ -93,7 +93,7 @@ docs/research/    Research behind PLAN.md decisions (not shipped; values need re
 
 ## 4. State management rules
 
-Three kinds of state. Do not mix them.
+Four kinds of state. Do not mix them.
 
 1. **Document state** (persisted to `scene.json`, undoable via `zundo`): assets, parts,
    design-pose transforms, materials, anchors, mates, schematic nodes/edges, bindings,
@@ -102,6 +102,9 @@ Three kinds of state. Do not mix them.
    projection, panel layout, test-mode flag, simulation *results*.
 3. **Transient per-frame state** (plain mutable objects or refs, **never Zustand**): live
    physics poses, drag targets, hover candidates. Read in `useFrame`, sampled when needed.
+4. **Preferences** (per machine, not per project; Zustand persisted to the webview's
+   localStorage, zod-validated, every access guarded): mouse navigation preset, zoom
+   settings. Never in `scene.json`, never undoable.
 
 Further rules:
 - Subscribe with narrow selectors (`useStore(s => s.parts[id])`, `useShallow` for objects).
@@ -168,6 +171,8 @@ because light blue on white fails contrast (sky-400 #38BDF8 is only 2.14:1).
 | `warning` | `#B45309` (amber-700) | Warnings | 5.02:1 |
 | `success` | `#15803D` (green-700) | OK states | 5.02:1 |
 | viewport bg | `#F8FAFC` -> `#E2E8F0` vertical gradient | 3D viewport only | n/a |
+| `grid-minor` / `grid-major` | `#CBD5E1` / `#94A3B8` (slate-300/400) | 3D ground grid lines | decorative |
+| `axis-x` / `axis-y` / `axis-z` | `#DC2626` / `#15803D` / `#2563EB` | 3D axes, triad | >=3.92:1 on the viewport gradient; white labels >=4.83:1 |
 
 **Schematic domain colours** (wires, port glyphs; each >=3:1 on white). Colour is never the
 only cue: each domain also has a distinct line pattern and port shape.
@@ -192,6 +197,10 @@ Composite widgets (tree, toolbar, tabs, menus) follow their WAI-ARIA pattern: on
 keys (arrows, Home/End, Space/Enter); everything else (Delete, Escape, Ctrl+...) bubbles to the
 registry. Disabled toolbar items use `aria-disabled`, not `disabled`, so they stay focusable
 and the tooltip can say why. Dialogs return focus to whatever opened them.
+
+3D code reads colours only through `src/features/viewport/theme/sceneTokens.ts`, which reads
+these CSS variables. Overlay materials (grid, gizmos, highlights) set `toneMapped: false` so
+they show the exact token under Neutral tone mapping.
 
 Focus rings use the full `ring` token, never an opacity variant (`ring-ring/50` falls below
 3:1). Sky-600 is 4.10:1 on white, 3.91:1 on `surface` and 3.57:1 on `accent`.

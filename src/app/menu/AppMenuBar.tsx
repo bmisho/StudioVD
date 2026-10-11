@@ -9,6 +9,7 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar"
 import { CommandMenuItem } from "./CommandMenuItem"
+import { CommandRadioGroup } from "./CommandRadioGroup"
 
 const triggerClass = "h-6 px-2 py-0 text-xs"
 
@@ -58,7 +59,33 @@ export function AppMenuBar() {
         <MenubarTrigger className={triggerClass}>View</MenubarTrigger>
         <MenubarContent>
           <CommandMenuItem id="view.fitAll" />
+          <MenubarSub>
+            <MenubarSubTrigger>Standard Views</MenubarSubTrigger>
+            <MenubarSubContent>
+              <CommandMenuItem id="view.orient.front" />
+              <CommandMenuItem id="view.orient.back" />
+              <CommandMenuItem id="view.orient.left" />
+              <CommandMenuItem id="view.orient.right" />
+              <CommandMenuItem id="view.orient.top" />
+              <CommandMenuItem id="view.orient.bottom" />
+              <MenubarSeparator />
+              <CommandMenuItem id="view.orient.isometric" />
+            </MenubarSubContent>
+          </MenubarSub>
           <CommandMenuItem id="view.toggleProjection" />
+          <MenubarSub>
+            <MenubarSubTrigger>Mouse Navigation</MenubarSubTrigger>
+            <MenubarSubContent>
+              <CommandRadioGroup
+                ids={[
+                  "view.navigation.solidworks",
+                  "view.navigation.fusion",
+                  "view.navigation.onshape",
+                  "view.navigation.blender",
+                ]}
+              />
+            </MenubarSubContent>
+          </MenubarSub>
           <MenubarSeparator />
           <CommandMenuItem id="view.toggleSplit" />
           <CommandMenuItem id="view.maximizeViewport" />

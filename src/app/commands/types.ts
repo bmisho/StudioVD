@@ -1,6 +1,10 @@
+import type { StandardView } from "@/core/math/standardViews"
+import type { NavigationPresetId } from "@/core/navigation/mousePresets"
+import type { ViewportApi } from "@/features/viewport/viewportBridge"
 import type { AppError, Result } from "@/lib/tauri/result"
 import type { History } from "@/store/document/history"
 import type { DocumentStore } from "@/store/document/documentStore"
+import type { PreferencesStore } from "@/store/preferences/preferencesStore"
 import type { SessionStore } from "@/store/session/sessionStore"
 
 export type CommandId =
@@ -25,6 +29,8 @@ export type CommandId =
   | "view.toggleLeftPanel"
   | "view.toggleRightPanel"
   | "view.focusMenuBar"
+  | `view.orient.${StandardView}`
+  | `view.navigation.${NavigationPresetId}`
   | "tool.select"
   | "tool.anchor"
   | "tool.mate"
@@ -63,6 +69,9 @@ export interface CommandDeps {
   document: DocumentStore
   history: History
   session: SessionStore
+  preferences: PreferencesStore
+  /** The 3D view, once it exists (commands are disabled until then). */
+  viewport: ViewportApi
   backend: Backend
   /** Surfaces a failed backend call to the user; `action` names what failed ("Save"). */
   reportError: (error: AppError, action: string) => void

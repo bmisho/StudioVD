@@ -5,6 +5,9 @@ import { defineConfig, devices } from "@playwright/test"
 // both (E2E_BROWSERS=chromium,webkit); locally only the installed browsers are used.
 const browsers = (process.env.E2E_BROWSERS ?? "chromium").split(",").map((b) => b.trim())
 const viewport = { width: 1440, height: 900 }
+// CI runners have no GPU. Chromium's implicit software-WebGL fallback is deprecated, so opt
+// in to SwiftShader explicitly: WebGL2 then behaves the same on every machine.
+const chromiumArgs = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -24,10 +27,21 @@ export default defineConfig({
   },
   projects: [
     ...(browsers.includes("chromium")
-      ? [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport } }]
+      ? [
+          {
+            name: "chromium",
+            use: { ...devices["Desktop Chrome"], viewport, launchOptions: { args: chromiumArgs } },
+          },
+        ]
       : []),
     ...(browsers.includes("webkit")
-      ? [{ name: "webkit", use: { ...devices["Desktop Safari"], viewport } }]
+      ? [
+          {
+            name: "webkit",
+            // Desktop Safari defaults to 2x: four times the software-rendered pixels on CI.
+            use: { ...devices["Desktop Safari"], viewport, deviceScaleFactor: 1 },
+          },
+        ]
       : []),
   ],
 })

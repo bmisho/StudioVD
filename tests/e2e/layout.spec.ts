@@ -6,7 +6,7 @@ const width = async (locator: Locator) => (await locator.boundingBox())?.width ?
 test.describe("layout persistence", () => {
   test("panel toggles never remount the 3D pane or lose sizes and tabs", async ({ page }) => {
     // Phase 3 puts a WebGL canvas here: a remount would destroy its context.
-    const viewportNode = await page.getByTestId("viewport-placeholder").elementHandle()
+    const viewportNode = await page.getByTestId("viewport-canvas").locator("canvas").elementHandle()
     const tablist = page.getByRole("tablist")
 
     const handle = page.locator('[data-slot="resizable-handle"]').first()

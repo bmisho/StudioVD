@@ -1,9 +1,11 @@
 import { toast } from "sonner"
+import { viewportBridge } from "@/features/viewport/viewportBridge"
 import * as tauri from "@/lib/tauri/commands"
 import type { AppError } from "@/lib/tauri/result"
 import { closeMainWindow } from "@/lib/tauri/window"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { documentHistory } from "@/store/document/history"
+import { usePreferencesStore } from "@/store/preferences/preferencesStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { connectSelectionPruning } from "@/store/selectionSync"
 import { rememberDialogReturnFocus } from "../dialogs/focusReturn"
@@ -24,6 +26,8 @@ export const appCommands = createCommandRegistry({
   document: useDocumentStore,
   history: documentHistory,
   session: useSessionStore,
+  preferences: usePreferencesStore,
+  viewport: viewportBridge,
   backend: {
     newProject: tauri.newProject,
     openProject: tauri.openProject,

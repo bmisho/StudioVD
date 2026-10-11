@@ -3,16 +3,20 @@ import type { Command, CommandDeps } from "./types"
 /** Not built yet: visible but disabled, with the phase that delivers it. */
 const later = (phase: number) => ({ isEnabled: () => false, availableInPhase: phase })
 
-export function viewCommands({ session, openDialog, focusMenuBar }: CommandDeps): Command[] {
+export function viewCommands({
+  session,
+  viewport,
+  openDialog,
+  focusMenuBar,
+}: CommandDeps): Command[] {
   const s = () => session.getState()
   return [
     {
       id: "view.fitAll",
       label: "Fit All",
-      shortcuts: ["F"],
-      run: () => undefined,
-      isEnabled: () => false,
-      availableInPhase: 3,
+      shortcuts: ["F", "Home"],
+      run: () => viewport.fitAll(),
+      isEnabled: () => viewport.isReady(),
     },
     {
       id: "view.toggleProjection",

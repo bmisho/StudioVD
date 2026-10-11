@@ -1,10 +1,16 @@
+import { lazy, Suspense } from "react"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { SchematicPlaceholder } from "@/features/schematic/SchematicPlaceholder"
-import { ViewportPlaceholder } from "@/features/viewport/ViewportPlaceholder"
+import { ViewportLoading } from "@/features/viewport/ViewportLoading"
 import { cn } from "@/lib/utils"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { PaneFrame } from "./PaneFrame"
 import { useCollapsiblePanel } from "./useCollapsiblePanel"
+
+// three.js, R3F and camera-controls load in their own chunk, so the shell paints first.
+const Viewport3D = lazy(() =>
+  import("@/features/viewport/Viewport3D").then((m) => ({ default: m.Viewport3D }))
+)
 
 /**
  * 3D view and schematic side by side (or stacked). Nothing here ever remounts: orientation is
@@ -29,7 +35,9 @@ export function CenterSplit() {
         collapsedSize="0"
       >
         <PaneFrame pane="viewport" title="3D View" hidden={viewport.collapsed}>
-          <ViewportPlaceholder />
+          <Suspense fallback={<ViewportLoading />}>
+            <Viewport3D />
+          </Suspense>
         </PaneFrame>
       </ResizablePanel>
       <ResizableHandle

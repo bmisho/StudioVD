@@ -48,8 +48,7 @@ export function editCommands(deps: CommandDeps): Command[] {
         const parts = selectedDirectPartIds(deps)
         const groups = selectedGroupIds(deps)
         if (parts.length === 0 && groups.length === 0) return
-        document.getState().deleteParts(parts)
-        document.getState().deleteGroups(groups)
+        document.getState().deleteItems(parts, groups)
         session.getState().clearSelection()
       },
       isEnabled: () => selectedDirectPartIds(deps).length + selectedGroupIds(deps).length > 0,

@@ -58,3 +58,22 @@ describe("part commands", () => {
     expect(t.session.getState().selection).toEqual([])
   })
 })
+
+describe("delete", () => {
+  it("deleting parts and groups together is ONE undo step", () => {
+    const t = withRig()
+    t.session.getState().select([{ kind: "part", id: t.base }])
+    t.registry.run("edit.newGroup") // the base moves into Group 1
+    const group = t.session.getState().selection[0]
+    if (group?.kind !== "group") throw new Error("expected the new group selected")
+    t.session.getState().select([group, { kind: "part", id: t.leaf }])
+    const before = t.document.temporal.getState().pastStates.length
+    t.registry.run("edit.delete")
+    expect(Object.keys(t.document.getState().doc.parts)).toEqual([t.base])
+    expect(t.document.getState().doc.groups).toEqual({})
+    expect(t.document.temporal.getState().pastStates.length).toBe(before + 1)
+    t.history.undo()
+    expect(Object.keys(t.document.getState().doc.parts)).toHaveLength(2)
+    expect(Object.keys(t.document.getState().doc.groups)).toHaveLength(1)
+  })
+})

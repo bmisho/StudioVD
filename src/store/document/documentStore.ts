@@ -10,6 +10,7 @@ import {
   type GroupId,
   type SceneDocument,
 } from "@/core/schema"
+import { removeGroups } from "./deletion"
 import { partActions, type PartActions } from "./partActions"
 
 /** Maximum undo depth. Snapshots share structure (immer), so each costs only what changed. */
@@ -66,21 +67,7 @@ export function createDocumentStore(initial?: SceneDocument) {
           })
         },
 
-        deleteGroups: (ids) => {
-          set((s) => {
-            for (const id of ids) {
-              const group = s.doc.groups[id]
-              if (!group) continue
-              for (const child of Object.values(s.doc.groups)) {
-                if (child.parentId === id) child.parentId = group.parentId
-              }
-              for (const part of Object.values(s.doc.parts)) {
-                if (part.parentId === id) part.parentId = group.parentId
-              }
-              delete s.doc.groups[id]
-            }
-          })
-        },
+        deleteGroups: (ids) => set((s) => removeGroups(s.doc, ids)),
 
         ...partActions(set),
 

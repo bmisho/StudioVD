@@ -1,5 +1,5 @@
 import type { Draft } from "immer"
-import { commonParent, partDeletion, topLevelItems } from "@/core/scene/partOps"
+import { commonParent, topLevelItems } from "@/core/scene/partOps"
 import type { SelectionRef } from "@/core/scene/selection"
 import {
   NameSchema,
@@ -10,6 +10,7 @@ import {
   type Pose,
   type SceneDocument,
 } from "@/core/schema"
+import { removeGroups, removeParts } from "./deletion"
 
 export interface PartActions {
   /** Renames a part; names the schema would reject are ignored (like `renameGroup`). */
@@ -19,6 +20,8 @@ export interface PartActions {
   setPartsGrounded: (ids: readonly PartId[], grounded: boolean) => void
   /** Deletes parts with their anchors, mates, couplings, bindings and unused assets. */
   deleteParts: (ids: readonly PartId[]) => void
+  /** Deletes parts and groups together: ONE undo entry (Edit › Delete on a mixed selection). */
+  deleteItems: (parts: readonly PartId[], groups: readonly GroupId[]) => void
   /**
    * Moves the selected parts and groups (outermost ones) into a new group under their shared
    * parent. With nothing to move, creates an empty group at the root. Returns its id.
@@ -58,15 +61,12 @@ export function partActions(set: Set): PartActions {
         if (part.grounded !== grounded) part.grounded = grounded
       }),
 
-    deleteParts: (ids) =>
+    deleteParts: (ids) => set((s) => removeParts(s.doc, ids)),
+
+    deleteItems: (parts, groups) =>
       set((s) => {
-        const gone = partDeletion(s.doc, ids)
-        for (const id of gone.parts) delete s.doc.parts[id]
-        for (const id of gone.anchors) delete s.doc.anchors[id]
-        for (const id of gone.mates) delete s.doc.mates[id]
-        for (const id of gone.couplings) delete s.doc.couplings[id]
-        for (const id of gone.bindings) delete s.doc.bindings[id]
-        for (const id of gone.assets) delete s.doc.assets[id]
+        removeParts(s.doc, parts)
+        removeGroups(s.doc, groups)
       }),
 
     groupItems: (items, name) => {

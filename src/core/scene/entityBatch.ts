@@ -1,5 +1,6 @@
 import {
   AnchorSchema,
+  checkIntegrity,
   GeometryAssetSchema,
   GroupSchema,
   MateSchema,
@@ -22,17 +23,17 @@ export interface EntityBatch {
   mates?: readonly Mate[]
 }
 
-type Refs = Pick<SceneDocument, "assets" | "groups" | "parts" | "anchors" | "mates">
-
 const has = (record: object, id: string) => Object.hasOwn(record, id)
 
 /**
  * Validates a batch against the document it goes into. Returns the problems, empty when the
  * batch is valid: each entity passes its schema, ids are new (an asset may already exist,
  * since assets are content addressed), and every reference resolves in the document or the
- * batch. Store actions must never write a document the schema would reject.
+ * batch. Then the merged document must pass the same integrity rules as an opened file (caps,
+ * group depth, mates across two parts): store actions never write a document that Open would
+ * refuse (PLAN 5.1).
  */
-export function entityBatchProblems(doc: Refs, batch: EntityBatch): string[] {
+export function entityBatchProblems(doc: SceneDocument, batch: EntityBatch): string[] {
   const problems: string[] = []
   const check = (ok: boolean, message: string) => {
     if (!ok) problems.push(message)
@@ -71,5 +72,26 @@ export function entityBatchProblems(doc: Refs, batch: EntityBatch): string[] {
       check(has(doc.anchors, end) || anchors.has(end), `mate ${m.id}: unknown anchor`)
     }
   }
-  return problems
+  if (problems.length > 0) return problems
+  return checkIntegrity(merged(doc, batch)).map((p) => `${p.path}: ${p.message}`)
+}
+
+function add<K extends string, T extends { id: K }>(
+  into: Readonly<Record<K, T>>,
+  list: readonly T[] = []
+): Record<K, T> {
+  const out: Record<K, T> = { ...into }
+  for (const e of list) out[e.id] = e // ids passed their schema above: UUIDs or hashes
+  return out
+}
+
+const merged = (doc: SceneDocument, batch: EntityBatch): SceneDocument => {
+  return {
+    ...doc,
+    assets: add(doc.assets, batch.assets),
+    groups: add(doc.groups, batch.groups),
+    parts: add(doc.parts, batch.parts),
+    anchors: add(doc.anchors, batch.anchors),
+    mates: add(doc.mates, batch.mates),
+  }
 }

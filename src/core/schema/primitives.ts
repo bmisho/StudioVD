@@ -53,3 +53,12 @@ export const NameSchema = z.string().trim().min(1).max(120)
 
 /** SPDX licence expression, e.g. `CC-BY-SA-4.0 WITH KiCad-libraries-exception`. */
 export const SpdxSchema = z.string().min(1).max(200)
+
+/**
+ * Keys chosen by authors (component local keys, parameter names): identifier-like, so never a
+ * prototype name or free text.
+ */
+export const LocalKeySchema = z
+  .string()
+  .regex(/^[a-zA-Z][a-zA-Z0-9_]{0,31}$/)
+  .refine((k) => !["__proto__", "constructor", "prototype"].includes(k), "reserved key")

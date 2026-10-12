@@ -1,53 +1,51 @@
 import { z } from "zod"
 import {
   AssetIdSchema,
-  ComponentInstanceIdSchema,
   GroupIdSchema,
   MaterialIdSchema,
   PartIdSchema,
   TextureIdSchema,
 } from "./ids"
-import { NameSchema, PoseSchema, SpdxSchema, Vec3Schema } from "./primitives"
+import { NameSchema, PoseSchema, Vec3Schema } from "./primitives"
 
-/** Licence metadata carried by every geometry asset (CLAUDE.md §12). */
-export const AssetLicenseSchema = z
-  .object({
-    spdx: SpdxSchema,
-    creators: z.array(z.string().max(200)).max(32),
-    /** Where the asset came from. https only: the UI may render it as a link (CLAUDE.md §9). */
-    sourceUrl: z
-      .url({ protocol: /^https$/ })
-      .max(2048)
-      .optional(),
-    sourceRevision: z.string().max(128).optional(),
-    modifications: z.string().max(1000).optional(),
-    licenseTextSha256: z
-      .string()
-      .regex(/^[0-9a-f]{64}$/)
-      .optional(),
-  })
+/** Part-local bounds; `min` never exceeds `max` on any axis. */
+export const BoundsMmSchema = z
+  .object({ min: Vec3Schema, max: Vec3Schema })
   .strict()
+  .refine((b) => b.min.every((v, i) => v <= (b.max[i] ?? v)), "bbox min must not exceed max")
 
+/**
+ * A normalized mesh, stored once per content address at `geometry/<id>.glb`. Licence
+ * metadata (CLAUDE.md §12) arrives with library components in Phase 9, as an optional field.
+ */
 export const GeometryAssetSchema = z
   .object({
     id: AssetIdSchema,
     path: z.string().regex(/^geometry\/[0-9a-f]{64}\.glb$/),
     triangleCount: z.number().int().nonnegative(),
-    bboxMm: z.object({ min: Vec3Schema, max: Vec3Schema }).strict(),
+    bboxMm: BoundsMmSchema,
     volumeMm3: z.number().nonnegative().optional(),
     centroidMm: Vec3Schema.optional(),
     watertight: z.boolean().optional(),
-    license: AssetLicenseSchema.optional(),
   })
   .strict()
+  .refine((a) => a.path === `geometry/${a.id}.glb`, {
+    message: "asset path must be geometry/<id>.glb",
+    path: ["path"],
+  })
 export type GeometryAsset = z.infer<typeof GeometryAssetSchema>
 
+/** A texture image, stored once per content address (Phase 6 uses them). */
 export const TextureSchema = z
   .object({
     id: TextureIdSchema,
     path: z.string().regex(/^textures\/[0-9a-f]{64}\.(png|jpg)$/),
   })
   .strict()
+  .refine((t) => t.path.startsWith(`textures/${t.id}.`), {
+    message: "texture path must be textures/<id>.png|jpg",
+    path: ["path"],
+  })
 
 /** Phase 2 draft: appearance is expanded to full PBR in Phase 6. */
 export const MaterialSchema = z
@@ -77,6 +75,10 @@ export type Group = z.infer<typeof GroupSchema>
 export const ColliderKindSchema = z.enum(["hull", "decomposed", "box", "trimesh", "none"])
 export type ColliderKind = z.infer<typeof ColliderKindSchema>
 
+/**
+ * A placed instance of an asset. Later phases add optional fields (Phase 6 material slots,
+ * Phase 9 the component reference); a v1 file never has them, so that needs no migration.
+ */
 export const PartSchema = z
   .object({
     id: PartIdSchema,
@@ -85,17 +87,11 @@ export const PartSchema = z
     parentId: GroupIdSchema.nullable(),
     pose: PoseSchema,
     materialId: MaterialIdSchema.nullable(),
-    /** glTF material name -> project material, for multi-colour imports. */
-    materialSlots: z.record(z.string().max(120), MaterialIdSchema).optional(),
     grounded: z.boolean(),
     visible: z.boolean(),
     collider: ColliderKindSchema,
     massOverrideKg: z.number().positive().optional(),
     comOverrideMm: Vec3Schema.optional(),
-    componentRef: z
-      .object({ instance: ComponentInstanceIdSchema, key: z.string().max(32) })
-      .strict()
-      .optional(),
   })
   .strict()
 export type Part = z.infer<typeof PartSchema>

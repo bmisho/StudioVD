@@ -133,7 +133,13 @@ export function createImportController(deps: ImportDeps) {
     if (batch.parts.length > 0) {
       const budget = triangleBudgetWarning(doc, batch)
       if (budget) warnings.push(budget)
-      deps.document.getState().insertEntities(batch)
+      try {
+        deps.document.getState().insertEntities(batch)
+      } catch (e) {
+        // The project limits (parts, group depth) apply to imports too (PLAN 5.1).
+        deps.notify.error("The import could not be added", errorText(e))
+        return
+      }
       // New parts would be invisible under View › Isolate: show everything again.
       if (deps.session.getState().isolated) deps.session.getState().toggleIsolation([])
       deps.session.getState().select(batch.topLevel)

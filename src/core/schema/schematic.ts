@@ -6,7 +6,7 @@ import {
   EdgeIdSchema,
   NodeIdSchema,
 } from "./ids"
-import { NameSchema } from "./primitives"
+import { LocalKeySchema, NameSchema } from "./primitives"
 
 // Phase 2 draft. Port payload types, parameters and behaviour are fleshed out in Phases 11-13.
 
@@ -50,7 +50,7 @@ export const SchematicNodeSchema = z
     blockDefId: BlockDefIdSchema,
     position: z.object({ x: z.number(), y: z.number() }).strict(),
     label: z.string().max(64),
-    paramValues: z.record(z.string().max(64), ParamValueSchema),
+    paramValues: z.record(LocalKeySchema, ParamValueSchema),
     componentInstanceId: ComponentInstanceIdSchema.optional(),
   })
   .strict()

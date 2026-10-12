@@ -10,15 +10,11 @@ import {
   NodeIdSchema,
   PartIdSchema,
 } from "./ids"
-import { SpdxSchema } from "./primitives"
+import { LocalKeySchema, SpdxSchema } from "./primitives"
 
-// Library records inside a project (PLAN.md §1.3, §4.6). Present from schema v1 so that
-// Phase 9 needs no migration.
-
-const LocalKeySchema = z
-  .string()
-  .regex(/^[a-zA-Z][a-zA-Z0-9_]{0,31}$/)
-  .refine((k) => !["__proto__", "constructor", "prototype"].includes(k), "reserved key")
+// Library records inside a project (PLAN.md §1.3, §4.6). Present from schema v1 but gated
+// empty until Phase 9 (document.ts): an opened .stvd is untrusted (CLAUDE.md §9), so no
+// manifest gets in before its strict schema exists.
 
 /** Validated copy of a library component manifest, stored once per definition. */
 export const ComponentDefSnapshotSchema = z
@@ -33,16 +29,6 @@ export const ComponentDefSnapshotSchema = z
   })
   .strict()
 export type ComponentDefSnapshot = z.infer<typeof ComponentDefSnapshotSchema>
-
-/**
- * Component definitions in a project. Must be empty until Phase 9 defines the manifest
- * schema: an opened .stvd is untrusted (CLAUDE.md §9), so no unvalidated manifest gets in.
- */
-export const ComponentDefsSchema = z
-  .record(ComponentDefKeySchema, ComponentDefSnapshotSchema)
-  .refine((defs) => Object.keys(defs).length === 0, {
-    message: "Library components are not supported before Phase 9",
-  })
 
 /** Which project entities an inserted component created, keyed by the manifest's local keys. */
 export const ComponentInstanceSchema = z
@@ -62,6 +48,7 @@ export const ComponentInstanceSchema = z
   .strict()
 export type ComponentInstance = z.infer<typeof ComponentInstanceSchema>
 
+/** A licence text file, by the SHA-256 of its bytes (the record key). */
 export const LicenseTextSchema = z
   .object({
     path: z.string().regex(/^licenses\/[0-9a-f]{64}\.txt$/),

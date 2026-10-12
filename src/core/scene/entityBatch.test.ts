@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest"
-import { createEmptyDocument, type AnchorId, type AssetId, type GroupId } from "@/core/schema"
+import {
+  createEmptyDocument,
+  newId,
+  type AnchorId,
+  type AssetId,
+  type GroupId,
+} from "@/core/schema"
 import { entityBatchProblems } from "./entityBatch"
 import { createTestRig } from "./testRig"
+
+/** Readable fixed UUIDs: `uuid(1)` is 00000000-0000-4000-8000-000000000001. */
+const uuid = (n: number) => `00000000-0000-4000-8000-${n.toString(16).padStart(12, "0")}`
 
 describe("entityBatchProblems", () => {
   it("accepts the test rig into an empty document", () => {
@@ -18,7 +27,7 @@ describe("entityBatchProblems", () => {
     expect(
       entityBatchProblems(doc, {
         assets: rig.assets,
-        parts: [{ ...part, parentId: "nope" as GroupId }],
+        parts: [{ ...part, parentId: newId<GroupId>() }],
       })
     ).toEqual([`part ${part.id}: unknown group`])
     expect(entityBatchProblems(doc, { anchors: [anchor] })).toEqual([
@@ -26,9 +35,9 @@ describe("entityBatchProblems", () => {
     ])
     const mate = rig.mates[0]
     if (!mate) throw new Error("rig incomplete")
-    expect(entityBatchProblems(doc, { mates: [{ ...mate, anchorB: "x" as AnchorId }] })).toContain(
-      `mate ${mate.id}: unknown anchor`
-    )
+    expect(
+      entityBatchProblems(doc, { mates: [{ ...mate, anchorB: newId<AnchorId>() }] })
+    ).toContain(`mate ${mate.id}: unknown anchor`)
   })
 
   it("rejects duplicate ids but allows an existing content-addressed asset", () => {
@@ -53,15 +62,22 @@ describe("entityBatchProblems", () => {
 })
 
 describe("entityBatchProblems: groups", () => {
-  const group = (id: string, parentId: string | null) => ({
-    id: id as GroupId,
-    name: id,
-    parentId: parentId as GroupId | null,
+  const ids: Record<string, GroupId> = {
+    outer: uuid(1) as GroupId,
+    inner: uuid(2) as GroupId,
+    kept: uuid(3) as GroupId,
+    child: uuid(4) as GroupId,
+    later: uuid(5) as GroupId,
+  }
+  const group = (name: string, parent: string | null) => ({
+    id: ids[name] as GroupId,
+    name,
+    parentId: parent === null ? null : (ids[parent] as GroupId),
   })
 
   it("accepts groups whose parents come earlier in the batch, and parts inside them", () => {
     const rig = createTestRig()
-    const parts = rig.parts.map((p) => ({ ...p, parentId: "inner" as GroupId }))
+    const parts = rig.parts.map((p) => ({ ...p, parentId: ids.inner as GroupId }))
     const batch = {
       assets: rig.assets,
       groups: [group("outer", null), group("inner", "outer")],
@@ -72,11 +88,11 @@ describe("entityBatchProblems: groups", () => {
 
   it("rejects unknown parents, parents listed later and duplicate groups", () => {
     const doc = createEmptyDocument("0.1.0")
-    doc.groups["kept" as GroupId] = group("kept", null)
+    doc.groups[ids.kept as GroupId] = group("kept", null)
     expect(
       entityBatchProblems(doc, {
         groups: [group("child", "later"), group("later", null), group("kept", null)],
       })
-    ).toEqual(["group child: unknown parent", "group kept already exists"])
+    ).toEqual([`group ${ids.child}: unknown parent`, `group ${ids.kept} already exists`])
   })
 })

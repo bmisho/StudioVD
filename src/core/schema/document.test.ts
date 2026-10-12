@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest"
 import { createEmptyDocument, parseDocument, type SceneDocument } from "./document"
-import { newId, type GroupId, type PartId } from "./ids"
-import { AssetLicenseSchema } from "./scene"
+import { MateSchema } from "./assembly"
+import { GroupIdSchema, newId, type AnchorId, type GroupId, type MateId, type PartId } from "./ids"
+import { GeometryAssetSchema } from "./scene"
 
 const valid = (): SceneDocument => createEmptyDocument("0.1.0")
 
@@ -64,7 +65,7 @@ describe("scene.json v1 schema", () => {
     expect(parseDocument(doc).ok).toBe(false)
   })
 
-  it("rejects component definitions until the Phase 9 manifest schema exists", () => {
+  it("rejects library components until Phase 9 defines the manifest schema", () => {
     const key = "std/m3@1.0.0#0123456789ab"
     const def = { key, id: "std/m3", version: "1.0.0", manifestSha256: "a".repeat(64) }
     const doc = {
@@ -74,18 +75,40 @@ describe("scene.json v1 schema", () => {
     expect(parseDocument(doc).ok).toBe(false)
   })
 
-  it("accepts only https source URLs in licence metadata", () => {
-    const license = (sourceUrl: string) =>
-      AssetLicenseSchema.safeParse({ spdx: "CC0-1.0", creators: [], sourceUrl }).success
-    expect(license("https://github.com/org/repo")).toBe(true)
-    for (const url of [
-      "javascript:alert(1)",
-      "data:text/html,x",
-      "file:///etc/passwd",
-      "http://x.org",
-    ]) {
-      expect(license(url)).toBe(false)
+  it("ties an asset's path to its content address and keeps its bounds ordered", () => {
+    const id = "a".repeat(64)
+    const asset = {
+      id,
+      path: `geometry/${id}.glb`,
+      triangleCount: 12,
+      bboxMm: { min: [-1, -1, -1], max: [1, 1, 1] },
     }
+    expect(GeometryAssetSchema.safeParse(asset).success).toBe(true)
+    const otherPath = { ...asset, path: `geometry/${"b".repeat(64)}.glb` }
+    expect(GeometryAssetSchema.safeParse(otherPath).success).toBe(false)
+    const inverted = { ...asset, bboxMm: { min: [0, 2, 0], max: [1, 1, 1] } }
+    expect(GeometryAssetSchema.safeParse(inverted).success).toBe(false)
+  })
+
+  it("accepts only lowercase UUIDs as minted ids", () => {
+    expect(GroupIdSchema.safeParse(newId<GroupId>()).success).toBe(true)
+    for (const id of ["constructor", "a".repeat(64), "00000000-0000-4000-8000-00000000000A"])
+      expect(GroupIdSchema.safeParse(id).success).toBe(false)
+  })
+
+  it("rejects a mate between an anchor and itself", () => {
+    const anchor = newId<AnchorId>()
+    const mate = {
+      id: newId<MateId>(),
+      type: "fixed",
+      anchorA: anchor,
+      anchorB: anchor,
+      flip: false,
+      angleOffsetRad: 0,
+      contactsEnabled: false,
+      suppressed: false,
+    }
+    expect(MateSchema.safeParse(mate).success).toBe(false)
   })
 
   it("never throws on garbage input", () => {

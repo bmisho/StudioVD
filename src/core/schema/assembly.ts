@@ -1,25 +1,12 @@
 import { z } from "zod"
-import {
-  AnchorIdSchema,
-  ComponentInstanceIdSchema,
-  CouplingIdSchema,
-  MateIdSchema,
-  PartIdSchema,
-} from "./ids"
+import { AnchorIdSchema, CouplingIdSchema, MateIdSchema, PartIdSchema } from "./ids"
 import { FrameSchema, NameSchema } from "./primitives"
 
-/** Where an anchor came from. Component anchors are authoritative frames (no face ids). */
+/** Where an anchor came from. Phase 9 adds `component` (authoritative library frames). */
 export const AnchorSourceSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("face"), faceIndex: z.number().int().nonnegative() }).strict(),
   z.object({ kind: z.literal("vertex"), vertexIndex: z.number().int().nonnegative() }).strict(),
   z.object({ kind: z.literal("manual") }).strict(),
-  z
-    .object({
-      kind: z.literal("component"),
-      instance: ComponentInstanceIdSchema,
-      key: z.string().max(32),
-    })
-    .strict(),
 ])
 
 export const AnchorSchema = z
@@ -58,6 +45,10 @@ export const MateSchema = z
     suppressed: z.boolean(),
   })
   .strict()
+  .refine((m) => m.anchorA !== m.anchorB, {
+    message: "a mate needs two different anchors",
+    path: ["anchorB"],
+  })
 export type Mate = z.infer<typeof MateSchema>
 
 /** Kinematic coupling between two mates (PLAN.md Phase 10.5). */
@@ -71,4 +62,5 @@ export const CouplingSchema = z
     ratio: z.number().refine((r) => r !== 0, "ratio must be non-zero"),
   })
   .strict()
+  .refine((c) => c.mateA !== c.mateB, { message: "a coupling needs two mates", path: ["mateB"] })
 export type Coupling = z.infer<typeof CouplingSchema>

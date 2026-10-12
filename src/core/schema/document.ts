@@ -13,9 +13,12 @@ import {
   MaterialIdSchema,
   NodeIdSchema,
   PartIdSchema,
+  ComponentDefKeySchema,
+  Sha256Schema,
   TextureIdSchema,
 } from "./ids"
-import { ComponentDefsSchema, ComponentInstanceSchema, LicenseTextSchema } from "./library"
+import { emptyUntil } from "./gates"
+import { ComponentDefSnapshotSchema, ComponentInstanceSchema, LicenseTextSchema } from "./library"
 import { NameSchema, Vec3Schema } from "./primitives"
 import {
   BindingSchema,
@@ -34,8 +37,10 @@ import {
 export const SCHEMA_VERSION = 1
 
 /**
- * `scene.json` v1 (draft until Phase 5 finalizes it; after that, changes need a migration).
- * Every entity collection is normalized as Record<Id, Entity> (CLAUDE.md §4).
+ * `scene.json` v1 (final since Phase 5: changing what a saved file means needs a migration,
+ * `migrate.ts`). Every entity collection is normalized as Record<Id, Entity> (CLAUDE.md §4).
+ * Collections a later phase owns are gated empty until then (`emptyUntil`). Cross-entity
+ * rules (keys, references, cycles, caps) live in `integrity.ts`.
  */
 export const SceneDocumentSchema = z
   .object({
@@ -45,24 +50,32 @@ export const SceneDocumentSchema = z
     units: z.object({ length: z.literal("mm") }).strict(),
     project: z.object({ name: NameSchema }).strict(),
     assets: z.record(AssetIdSchema, GeometryAssetSchema),
-    textures: z.record(TextureIdSchema, TextureSchema),
-    materials: z.record(MaterialIdSchema, MaterialSchema),
+    textures: emptyUntil(z.record(TextureIdSchema, TextureSchema), 6, "Textures"),
+    materials: emptyUntil(z.record(MaterialIdSchema, MaterialSchema), 6, "Materials"),
     groups: z.record(GroupIdSchema, GroupSchema),
     parts: z.record(PartIdSchema, PartSchema),
     anchors: z.record(AnchorIdSchema, AnchorSchema),
     mates: z.record(MateIdSchema, MateSchema),
-    couplings: z.record(CouplingIdSchema, CouplingSchema),
+    couplings: emptyUntil(z.record(CouplingIdSchema, CouplingSchema), 10, "Couplings"),
     schematic: z
       .object({
-        nodes: z.record(NodeIdSchema, SchematicNodeSchema),
-        edges: z.record(EdgeIdSchema, SchematicEdgeSchema),
-        blockDefs: z.record(BlockDefIdSchema, BlockDefSchema),
+        nodes: emptyUntil(z.record(NodeIdSchema, SchematicNodeSchema), 11, "Schematic blocks"),
+        edges: emptyUntil(z.record(EdgeIdSchema, SchematicEdgeSchema), 11, "Schematic wires"),
+        blockDefs: emptyUntil(z.record(BlockDefIdSchema, BlockDefSchema), 11, "Block types"),
       })
       .strict(),
-    bindings: z.record(BindingIdSchema, BindingSchema),
-    componentDefs: ComponentDefsSchema,
-    components: z.record(ComponentInstanceIdSchema, ComponentInstanceSchema),
-    licenseTexts: z.record(z.string().regex(/^[0-9a-f]{64}$/), LicenseTextSchema),
+    bindings: emptyUntil(z.record(BindingIdSchema, BindingSchema), 13, "Bindings"),
+    componentDefs: emptyUntil(
+      z.record(ComponentDefKeySchema, ComponentDefSnapshotSchema),
+      9,
+      "Library components"
+    ),
+    components: emptyUntil(
+      z.record(ComponentInstanceIdSchema, ComponentInstanceSchema),
+      9,
+      "Library components"
+    ),
+    licenseTexts: emptyUntil(z.record(Sha256Schema, LicenseTextSchema), 9, "Licence texts"),
     simulation: z
       .object({
         /** m/s², world frame (Y-up). Used by the solver only; Rapier gravity is always zero. */

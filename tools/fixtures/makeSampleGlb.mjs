@@ -39,8 +39,10 @@ function box(sx, sy, sz) {
   return { pos: new Float32Array(pos), nor: new Float32Array(nor), idx: new Uint16Array(idx) }
 }
 
-export function sampleGlb() {
-  const meshes = [box(0.05, 0.01, 0.04), box(0.01, 0.03, 0.01)]
+/** `scale` grows every length; `names` are the assembly, plate and peg node names. */
+export function sampleGlb(scale = 1, names = ["Assembly", "Plate", "Peg"]) {
+  const k = scale
+  const meshes = [box(0.05 * k, 0.01 * k, 0.04 * k), box(0.01 * k, 0.03 * k, 0.01 * k)]
   const chunks = []
   const views = []
   const accessors = []
@@ -87,9 +89,9 @@ export function sampleGlb() {
     scene: 0,
     scenes: [{ nodes: [0] }],
     nodes: [
-      { name: "Assembly", translation: [0.1, 0, 0], rotation: [0, s, 0, s], children: [1, 2] },
-      { name: "Plate", mesh: 0 },
-      { name: "Peg", mesh: 1, translation: [0, 0.02, 0] },
+      { name: names[0], translation: [0.1 * k, 0, 0], rotation: [0, s, 0, s], children: [1, 2] },
+      { name: names[1], mesh: 0 },
+      { name: names[2], mesh: 1, translation: [0, 0.02 * k, 0] },
     ],
     meshes: gltfMeshes,
     materials: [

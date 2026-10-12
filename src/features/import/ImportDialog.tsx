@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -69,6 +70,11 @@ export function ImportDialog() {
   const status = useImportStore((s) => s.status)
   const close = useImportStore((s) => s.close)
   const running = status.phase === "running"
+  // Import disables itself while running: move focus to Cancel, the only live control.
+  const cancelRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (running) cancelRef.current?.focus()
+  }, [running])
   const files = status.phase === "idle" ? [] : status.files
   const importable = files.filter((f) => formatOf(f.name) !== null).length
 
@@ -98,6 +104,7 @@ export function ImportDialog() {
         )}
         <DialogFooter>
           <Button
+            ref={cancelRef}
             variant="outline"
             size="sm"
             onClick={() => (running ? importController.cancel() : close())}

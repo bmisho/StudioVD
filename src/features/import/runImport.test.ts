@@ -100,6 +100,27 @@ describe("runImport", () => {
     }
   })
 
+  it("quantized glTF over 1 m keeps its geometry, and node names stay as written", async () => {
+    const plain = await runImport(job("large.glb", "glb", fixture("large.glb")), decoders)
+    const packed = await runImport(job("large-meshopt.glb", "glb", fixture("large-meshopt.glb")), {
+      ...decoders,
+      meshopt: MeshoptDecoder,
+    })
+    expect(plain.parts.map((p) => [p.name, p.path.join("/")])).toEqual([
+      ["Plate 1.001", "Big Assembly"],
+      ["Peg [A]", "Big Assembly"],
+    ])
+    expect(packed.parts.map((p) => p.name)).toEqual(["Plate 1.001", "Peg [A]"])
+    for (const [i, part] of packed.parts.entries()) {
+      const reference = plain.parts[i]?.asset
+      // ×40 sample: the plate is 2 m and the assembly sits 4 m out; 14-bit grids are ~0.1 mm.
+      part.asset.offsetMm.forEach((v, k) => expect(v).toBeCloseTo(reference?.offsetMm[k] ?? NaN, 0))
+      part.asset.bboxMm.max.forEach((v, k) =>
+        expect(v).toBeCloseTo(reference?.bboxMm.max[k] ?? NaN, 0)
+      )
+    }
+  })
+
   it("OBJ with MTL: one part per object, Kd colour linearized; single split merges", async () => {
     const obj =
       "mtllib a.mtl\no A\nv 0 0 0\nv 1 0 0\nv 0 1 0\nusemtl red\nf 1 2 3\no B\nv 0 0 1\nv 1 0 1\nv 0 1 1\nf 4 5 6\n"

@@ -1,9 +1,9 @@
-import type { Mesh, Object3D } from "three"
+import { BufferAttribute, BufferGeometry, type Mesh, type Object3D } from "three"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import type { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js"
 import { decodeUri } from "@/core/import/externalRefs"
 import type { Vec3 } from "@/core/schema"
-import { fromGeometry, type ParsedMesh } from "./parsedMesh"
+import { copyVec3, fromGeometry, type ParsedMesh } from "./parsedMesh"
 import { glbChunks, packGlb, stripTextures } from "./gltfJson"
 
 export interface GltfInput {
@@ -55,6 +55,25 @@ export async function parseGltf(input: GltfInput): Promise<ParsedMesh[]> {
   }
 }
 
+/** The name as the file wrote it: GLTFLoader sanitizes `name` ("Bolt M6" -> "Bolt_M6"). */
+const nameOf = (o: Object3D): string =>
+  typeof o.userData.name === "string" ? o.userData.name : o.name
+
+/**
+ * Float32 copies of position, normal and index. Quantized attributes (KHR_mesh_quantization:
+ * int16/uint16, often normalized) must not be transformed in place: their node matrix
+ * dequantizes them, and world coordinates would wrap or truncate in the integer arrays.
+ */
+function floatGeometry(source: BufferGeometry): BufferGeometry {
+  const out = new BufferGeometry()
+  out.setAttribute("position", new BufferAttribute(copyVec3(source.getAttribute("position")), 3))
+  if (source.hasAttribute("normal"))
+    out.setAttribute("normal", new BufferAttribute(copyVec3(source.getAttribute("normal")), 3))
+  const index = source.getIndex()
+  if (index) out.setIndex(new BufferAttribute(Uint32Array.from(index.array), 1))
+  return out
+}
+
 /** Every mesh in world space (node transforms applied), named after its node. */
 export function collectMeshes(root: Object3D, fallbackName: string): ParsedMesh[] {
   root.updateMatrixWorld(true)
@@ -64,14 +83,14 @@ export function collectMeshes(root: Object3D, fallbackName: string): ParsedMesh[
     if (!mesh.isMesh) return
     // applyMatrix4 transforms normals too (normal matrix); a mirroring transform also needs
     // the winding reversed, or the triangles would face inward.
-    const geometry = mesh.geometry.clone().applyMatrix4(mesh.matrixWorld)
+    const geometry = floatGeometry(mesh.geometry).applyMatrix4(mesh.matrixWorld)
     if (mesh.matrixWorld.determinant() < 0) flipWinding(geometry)
     const material = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material
     const c = (material as { color?: { r: number; g: number; b: number } } | undefined)?.color
     const color: Vec3 | null = c ? [c.r, c.g, c.b] : null
     const path: string[] = []
-    for (let p = mesh.parent; p && p !== root; p = p.parent) if (p.name) path.unshift(p.name)
-    out.push(fromGeometry(geometry, mesh.name || fallbackName, path, color, true))
+    for (let p = mesh.parent; p && p !== root; p = p.parent) if (nameOf(p)) path.unshift(nameOf(p))
+    out.push(fromGeometry(geometry, nameOf(mesh) || fallbackName, path, color, true))
     geometry.dispose()
   })
   return out

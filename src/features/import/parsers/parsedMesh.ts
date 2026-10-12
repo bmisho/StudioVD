@@ -39,7 +39,7 @@ export function fromGeometry(
 }
 
 /** Per-element copy: works for interleaved and normalized (quantized) attributes too. */
-function copyVec3(attribute: {
+export function copyVec3(attribute: {
   count: number
   getX(i: number): number
   getY(i: number): number

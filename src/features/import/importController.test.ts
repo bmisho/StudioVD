@@ -1,69 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
-import type { PreparedAsset } from "@/core/geometry/prepareAsset"
-import type { AssetId } from "@/core/schema"
-import { err, ok } from "@/lib/tauri/result"
-import { createDocumentStore } from "@/store/document/documentStore"
-import { createImportStore } from "@/store/session/importStore"
-import { createSessionStore } from "@/store/session/sessionStore"
-import { createImportController, type ImportDeps } from "./importController"
-import type { ImportJob, ImportOutcome } from "./runImport"
-
-const prepared = (n: number, triangleCount = 12): PreparedAsset => ({
-  name: `mesh${n}`,
-  id: n.toString(16).padStart(64, "0") as AssetId,
-  glb: new Uint8Array([n]),
-  offsetMm: [n, 0, 0],
-  triangleCount,
-  bboxMm: { min: [-1, -1, -1], max: [1, 1, 1] },
-  watertight: true,
-  faceCount: 6,
-})
-const outcome = (...ns: number[]): ImportOutcome => ({
-  parts: ns.map((n) => ({ name: `Part ${n}`, path: [], asset: prepared(n) })),
-  warnings: [],
-})
-const file = (name: string) => ({ token: `t-${name}`, name, size: 10 })
-const bytes = (text: string) => new TextEncoder().encode(text).buffer
-
-function setup(jobs: Record<string, () => Promise<ImportOutcome>>) {
-  const document = createDocumentStore()
-  const session = createSessionStore()
-  const imports = createImportStore()
-  const seen: ImportJob[] = []
-  const cancel = vi.fn()
-  const deps: ImportDeps = {
-    backend: {
-      readImportFile: vi.fn((token: string) =>
-        Promise.resolve(ok(bytes(token.endsWith(".obj") ? "mtllib parts.mtl\n" : "{}")))
-      ),
-      readImportResource: vi.fn((_token: string, relative: string) =>
-        Promise.resolve(
-          relative === "parts.mtl" ? ok(bytes("newmtl a\n")) : err({ kind: "io", message: "gone" })
-        )
-      ),
-      writeAsset: vi.fn(() => Promise.resolve(ok(true))),
-    },
-    runJob: (job) => {
-      seen.push(job)
-      const run = jobs[job.fileName] ?? (() => Promise.reject(new Error("no job")))
-      return { result: run(), cancel }
-    },
-    document,
-    session,
-    imports,
-    fitAll: vi.fn(),
-    notify: { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() },
-  }
-  return {
-    controller: createImportController(deps),
-    deps,
-    document,
-    session,
-    imports,
-    seen,
-    cancel,
-  }
-}
+import { ok } from "@/lib/tauri/result"
+import type { ImportOutcome } from "./runImport"
+import { bytes, file, outcome, prepared, setupImport as setup } from "./importControllerTestSetup"
 
 describe("import controller", () => {
   it("imports every file as ONE undo entry, selects it and stores each asset once", async () => {

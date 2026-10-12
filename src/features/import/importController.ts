@@ -39,6 +39,8 @@ const unwrap = async <T>(result: Promise<Result<T>>): Promise<T> => {
   return r.value
 }
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e))
+/** glTF JSON is parsed whole on this thread; bigger files should be .glb (Rust: same cap). */
+const MAX_GLTF_JSON_BYTES = 256 * 1024 * 1024
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`
 const lines = (items: string[], max = 6) =>
   items.length <= max
@@ -53,32 +55,46 @@ const lines = (items: string[], max = 6) =>
 export function createImportController(deps: ImportDeps) {
   let current: RunningImport | null = null
   let cancelled = false
+  // Cancel may come while files are still being read, before any worker exists to terminate.
+  const stopIfCancelled = () => {
+    if (cancelled) throw new DOMException("Import cancelled.", "AbortError")
+  }
 
   async function jobFor(file: PickedFile, options: ImportOptions, warnings: string[]) {
     const format = formatOf(file.name)
     if (!format) throw new Error("This file type cannot be imported.")
     const bytes = await unwrap(deps.backend.readImportFile(file.token))
+    stopIfCancelled()
     const job: ImportJob = { fileName: file.name, format, bytes, options }
     if (format === "obj") {
       const texts: string[] = []
       for (const name of objMaterialLibraries(new Uint8Array(bytes))) {
         const r = await deps.backend.readImportResource(file.token, name)
+        stopIfCancelled()
         if (r.ok) texts.push(new TextDecoder().decode(r.value))
         else warnings.push(`${file.name}: material library ${name} not found, colours skipped.`)
       }
       if (texts.length > 0) job.mtlText = texts.join("\n")
     } else if (format === "gltf") {
+      if (bytes.byteLength > MAX_GLTF_JSON_BYTES)
+        throw new Error("This .gltf is over 256 MB of JSON; convert it to .glb to import it.")
       const resources: Record<string, ArrayBuffer> = {}
       const json: unknown = JSON.parse(new TextDecoder().decode(bytes))
       for (const uri of gltfBufferUris(json)) {
         resources[uri] = await unwrap(deps.backend.readImportResource(file.token, uri))
+        stopIfCancelled()
       }
       job.resources = resources
     }
     return job
   }
 
-  async function importFile(file: PickedFile, index: number, options: ImportOptions) {
+  async function importFile(
+    file: PickedFile,
+    index: number,
+    options: ImportOptions,
+    written: Set<string>
+  ) {
     const report = (stage: string, fraction: number) =>
       deps.imports
         .getState()
@@ -86,15 +102,19 @@ export function createImportController(deps: ImportDeps) {
     report("Reading", 0)
     const warnings: string[] = []
     const job = await jobFor(file, options, warnings)
+    stopIfCancelled()
     current = deps.runJob(job, (done, total, stage) => report(stage, total > 0 ? done / total : 0))
     const outcome = await current.result
     current = null
     report("Saving", 1)
+    // Identical meshes (N equal screws) share one content address: send each once.
     const known = deps.document.getState().doc.assets
     for (const part of outcome.parts) {
-      if (cancelled) break
-      if (!Object.hasOwn(known, part.asset.id))
-        await unwrap(deps.backend.writeAsset(part.asset.id, part.asset.glb))
+      stopIfCancelled()
+      const id = part.asset.id
+      if (Object.hasOwn(known, id) || written.has(id)) continue
+      await unwrap(deps.backend.writeAsset(id, part.asset.glb))
+      written.add(id)
     }
     const imported: ImportedFile = {
       fileName: file.name,
@@ -114,6 +134,8 @@ export function createImportController(deps: ImportDeps) {
       const budget = triangleBudgetWarning(doc, batch)
       if (budget) warnings.push(budget)
       deps.document.getState().insertEntities(batch)
+      // New parts would be invisible under View › Isolate: show everything again.
+      if (deps.session.getState().isolated) deps.session.getState().toggleIsolation([])
       deps.session.getState().select(batch.topLevel)
       deps.fitAll()
       const fileCount = files.filter((f) => f.parts.length > 0).length
@@ -133,13 +155,14 @@ export function createImportController(deps: ImportDeps) {
       const options = deps.imports.getState().options
       cancelled = false
       const done: ImportedFile[] = []
+      const written = new Set<string>()
       const warnings: string[] = []
       const errors: string[] = []
       try {
         for (const [index, file] of files.entries()) {
           if (cancelled) break
           try {
-            const result = await importFile(file, index, options)
+            const result = await importFile(file, index, options, written)
             done.push(result.imported)
             warnings.push(...result.warnings)
           } catch (e) {

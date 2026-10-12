@@ -24,6 +24,13 @@ pub struct PickedFile {
     pub size: u64,
 }
 
+/// What a drop on the window registered: importable files get tokens, the rest are named.
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct DroppedFiles {
+    pub files: Vec<PickedFile>,
+    pub skipped: Vec<String>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Access {
     Read,
@@ -72,6 +79,22 @@ impl PickedFiles {
             name,
             size: meta.len(),
         })
+    }
+
+    /// Registers dropped paths: files with an import extension get read tokens; folders,
+    /// other file types and unreadable paths are listed as skipped.
+    pub fn add_dropped(&mut self, paths: &[PathBuf]) -> DroppedFiles {
+        let mut dropped = DroppedFiles {
+            files: Vec::new(),
+            skipped: Vec::new(),
+        };
+        for path in paths {
+            match has_import_extension(path).then(|| self.add_source(path.clone())) {
+                Some(Ok(file)) => dropped.files.push(file),
+                _ => dropped.skipped.push(file_name(path)),
+            }
+        }
+        dropped
     }
 
     /// Registers the destination chosen in a save dialog.

@@ -8,7 +8,7 @@ use crate::workspace::write_atomic;
 use serde::Serialize;
 use std::path::PathBuf;
 use tauri::ipc::{InvokeBody, Request, Response};
-use tauri::{Emitter, Manager, Runtime, State, Webview, Window};
+use tauri::{Emitter, Manager, Runtime, State, Window};
 use tauri_plugin_dialog::DialogExt;
 
 /// GTK file filters are case-sensitive, and CAD tools often write `.STEP`.
@@ -48,31 +48,17 @@ pub async fn pick_import_files<R: Runtime>(
         .collect()
 }
 
-#[derive(Clone, Serialize)]
-pub struct DroppedFiles {
-    files: Vec<PickedFile>,
-    skipped: Vec<String>,
-}
-
 /// Files dropped on the window: supported ones get tokens and go to the webview as an
-/// `import-drop` event (Tauri's own drag-drop event would hand it paths).
-pub fn files_dropped<R: Runtime>(webview: &Webview<R>, paths: &[PathBuf]) {
-    let state = webview.state::<AppState>();
+/// `import-drop` event (Tauri's own drag-drop event would hand it paths). A window's own
+/// webview reports drops as a window event, a child webview as a webview event.
+pub fn files_dropped<R: Runtime, T: Manager<R> + Emitter<R>>(target: &T, paths: &[PathBuf]) {
+    let state = target.state::<AppState>();
     let Ok(mut picked) = state.picked() else {
         return;
     };
-    let mut dropped = DroppedFiles {
-        files: Vec::new(),
-        skipped: Vec::new(),
-    };
-    for path in paths {
-        match picked::has_import_extension(path).then(|| picked.add_source(path.clone())) {
-            Some(Ok(file)) => dropped.files.push(file),
-            _ => dropped.skipped.push(picked::file_name(path)),
-        }
-    }
+    let dropped = picked.add_dropped(paths);
     drop(picked);
-    let _ = webview.emit("import-drop", dropped);
+    let _ = target.emit("import-drop", dropped);
 }
 
 #[tauri::command]

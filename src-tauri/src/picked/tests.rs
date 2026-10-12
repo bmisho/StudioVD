@@ -90,3 +90,26 @@ fn reads_are_capped() {
     assert_eq!(read_capped(&file, 99).unwrap_err().kind(), "invalidInput");
     let _ = fs::remove_dir_all(dir);
 }
+
+#[test]
+fn drops_register_importable_files_and_name_the_rest() {
+    let dir = temp_dir("drop");
+    let model = dir.join("bracket.STL");
+    fs::write(&model, b"solid").expect("model");
+    fs::write(dir.join("notes.txt"), b"x").expect("notes");
+    let mut picked = PickedFiles::default();
+    let dropped = picked.add_dropped(&[
+        model.clone(),
+        dir.join("notes.txt"),
+        dir.join("sub"),
+        dir.join("gone.step"),
+    ]);
+    assert_eq!(dropped.files.len(), 1);
+    assert_eq!(dropped.files[0].name, "bracket.STL");
+    assert_eq!(
+        picked.source(&dropped.files[0].token).expect("token"),
+        model
+    );
+    assert_eq!(dropped.skipped, ["notes.txt", "sub", "gone.step"]);
+    let _ = fs::remove_dir_all(dir);
+}

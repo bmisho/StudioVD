@@ -4,7 +4,7 @@ mod picked;
 mod state;
 mod workspace;
 
-use tauri::{DragDropEvent, Manager, RunEvent, WebviewEvent};
+use tauri::{DragDropEvent, Manager, RunEvent, WebviewEvent, WindowEvent};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -15,6 +15,13 @@ pub fn run() {
             let state = state::AppState::new(app.handle());
             app.manage(state);
             Ok(())
+        })
+        // A window created from the config reports drops on its webview as a WINDOW event
+        // (tauri-runtime-wry synthesizes it); only child webviews send webview events.
+        .on_window_event(|window, event| {
+            if let WindowEvent::DragDrop(DragDropEvent::Drop { paths, .. }) = event {
+                commands::import::files_dropped(window, paths);
+            }
         })
         .on_webview_event(|webview, event| {
             if let WebviewEvent::DragDrop(DragDropEvent::Drop { paths, .. }) = event {

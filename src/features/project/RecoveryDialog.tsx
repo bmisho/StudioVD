@@ -20,7 +20,7 @@ function CandidateRow({ candidate }: { candidate: RecoveryCandidate }) {
         <p className="truncate text-xs font-medium" title={candidate.title}>
           {candidate.title}
         </p>
-        <p className="truncate text-xs text-muted-foreground tabular-nums">
+        <p className="text-xs text-muted-foreground tabular-nums">
           {candidate.fileName ?? "Never saved"} · autosaved{" "}
           {when.format(new Date(candidate.autosavedAtMs))}
         </p>

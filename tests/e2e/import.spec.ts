@@ -61,6 +61,10 @@ test.describe("import", () => {
     await expect(dialog.getByLabel("Units")).toBeHidden() // glTF is metres by definition
     await dialog.getByRole("button", { name: "Import" }).click()
     await expect(page.getByText("Imported 2 parts from 1 file")).toBeVisible({ timeout: 30_000 })
+    // The app is aria-hidden until the modal's exit animation ends, and on a GPU-less runner
+    // the first render of the new parts (shader compiles) can hold the main thread for
+    // seconds: wait for the dialog to go, with headroom, before reading the tree.
+    await expect(dialog).toBeHidden({ timeout: 15_000 })
     // A flat tree: nesting is aria-level (WAI-ARIA tree pattern), not DOM structure.
     const tree = page.getByRole("tree", { name: "Scene graph" })
     await expect(tree.getByRole("treeitem", { name: "Assembly" })).toHaveAttribute(

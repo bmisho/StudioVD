@@ -135,42 +135,62 @@ microcontroller register files already use it.
 ```
 MyAssembly.stvd
 ├── scene.json                         master file (schema-validated, versioned)
+├── thumbnail.png                      512×320, the assembly without grid or gizmos
 ├── geometry/<sha256>.glb              normalized geometry, one per unique asset
-├── sources/<sha256>.<step|iges|...>   optional originals (re-tessellate at another quality)
-├── textures/<sha256>.<png|jpg>
-├── colliders/<sha256>-<params>.bin    cached convex decompositions
-├── licenses/<sha256>.txt              full licence texts of library content used in the project
-└── thumbnail.png
+├── textures/<sha256>.<png|jpg>        (Phase 6)
+└── licenses/<sha256>.txt              full licence texts of library content used (Phase 9)
 ```
 
-### 1.3 `scene.json` shape (v1 sketch, finalized as zod schemas in Phase 2/5)
+Later phases may add `sources/` (original CAD files) and `colliders/` (cached convex
+decompositions); the reader refuses any entry it does not know. As built (Phase 5): the zip is
+written deterministically (fixed timestamps, Unix mode 0644, fixed order; JSON/GLB/TXT
+deflated, PNG/JPG stored) through a temporary file and an atomic rename, holds exactly the
+files `scene.json` names (each re-hashed on the way), and is re-read before it replaces
+anything. Reading goes through a strict guard (`src-tauri/src/bundle/guard.rs`, shared with
+Phase 14 packs): plain contiguous zip32 only, safe ASCII names, regular files, counted bytes
+with size and ratio caps, SHA-256 per file.
 
-Library fields are part of v1 from the start, so Phase 9 needs no schema migration.
+### 1.3 `scene.json` v1 (final since Phase 5: `src/core/schema/`)
+
+Every collection is `Record<Id, Entity>`. Minted ids are lowercase UUIDs; assets, textures
+and licence texts are keyed by the SHA-256 of their file, whose path is `<dir>/<sha256>.<ext>`.
+Collections a later phase owns are part of v1 but **accepted only empty** until that phase
+(`gates.ts`): relaxing a gate never invalidates a saved file, so it needs no migration.
+Optional fields a later phase defines (asset licence, part material slots and component
+reference, `component` anchor sources, Phase 6 PBR fields...) are left out of v1 and added
+then as optional fields, which no v1 file contains. Cross-entity rules (`integrity.ts`):
+record keys equal ids, minted ids unique across kinds, references resolve, no group cycles,
+group depth ≤ 64, collection caps.
 
 ```ts
 interface SceneFile {
   format: "studiovd"; schemaVersion: 1; appVersion: string; units: { length: "mm" };
-  assets:    Record<AssetId, GeometryAsset>;   // sha256, path, bbox, triCount, faces[], volume, centroid, watertight,
-                                               // license? (SPDX + attribution + source@revision)
-  textures:  Record<TextureId, { path: string; sha256: string }>;
-  materials: Record<MaterialId, Material>;     // appearance (PBR) + physical { densityKgM3 } + builtinKey?
-  parts:     Record<PartId, Part>;             // name, assetId, parentId, position, quaternion, materialId,
-                                               // materialSlots?, grounded, visible,
-                                               // collider: "hull"|"decomposed"|"box"|"trimesh"|"none",
-                                               // massOverrideKg?, comOverrideMm?, componentRef?
-  anchors:   Record<AnchorId, Anchor>;         // partId, kind: point|planar|axial, frame {origin, z, x} (part-local),
-                                               // name?, interface?, source (face | vertex | manual | component)
-  mates:     Record<MateId, Mate>;             // type: fixed|revolute|prismatic|spherical, anchorA, anchorB,
-                                               // flip, angleOffsetRad, limits?, contactsEnabled, suppressed
-  couplings: Record<CouplingId, Coupling>;     // gear ratio / rack-pinion / lead screw between two mates (Phase 10)
-  schematic: { nodes: SchematicNode[]; edges: SchematicEdge[]; blockDefs: Record<BlockDefId, BlockDef> };
-  bindings:  Record<BindingId, Binding>;       // 3D quantity <-> schematic port/parameter
-  componentDefs: Record<ComponentDefKey, ComponentDefSnapshot>; // validated copy of each library manifest used
-  components:    Record<ComponentInstanceId, ComponentInstance>; // which entities each inserted component created
-  licenseTexts:  Record<Sha256, { path: string; spdx: string }>;
-  simulation:{ gravity: [number, number, number]; solver: SolverSettings };
+  project:   { name: string };
+  assets:    Record<Sha256, GeometryAsset>;    // path geometry/<id>.glb, triangleCount, bboxMm, volumeMm3?,
+                                               // centroidMm?, watertight? (faces live in the GLB)
+  textures:  Record<Sha256, { id; path: "textures/<id>.png|jpg" }>;     // empty until Phase 6
+  materials: Record<MaterialId, Material>;                              // empty until Phase 6
+  groups:    Record<GroupId, { id; name; parentId: GroupId | null }>;
+  parts:     Record<PartId, Part>;             // name, assetId, parentId, pose { positionMm, quaternion },
+                                               // materialId | null, grounded, visible, collider,
+                                               // massOverrideKg?, comOverrideMm?
+  anchors:   Record<AnchorId, Anchor>;         // partId, kind, frame (part-local), name?, interface?,
+                                               // source: face | vertex | manual
+  mates:     Record<MateId, Mate>;             // two different anchors on two different parts
+  couplings: Record<CouplingId, Coupling>;                              // empty until Phase 10
+  schematic: { nodes; edges; blockDefs };      // Records, empty until Phase 11
+  bindings:  Record<BindingId, Binding>;                                // empty until Phase 13
+  componentDefs; components; licenseTexts;                              // empty until Phase 9
+  simulation:{ gravity: [number, number, number]; maxIterations: number; tolerance: number };
 }
 ```
+
+Opening runs one pipeline (`openSceneBytes`): 64 MiB cap, strict UTF-8, nesting ≤ 32 (checked
+on the text, before `JSON.parse`), reserved keys `__proto__`/`constructor`/`prototype`
+refused anywhere, finite numbers, format version and `vN → vN+1` migrations (a newer format
+is refused by name), the zod schema, then the integrity rules. A file that fails is refused,
+never repaired. Saving runs the same checks (`serializeScene`), so the app never writes a
+file it would refuse to open; every store action is tested against it.
 
 ---
 
@@ -631,7 +651,7 @@ Exit criteria
 - [x] 4.1 Rust workspace manager: create/open/clean per-project workspace in app cache dir;
   asset-protocol scope; raw-binary `write_asset` command; Rust unit tests. As built: one
   workspace per session (`<app cache>/workspaces/ws-*`, locked while in use, deleted on exit,
-  crash leftovers swept after 14 days; Phase 5 adds open/save). Instead of Tauri's asset
+  crash leftovers swept; Phase 5 adds open/save, see 5.2/5.5). Instead of Tauri's asset
   protocol (whose scope Tauri widens for every dropped path), a `stvd` URI scheme serves
   `<sha256>.glb` from the workspace's `geometry/` folder and nothing else. The webview never sends a path: open/save dialogs run in Rust
   (`tauri-plugin-dialog`, no JS capability) and dropped files are registered in Rust, so the
@@ -676,30 +696,56 @@ Exit criteria
 
 ## Phase 5: Project bundle save/load
 
-- [ ] 5.1 Final `scene.json` v1 zod schema (incl. library fields from §1.3) + migration
+- [x] 5.1 Final `scene.json` v1 zod schema (incl. library fields from §1.3) + migration
   framework (`vN → vN+1` functions) + tests. Integrity checks before a file reaches the store
   (an opened `.stvd` is untrusted): every record key equals its entity's `id`; IDs unique
   across kinds; all references resolve (parents, materials, assets, anchors, mates, nodes);
   no group parent cycles; asset ids match their paths; collection-size caps; keys
   `__proto__`/`constructor`/`prototype` refused before parsing (zod records drop
-  `__proto__` silently)
-- [ ] 5.2 Rust `bundle`: zip write (deflate JSON/GLB, store PNG/JPG), atomic temp+rename,
+  `__proto__` silently). As built (§1.3): later phases' collections are gated empty and
+  their optional fields left out, so no migration is needed for them; nesting is checked on
+  the JSON text before parsing; group depth ≤ 64; inserts and every store action are held to
+  the same rules
+- [x] 5.2 Rust `bundle`: zip write (deflate JSON/GLB, store PNG/JPG), atomic temp+rename,
   extract into workspace. The zip guard is a generic module (limits and allowlist as
-  parameters, symlink rejection, counted bytes, reserved names) reused by library packs
-- [ ] 5.3 Commands: New, Open, Save, Save As, Close; dirty tracking; "unsaved changes" prompt on
-  window close; recent files (app config dir)
-- [ ] 5.4 File association for `.stvd` + open-on-launch (single-instance forwarding)
-- [ ] 5.5 Autosave to workspace + crash-recovery prompt on next launch; thumbnail capture
-- [ ] 5.6 Save-time GC: drop assets, licence texts and `componentDefs` nothing references
-- [ ] 5.7 Tests: Rust round-trip, zip-slip and symlink rejection, truncated zip, ratio bomb;
-  TS schema round-trip; E2E import → save → reopen → deep-equal document
+  parameters, symlink rejection, counted bytes, reserved names) reused by library packs.
+  As built (§1.2): `zip` 9.0.2 without default features (deflate via flate2's
+  `forbid(unsafe)` miniz_oxide backend); never `ZipArchive::extract`. Workspaces hold the
+  project as `bundle/` (same layout as the zip); an open extracts into a fresh workspace that
+  replaces the current one only after the webview accepted its scene
+- [x] 5.3 Commands: New, Open, Save, Save As, Close; dirty tracking; "unsaved changes" prompt on
+  window close; recent files (app config dir). As built: Close Project leaves a new untitled
+  project; one project operation at a time and none during an import; dirty = the document
+  is not the one saved (a reference compare: undo back to it is clean); Save writes the
+  snapshot it took, so edits made during a save stay unsaved; Rust owns the window title
+  and the close guard (`CloseRequested` held, the webview asks Save / Don't Save / Cancel;
+  a webview that does not answer for 10 s cannot block a second close); recent files are
+  ten paths in `<app config>/recent.json`, opened by id
+- [x] 5.4 File association for `.stvd` + open-on-launch (single-instance forwarding). As
+  built: Rust keeps the launch path and the webview pulls it (no event lost before it
+  loads); a dropped `.stvd` opens too; deb/rpm ship a shared-mime-info package and a desktop
+  file with `%f` (Tauri's default has none); the AppImage gets no file association
+- [x] 5.5 Autosave to workspace + crash-recovery prompt on next launch; thumbnail capture.
+  As built: autosave 2 s after editing stops (30 s at most), never into the user's file,
+  removed when the document is back at its saved state; a workspace that still holds an
+  autosave survives exit and is offered for recovery (kept 90 days, plain leftovers 1 day);
+  thumbnails render the current view without grid, highlights or gizmos
+- [x] 5.6 Save-time GC: drop assets, licence texts and `componentDefs` nothing references
+- [x] 5.7 Tests: Rust round-trip, zip-slip and symlink rejection, truncated zip, ratio bomb;
+  TS schema round-trip; E2E import → save → reopen → deep-equal document. Also: the guard's
+  checks are mutation-tested; the E2E mock keeps saved scenes (the zip itself is tested in
+  Rust). Linux desktop check (Xvfb, real dialogs): save, reopen, Open Recent, close prompt,
+  crash recovery, a second launch and a drop forwarding a `.stvd`, a launch argument, a
+  zip-slip file refused. Windows not yet checked (as 3.14)
 - [ ] ⛔ 5.8 **User approval**
 
 ## Phase 6: Materials & appearance
 
 - [ ] 6.1 Material model: appearance (`MeshPhysicalMaterial`: colour, metalness, roughness,
   clearcoat, transmission, IOR, thickness, opacity, emissive, texture maps) + physical (density);
-  per-part material slots keyed by glTF material name (multi-colour STEP/GLB parts)
+  per-part material slots keyed by glTF material name (multi-colour STEP/GLB parts). Lifts
+  the scene.json v1 gates on `materials` and `textures` (§1.3); slots are stored as a list of
+  `{ slot, materialId }`, since free-text names must not become record keys
 - [ ] 6.2 Built-in library with stable keys and densities (kg/m³): ABS 1040, PLA 1240,
   PC clear 1200, Acrylic 1180, POM 1410, Polyurethane 1200, Glass 2500, Aluminium 6061/6063 2700,
   Steel 7850, Stainless 8000, Brass 8500, Copper 8960, Rubber 1100, FR-4 1850
@@ -741,7 +787,10 @@ Exit criteria
 ## Phase 9: Component library I (local library + generators)
 
 - [ ] 9.1 zod schemas for `component.json`, `pack.json` and the catalog index (§4.3-4.4), with
-  every validation rule from §4.7; valid/invalid fixture suite
+  every validation rule from §4.7; valid/invalid fixture suite. Lifts the scene.json v1 gates
+  on `componentDefs`, `components` and `licenseTexts`, adds the optional asset licence (https
+  URLs only), `part.componentRef` and `component` anchor sources (§1.3), with their
+  integrity rules (`src/core/schema/integrity.ts`)
 - [ ] 9.2 Rust `library` module (local part): store layout (§4.5), content-addressed blobs,
   staging + atomic install, `installed.json` (rebuildable from disk), single-writer lock, GC;
   Install-from-file for `.stvdpack` (unsigned packs show an "Unverified" badge after confirmation)

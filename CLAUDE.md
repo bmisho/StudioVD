@@ -50,20 +50,24 @@ src/
     properties/   Right sidebar inspectors
     library/      Library tab, insertion drag, credits dialog
     export/       GLB/STL export of the assembly or selection
+    project/      New/Open/Save, dirty tracking, autosave, recovery, unsaved-changes prompt
   core/           PURE TypeScript. No React, no R3F, no DOM, no Tauri
     math/         Frames, transforms, fitting (three math types allowed)
     physics/      Drag spring, damping, joint tree, physics model from the document (no Rapier)
     sim/          Netlist compiler, MNA solver, signal propagation (no three.js at all)
     generators/   Parametric standard parts: <id>/v<major>.ts (pure, runs in a worker)
-    schema/       zod schemas for scene.json, component.json, packs, catalog + migrations
+    schema/       zod schemas for scene.json, component.json, packs, catalog + migrations;
+                  the open/save pipeline (limits, migrations, integrity checks)
+    project/      Save-time GC and other pure project-file logic
     units.ts      The only place unit conversions live
   store/          Zustand slices + selectors
   lib/tauri/      Typed wrappers for every Tauri command/plugin call
   workers/        Web Worker entry points
 src-tauri/src/
   commands/       #[tauri::command] handlers (thin; delegate to modules)
-  bundle/         Project bundle zip read/write
-  workspace/      Per-project working directory management
+  bundle/         Zip guard + deterministic writer (shared with library packs), `.stvd` format
+  project/        Open project state: workspace swap, save, recent files, title, close guard
+  workspace/      Per-project working directory, sweep, crash recovery
   picked/         Files the user chose in a dialog or dropped (opaque tokens for the webview)
   geometry/       Convex decomposition (parry3d) and other heavy geometry
   library/        Component store, install, signature verification, downloads
@@ -91,6 +95,8 @@ docs/research/    Research behind PLAN.md decisions (not shipped; values need re
 - No `eval`, `new Function`, or string-to-code. User-defined block behaviour uses a sandboxed
   expression parser.
 - IDs are opaque strings (`crypto.randomUUID()`), typed with branded types (`PartId`, `AnchorId`, ...).
+  The schema accepts only lowercase UUIDs as minted ids; files are keyed by their SHA-256.
+- Look entities up with `Object.hasOwn` (a record also "has" `toString`).
 - Rust: no `unwrap()`/`expect()` in command paths. Return `Result<T, AppError>` where
   `AppError` serializes to a typed error for the frontend.
 
@@ -115,7 +121,16 @@ Further rules:
 - Subscribe with narrow selectors (`useStore(s => s.parts[id])`, `useShallow` for objects).
 - Continuous gestures (gizmo drags, node drags, slider scrubs, typing in an inspector) must
   produce **one** undo entry: `documentHistory.beginGesture()` on start returns a token, and
-  only that token can end or cancel the gesture. An unchanged document adds no entry.
+  only that token can end or cancel the gesture. An unchanged document adds no entry (and
+  gets its start object back, so it does not read as an unsaved change).
+- **scene.json is the contract.** Store actions never produce a document that Open would
+  refuse: inserts run the integrity rules, and `documentContract.test.ts` round-trips every
+  action. Changing what a saved file means needs a `vN → vN+1` migration (`migrate.ts`) and
+  a frozen fixture; a collection a later phase owns stays gated empty until then.
+- Unsaved changes = the document is not the object last saved or opened (reference compare;
+  immer and zundo keep that exact). Anything replacing the document goes through the project
+  controller (`features/project`): one operation at a time, the unsaved-changes prompt, then
+  `switchDocument` (history cleared, session state reset, unused geometry freed).
 - Session state that points into the document (selection) is pruned when the document
   changes (undo, redo, delete, open), so commands never act on entities that no longer exist.
 - Never use a React `key` to force-remount layout containers (panels, the 3D canvas, the
@@ -249,7 +264,15 @@ Testing notes:
 - A regression test must be shown to fail without its fix before it counts.
 - The E2E Tauri mock (`tests/e2e/tauriMock.ts`) has an in-memory file system: tests queue
   picked or dropped files, assets the app writes come back through `convertFileSrc`, and
-  exports are kept for inspection. Keep it in step with `src/lib/tauri`.
+  exports are kept for inspection. Project commands live in `tauriProjectMock.ts` (a second
+  init script): saved scenes stay on an in-memory "disk"; state needed before the app starts
+  (recovery, a launch file) is seeded through `sessionStorage` and a reload. Keep both in
+  step with `src/lib/tauri`.
+- After an import, wait for the Import dialog to be hidden before querying the rest of the
+  app: Radix keeps it `aria-hidden` until the exit animation ends, and on a GPU-less runner
+  the first render of new parts can hold the main thread for seconds.
+- `tauri dev` uses its own single-instance D-Bus name on Linux; on Windows it shares the
+  installed app's mutex, so close an installed StudioVD before `tauri dev`.
 - Vite's dev dependency scan does not follow `new Worker(...)`; workers are listed in
   `optimizeDeps.entries` (`src/workers/*.worker.ts`). Without that, the first import
   re-optimizes and reloads every open page, which breaks parallel E2E runs.
@@ -268,9 +291,12 @@ Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindi
 
 - Tauri capabilities are least-privilege; fs access scoped to the project workspace, app
   data/cache dirs, and paths the user picked in a dialog.
-- Zip extraction (`.stvd` and `.stvdpack`) uses our own loop, never `ZipArchive::extract`:
-  `enclosed_name()` required; absolute paths, `..`, symlinks, Windows reserved names and
-  case-insensitive duplicates rejected; byte-counted size and compression-ratio limits.
+- Zip extraction (`.stvd` and `.stvdpack`) goes through `src-tauri/src/bundle/guard.rs`, never
+  `ZipArchive::extract`: our own EOCD read, contiguous layout (no prefix, gaps, overlaps,
+  trailing data, ZIP64 or data descriptors), safe ASCII names (no absolute paths, `..`,
+  backslashes, Windows device names), regular files only, case-insensitive duplicates and
+  file/folder clashes rejected, byte-counted size and compression-ratio limits, CRC read to
+  the end, a fresh destination folder. Every content-addressed file is checked by SHA-256.
 - **Library packs are data only.** Allowed files: JSON, GLB, PNG, JPG, TXT. No SVG, HTML,
   scripts, or GLB buffers/images with external or `data:` URIs. Behaviour comes only from
   app-built-in model/generator/symbol IDs or the sandboxed expression parser.
@@ -282,6 +308,9 @@ Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindi
   A model's token reads only the files the model itself names, inside its folder. Asset
   writes are verified against their SHA-256. Tauri's asset protocol stays off (Tauri widens
   its scope for every dropped file or folder); the `stvd` scheme serves content addresses.
+  The open project's path, recent files, launch files and recovery candidates stay in Rust:
+  the webview sees file names, ids and tokens. Saving zips only files `scene.json` names
+  as `<dir>/<sha256>.<ext>`, each re-hashed.
 - Every `component.json`, including those inside an opened `.stvd` (a project file is
   untrusted input), passes the same strict zod validation.
 - A strict CSP replaces `"csp": null` before release (Phase 15).

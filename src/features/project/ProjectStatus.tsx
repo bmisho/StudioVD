@@ -1,7 +1,7 @@
 import { useProjectStore } from "@/store/session/projectStore"
 
 const time = new Intl.DateTimeFormat(undefined, { timeStyle: "short" })
-const BUSY = { saving: "Saving…", opening: "Opening…", creating: "Creating…" } as const
+const BUSY = { saving: "Saving…", opening: "Opening…", creating: "New project…", closing: null }
 
 /** Status bar: what the project's file holds compared with the document. */
 export function ProjectStatus() {
@@ -9,8 +9,11 @@ export function ProjectStatus() {
   const dirty = useProjectStore((s) => s.dirty)
   const savedAt = useProjectStore((s) => s.savedAt)
   const autosavedAt = useProjectStore((s) => s.autosavedAt)
+  // While the unsaved-changes prompt waits for an answer, nothing is in progress yet.
+  const asking = useProjectStore((s) => s.prompt !== null)
+  const busyText = busy && !asking ? BUSY[busy] : null
   let text = "No changes"
-  if (busy) text = BUSY[busy]
+  if (busyText) text = busyText
   else if (dirty)
     text = autosavedAt
       ? `Unsaved changes (autosaved ${time.format(autosavedAt)})`

@@ -32,6 +32,7 @@ async function importSample(page: Page) {
   const dialog = page.getByRole("dialog", { name: "Import" })
   await dialog.getByRole("button", { name: "Import" }).click()
   await expect(page.getByText(/^Imported \d+ parts? from 1 file$/)).toBeVisible({ timeout: 30_000 })
+  await expect(dialog).toBeHidden({ timeout: 15_000 }) // see import.spec.ts
 }
 
 /** An empty but valid scene.json named `name`. */

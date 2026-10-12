@@ -36,7 +36,15 @@ export function createProjectController(deps: ProjectDeps) {
     if (!project.getState().dirty) return true
     const choice = await project.getState().ask(action)
     if (choice === "cancel") return false
-    if (choice === "save") return saveDocument(deps)
+    if (choice === "save") {
+      const busy = project.getState().busy
+      project.getState().setBusy("saving")
+      try {
+        return await saveDocument(deps)
+      } finally {
+        project.getState().setBusy(busy)
+      }
+    }
     await backend.clearAutosave() // Don't Save: nothing to recover later
     return true
   }
@@ -71,7 +79,7 @@ export function createProjectController(deps: ProjectDeps) {
     async requestClose() {
       await backend.acknowledgeClose()
       if (project.getState().prompt !== null || project.getState().busy !== null) return
-      await exclusive("saving", async () => {
+      await exclusive("closing", async () => {
         if (await settle("closing StudioVD")) await backend.confirmClose()
       })
     },

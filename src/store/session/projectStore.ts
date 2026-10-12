@@ -17,7 +17,7 @@ export interface ProjectState {
   /** The document differs from what was last saved (or opened). */
   dirty: boolean
   /** A project operation in progress; others wait (one at a time). */
-  busy: "saving" | "opening" | "creating" | null
+  busy: "saving" | "opening" | "creating" | "closing" | null
   savedAt: number | null
   autosavedAt: number | null
   prompt: UnsavedPrompt | null

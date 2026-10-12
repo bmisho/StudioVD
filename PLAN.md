@@ -672,7 +672,7 @@ Exit criteria
   (STL, STEP and DRACO GLB import, a file dropped from a GTK drag source, STL export,
   workspace removed on exit;
   `docs/screenshots/phase-4-linux-*.png`). Windows not checked (no machine here)
-- [ ] ⛔ 4.11 **User approval**
+- [x] ⛔ 4.11 **User approval** (2026-10-12; Windows desktop check still open, as 3.14)
 
 ## Phase 5: Project bundle save/load
 

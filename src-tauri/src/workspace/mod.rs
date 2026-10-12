@@ -1,28 +1,40 @@
-//! Per-project working directory (PLAN 1.1 decision 2, Phase 4.1). Imported geometry lives in
-//! `<app cache>/workspaces/<id>/geometry/<sha256>.glb`; the webview loads it through the
-//! `stvd` URI scheme (`protocol`), which serves that folder only. Phase 5 zips a workspace
-//! into a `.stvd` bundle.
+//! Per-project working directory (PLAN 1.1 decision 2, Phases 4.1 and 5). Layout:
+//!
+//! ```text
+//! <app cache>/workspaces/ws-<millis>-<pid>-<n>/
+//!   .lock            held while a StudioVD instance uses the workspace
+//!   bundle/          the project's files, as in the .stvd (geometry/<sha256>.glb, ...)
+//!   autosave.json    unsaved changes (Phase 5.5); its presence makes the folder recoverable
+//!   manifest.json    the .stvd it belongs to (written by Rust only)
+//! ```
+//!
+//! The webview loads geometry through the `stvd` URI scheme (`protocol`), which serves
+//! `bundle/geometry` only.
 
 pub mod protocol;
+pub mod recovery;
+pub mod sweep;
 
 use crate::error::{AppError, AppResult};
+use crate::fsutil::write_atomic;
 use sha2::{Digest, Sha256};
 use std::fs;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Largest single asset accepted from the webview (a 2-3 M triangle budget is the whole scene).
 pub const MAX_ASSET_BYTES: usize = 512 * 1024 * 1024;
 
+const LOCK_FILE: &str = ".lock";
+const BUNDLE_DIR: &str = "bundle";
+const AUTOSAVE_FILE: &str = "autosave.json";
+
 pub struct Workspace {
     root: PathBuf,
-    /// Held for the session: `clean_stale` in another instance skips locked workspaces.
-    _lock: fs::File,
+    /// Held while this instance uses the workspace: sweeps and recovery skip locked folders.
+    lock: fs::File,
 }
-
-const LOCK_FILE: &str = ".lock";
 
 /// A content address: lowercase hex SHA-256 (the frontend `AssetIdSchema`).
 pub fn is_asset_id(id: &str) -> bool {
@@ -33,15 +45,47 @@ pub fn is_asset_id(id: &str) -> bool {
 }
 
 pub fn sha256_hex(bytes: &[u8]) -> String {
-    Sha256::digest(bytes)
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect()
+    hex(&Sha256::digest(bytes))
+}
+
+pub fn hex(digest: &[u8]) -> String {
+    digest.iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// Stores an asset under its content address in `geometry_dir`. The bytes must hash to `id`:
+/// the webview cannot place anything else in the workspace. False if it was already there.
+pub fn write_asset(geometry_dir: &Path, id: &str, bytes: &[u8]) -> AppResult<bool> {
+    if !is_asset_id(id) {
+        return Err(AppError::InvalidInput(format!(
+            "'{id}' is not an asset id."
+        )));
+    }
+    if bytes.len() > MAX_ASSET_BYTES {
+        return Err(AppError::InvalidInput("The asset is too large.".into()));
+    }
+    if sha256_hex(bytes) != id {
+        return Err(AppError::InvalidInput(format!(
+            "Asset {id} does not match its content."
+        )));
+    }
+    let path = geometry_dir.join(format!("{id}.glb"));
+    if path.is_file() {
+        return Ok(false); // same address, same bytes
+    }
+    write_atomic(&path, bytes)?;
+    Ok(true)
 }
 
 impl Workspace {
-    /// Creates a fresh workspace under `base` (normally `<app cache>/workspaces`).
+    /// A fresh workspace for a new project: an empty `bundle/geometry`.
     pub fn create(base: &Path) -> AppResult<Self> {
+        let ws = Self::create_empty(base)?;
+        fs::create_dir_all(ws.geometry_dir())?;
+        Ok(ws)
+    }
+
+    /// A fresh workspace with no `bundle/` yet: opening a `.stvd` extracts into it.
+    pub fn create_empty(base: &Path) -> AppResult<Self> {
         let millis = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_millis())
@@ -49,104 +93,63 @@ impl Workspace {
         static NEXT: AtomicU64 = AtomicU64::new(0);
         let n = NEXT.fetch_add(1, Ordering::Relaxed);
         let root = base.join(format!("ws-{millis}-{}-{n}", std::process::id()));
-        fs::create_dir_all(root.join("geometry"))?;
+        fs::create_dir_all(&root)?;
         let lock = fs::File::create(root.join(LOCK_FILE))?;
         lock.lock()?;
-        Ok(Self { root, _lock: lock })
+        Ok(Self { root, lock })
+    }
+
+    /// Takes over a workspace another (crashed) instance left behind, for crash recovery.
+    pub fn adopt(root: &Path) -> AppResult<Self> {
+        let lock = fs::OpenOptions::new()
+            .write(true)
+            .open(root.join(LOCK_FILE))?;
+        match lock.try_lock() {
+            Ok(()) => Ok(Self {
+                root: root.to_path_buf(),
+                lock,
+            }),
+            Err(fs::TryLockError::WouldBlock) => Err(AppError::InvalidInput(
+                "This project is open in another StudioVD window.".into(),
+            )),
+            Err(fs::TryLockError::Error(e)) => Err(e.into()),
+        }
     }
 
     pub fn root(&self) -> &Path {
         &self.root
     }
 
+    /// The project's files, laid out as inside the `.stvd`.
+    pub fn bundle_dir(&self) -> PathBuf {
+        self.root.join(BUNDLE_DIR)
+    }
+
     pub fn geometry_dir(&self) -> PathBuf {
-        self.root.join("geometry")
+        self.bundle_dir().join("geometry")
     }
 
-    /// Stores an asset under its content address. The bytes must hash to `id`: the webview
-    /// cannot place anything else in the workspace. Returns false if it was already there.
-    pub fn write_asset(&self, id: &str, bytes: &[u8]) -> AppResult<bool> {
-        if !is_asset_id(id) {
-            return Err(AppError::InvalidInput(format!(
-                "'{id}' is not an asset id."
-            )));
-        }
-        if bytes.len() > MAX_ASSET_BYTES {
-            return Err(AppError::InvalidInput("The asset is too large.".into()));
-        }
-        if sha256_hex(bytes) != id {
-            return Err(AppError::InvalidInput(format!(
-                "Asset {id} does not match its content."
-            )));
-        }
-        let path = self.geometry_dir().join(format!("{id}.glb"));
-        if path.is_file() {
-            return Ok(false); // same address, same bytes
-        }
-        write_atomic(&path, bytes)?;
-        Ok(true)
+    pub fn autosave_path(&self) -> PathBuf {
+        self.root.join(AUTOSAVE_FILE)
     }
-}
 
-/// Writes through a temporary file in the same directory and renames it into place, so a
-/// crash never leaves a half-written file under the final name (Windows and Linux).
-pub fn write_atomic(path: &Path, bytes: &[u8]) -> AppResult<()> {
-    let dir = path
-        .parent()
-        .ok_or_else(|| AppError::InvalidInput("The path has no directory.".into()))?;
-    let name = path
-        .file_name()
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_default();
-    // Unique per write (two exports to one file may overlap) and never an existing file.
-    static NEXT: AtomicU64 = AtomicU64::new(0);
-    let n = NEXT.fetch_add(1, Ordering::Relaxed);
-    let temp = dir.join(format!(".{name}.{}.{n}.tmp", std::process::id()));
-    {
-        let mut file = fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&temp)?;
-        file.write_all(bytes)?;
-        file.sync_all()?;
+    /// Done with this workspace (New, Open, exit). Unsaved changes keep it for crash
+    /// recovery; otherwise everything in it is in the `.stvd` or was discarded: deleted.
+    pub fn release(self) {
+        if !self.autosave_path().is_file() {
+            self.discard();
+        }
     }
-    fs::rename(&temp, path).inspect_err(|_| {
-        let _ = fs::remove_file(&temp);
-    })?;
-    Ok(())
-}
 
-/// Whether another running instance holds this workspace (its lock file is locked).
-fn in_use(root: &Path) -> bool {
-    let Ok(file) = fs::OpenOptions::new()
-        .write(true)
-        .open(root.join(LOCK_FILE))
-    else {
-        return false; // no lock file: not a live workspace
-    };
-    matches!(file.try_lock(), Err(fs::TryLockError::WouldBlock))
-}
-
-/// Deletes workspaces under `base` older than `max_age` (by folder date), except `keep` and
-/// any a running instance still holds. Errors on single entries are skipped.
-pub fn clean_stale(base: &Path, max_age: Duration, keep: &Path) -> usize {
-    let Ok(entries) = fs::read_dir(base) else {
-        return 0;
-    };
-    let now = SystemTime::now();
-    entries
-        .flatten()
-        .filter(|e| e.path() != keep && e.file_name().to_string_lossy().starts_with("ws-"))
-        .filter(|e| {
-            e.metadata()
-                .and_then(|m| m.modified())
-                .ok()
-                .and_then(|t| now.duration_since(t).ok())
-                .is_some_and(|age| age > max_age)
-        })
-        .filter(|e| !in_use(&e.path()))
-        .filter(|e| fs::remove_dir_all(e.path()).is_ok())
-        .count()
+    /// Deletes the workspace. The autosave goes first, under the lock, so a half-deleted
+    /// folder is never offered for recovery.
+    pub fn discard(self) {
+        let _ = fs::remove_file(self.autosave_path());
+        let root = self.root.clone();
+        let _ = self.lock.unlock();
+        drop(self);
+        let _ = fs::remove_dir_all(root);
+    }
 }
 
 #[cfg(test)]

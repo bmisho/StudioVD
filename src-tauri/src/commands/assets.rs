@@ -2,8 +2,9 @@
 //! Rust verifies. Reads go through the `stvd` URI scheme (`workspace::protocol`).
 
 use super::ipc::{header, raw_body};
-use crate::error::AppResult;
+use crate::error::{AppError, AppResult};
 use crate::state::AppState;
+use crate::workspace::write_asset as store_asset;
 use tauri::ipc::Request;
 use tauri::State;
 
@@ -12,7 +13,8 @@ use tauri::State;
 /// to 512 MiB would be the price of moving them).
 #[tauri::command]
 pub async fn write_asset(state: State<'_, AppState>, request: Request<'_>) -> AppResult<bool> {
-    state
-        .workspace()?
-        .write_asset(header(&request, "x-asset-id")?, raw_body(&request)?)
+    let dir = state
+        .geometry_dir()
+        .ok_or_else(|| AppError::Io("The project workspace could not be created.".into()))?;
+    store_asset(&dir, header(&request, "x-asset-id")?, raw_body(&request)?)
 }

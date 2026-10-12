@@ -2,7 +2,9 @@
 
 pub mod app;
 pub mod assets;
+mod dialog;
 pub mod export;
 pub mod import;
 mod ipc;
 pub mod project;
+pub mod session;

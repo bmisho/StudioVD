@@ -8,8 +8,6 @@ use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AppError {
-    /// The feature exists in the UI but its backend lands in a later phase.
-    NotImplemented { feature: &'static str, phase: u8 },
     /// The caller sent arguments the command cannot accept.
     InvalidInput(String),
     /// File-system or OS failure.
@@ -17,13 +15,16 @@ pub enum AppError {
 }
 
 impl AppError {
-    pub fn not_implemented(feature: &'static str, phase: u8) -> Self {
-        Self::NotImplemented { feature, phase }
+    /// Leads the message with what failed ("robot.stvd could not be opened."), same kind.
+    pub fn context(self, what: &str) -> Self {
+        match self {
+            Self::InvalidInput(m) => Self::InvalidInput(format!("{what} {m}")),
+            Self::Io(m) => Self::Io(format!("{what} {m}")),
+        }
     }
 
     pub fn kind(&self) -> &'static str {
         match self {
-            Self::NotImplemented { .. } => "notImplemented",
             Self::InvalidInput(_) => "invalidInput",
             Self::Io(_) => "io",
         }
@@ -33,9 +34,6 @@ impl AppError {
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::NotImplemented { feature, phase } => {
-                write!(f, "{feature} arrives in Phase {phase}.")
-            }
             Self::InvalidInput(msg) | Self::Io(msg) => f.write_str(msg),
         }
     }
@@ -44,8 +42,22 @@ impl fmt::Display for AppError {
 impl std::error::Error for AppError {}
 
 impl From<std::io::Error> for AppError {
+    /// Keeps the OS text, led by a plain reason for the failures users can act on.
     fn from(e: std::io::Error) -> Self {
-        Self::Io(e.to_string())
+        use std::io::ErrorKind as K;
+        let reason = match e.kind() {
+            K::StorageFull | K::QuotaExceeded => Some("The disk is full"),
+            K::PermissionDenied | K::ReadOnlyFilesystem => Some("No permission to write there"),
+            // ERROR_SHARING_VIOLATION / ERROR_LOCK_VIOLATION have no ErrorKind.
+            _ if cfg!(windows) && matches!(e.raw_os_error(), Some(32 | 33)) => {
+                Some("Another program has the file open")
+            }
+            _ => None,
+        };
+        Self::Io(match reason {
+            Some(reason) => format!("{reason} ({e})."),
+            None => e.to_string(),
+        })
     }
 }
 
@@ -66,12 +78,18 @@ mod tests {
 
     #[test]
     fn serializes_kind_and_message() {
-        let json = serde_json::to_value(AppError::not_implemented("Saving projects", 5))
+        let json = serde_json::to_value(AppError::InvalidInput("Bad token.".into()))
             .expect("AppError always serializes");
         assert_eq!(
             json,
-            serde_json::json!({ "kind": "notImplemented", "message": "Saving projects arrives in Phase 5." })
+            serde_json::json!({ "kind": "invalidInput", "message": "Bad token." })
         );
+    }
+
+    #[test]
+    fn io_errors_lead_with_a_plain_reason() {
+        let full = AppError::from(std::io::Error::from(std::io::ErrorKind::StorageFull));
+        assert!(full.to_string().starts_with("The disk is full ("));
     }
 
     #[test]

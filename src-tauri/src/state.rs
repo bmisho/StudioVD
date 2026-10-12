@@ -1,37 +1,57 @@
-//! Process-wide backend state: the current workspace and the files the user picked.
+//! Process-wide backend state: the open project and the files the user picked.
 
 use crate::error::{AppError, AppResult};
 use crate::picked::PickedFiles;
-use crate::workspace::{clean_stale, Workspace};
+use crate::project::Project;
+use crate::workspace::sweep::{clean_stale, LEFTOVER_AGE, RECOVERABLE_AGE};
+use crate::workspace::Workspace;
+use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
-use std::time::Duration;
 use tauri::{AppHandle, Manager, Runtime};
 
-/// Workspaces left behind by a crash are deleted after this long.
-const STALE_WORKSPACE_AGE: Duration = Duration::from_secs(14 * 24 * 60 * 60);
-
 pub struct AppState {
-    workspace: Option<Workspace>,
+    /// `<app cache>/workspaces`, where every project workspace lives.
+    workspaces: Option<PathBuf>,
+    /// `<app config>`: recent projects.
+    config: Option<PathBuf>,
+    project: Mutex<Project>,
     picked: Mutex<PickedFiles>,
 }
 
 impl AppState {
     /// Creates this session's workspace. A failure is logged, not fatal: the app starts and
-    /// imports report the error.
+    /// project commands report the error.
     pub fn new<R: Runtime>(app: &AppHandle<R>) -> Self {
-        let workspace = open_workspace(app)
-            .inspect_err(|e| eprintln!("StudioVD: no workspace ({e}); importing is disabled."))
+        let workspaces = app
+            .path()
+            .app_cache_dir()
+            .map(|dir| dir.join("workspaces"))
             .ok();
+        let workspace = workspaces.as_deref().and_then(|base| {
+            Workspace::create(base)
+                .inspect_err(|e| eprintln!("StudioVD: no workspace ({e})."))
+                .ok()
+        });
+        if let (Some(base), Some(ws)) = (&workspaces, &workspace) {
+            // Off the startup path: deleting a large leftover workspace takes a while.
+            let (base, keep) = (base.clone(), ws.root().to_path_buf());
+            std::thread::spawn(move || clean_stale(&base, &keep, LEFTOVER_AGE, RECOVERABLE_AGE));
+        }
         Self {
-            workspace,
+            workspaces,
+            config: app.path().app_config_dir().ok(),
+            project: Mutex::new(Project {
+                workspace,
+                ..Project::default()
+            }),
             picked: Mutex::new(PickedFiles::default()),
         }
     }
 
-    pub fn workspace(&self) -> AppResult<&Workspace> {
-        self.workspace
-            .as_ref()
-            .ok_or_else(|| AppError::Io("The project workspace could not be created.".into()))
+    pub fn project(&self) -> AppResult<MutexGuard<'_, Project>> {
+        self.project
+            .lock()
+            .map_err(|_| AppError::Io("The project state is unavailable.".into()))
     }
 
     pub fn picked(&self) -> AppResult<MutexGuard<'_, PickedFiles>> {
@@ -40,23 +60,35 @@ impl AppState {
             .map_err(|_| AppError::Io("The file list is unavailable.".into()))
     }
 
-    /// Deletes this session's workspace (on exit; Phase 5 keeps saved work in the `.stvd`).
-    pub fn remove_workspace(&self) {
-        if let Some(ws) = &self.workspace {
-            let _ = std::fs::remove_dir_all(ws.root());
+    pub fn workspaces_dir(&self) -> AppResult<&Path> {
+        self.workspaces
+            .as_deref()
+            .ok_or_else(|| AppError::Io("The app cache folder is unavailable.".into()))
+    }
+
+    pub fn config_dir(&self) -> Option<&Path> {
+        self.config.as_deref()
+    }
+
+    /// Where the `stvd` scheme serves geometry from (the current workspace).
+    pub fn geometry_dir(&self) -> Option<PathBuf> {
+        let project = self.project().ok()?;
+        project.workspace.as_ref().map(Workspace::geometry_dir)
+    }
+
+    /// On exit: releases the workspaces. Unsaved changes stay for crash recovery.
+    pub fn shutdown(&self) {
+        let Ok(mut project) = self.project() else {
+            return;
+        };
+        let pending = project.pending.take();
+        let workspace = project.workspace.take();
+        drop(project);
+        if let Some(pending) = pending {
+            pending.workspace.release();
+        }
+        if let Some(ws) = workspace {
+            ws.release();
         }
     }
-}
-
-fn open_workspace<R: Runtime>(app: &AppHandle<R>) -> AppResult<Workspace> {
-    let base = app
-        .path()
-        .app_cache_dir()
-        .map_err(|e| AppError::Io(e.to_string()))?
-        .join("workspaces");
-    let ws = Workspace::create(&base)?;
-    // Off the startup path: deleting a large leftover workspace takes a while.
-    let keep = ws.root().to_path_buf();
-    std::thread::spawn(move || clean_stale(&base, STALE_WORKSPACE_AGE, &keep));
-    Ok(ws)
 }

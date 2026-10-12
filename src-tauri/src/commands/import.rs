@@ -4,6 +4,7 @@
 use super::ipc::{blocking, into_path};
 use crate::error::AppResult;
 use crate::picked::{self, DroppedFiles, IMPORT_EXTENSIONS, MAX_IMPORT_BYTES};
+use crate::project::launch;
 use crate::state::AppState;
 use std::path::PathBuf;
 use tauri::ipc::Response;
@@ -46,6 +47,25 @@ pub async fn pick_import_files<R: Runtime>(
 /// `import-drop` event (Tauri's own drag-drop event would hand it paths). A window's own
 /// webview reports drops as a window event, a child webview as a webview event.
 pub fn files_dropped<R: Runtime, T: Manager<R> + Emitter<R>>(target: &T, paths: &[PathBuf]) {
+    // A dropped project opens (the rest of that drop is ignored, and named as skipped).
+    if let Some(project) = paths.iter().find(|p| launch::is_project_file(p)) {
+        launch::request_open(target.app_handle(), project.clone());
+        let skipped: Vec<String> = paths
+            .iter()
+            .filter(|p| *p != project)
+            .map(|p| crate::picked::file_name(p))
+            .collect();
+        if !skipped.is_empty() {
+            let _ = target.emit(
+                "import-drop",
+                DroppedFiles {
+                    files: Vec::new(),
+                    skipped,
+                },
+            );
+        }
+        return;
+    }
     let state = target.state::<AppState>();
     let Ok(mut picked) = state.picked() else {
         return;

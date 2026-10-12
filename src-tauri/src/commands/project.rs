@@ -81,7 +81,16 @@ pub async fn project_open_launch<R: Runtime>(app: AppHandle<R>) -> AppResult<Opt
     blocking(move || {
         let state = app.state::<AppState>();
         let path = state.project()?.launch.take();
-        path.map(|p| open::load(&state, p)).transpose()
+        path.map(|p| {
+            if !p.is_file() {
+                return Err(AppError::InvalidInput(format!(
+                    "{} does not exist.",
+                    crate::picked::file_name(&p)
+                )));
+            }
+            open::load(&state, p)
+        })
+        .transpose()
     })
     .await
 }

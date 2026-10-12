@@ -11,11 +11,23 @@ use tauri::{DragDropEvent, Manager, RunEvent, WebviewEvent, WindowEvent};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let app = tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+    if project::launch::single_instance_usable() {
+        // First: a second launch hands its arguments over and exits before it creates a
+        // window or a workspace (PLAN 5.4).
+        builder = builder.plugin(project::launch::single_instance());
+    }
+    let app = builder
         // The dialog plugin is used from Rust only; no capability exposes it to the webview.
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let state = state::AppState::new(app.handle());
+            // A .stvd the app was started with (a double click in the file manager).
+            let cwd = std::env::current_dir().unwrap_or_default();
+            let launch = project::launch::project_argument(std::env::args_os().skip(1), &cwd);
+            if let (Some(path), Ok(mut project)) = (launch, state.project()) {
+                project.launch = Some(path);
+            }
             app.manage(state);
             Ok(())
         })

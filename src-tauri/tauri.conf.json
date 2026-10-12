@@ -33,6 +33,31 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "stvd"
+        ],
+        "name": "StudioVD.Project",
+        "description": "StudioVD project",
+        "mimeType": "application/x-studiovd",
+        "role": "Editor"
+      }
+    ],
+    "linux": {
+      "deb": {
+        "files": {
+          "/usr/share/mime/packages/studiovd.xml": "bundle/linux/studiovd-mime.xml"
+        },
+        "desktopTemplate": "bundle/linux/studiovd.desktop"
+      },
+      "rpm": {
+        "files": {
+          "/usr/share/mime/packages/studiovd.xml": "bundle/linux/studiovd-mime.xml"
+        },
+        "desktopTemplate": "bundle/linux/studiovd.desktop"
+      }
+    }
   }
 }

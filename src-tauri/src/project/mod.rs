@@ -5,6 +5,7 @@
 //! bundle into a fresh workspace (`Pending`), the webview validates its scene.json, and only
 //! then `commit` swaps it in (or `discard` drops it).
 
+pub mod launch;
 pub mod open;
 pub mod recent;
 pub mod save;

@@ -25,6 +25,7 @@ sha2 = "0.10"
 tauri-plugin-dialog = "2.8.2"
 zip = { version = "9.0.2", default-features = false, features = ["deflate-flate2"] }
 flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
+tauri-plugin-single-instance = "2.5.2"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

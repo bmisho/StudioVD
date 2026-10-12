@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Installed to /usr/share/mime/packages: makes *.stvd an application/x-studiovd file, so the
+     file manager opens it with StudioVD (the .desktop file lists that MIME type). -->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-studiovd">
+    <comment>StudioVD project</comment>
+    <sub-class-of type="application/zip"/>
+    <glob pattern="*.stvd"/>
+  </mime-type>
+</mime-info>

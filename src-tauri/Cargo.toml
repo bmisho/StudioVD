@@ -25,8 +25,13 @@ sha2 = "0.10"
 tauri-plugin-dialog = "2.8.2"
 zip = { version = "9.0.2", default-features = false, features = ["deflate-flate2"] }
 flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
-tauri-plugin-single-instance = "2.5.2"
+tauri-plugin-single-instance = "2.5.3"
 
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# The single-instance plugin's own D-Bus library: used only to validate the session bus
+# address the way the plugin will parse it (it panics on one it cannot).
+zbus = "5.19"
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

@@ -30,7 +30,15 @@ export function createAutosaver(deps: AutosaveDeps) {
   const { delayMs = 2000, maxWaitMs = 30_000 } = deps
   let timer: ReturnType<typeof setTimeout> | null = null
   let firstChange: number | null = null
-  let inFlight: Promise<unknown> = Promise.resolve()
+  // Writes and clears run one after another, in the order they were asked for: a clear
+  // must never overtake a write still in flight (a stale autosave would then survive).
+  let queue: Promise<unknown> = Promise.resolve()
+  const enqueue = <T>(op: () => Promise<T>): Promise<T> => {
+    const next = queue.then(op, op)
+    queue = next
+    return next
+  }
+  /** An autosave may exist (one was written or is being written). */
   let written = false
 
   const schedule = (ms: number) => {
@@ -49,13 +57,11 @@ export function createAutosaver(deps: AutosaveDeps) {
     if (deps.tracker.isSaved(doc)) return
     const serialized = serializeScene(doc, deps.appVersion)
     if (!serialized.ok) return // never happens for store documents; nothing to recover from
-    const write = deps.write(new TextEncoder().encode(serialized.json))
-    inFlight = write
-    const result = await write
-    if (result.ok) {
-      written = true
+    const bytes = new TextEncoder().encode(serialized.json)
+    written = true
+    const result = await enqueue(() => deps.write(bytes))
+    if (result.ok && !deps.tracker.isSaved(deps.document.getState().doc))
       deps.project.getState().markAutosaved(deps.now())
-    }
   }
 
   const unsubscribe = deps.document.subscribe((state) => {
@@ -65,7 +71,7 @@ export function createAutosaver(deps: AutosaveDeps) {
       firstChange = null
       if (written) {
         written = false
-        inFlight = deps.clear()
+        void enqueue(() => deps.clear())
         deps.project.getState().markAutosaved(null)
       }
       return
@@ -76,9 +82,9 @@ export function createAutosaver(deps: AutosaveDeps) {
   })
 
   return {
-    /** Resolves once no autosave write is in flight. */
+    /** Resolves once no autosave write or clear is in flight. */
     idle: async () => {
-      await inFlight
+      await queue
     },
     dispose() {
       unsubscribe()

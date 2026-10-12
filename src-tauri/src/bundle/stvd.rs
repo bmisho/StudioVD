@@ -25,8 +25,10 @@ pub const LIMITS: Limits = Limits {
     max_archive_bytes: u32::MAX as u64,
     max_entries: 15_000,
     max_total_bytes: 8 * 1024 * 1024 * 1024,
+    // Real projects expand a few times (floats deflate poorly); a small file may still
+    // reach 64 MiB. A save that would exceed this fails its self-check instead.
     max_ratio: 200,
-    ratio_floor_bytes: 1024 * 1024,
+    ratio_floor_bytes: 64 * 1024 * 1024,
     max_name_len: 96,
 };
 

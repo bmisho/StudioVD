@@ -1,5 +1,6 @@
 //! Save, Save As, New and autosave (PLAN 5.3, 5.5).
 
+use super::session::retire;
 use super::{recent, remember_path, ProjectInfo};
 use crate::bundle::stvd;
 use crate::error::{AppError, AppResult};
@@ -19,19 +20,23 @@ pub fn save(
     thumbnail: Option<&[u8]>,
     target: Option<PathBuf>,
 ) -> AppResult<ProjectInfo> {
-    let (bundle, path) = {
+    let (bundle, path, generation) = {
         let mut project = state.project()?;
         let bundle = project.workspace()?.bundle_dir();
         let path = target.or_else(|| project.path.clone()).ok_or_else(|| {
             AppError::InvalidInput("The project has no file yet: use Save As.".into())
         })?;
-        project.begin()?;
-        (bundle, path)
+        let generation = project.begin()?;
+        (bundle, path, generation)
     };
     // The zip is written without the lock: assets keep loading while a large project saves.
     let written = stvd::write(&bundle, scene, thumbnail, &path)
         .map_err(|e| e.context(&format!("{} could not be saved.", file_name(&path))));
     let mut project = state.project()?;
+    if project.generation != generation {
+        // The page reloaded meanwhile: the new session is not this file's.
+        return written.map(|()| ProjectInfo { file_name: None });
+    }
     project.busy = false;
     written?;
     if let Some(png) = thumbnail {
@@ -62,7 +67,7 @@ pub fn new_project(state: &AppState) -> AppResult<ProjectInfo> {
     let info = project.info();
     drop(project);
     if let Some(old) = old {
-        old.release();
+        retire(old, false); // its changes were saved or discarded first
     }
     Ok(info)
 }

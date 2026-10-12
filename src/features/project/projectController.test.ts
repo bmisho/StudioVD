@@ -111,4 +111,14 @@ describe("project controller: unsaved changes", () => {
     expect(t.backend.newProject).not.toHaveBeenCalled()
     expect(t.notify.info).toHaveBeenCalledWith("An import is running", expect.any(String))
   })
+
+  it("opens a launch file that arrives during a save once the save is done", async () => {
+    const t = setupProject()
+    t.insertRig()
+    const saving = t.controller.save()
+    await t.controller.openLaunch() // a second launch forwards a file mid-save
+    expect(t.backend.openLaunchProject).not.toHaveBeenCalled()
+    await saving
+    expect(t.backend.openLaunchProject).toHaveBeenCalledOnce()
+  })
 })

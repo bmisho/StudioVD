@@ -5,8 +5,9 @@ use super::dialog::{clean_stem, with_extension};
 use super::ipc::{blocking, header, into_path, raw_body};
 use crate::error::{AppError, AppResult};
 use crate::picked::PickedFile;
+use crate::project::launch::LaunchSlot;
 use crate::project::open::{self, PendingInfo};
-use crate::project::window::update_title;
+use crate::project::window::{update_title, MAIN_WINDOW};
 use crate::project::{recent, save, ProjectInfo};
 use crate::state::AppState;
 use tauri::ipc::{Request, Response};
@@ -80,7 +81,7 @@ pub async fn project_open_recent<R: Runtime>(
 pub async fn project_open_launch<R: Runtime>(app: AppHandle<R>) -> AppResult<Option<PendingInfo>> {
     blocking(move || {
         let state = app.state::<AppState>();
-        let path = state.project()?.launch.take();
+        let path = app.state::<LaunchSlot>().take();
         path.map(|p| {
             if !p.is_file() {
                 return Err(AppError::InvalidInput(format!(
@@ -165,7 +166,7 @@ pub async fn project_save<R: Runtime>(
         (!thumbnail.is_empty()).then(|| thumbnail.to_vec()),
     );
     let handle = app.clone();
-    let info = blocking(move || {
+    let saved = blocking(move || {
         save::save(
             &handle.state::<AppState>(),
             &scene,
@@ -173,7 +174,15 @@ pub async fn project_save<R: Runtime>(
             target,
         )
     })
-    .await?;
+    .await;
+    // The window was closed while the file was being written: close it now if that worked.
+    let close = std::mem::take(&mut state.project()?.close_when_idle);
     refresh_title(&app);
+    let info = saved?;
+    if close {
+        if let Some(window) = app.get_webview_window(MAIN_WINDOW) {
+            let _ = window.close();
+        }
+    }
     Ok(info)
 }

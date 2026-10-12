@@ -22,12 +22,20 @@ fn temp_path(dest: &Path) -> AppResult<PathBuf> {
 
 /// Writes `dest` through a temporary file in the same directory, synced, then renamed into
 /// place: a crash or a failed write never leaves a half-written file under the final name,
-/// and the old file stays intact until the rename (Windows and Linux).
+/// and the old file stays intact until the rename (Windows and Linux). A symlinked `dest` is
+/// updated where it points, and an existing file keeps its permissions.
 pub fn write_atomic_with(
     dest: &Path,
     write: impl FnOnce(&mut File) -> AppResult<()>,
 ) -> AppResult<()> {
-    let temp = temp_path(dest)?;
+    let is_link = fs::symlink_metadata(dest).is_ok_and(|m| m.file_type().is_symlink());
+    let dest = if is_link {
+        fs::canonicalize(dest)?
+    } else {
+        dest.to_path_buf()
+    };
+    let permissions = fs::metadata(&dest).ok().map(|m| m.permissions());
+    let temp = temp_path(&dest)?;
     let result = (|| {
         // Readable too: a writer may check what it wrote (the .stvd self-check).
         let mut file = fs::OpenOptions::new()
@@ -38,7 +46,10 @@ pub fn write_atomic_with(
         write(&mut file)?;
         file.sync_all()?;
         drop(file);
-        replace(&temp, dest)?;
+        if let Some(permissions) = permissions {
+            fs::set_permissions(&temp, permissions)?;
+        }
+        replace(&temp, &dest)?;
         Ok(())
     })();
     if result.is_err() {
@@ -100,6 +111,29 @@ mod tests {
         assert_eq!(fs::read(&dest).expect("read"), b"two", "old file intact");
         let names: Vec<_> = fs::read_dir(&dir).expect("list").flatten().collect();
         assert_eq!(names.len(), 1, "no temp file left behind");
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn replacing_keeps_permissions_and_follows_symlinks() {
+        use std::os::unix::fs::{symlink, PermissionsExt};
+        let dir = std::env::temp_dir().join(format!("studiovd-fsutil-ln-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("dir");
+        let real = dir.join("real.stvd");
+        fs::write(&real, b"old").expect("old");
+        fs::set_permissions(&real, fs::Permissions::from_mode(0o600)).expect("chmod");
+        let link = dir.join("link.stvd");
+        symlink(&real, &link).expect("symlink");
+        write_atomic(&link, b"new").expect("write through the link");
+        assert!(fs::symlink_metadata(&link)
+            .expect("link")
+            .file_type()
+            .is_symlink());
+        assert_eq!(fs::read(&real).expect("real"), b"new");
+        let mode = fs::metadata(&real).expect("meta").permissions().mode() & 0o777;
+        assert_eq!(mode, 0o600);
         let _ = fs::remove_dir_all(dir);
     }
 }

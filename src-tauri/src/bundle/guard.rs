@@ -4,7 +4,7 @@
 //! of regular files with safe names, and counts every byte it writes.
 
 pub use super::layout::check_name;
-use super::layout::{check_layout, read_eocd};
+use super::layout::{check_central_directory, check_layout, read_eocd};
 use crate::error::{AppError, AppResult};
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
@@ -19,7 +19,9 @@ pub struct Limits {
     pub max_entries: usize,
     /// All entries together, uncompressed.
     pub max_total_bytes: u64,
-    /// Uncompressed/compressed, above `ratio_floor_bytes` (zip bombs).
+    /// All entries together may expand to at most `archive bytes × max_ratio` (zip bombs),
+    /// or `ratio_floor_bytes` for a small archive. One budget per archive: a floor per entry
+    /// would let thousands of tiny entries add up to gigabytes.
     pub max_ratio: u64,
     pub ratio_floor_bytes: u64,
     pub max_name_len: usize,
@@ -52,27 +54,28 @@ pub fn extract_zip<R: Read + Seek>(
     limits: &Limits,
     rule: impl Fn(&str) -> Option<u64>,
 ) -> AppResult<Vec<Extracted>> {
-    let (mut archive, entries) = open_checked(reader, limits, &rule)?;
+    let (mut archive, entries, budget) = open_checked(reader, limits, &rule)?;
     fs::create_dir(dest)?; // fails if it exists: never extract over anything
-    let result = write_entries(&mut archive, dest, limits, entries);
+    let result = write_entries(&mut archive, dest, budget, entries);
     if result.is_err() {
         let _ = fs::remove_dir_all(dest);
     }
     result
 }
 
-/// Every check that needs no decompression: what a save runs on its own output. Returns the
-/// entry names.
+/// Every check that needs no decompression (declared sizes included): what a save runs on
+/// its own output, so it never writes an archive extraction would refuse. Returns the names.
 pub fn inspect_zip<R: Read + Seek>(
     reader: R,
     limits: &Limits,
     rule: impl Fn(&str) -> Option<u64>,
 ) -> AppResult<Vec<String>> {
-    let (_, entries) = open_checked(reader, limits, &rule)?;
+    let (_, entries, _) = open_checked(reader, limits, &rule)?;
     Ok(entries.into_iter().map(|(name, _)| name).collect())
 }
 
-type Checked<R> = (ZipArchive<R>, Vec<(String, u64)>);
+/// The archive, its entries with their size caps, and how many bytes they may expand to.
+type Checked<R> = (ZipArchive<R>, Vec<(String, u64)>, u64);
 
 fn open_checked<R: Read + Seek>(
     mut reader: R,
@@ -87,16 +90,22 @@ fn open_checked<R: Read + Seek>(
     if usize::from(eocd.entries) > limits.max_entries {
         return bad("the archive has too many entries");
     }
+    check_central_directory(&mut reader, &eocd)?;
+    let budget = file_len
+        .saturating_mul(limits.max_ratio)
+        .max(limits.ratio_floor_bytes)
+        .min(limits.max_total_bytes);
     let mut archive = ZipArchive::new(reader)?;
     check_layout(&mut archive, &eocd)?;
-    let entries = check_entries(&mut archive, limits, rule)?;
-    Ok((archive, entries))
+    let entries = check_entries(&mut archive, limits, budget, rule)?;
+    Ok((archive, entries, budget))
 }
 
 /// Metadata pass, nothing decompressed yet. Returns (name, size cap) per entry.
 fn check_entries<R: Read + Seek>(
     a: &mut ZipArchive<R>,
     limits: &Limits,
+    budget: u64,
     rule: &impl Fn(&str) -> Option<u64>,
 ) -> AppResult<Vec<(String, u64)>> {
     let mut seen = HashSet::new();
@@ -133,7 +142,7 @@ fn check_entries<R: Read + Seek>(
         declared_total = declared_total.saturating_add(e.size());
         entries.push((name, cap));
     }
-    if declared_total > limits.max_total_bytes {
+    if declared_total > budget {
         return bad("the archive expands too much");
     }
     for (name, _) in &entries {
@@ -148,10 +157,12 @@ fn check_entries<R: Read + Seek>(
     Ok(entries)
 }
 
+/// Streams each entry with counted bytes: declared sizes are only claims, so every entry
+/// stops at its declared size and cap, and all of them at the archive's budget.
 fn write_entries<R: Read + Seek>(
     a: &mut ZipArchive<R>,
     dest: &Path,
-    limits: &Limits,
+    budget: u64,
     entries: Vec<(String, u64)>,
 ) -> AppResult<Vec<Extracted>> {
     let mut total = 0u64;
@@ -160,11 +171,7 @@ fn write_entries<R: Read + Seek>(
     for (i, (name, cap)) in entries.into_iter().enumerate() {
         let mut f = a.by_index(i)?;
         let declared = f.size();
-        let ratio_cap = f
-            .compressed_size()
-            .saturating_mul(limits.max_ratio)
-            .max(limits.ratio_floor_bytes);
-        let cap = cap.min(declared).min(ratio_cap);
+        let cap = cap.min(declared);
         let path = dest.join(&name);
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
@@ -183,7 +190,7 @@ fn write_entries<R: Read + Seek>(
             }
             written += n as u64;
             total += n as u64;
-            if written > cap || total > limits.max_total_bytes {
+            if written > cap || total > budget {
                 return bad(format!("entry {name:?} expands too much"));
             }
             hasher.update(&buf[..n]);

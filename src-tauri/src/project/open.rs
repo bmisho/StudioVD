@@ -1,6 +1,7 @@
 //! Opening a `.stvd` or restoring a crashed session: extract or adopt into a pending
 //! workspace, let the webview validate the scene, then commit or discard.
 
+use super::session::retire;
 use super::{recent, remember_path, Pending, ProjectInfo};
 use crate::bundle::stvd;
 use crate::error::{AppError, AppResult};
@@ -26,7 +27,7 @@ pub struct PendingInfo {
 fn park(state: &AppState, pending: Pending) -> AppResult<()> {
     let old = state.project()?.pending.replace(pending);
     if let Some(old) = old {
-        old.workspace.release();
+        retire(old.workspace, true);
     }
     Ok(())
 }
@@ -126,7 +127,7 @@ pub fn commit(state: &AppState) -> AppResult<ProjectInfo> {
     let info = project.info();
     drop(project);
     if let Some(old) = old {
-        old.release();
+        retire(old, false); // its changes were saved or discarded before this open
     }
     Ok(info)
 }
@@ -136,7 +137,7 @@ pub fn commit(state: &AppState) -> AppResult<ProjectInfo> {
 pub fn discard(state: &AppState) -> AppResult<()> {
     let pending = state.project()?.pending.take();
     if let Some(pending) = pending {
-        pending.workspace.release();
+        retire(pending.workspace, true);
     }
     Ok(())
 }

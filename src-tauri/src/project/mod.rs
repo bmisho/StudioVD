@@ -9,6 +9,7 @@ pub mod launch;
 pub mod open;
 pub mod recent;
 pub mod save;
+pub mod session;
 pub mod window;
 
 use crate::error::{AppError, AppResult};
@@ -42,12 +43,15 @@ pub struct Project {
     /// Set while a save runs outside the lock: one project operation at a time.
     pub busy: bool,
     pub pending: Option<Pending>,
-    /// A `.stvd` from the command line, a second launch or a drop, until the webview takes it.
-    pub launch: Option<PathBuf>,
     /// Recovery candidates handed out, by token.
     pub recovery: Vec<(String, PathBuf)>,
     /// When the webview was last asked to confirm closing (cleared when it answers).
     pub close_asked: Option<Instant>,
+    /// The window was closed during a save: close it once the save has finished.
+    pub close_when_idle: bool,
+    /// Bumped when the page reloads (a new session): work the old page started must not
+    /// change the new one when it finishes.
+    pub generation: u64,
 }
 
 impl Project {
@@ -63,23 +67,36 @@ impl Project {
             .ok_or_else(|| AppError::Io("The project workspace could not be created.".into()))
     }
 
-    pub fn begin(&mut self) -> AppResult<()> {
+    /// Starts the one project operation allowed at a time; returns the session it belongs to.
+    pub fn begin(&mut self) -> AppResult<u64> {
         if self.busy {
             return Err(AppError::InvalidInput(
                 "Another project operation is still running.".into(),
             ));
         }
         self.busy = true;
-        Ok(())
+        Ok(self.generation)
     }
 
-    /// Makes `workspace` the project's and returns the old one, to `release` outside the lock
+    /// Makes `workspace` the project's and returns the old one, to drop outside the lock
     /// (deleting a large workspace takes a while).
     pub fn install(&mut self, workspace: Workspace, path: Option<PathBuf>) -> Option<Workspace> {
         let old = self.workspace.replace(workspace);
         self.path = path;
         self.dirty = false;
         old
+    }
+
+    /// A new session in `fresh`, untitled (the page reloaded with an empty document). Returns
+    /// the old workspace and an open in progress, to retire outside the lock.
+    pub fn restart(&mut self, fresh: Workspace) -> (Option<Workspace>, Option<Pending>) {
+        self.generation += 1;
+        self.busy = false;
+        self.close_asked = None;
+        self.close_when_idle = false;
+        self.recovery.clear();
+        let pending = self.pending.take();
+        (self.install(fresh, None), pending)
     }
 }
 

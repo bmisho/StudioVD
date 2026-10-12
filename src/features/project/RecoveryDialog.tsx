@@ -49,8 +49,8 @@ export function RecoveryDialog() {
         <DialogHeader>
           <DialogTitle>Recover unsaved work</DialogTitle>
           <DialogDescription>
-            StudioVD closed before these changes were saved. Restore one to keep working on it, or
-            discard it for good.
+            StudioVD closed or reloaded before these changes were saved. Restore one to keep working
+            on it, or discard it for good.
           </DialogDescription>
         </DialogHeader>
         <ul

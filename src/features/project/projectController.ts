@@ -14,6 +14,8 @@ import { switchDocument } from "./switchDocument"
  */
 export function createProjectController(deps: ProjectDeps) {
   const { backend, notify, project } = deps
+  /** A launch file arrived during another operation: Rust keeps it, we take it after. */
+  let launchWaiting = false
 
   /** Runs `op` unless another project operation or an import is running. */
   async function exclusive(busy: NonNullable<ProjectState["busy"]>, op: () => Promise<unknown>) {
@@ -29,6 +31,18 @@ export function createProjectController(deps: ProjectDeps) {
     } finally {
       project.getState().setBusy(null)
     }
+    if (launchWaiting) {
+      launchWaiting = false
+      await openLaunch()
+    }
+  }
+
+  function openLaunch(): Promise<void> {
+    if (project.getState().busy !== null) {
+      launchWaiting = true
+      return Promise.resolve()
+    }
+    return exclusive("opening", () => open("Open", backend.openLaunchProject()))
   }
 
   /** Unsaved changes are saved or discarded by choice; false when the user cancels. */
@@ -71,8 +85,8 @@ export function createProjectController(deps: ProjectDeps) {
     open: () => exclusive("opening", () => open("Open", backend.openProjectDialog())),
     openRecent: (id: string) =>
       exclusive("opening", () => open("Open", backend.openRecentProject(id))),
-    /** A `.stvd` from the command line, a second launch or a drop. */
-    openLaunch: () => exclusive("opening", () => open("Open", backend.openLaunchProject())),
+    /** A `.stvd` from the command line, a second launch or a drop (after any busy work). */
+    openLaunch,
     save: () => exclusive("saving", () => saveDocument(deps)),
     saveAs: () => exclusive("saving", () => saveDocument(deps, true)),
     /** The window's close button or File › Exit, with unsaved changes (Rust held it). */

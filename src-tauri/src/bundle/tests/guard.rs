@@ -1,7 +1,7 @@
 //! The generic guard refuses every hostile archive shape it knows about.
 
 use super::raw::{any_name, entry, raw_zip, refusal, temp, RawEntry, LIMITS};
-use crate::bundle::guard::extract_zip;
+use crate::bundle::guard::{extract_zip, Limits};
 use crate::workspace::sha256_hex;
 use std::fs;
 use std::io::Cursor;
@@ -120,4 +120,49 @@ fn refuses_duplicates_crc_errors_and_data_descriptors() {
         ..entry("a.txt", b"x")
     };
     assert!(refusal(raw_zip(&[descriptor])).is_some());
+}
+
+#[test]
+fn many_small_entries_share_one_expansion_budget() {
+    // Each entry alone is under the floor; together they expand far past the archive's budget.
+    let limits = Limits {
+        max_ratio: 10,
+        ..LIMITS
+    };
+    let entries: Vec<RawEntry> = (0..16)
+        .map(|i| RawEntry {
+            deflate: true,
+            ..entry(&format!("geometry/{i}.glb"), &[0u8; 4096])
+        })
+        .collect();
+    let zip = raw_zip(&entries);
+    assert!((zip.len() as u64) * 10 < 16 * 4096, "the archive is small");
+    let base = temp("budget");
+    let result = extract_zip(Cursor::new(zip), &base.join("out"), &limits, any_name);
+    let why = result.err().map(|e| e.to_string()).unwrap_or_default();
+    assert!(why.contains("expands too much"), "{why}");
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
+fn refuses_central_records_the_directory_does_not_count() {
+    // One counted record, plus a hidden second one (another zip tool would list it) that
+    // points back at the same local entry.
+    let mut zip = raw_zip(&[entry("scene.json", b"{}")]);
+    let cd = zip
+        .windows(4)
+        .position(|w| w == [0x50, 0x4b, 0x01, 0x02])
+        .expect("central record");
+    let eocd = zip.len() - 22;
+    let mut hidden = zip[cd..eocd].to_vec();
+    let name = b"../evil.sh";
+    hidden.truncate(46);
+    hidden[28..30].copy_from_slice(&(name.len() as u16).to_le_bytes());
+    hidden.extend(name);
+    let cd_size = (eocd - cd + hidden.len()) as u32;
+    zip.splice(eocd..eocd, hidden);
+    let eocd = zip.len() - 22;
+    zip[eocd + 12..eocd + 16].copy_from_slice(&cd_size.to_le_bytes());
+    let why = refusal(zip).expect("refused");
+    assert!(why.contains("does not count"), "{why}");
 }

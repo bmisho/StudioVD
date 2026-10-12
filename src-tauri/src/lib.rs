@@ -11,7 +11,8 @@ use tauri::{DragDropEvent, Manager, RunEvent, WebviewEvent, WindowEvent};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut builder = tauri::Builder::default();
+    // Managed before any plugin: a second launch can hand over its file during startup.
+    let mut builder = tauri::Builder::default().manage(project::launch::LaunchSlot::default());
     if project::launch::single_instance_usable() {
         // First: a second launch hands its arguments over and exits before it creates a
         // window or a workspace (PLAN 5.4).
@@ -25,8 +26,9 @@ pub fn run() {
             // A .stvd the app was started with (a double click in the file manager).
             let cwd = std::env::current_dir().unwrap_or_default();
             let launch = project::launch::project_argument(std::env::args_os().skip(1), &cwd);
-            if let (Some(path), Ok(mut project)) = (launch, state.project()) {
-                project.launch = Some(path);
+            if let Some(path) = launch {
+                app.state::<project::launch::LaunchSlot>()
+                    .put_if_empty(path);
             }
             app.manage(state);
             Ok(())
@@ -42,6 +44,14 @@ pub fn run() {
                 api.prevent_close();
             }
             _ => {}
+        })
+        // A reload of the page starts a new session (see `project::session`).
+        .on_page_load(|webview, payload| {
+            if webview.label() == project::window::MAIN_WINDOW
+                && payload.event() == tauri::webview::PageLoadEvent::Started
+            {
+                project::session::page_started(webview.app_handle());
+            }
         })
         .on_webview_event(|webview, event| {
             if let WebviewEvent::DragDrop(DragDropEvent::Drop { paths, .. }) = event {

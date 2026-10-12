@@ -76,11 +76,14 @@ impl AppState {
         project.workspace.as_ref().map(Workspace::geometry_dir)
     }
 
-    /// On exit: releases the workspaces. Unsaved changes stay for crash recovery.
+    /// On exit. Unsaved changes (the webview never confirmed the close, e.g. it hung) or a
+    /// save still running keep the workspace for crash recovery; otherwise it is deleted,
+    /// even if a late autosave landed after the last save.
     pub fn shutdown(&self) {
         let Ok(mut project) = self.project() else {
             return;
         };
+        let keep = project.dirty || project.busy;
         let pending = project.pending.take();
         let workspace = project.workspace.take();
         drop(project);
@@ -88,7 +91,11 @@ impl AppState {
             pending.workspace.release();
         }
         if let Some(ws) = workspace {
-            ws.release();
+            if keep {
+                ws.release();
+            } else {
+                ws.discard();
+            }
         }
     }
 }

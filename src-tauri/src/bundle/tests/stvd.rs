@@ -121,3 +121,25 @@ fn opening_refuses_unknown_entries_and_mismatched_content() {
     .is_ok());
     let _ = fs::remove_dir_all(base);
 }
+
+#[test]
+fn saving_refuses_a_file_it_could_not_reopen() {
+    // 70 MiB of zeros deflates to almost nothing: past the reader's expansion budget, so the
+    // save's self-check refuses it and nothing is written.
+    let base = temp("save-budget");
+    let bundle = base.join("bundle");
+    fs::create_dir_all(bundle.join("geometry")).expect("bundle");
+    let glb = vec![0u8; 70 << 20];
+    let id = sha256_hex(&glb);
+    fs::write(bundle.join(format!("geometry/{id}.glb")), &glb).expect("asset");
+    let scene = format!(
+        r#"{{"assets":{{"{id}":{{"path":"geometry/{id}.glb"}}}},"textures":{{}},"licenseTexts":{{}}}}"#
+    );
+    let target = base.join("p.stvd");
+    let err = stvd::write(&bundle, scene.as_bytes(), None, &target).expect_err("refused");
+    assert!(err.to_string().contains("did not check out"), "{err}");
+    assert!(!target.exists());
+    let leftovers = fs::read_dir(&base).expect("list").count();
+    assert_eq!(leftovers, 1, "only the bundle folder, no temp file");
+    let _ = fs::remove_dir_all(base);
+}

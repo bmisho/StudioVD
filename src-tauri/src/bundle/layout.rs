@@ -81,6 +81,35 @@ pub(super) fn read_eocd<R: Read + Seek>(r: &mut R, file_len: u64) -> AppResult<E
     })
 }
 
+/// Largest central directory read into memory (about 300 bytes per entry at our limits).
+const MAX_CENTRAL_DIRECTORY: u32 = 16 * 1024 * 1024;
+
+/// Walks the central directory record by record: exactly the counted records, back to back,
+/// filling it to the EOCD. Records hidden after the counted ones (which other zip tools would
+/// list and extract) are refused.
+pub(super) fn check_central_directory<R: Read + Seek>(r: &mut R, eocd: &Eocd) -> AppResult<()> {
+    if eocd.cd_size > MAX_CENTRAL_DIRECTORY
+        || u64::from(eocd.cd_offset) + u64::from(eocd.cd_size) != eocd.pos
+    {
+        return bad("the archive's directory is malformed");
+    }
+    let mut cd = vec![0u8; eocd.cd_size as usize];
+    r.seek(SeekFrom::Start(u64::from(eocd.cd_offset)))?;
+    r.read_exact(&mut cd)?;
+    let u16_at = |o: usize| u16::from_le_bytes([cd[o], cd[o + 1]]) as usize;
+    let mut cursor = 0usize;
+    for _ in 0..eocd.entries {
+        if cd.len() < cursor + 46 || cd[cursor..cursor + 4] != [0x50, 0x4b, 0x01, 0x02] {
+            return bad("the archive's directory is malformed");
+        }
+        cursor += 46 + u16_at(cursor + 28) + u16_at(cursor + 30) + u16_at(cursor + 32);
+    }
+    if cursor != cd.len() {
+        return bad("the archive's directory holds records it does not count");
+    }
+    Ok(())
+}
+
 /// Local entries back to back from byte 0, then the central directory, then the EOCD:
 /// no prefixed data, no gaps or hidden entries, no overlaps, no collapsed duplicate names.
 pub(super) fn check_layout<R: Read + Seek>(a: &mut ZipArchive<R>, eocd: &Eocd) -> AppResult<()> {

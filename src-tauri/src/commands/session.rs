@@ -43,9 +43,14 @@ pub fn project_close_confirmed<R: Runtime>(
     window.destroy().map_err(|e| AppError::Io(e.to_string()))
 }
 
+/// Async: listing stats every path, and a file on an offline share can block for a while.
 #[tauri::command]
-pub fn recent_projects(state: State<'_, AppState>) -> AppResult<Vec<RecentProject>> {
-    Ok(state.config_dir().map(recent::list).unwrap_or_default())
+pub async fn recent_projects<R: Runtime>(app: AppHandle<R>) -> AppResult<Vec<RecentProject>> {
+    blocking(move || {
+        let state = app.state::<AppState>();
+        Ok(state.config_dir().map(recent::list).unwrap_or_default())
+    })
+    .await
 }
 
 #[tauri::command]
@@ -53,8 +58,9 @@ pub async fn autosave_write(state: State<'_, AppState>, request: Request<'_>) ->
     save::autosave(&state, raw_body(&request)?)
 }
 
+/// Async like `autosave_write`, so both run on the same pool (the webview orders them).
 #[tauri::command]
-pub fn autosave_clear(state: State<'_, AppState>) -> AppResult<()> {
+pub async fn autosave_clear(state: State<'_, AppState>) -> AppResult<()> {
     save::clear_autosave(&state)
 }
 

@@ -712,19 +712,26 @@ Exit criteria
   As built (§1.2): `zip` 9.0.2 without default features (deflate via flate2's
   `forbid(unsafe)` miniz_oxide backend); never `ZipArchive::extract`. Workspaces hold the
   project as `bundle/` (same layout as the zip); an open extracts into a fresh workspace that
-  replaces the current one only after the webview accepted its scene
+  replaces the current one only after the webview accepted its scene; the expansion budget
+  covers the whole archive (200× its size, at least 64 MiB for a `.stvd`), the central
+  directory is walked so it holds no records it does not count, and a save re-reads its zip
+  through the guard before replacing the file
 - [x] 5.3 Commands: New, Open, Save, Save As, Close; dirty tracking; "unsaved changes" prompt on
   window close; recent files (app config dir). As built: Close Project leaves a new untitled
   project; one project operation at a time and none during an import; dirty = the document
   is not the one saved (a reference compare: undo back to it is clean); Save writes the
   snapshot it took, so edits made during a save stay unsaved; Rust owns the window title
   and the close guard (`CloseRequested` held, the webview asks Save / Don't Save / Cancel;
-  a webview that does not answer for 10 s cannot block a second close); recent files are
-  ten paths in `<app config>/recent.json`, opened by id
+  a webview that does not answer for 10 s cannot block a second close; a close during a save
+  waits for it); recent files are ten paths in `<app config>/recent.json`, opened by id; a
+  page reload starts a new untitled session in Rust too (the old file cannot be saved over
+  with an empty document; its unsaved work is offered for recovery)
 - [x] 5.4 File association for `.stvd` + open-on-launch (single-instance forwarding). As
   built: Rust keeps the launch path and the webview pulls it (no event lost before it
   loads); a dropped `.stvd` opens too; deb/rpm ship a shared-mime-info package and a desktop
-  file with `%f` (Tauri's default has none); the AppImage gets no file association
+  file with `%f` (Tauri's default has none); the AppImage gets no file association; on
+  Linux, single instance is skipped when the D-Bus session address cannot be parsed (the
+  plugin would panic)
 - [x] 5.5 Autosave to workspace + crash-recovery prompt on next launch; thumbnail capture.
   As built: autosave 2 s after editing stops (30 s at most), never into the user's file,
   removed when the document is back at its saved state; a workspace that still holds an

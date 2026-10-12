@@ -46,8 +46,7 @@ export function SceneGraphPanel() {
       <ScrollArea className="min-h-0 flex-1">
         {tree.length === 0 ? (
           <p className="p-4 text-xs text-muted-foreground">
-            No parts yet. Import CAD files with File › Import (Phase 4), or create a group to
-            organise the assembly.
+            No parts yet. Import CAD files with File › Import (Ctrl+I) or drop them on the window.
           </p>
         ) : (
           <SceneTree tree={tree} />

@@ -68,8 +68,9 @@ let geometryDir: Promise<string> | null = null
 
 async function load(id: AssetId): Promise<LoadedAsset> {
   geometryDir ??= getWorkspaceInfo().then((r) => {
-    if (!r.ok) throw new Error(r.error.message)
-    return r.value.geometryDir
+    if (r.ok) return r.value.geometryDir
+    geometryDir = null // ask again next time instead of failing every later load
+    throw new Error(r.error.message)
   })
   const response = await fetch(assetUrl(await geometryDir, id))
   if (!response.ok) throw new Error(`HTTP ${response.status}`)

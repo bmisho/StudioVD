@@ -49,6 +49,7 @@ src/
     scene-graph/  Left sidebar tree
     properties/   Right sidebar inspectors
     library/      Library tab, insertion drag, credits dialog
+    export/       GLB/STL export of the assembly or selection
   core/           PURE TypeScript. No React, no R3F, no DOM, no Tauri
     math/         Frames, transforms, fitting (three math types allowed)
     physics/      Drag spring, damping, joint tree, physics model from the document (no Rapier)
@@ -63,6 +64,7 @@ src-tauri/src/
   commands/       #[tauri::command] handlers (thin; delegate to modules)
   bundle/         Project bundle zip read/write
   workspace/      Per-project working directory management
+  picked/         Files the user chose in a dialog or dropped (opaque tokens for the webview)
   geometry/       Convex decomposition (parry3d) and other heavy geometry
   library/        Component store, install, signature verification, downloads
 tests/e2e/        Playwright specs
@@ -152,8 +154,9 @@ Further rules:
 - Heavy CPU work runs off the main thread: STEP/IGES parsing (worker), simulation solve
   (worker), convex decomposition (Rust).
 - **Offline-first.** The webview makes **no** network requests, ever. Do not use drei
-  `Environment` presets (they fetch HDRIs from a CDN) or default DRACO/meshopt decoder URLs
-  (gstatic). Bundle decoders, fonts, and environment maps locally.
+  `Environment` presets (they fetch HDRIs from a CDN) or drei's `useGLTF` DRACO (gstatic).
+  three's `DRACOLoader` gets `DRACO_GLTF_CONFIG` (its own decoder files, bundled by Vite).
+  Bundle decoders, fonts, and environment maps locally.
 - The **only** network access in the app is the Rust library downloader, and only on an
   explicit user action (Browse, Refresh, Download, Check for updates) or an opt-in periodic
   check (off by default). No startup network traffic. An "Offline mode" switch disables it.
@@ -243,6 +246,12 @@ Testing notes:
   pointer press as a hit on a resize handle and steals focus. Component tests focus inputs
   programmatically; real-mouse flows belong in Playwright.
 - A regression test must be shown to fail without its fix before it counts.
+- The E2E Tauri mock (`tests/e2e/tauriMock.ts`) has an in-memory file system: tests queue
+  picked or dropped files, assets the app writes come back through `convertFileSrc`, and
+  exports are kept for inspection. Keep it in step with `src/lib/tauri`.
+- Vite's dev dependency scan does not follow `new Worker(...)`; workers are listed in
+  `optimizeDeps.entries` (`src/workers/*.worker.ts`). Without that, the first import
+  re-optimizes and reloads every open page, which breaks parallel E2E runs.
 - `@playwright/test` is pinned to 1.56.1 because the dev sandbox ships Chromium build 1194. CI
   installs browsers itself, so bumping it only breaks local sandbox runs.
 - shadcn/ui: components in `src/components/ui/` come from `shadcn-ui/ui@e94cebe`
@@ -267,6 +276,11 @@ Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindi
 - Trust comes only from signatures: the catalog index is verified with compiled-in minisign
   keys before it is parsed; every pack and file is checked by SHA-256. Hosts and mirrors are
   untrusted. Library commands take IDs, never URLs or file paths from the webview.
+- **No paths from the webview, ever.** Open/save dialogs run in Rust and drops are registered
+  in Rust; the webview gets opaque tokens (read and write tokens are not interchangeable).
+  Files a model names next to itself resolve only inside its folder. Asset writes are
+  verified against their SHA-256; the asset protocol is scoped to the workspace's
+  `geometry/` folder.
 - Every `component.json`, including those inside an opened `.stvd` (a project file is
   untrusted input), passes the same strict zod validation.
 - A strict CSP replaces `"csp": null` before release (Phase 15).

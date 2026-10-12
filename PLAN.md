@@ -626,26 +626,48 @@ Exit criteria
 
 ## Phase 4: Import pipeline & geometry assets
 
-- [ ] 4.1 Rust workspace manager: create/open/clean per-project workspace in app cache dir;
-  asset-protocol scope; raw-binary `write_asset` command; Rust unit tests
-- [ ] 4.2 Import dialog: file picker (GLB/GLTF, OBJ+MTL, STL, STEP/STP, IGES/IGS), unit
+- [x] 4.1 Rust workspace manager: create/open/clean per-project workspace in app cache dir;
+  asset-protocol scope; raw-binary `write_asset` command; Rust unit tests. As built: one
+  workspace per session (`<app cache>/workspaces/ws-*`, deleted on exit, crash leftovers swept
+  after 14 days; Phase 5 adds open/save). The asset protocol is scoped to its `geometry/`
+  folder only. The webview never sends a path: open/save dialogs run in Rust
+  (`tauri-plugin-dialog`, no JS capability) and dropped files are registered in Rust, so the
+  webview only holds opaque read/write tokens; siblings a .gltf/.obj names resolve only inside
+  the model's folder (symlinks included). `write_asset` stores bytes only under their own
+  SHA-256
+- [x] 4.2 Import dialog: file picker (GLB/GLTF, OBJ+MTL, STL, STEP/STP, IGES/IGS), unit
   (mm/cm/m/in), up axis (Y/Z), STEP tessellation quality (coarse/normal/fine), split mode
-  (one part per mesh/node)
-- [ ] 4.3 GLB/GLTF loader with locally bundled DRACO + meshopt decoders; OBJ/MTL; STL
-- [ ] 4.4 STEP/IGES worker (occt-import-js, lazy WASM): progress, cancel, hierarchy → parts,
+  (one part per mesh/node). Also: files dropped on the window, progress per file, Cancel
+  (inserts nothing), per-file errors (the other files still import), ft as a unit
+- [x] 4.3 GLB/GLTF loader with locally bundled DRACO + meshopt decoders; OBJ/MTL; STL. As built:
+  every format parses in the import worker (textures are stripped, so GLTFLoader needs no
+  DOM); DRACO uses three's own decoder files, bundled by Vite (no CDN)
+- [x] 4.4 STEP/IGES worker (occt-import-js, lazy WASM): progress, cancel, hierarchy → parts,
   B-rep face ranges and per-face colours retained
-- [ ] 4.5 Normalize: units → mm, up-axis, recentre to bbox centre (offset into part transform),
+- [x] 4.5 Normalize: units → mm, up-axis, recentre to bbox centre (offset into part transform),
   normals, export GLB, SHA-256 dedup, write to workspace. Pure `src/core` functions, runnable in
-  Node, because the Phase 14 pack builder reuses them
-- [ ] 4.6 Per-asset analysis: BVH (three-mesh-bvh), face segmentation (B-rep ranges or
-  normal-angle region growing), face classification (§2), volume/centroid/watertight (§2)
-- [ ] 4.7 Scene graph: imported hierarchy, rename, show/hide, isolate, delete, group (a group is
-  its own entity; component instances map onto it); grounded flag (first part grounded by default)
-- [ ] 4.8 Transform gizmo (design mode) for free placement, single undo entry per drag
-- [ ] 4.9 Export: assembly or selection to GLB/STL (current pose)
-- [ ] 4.10 Tests: fixtures (`cube.step`, `bracket.stl`, `sample.glb`); unit cube volume = 1 mm³,
+  Node, because the Phase 14 pack builder reuses them. The GLB is our own deterministic writer
+  (0 errors/warnings/infos in the Khronos validator)
+- [x] 4.6 Per-asset analysis: BVH (three-mesh-bvh), face segmentation (B-rep ranges or
+  normal-angle region growing), face classification (§2), volume/centroid/watertight (§2).
+  As built: analysis runs at import; the BVH is built when an asset loads, in a worker, as an
+  "indirect" BVH so the stored triangle order (and so the face ranges) never changes
+- [x] 4.7 Scene graph: imported hierarchy, rename, show/hide, isolate, delete, group (a group is
+  its own entity; component instances map onto it); grounded flag (first part grounded by
+  default). As built: deleting parts also removes their anchors, the mates on them, couplings
+  and bindings; isolate is a view filter (session state); New Group wraps the selection
+- [x] 4.8 Transform gizmo (design mode) for free placement, single undo entry per drag
+  (move T / rotate R; a click on a handle never changes the selection)
+- [x] 4.9 Export: assembly or selection to GLB/STL (current pose). GLB in metres, STL in mm.
+  Licence attribution in exports (§4.8) lands with the first licensed assets (Phase 9):
+  imported files carry no licence metadata
+- [x] 4.10 Tests: fixtures (`cube.step`, `bracket.stl`, `sample.glb`); unit cube volume = 1 mm³,
   unit conversions, recentring, synthetic cylinder → axis within 0.1°; import E2E with mocked IPC;
-  triangle-budget warning
+  triangle-budget warning. Also DRACO/meshopt fixtures, export E2E, Rust path-resolution
+  tests, and a Linux desktop run under Xvfb through the real dialogs, IPC and asset protocol
+  (STL, STEP and DRACO GLB import, a file dropped from a GTK drag source, STL export,
+  workspace removed on exit;
+  `docs/screenshots/phase-4-linux-*.png`). Windows not checked (no machine here)
 - [ ] ⛔ 4.11 **User approval**
 
 ## Phase 5: Project bundle save/load

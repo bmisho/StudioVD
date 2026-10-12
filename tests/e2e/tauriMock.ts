@@ -1,7 +1,8 @@
 /**
  * Replaces the Tauri backend before the app loads (the browser equivalent of `mockIPC`).
  * Runs in the page, so it must be self-contained (no imports, no outer variables).
- * - `app_info` answers like the real Rust command; project commands reject `notImplemented`.
+ * - `app_info` answers like the real Rust command; project commands live in
+ *   `tauriProjectMock.ts`, installed after this script into the same command table.
  * - An in-memory file system stands in for the import/export commands: tests queue picked or
  *   dropped files, assets written by the app are served back through `convertFileSrc` as blob
  *   URLs, and exports are kept for inspection (see `E2EBackend`).
@@ -11,12 +12,6 @@ export function installTauriMockScript(): void {
   type Picked = { token: string; name: string; size: number }
   const w = window as unknown as Record<string, unknown>
   const calls: string[] = []
-  const phases: Record<string, string> = {
-    project_new: "Creating projects arrives in Phase 5.",
-    project_open: "Opening projects arrives in Phase 5.",
-    project_save: "Saving projects arrives in Phase 5.",
-    project_save_as: "Saving projects arrives in Phase 5.",
-  }
   const files = new Map<string, { name: string; bytes: Uint8Array }>()
   const resources = new Map<string, Uint8Array>()
   const assets = new Map<string, Uint8Array<ArrayBuffer>>()
@@ -128,13 +123,13 @@ export function installTauriMockScript(): void {
     },
   }
 
+  // Shared with tauriProjectMock.ts (a second init script): commands, events and assets.
+  w.__E2E_MOCK__ = { commands, emit, fail, assets }
   w.isTauri = true
   w.__TAURI_EVENT_PLUGIN_INTERNALS__ = { unregisterListener: () => undefined }
   w.__TAURI_INTERNALS__ = {
     invoke: (cmd: string, args: Args, options?: { headers?: Record<string, string> }) => {
       calls.push(cmd)
-      const message = phases[cmd]
-      if (message) return fail("notImplemented", message)
       const command = commands[cmd]
       return Promise.resolve(command ? command(args, options?.headers ?? {}) : null)
     },

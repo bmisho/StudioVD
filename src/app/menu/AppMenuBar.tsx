@@ -8,6 +8,7 @@ import {
   MenubarSubTrigger,
   MenubarTrigger,
 } from "@/components/ui/menubar"
+import { OpenRecentMenu } from "@/features/project/OpenRecentMenu"
 import { CommandMenuItem } from "./CommandMenuItem"
 import { CommandRadioGroup } from "./CommandRadioGroup"
 
@@ -26,9 +27,11 @@ export function AppMenuBar() {
         <MenubarContent>
           <CommandMenuItem id="file.new" />
           <CommandMenuItem id="file.open" />
+          <OpenRecentMenu />
           <MenubarSeparator />
           <CommandMenuItem id="file.save" />
           <CommandMenuItem id="file.saveAs" />
+          <CommandMenuItem id="file.close" />
           <MenubarSeparator />
           <CommandMenuItem id="file.import" />
           <MenubarSub>

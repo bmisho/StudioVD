@@ -1,6 +1,7 @@
 import { useEffect, useRef, type RefObject } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Box3, type Group } from "three"
+import { captureThumbnail } from "../thumbnail/captureThumbnail"
 import { viewportBridge } from "../viewportBridge"
 import type { CameraRig } from "./createCameraRig"
 import { fitAll, setViewDirection } from "./fitView"
@@ -8,7 +9,7 @@ import { visiblePartsBox } from "./sceneBounds"
 
 const box = new Box3()
 
-/** Registers fit-all and standard views with the command bridge; fits once on mount. */
+/** Registers fit-all, standard views and thumbnails with the command bridge; fits on mount. */
 export function useViewportBridge(rig: CameraRig, partsRoot: RefObject<Group | null>): void {
   const get = useThree((s) => s.get)
   const invalidate = useThree((s) => s.invalidate)
@@ -30,6 +31,7 @@ export function useViewportBridge(rig: CameraRig, partsRoot: RefObject<Group | n
         void setViewDirection(rig, direction, animate)
         invalidate()
       },
+      captureThumbnail: () => captureThumbnail(get()),
     })
   }, [rig, partsRoot, get, invalidate])
 

@@ -15,12 +15,15 @@ export interface ViewportApi {
   fitAllAfterChange(): void
   /** Looks along `direction` (from the target towards the camera). */
   setView(direction: Direction): void
+  /** A PNG of the assembly for the project bundle (PLAN 5.5); null when it cannot render. */
+  captureThumbnail(): Promise<Uint8Array | null>
 }
 
 export interface ViewportImpl {
   fitAll(animate: boolean): void
   fitAllNextFrame(animate: boolean): void
   setView(direction: Direction, animate: boolean): void
+  captureThumbnail(): Promise<Uint8Array | null>
 }
 
 const prefersMotion = () =>
@@ -35,6 +38,7 @@ export function createViewportBridge(): ViewportApi & { attach(impl: ViewportImp
     fitAll: (animate = prefersMotion()) => current?.fitAll(animate),
     fitAllAfterChange: () => current?.fitAllNextFrame(prefersMotion()),
     setView: (direction) => current?.setView(direction, prefersMotion()),
+    captureThumbnail: async () => (current ? current.captureThumbnail() : null),
     attach(impl) {
       current = impl
       return () => {

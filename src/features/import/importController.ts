@@ -2,6 +2,7 @@ import { buildImportBatch, type ImportedFile } from "@/core/import/importBatch"
 import { gltfBufferUris, objMaterialLibraries } from "@/core/import/externalRefs"
 import { formatOf, type ImportOptions } from "@/core/import/importOptions"
 import { triangleBudgetWarning } from "@/core/import/triangleBudget"
+import type { Notifier } from "@/lib/notify"
 import type { PickedFile } from "@/lib/tauri/files"
 import type { Result } from "@/lib/tauri/result"
 import type { DocumentStore } from "@/store/document/documentStore"
@@ -14,13 +15,6 @@ export interface ImportBackend {
   readImportFile: (token: string) => Promise<Result<ArrayBuffer>>
   readImportResource: (token: string, relative: string) => Promise<Result<ArrayBuffer>>
   writeAsset: (id: string, bytes: Uint8Array) => Promise<Result<boolean>>
-}
-
-export interface Notifier {
-  success: (title: string, detail?: string) => void
-  info: (title: string, detail?: string) => void
-  warning: (title: string, detail?: string) => void
-  error: (title: string, detail?: string) => void
 }
 
 export interface ImportDeps {

@@ -4,6 +4,7 @@ import { noRaycast } from "../picking/pickTarget"
 import { highlightMaterials } from "./highlightMaterials"
 import { ensureHullNormals } from "./hullGeometry"
 import { syncOutlineUniforms } from "./hullOutlineMaterial"
+import { OVERLAY } from "../thumbnail/overlay"
 
 export type HighlightState = "none" | "hover" | "selected"
 
@@ -21,13 +22,20 @@ export function PartHighlight({
   return (
     <>
       {state === "selected" && (
-        <mesh geometry={geometry} material={m.selectedTint} raycast={noRaycast} renderOrder={1} />
+        <mesh
+          geometry={geometry}
+          material={m.selectedTint}
+          raycast={noRaycast}
+          renderOrder={1}
+          userData={OVERLAY}
+        />
       )}
       <mesh
         geometry={outlineGeometry}
         material={state === "selected" ? m.selectedOutline : m.hoverOutline}
         raycast={noRaycast}
         onBeforeRender={syncOutlineUniforms}
+        userData={OVERLAY}
       />
     </>
   )

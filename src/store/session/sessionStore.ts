@@ -60,6 +60,8 @@ export interface SessionState {
   /** Isolates `ids`; when already isolating (or `ids` is empty), shows everything again. */
   toggleIsolation: (ids: readonly PartId[]) => void
   setGizmoMode: (mode: GizmoMode) => void
+  /** Another document replaced the open one (New, Open): drop what pointed into the old. */
+  resetForDocument: () => void
 }
 
 export const initialSessionState = {
@@ -110,6 +112,8 @@ export function createSessionStore() {
     setPanelOpen: (side, open) =>
       set(side === "left" ? { leftPanelOpen: open } : { rightPanelOpen: open }),
     toggleTestMode: () => set((s) => ({ testMode: !s.testMode })),
+    resetForDocument: () =>
+      set({ selection: [], isolated: null, testMode: false, activeTool: "select" }),
     restartTestMode: () => set((s) => (s.testMode ? { testRun: s.testRun + 1 } : {})),
     openDialog: (dialog) => set({ dialog }),
     closeDialog: () => set({ dialog: null }),

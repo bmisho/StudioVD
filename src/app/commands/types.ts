@@ -12,6 +12,7 @@ export type CommandId =
   | "file.open"
   | "file.save"
   | "file.saveAs"
+  | "file.close"
   | "file.import"
   | "file.exportGlb"
   | "file.exportStl"
@@ -68,7 +69,11 @@ export interface Backend {
   openProject: () => Promise<Result<void>>
   saveProject: () => Promise<Result<void>>
   saveProjectAs: () => Promise<Result<void>>
+  /** Closes the project, leaving a new untitled one (asks about unsaved changes). */
+  closeProject: () => Promise<Result<void>>
   importFiles: () => Promise<Result<void>>
+  /** Stores a normalized asset in the workspace (the test rig's boxes). */
+  writeAsset: (id: string, bytes: Uint8Array) => Promise<Result<boolean>>
   exportScene: (format: "glb" | "stl") => Promise<Result<void>>
   closeWindow: () => Promise<Result<void>>
 }

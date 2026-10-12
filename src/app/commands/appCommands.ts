@@ -1,8 +1,9 @@
 import { toast } from "sonner"
 import { exportScene } from "@/features/export/exportService"
 import { chooseImportFiles } from "@/features/import/importService"
+import { projectController } from "@/features/project/projectService"
 import { viewportBridge } from "@/features/viewport/viewportBridge"
-import * as tauri from "@/lib/tauri/commands"
+import { writeAsset } from "@/lib/tauri/files"
 import { ok, type AppError } from "@/lib/tauri/result"
 import { closeMainWindow } from "@/lib/tauri/window"
 import { useDocumentStore } from "@/store/document/documentStore"
@@ -19,6 +20,20 @@ function reportError(error: AppError, action: string): void {
   else toast.error(`${action} failed`, { description: error.message })
 }
 
+/**
+ * A project operation from a command. It reports its own failures; a prompt it opens returns
+ * focus to whatever invoked the command.
+ */
+const projectOp = (op: () => Promise<void>) => async () => {
+  rememberDialogReturnFocus()
+  try {
+    await op()
+  } finally {
+    forgetDialogReturnFocus()
+  }
+  return ok(undefined)
+}
+
 function focusMenuBar(): void {
   document.querySelector<HTMLElement>('[role="menubar"] [role="menuitem"]')?.focus()
 }
@@ -31,16 +46,18 @@ export const appCommands = createCommandRegistry({
   preferences: usePreferencesStore,
   viewport: viewportBridge,
   backend: {
-    newProject: tauri.newProject,
-    openProject: tauri.openProject,
-    saveProject: tauri.saveProject,
-    saveProjectAs: tauri.saveProjectAs,
+    newProject: projectOp(projectController.newProject),
+    openProject: projectOp(projectController.open),
+    saveProject: projectOp(projectController.save),
+    saveProjectAs: projectOp(projectController.saveAs),
+    closeProject: projectOp(projectController.newProject),
     importFiles: async () => {
       rememberDialogReturnFocus()
       const opened = await chooseImportFiles()
       if (!opened.ok || !opened.value) forgetDialogReturnFocus()
       return opened.ok ? ok(undefined) : opened
     },
+    writeAsset,
     exportScene,
     closeWindow: closeMainWindow,
   },

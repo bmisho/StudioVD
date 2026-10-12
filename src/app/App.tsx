@@ -2,6 +2,9 @@ import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ImportDialog } from "@/features/import/ImportDialog"
 import { useFileDrop } from "@/features/import/useFileDrop"
+import { RecoveryDialog } from "@/features/project/RecoveryDialog"
+import { UnsavedChangesDialog } from "@/features/project/UnsavedChangesDialog"
+import { useProjectSession } from "@/features/project/useProjectSession"
 import { useCommands } from "./commands/commandsContext"
 import { AboutDialog } from "./dialogs/AboutDialog"
 import { WorkspaceLayout } from "./layout/WorkspaceLayout"
@@ -14,6 +17,7 @@ import { MainToolbar } from "./toolbar/MainToolbar"
 export function App() {
   useGlobalShortcuts(useCommands())
   useFileDrop()
+  useProjectSession()
 
   return (
     <TooltipProvider delayDuration={400}>
@@ -28,6 +32,8 @@ export function App() {
       </div>
       <AboutDialog />
       <ImportDialog />
+      <UnsavedChangesDialog />
+      <RecoveryDialog />
       <Toaster position="bottom-right" />
     </TooltipProvider>
   )

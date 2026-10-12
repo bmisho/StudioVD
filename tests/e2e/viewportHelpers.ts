@@ -16,10 +16,18 @@ export async function waitForViewport(page: Page) {
 export async function insertTestRig(page: Page): Promise<{ base: string; leaf: string }> {
   await page.getByRole("menuitem", { name: "Help" }).click()
   await page.getByRole("menuitem", { name: "Insert Physics Test Rig" }).click()
-  const parts = await page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.parts() ?? [])
+  // The rig's boxes are real assets: hashed and stored before the parts are inserted.
+  const read = () => page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.parts() ?? [])
+  await expect.poll(async () => (await read()).length).toBe(2)
+  const parts = await read()
   const id = (name: string) => parts.find((p) => p.name === name)?.id ?? ""
   const ids = { base: id("Base"), leaf: id("Leaf") }
   await expect.poll(() => projectPart(page, ids.leaf)).not.toBeNull()
+  // Settled: both GLBs loaded (each load renders a frame and swaps the box for the mesh).
+  for (const part of [ids.base, ids.leaf])
+    await expect
+      .poll(() => page.evaluate((i) => window.__STUDIOVD_VIEWPORT__?.partMesh(i)?.loaded, part))
+      .toBe(true)
   return ids
 }
 

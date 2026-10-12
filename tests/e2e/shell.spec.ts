@@ -64,13 +64,6 @@ test.describe("application shell", () => {
 })
 
 test.describe("commands and the backend", () => {
-  test("File > Save reaches the backend and reports the phase", async ({ page }) => {
-    await page.getByRole("menuitem", { name: "File" }).click()
-    await page.getByRole("menuitem", { name: /^Save\s*Ctrl\+S$/ }).click()
-    await expect(page.getByText("Saving projects arrives in Phase 5.")).toBeVisible()
-    expect(await backendCalls(page)).toContain("project_save")
-  })
-
   test("Ctrl+I opens the file picker in the backend", async ({ page }) => {
     await page.keyboard.press("Control+i")
     await expect.poll(() => backendCalls(page)).toContain("pick_import_files")

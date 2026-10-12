@@ -39,11 +39,14 @@ describe("history", () => {
 
   it("adds nothing when a gesture ends where it started, even via other values", () => {
     const { store, history, id, past } = setup()
+    const before = store.getState().doc
     const token = history.beginGesture()
     store.getState().renameGroup(id, "Typo")
     store.getState().renameGroup(id, "Frame") // typed back: structurally unchanged
     history.endGesture(token)
     expect(past()).toBe(0)
+    // The very same document: nothing reads as an unsaved change.
+    expect(store.getState().doc).toBe(before)
   })
 
   it("restores the start state when a gesture is cancelled", () => {

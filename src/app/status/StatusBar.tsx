@@ -1,4 +1,5 @@
 import { APP_VERSION } from "@/core/app-info"
+import { ProjectStatus } from "@/features/project/ProjectStatus"
 import { useSessionStore } from "@/store/session/sessionStore"
 
 function StatusItem({ label, value, live }: { label: string; value: string; live?: boolean }) {
@@ -24,6 +25,7 @@ export function StatusBar() {
       aria-label="Status bar"
       className="flex h-6 shrink-0 items-center gap-4 border-t bg-surface px-3 text-xs select-none"
     >
+      <ProjectStatus />
       <StatusItem label="Selected" value={String(selectionCount)} />
       <StatusItem label="Mode" value={testMode ? "Test" : "Design"} live />
       <StatusItem label="View" value={projection === "perspective" ? "Perspective" : "Ortho"} />

@@ -55,6 +55,11 @@ export function fileCommands(deps: CommandDeps): Command[] {
       run: backendCommand(deps, "Save As", backend.saveProjectAs),
     },
     {
+      id: "file.close",
+      label: "Close Project",
+      run: backendCommand(deps, "Close", backend.closeProject),
+    },
+    {
       id: "file.import",
       label: "Import…",
       shortcuts: ["Ctrl+I"],

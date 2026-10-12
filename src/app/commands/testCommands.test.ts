@@ -14,13 +14,21 @@ describe("test mode commands", () => {
     expect(registry.run("test.reset")).toBe(false)
   })
 
-  it("inserts the physics test rig as one undoable change, then frames it", () => {
-    const { registry, document, history, viewport } = setup()
-    const impl = { fitAll: vi.fn(), fitAllNextFrame: vi.fn(), setView: vi.fn() }
+  it("inserts the physics test rig as one undoable change, then frames it", async () => {
+    const { registry, document, history, viewport, backend } = setup()
+    const impl = {
+      fitAll: vi.fn(),
+      fitAllNextFrame: vi.fn(),
+      setView: vi.fn(),
+      captureThumbnail: vi.fn(),
+    }
     viewport.attach(impl)
     registry.run("dev.insertTestRig")
-    expect(impl.fitAllNextFrame).toHaveBeenCalledOnce()
+    await vi.waitFor(() => expect(impl.fitAllNextFrame).toHaveBeenCalledOnce())
     const doc = document.getState().doc
+    // Real boxes, stored under their content address like an import.
+    for (const asset of Object.values(doc.assets))
+      expect(backend.writeAsset).toHaveBeenCalledWith(asset.id, expect.any(Uint8Array))
     expect(Object.values(doc.parts).map((p) => p.name)).toEqual(["Base", "Leaf"])
     expect(Object.values(doc.mates)).toHaveLength(1)
     history.undo()

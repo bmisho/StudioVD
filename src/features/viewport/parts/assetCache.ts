@@ -45,7 +45,8 @@ async function load(id: AssetId): Promise<LoadedAsset> {
 /**
  * Loaded asset geometry by content address (PLAN 4.6). Parts draw their bounding box until
  * the GLB is in; a missing or broken file keeps the box (and is logged). Same id, same GPU
- * buffers: never disposed, since undo can bring a deleted part back at any time.
+ * buffers: kept while the document's history can bring a part back, and released only when
+ * another document replaces it (`retain`, PLAN 5.3).
  */
 export const assetCache = {
   subscribe: (listener: () => void): (() => void) => {
@@ -55,6 +56,20 @@ export const assetCache = {
   get: (id: AssetId): LoadedAsset | undefined => {
     const entry = entries.get(id)
     return entry?.state === "ready" ? entry.asset : undefined
+  },
+  /**
+   * A new document replaced the open one (New, Open): frees geometry it does not use, and
+   * forgets failed loads, since its workspace may hold the files an earlier one lacked.
+   */
+  retain: (ids: ReadonlySet<string>): void => {
+    for (const [id, entry] of entries) {
+      if (entry.state === "loading" || (entry.state === "ready" && ids.has(id))) continue
+      if (entry.state === "ready") {
+        entry.asset.geometry.dispose()
+        entry.asset.material?.dispose()
+      }
+      entries.delete(id)
+    }
   },
   /** Starts loading `id` once. Placeholder assets (the test rig) have no file. */
   request: (id: AssetId): void => {

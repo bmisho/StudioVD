@@ -69,11 +69,14 @@ export function createHistory(store: DocumentStore): History {
     },
 
     endGesture: (token) => {
-      const closed = close(token)
-      if (!closed) return
+      if (gesture === null || token === null || gesture.token !== token) return
       // Structural, not reference, equality: typing a name and then retyping the original
-      // must not leave a phantom undo step.
-      if (deepEqual(store.getState().doc, closed.start)) return
+      // must not leave a phantom undo step. The start document itself comes back, so the
+      // unsaved-changes flag (a reference compare) sees no edit either.
+      const unchanged = deepEqual(store.getState().doc, gesture.start)
+      if (unchanged) store.setState({ doc: gesture.start }) // still paused: not recorded
+      const closed = close(token)
+      if (!closed || unchanged) return
       // zundo has no public "push" API; its temporal store is a plain zustand store.
       temporal.setState((t) => ({
         pastStates: [...t.pastStates, { doc: closed.start }].slice(-HISTORY_LIMIT),

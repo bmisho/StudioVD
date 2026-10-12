@@ -1,6 +1,7 @@
 import { clearMocks, mockIPC } from "@tauri-apps/api/mocks"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { getAppInfo, saveProject } from "./commands"
+import { getAppInfo } from "./commands"
+import { commitProject } from "./project"
 import { toAppError } from "./result"
 
 type TauriGlobal = typeof globalThis & { isTauri?: boolean }
@@ -37,18 +38,18 @@ describe("tauri wrappers", () => {
     mockIPC(() => {
       // Tauri rejects with the serialized Rust AppError object, not an Error instance.
       // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw { kind: "notImplemented", message: "Saving projects arrives in Phase 5." }
+      throw { kind: "invalidInput", message: "Nothing is being opened." }
     })
-    const result = await saveProject()
+    const result = await commitProject()
     expect(result).toEqual({
       ok: false,
-      error: { kind: "notImplemented", message: "Saving projects arrives in Phase 5." },
+      error: { kind: "invalidInput", message: "Nothing is being opened." },
     })
   })
 
   it("reports 'unavailable' in a plain browser instead of crashing", async () => {
     delete (globalThis as TauriGlobal).isTauri
-    const result = await saveProject()
+    const result = await commitProject()
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error.kind).toBe("unavailable")
   })

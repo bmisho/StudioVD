@@ -6,6 +6,7 @@ import { viewSpecOf } from "../camera/useCameraFrame"
 import { readSceneTokens } from "../theme/sceneTokens"
 import { useViewport } from "../ViewportContext"
 import { createGridMaterial, setGridUniforms } from "./gridMaterial"
+import { OVERLAY } from "../thumbnail/overlay"
 
 // Not pickable: otherwise every click on empty space hits the grid, and clicking empty
 // space no longer clears the selection.
@@ -28,7 +29,13 @@ export function CadGrid() {
   })
 
   return (
-    <mesh material={material} frustumCulled={false} renderOrder={-1} raycast={noRaycast}>
+    <mesh
+      material={material}
+      frustumCulled={false}
+      renderOrder={-1}
+      raycast={noRaycast}
+      userData={OVERLAY}
+    >
       <planeGeometry args={[2, 2]} />
     </mesh>
   )

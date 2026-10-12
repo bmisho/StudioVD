@@ -11,7 +11,7 @@ import type { Backend } from "./types"
 
 export const notImplemented: Extract<Result<void>, { ok: false }> = {
   ok: false,
-  error: { kind: "notImplemented", message: "Saving projects arrives in Phase 5." },
+  error: { kind: "notImplemented", message: "Not available in this test." },
 }
 
 /** A registry over fresh stores, a mocked backend and a detached viewport. */
@@ -26,7 +26,9 @@ export function setupRegistry(overrides: Partial<Backend> = {}) {
     openProject: vi.fn(() => Promise.resolve(notImplemented)),
     saveProject: vi.fn(() => Promise.resolve(notImplemented)),
     saveProjectAs: vi.fn(() => Promise.resolve(notImplemented)),
+    closeProject: vi.fn(() => Promise.resolve(notImplemented)),
     importFiles: vi.fn(() => Promise.resolve(notImplemented)),
+    writeAsset: vi.fn(() => Promise.resolve({ ok: true as const, value: true })),
     exportScene: vi.fn(() => Promise.resolve(notImplemented)),
     closeWindow: vi.fn(() => Promise.resolve({ ok: true as const, value: undefined })),
     ...overrides,

@@ -112,7 +112,12 @@ describe("3D view commands", () => {
     expect(registry.isEnabled("view.fitAll")).toBe(false)
     expect(registry.isEnabled("view.orient.top")).toBe(false)
 
-    const impl = { fitAll: vi.fn(), fitAllNextFrame: vi.fn(), setView: vi.fn() }
+    const impl = {
+      fitAll: vi.fn(),
+      fitAllNextFrame: vi.fn(),
+      setView: vi.fn(),
+      captureThumbnail: vi.fn(),
+    }
     const detach = viewport.attach(impl)
     expect(registry.run("view.fitAll")).toBe(true)
     expect(impl.fitAll).toHaveBeenCalledOnce()

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs"
 import { test as base, expect, type BrowserContext, type Page } from "@playwright/test"
 import { installTauriMockScript, type E2EBackend } from "./tauriMock"
+import { installProjectMockScript, type E2EProjectBackend } from "./tauriProjectMock"
 
 /**
  * The webview never touches the network (CLAUDE.md §6): every test fails if the page, a
@@ -34,6 +35,7 @@ export const test = base.extend<{ offlineGuard: undefined }>({
   offlineGuard: [offlineGuard, { auto: true }],
   page: async ({ page }, use) => {
     await page.addInitScript(installTauriMockScript)
+    await page.addInitScript(installProjectMockScript)
     await page.goto("/")
     await expect(page.getByRole("menubar", { name: "Main menu" })).toBeVisible()
     await use(page)
@@ -79,3 +81,6 @@ export async function dropFiles(
     [files, skipped] as const
   )
 }
+
+/** `window` in the page, for `page.evaluate` callbacks that reach the mocked backend. */
+export type E2EWindow = { __E2E__: E2EBackend & E2EProjectBackend }

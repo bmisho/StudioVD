@@ -161,7 +161,8 @@ Further rules:
   explicit user action (Browse, Refresh, Download, Check for updates) or an opt-in periodic
   check (off by default). No startup network traffic. An "Offline mode" switch disables it.
 - Large binaries never cross IPC as JSON. Assets live in the project workspace dir and are
-  loaded via the Tauri asset protocol; writes use raw binary IPC payloads.
+  loaded through the `stvd` URI scheme (Rust serves `<sha256>.glb` from the workspace only);
+  writes use raw binary IPC payloads.
 
 ## 7. Design system: light theme, white + light blue
 
@@ -278,9 +279,9 @@ Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindi
   untrusted. Library commands take IDs, never URLs or file paths from the webview.
 - **No paths from the webview, ever.** Open/save dialogs run in Rust and drops are registered
   in Rust; the webview gets opaque tokens (read and write tokens are not interchangeable).
-  Files a model names next to itself resolve only inside its folder. Asset writes are
-  verified against their SHA-256; the asset protocol is scoped to the workspace's
-  `geometry/` folder.
+  A model's token reads only the files the model itself names, inside its folder. Asset
+  writes are verified against their SHA-256. Tauri's asset protocol stays off (Tauri widens
+  its scope for every dropped file or folder); the `stvd` scheme serves content addresses.
 - Every `component.json`, including those inside an opened `.stvd` (a project file is
   untrusted input), passes the same strict zod validation.
 - A strict CSP replaces `"csp": null` before release (Phase 15).

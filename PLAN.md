@@ -81,8 +81,10 @@ flowchart LR
    update at 60 Hz; pushing them through Zustand would re-render React every frame. They live
    in a mutable buffer read inside `useFrame`.
 2. **Workspace directory instead of in-memory bundles.** Opening a project extracts it into
-   an app-cache workspace; imports write assets there; the viewport loads them via the Tauri
-   asset protocol. Save = Rust zips the workspace + `scene.json` (atomic: write temp, rename).
+   an app-cache workspace; imports write assets there; the viewport loads them through our
+   own `stvd` URI scheme, which serves `<sha256>.glb` from the workspace and nothing else
+   (Tauri's asset protocol stays off: Tauri widens its scope for every file or folder dropped
+   on the window). Save = Rust zips the workspace + `scene.json` (atomic: write temp, rename).
    Large binaries never travel through JSON IPC; crash recovery comes for free.
 3. **Geometry is normalized at import into GLB** (mm, Y-up, recentred, normals present),
    content-addressed by SHA-256. Parts *reference* an asset, so the same STL imported twice is
@@ -390,8 +392,8 @@ path). Draft TypeScript interfaces live in `docs/research/component-library/sche
 `appLocalDataDir/library/` (Windows: `%LOCALAPPDATA%\com.studiovd.desktop\library`, Linux:
 `~/.local/share/com.studiovd.desktop/library`). Not Roaming, and not the cache dir (OS cleaners
 purge caches; on Windows the cache dir is the same folder). The webview profile also lives in
-`appLocalDataDir`, so asset-protocol scopes name only `library/store`, `library/components`
-and `library/previews`, never the whole folder. Layout: `catalogs/`, `store/` (content-addressed
+`appLocalDataDir`, so the webview never gets a path scope into it: library files are served
+by content address through the `stvd` URI scheme, like workspace assets. Layout: `catalogs/`, `store/` (content-addressed
 blobs), `components/`, `staging/` (atomic installs, swept at startup), `installed.json`, `LOCK`.
 
 ### 4.6 Insertion
@@ -628,12 +630,14 @@ Exit criteria
 
 - [x] 4.1 Rust workspace manager: create/open/clean per-project workspace in app cache dir;
   asset-protocol scope; raw-binary `write_asset` command; Rust unit tests. As built: one
-  workspace per session (`<app cache>/workspaces/ws-*`, deleted on exit, crash leftovers swept
-  after 14 days; Phase 5 adds open/save). The asset protocol is scoped to its `geometry/`
-  folder only. The webview never sends a path: open/save dialogs run in Rust
+  workspace per session (`<app cache>/workspaces/ws-*`, locked while in use, deleted on exit,
+  crash leftovers swept after 14 days; Phase 5 adds open/save). Instead of Tauri's asset
+  protocol (whose scope Tauri widens for every dropped path), a `stvd` URI scheme serves
+  `<sha256>.glb` from the workspace's `geometry/` folder and nothing else. The webview never sends a path: open/save dialogs run in Rust
   (`tauri-plugin-dialog`, no JS capability) and dropped files are registered in Rust, so the
-  webview only holds opaque read/write tokens; siblings a .gltf/.obj names resolve only inside
-  the model's folder (symlinks included). `write_asset` stores bytes only under their own
+  webview only holds opaque read/write tokens; a model's token reads only the files the
+  .gltf/.obj itself names, inside its folder (symlinks included), within a byte budget.
+  Export never silently replaces a file the save dialog did not ask about. `write_asset` stores bytes only under their own
   SHA-256
 - [x] 4.2 Import dialog: file picker (GLB/GLTF, OBJ+MTL, STL, STEP/STP, IGES/IGS), unit
   (mm/cm/m/in), up axis (Y/Z), STEP tessellation quality (coarse/normal/fine), split mode
@@ -664,7 +668,7 @@ Exit criteria
 - [x] 4.10 Tests: fixtures (`cube.step`, `bracket.stl`, `sample.glb`); unit cube volume = 1 mm³,
   unit conversions, recentring, synthetic cylinder → axis within 0.1°; import E2E with mocked IPC;
   triangle-budget warning. Also DRACO/meshopt fixtures, export E2E, Rust path-resolution
-  tests, and a Linux desktop run under Xvfb through the real dialogs, IPC and asset protocol
+  tests, and a Linux desktop run under Xvfb through the real dialogs, IPC and `stvd` scheme
   (STL, STEP and DRACO GLB import, a file dropped from a GTK drag source, STL export,
   workspace removed on exit;
   `docs/screenshots/phase-4-linux-*.png`). Windows not checked (no machine here)
@@ -893,12 +897,15 @@ Exit criteria
 ## Phase 15: Hardening & release
 
 - [ ] 15.1 Strict CSP: no external origins at all; `script-src 'self' 'wasm-unsafe-eval'`, workers,
-  IPC and asset protocol only (both `asset:` and `http://asset.localhost` forms), plus `blob:` in
+  IPC (`ipc:` and `http://ipc.localhost`: without them Tauri falls back to postMessage and
+  binary uploads arrive as JSON, which `write_asset`/`write_export` refuse) and the `stvd`
+  scheme (`stvd:` and `http://stvd.localhost`) only, plus `blob:` in
   `connect-src` and `img-src`. GLTFLoader turns embedded GLB textures into blob URLs and
   fetches them on Chromium/WebView2, and `'self'` never matches `blob:`. E2E test: a textured
   GLB renders under the release CSP
 - [ ] 15.2 Capability audit (least privilege): app commands restricted via the build-time app
-  manifest, library commands for the main window only, narrow asset-protocol scopes,
+  manifest, library commands for the main window only, no asset protocol (content addresses
+  through the `stvd` scheme),
   `core:default` replaced by the individual core permissions the UI actually uses
 - [ ] 15.3 Performance pass on a 200-part reference assembly (load time, orbit fps, test-mode fps)
 - [ ] 15.4 Undo/redo coverage audit, context menus, shortcut help overlay

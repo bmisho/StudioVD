@@ -62,3 +62,36 @@ fn cleans_only_old_workspaces() {
     assert!(base.join("unrelated").is_dir());
     let _ = fs::remove_dir_all(base);
 }
+
+#[test]
+fn never_cleans_a_workspace_another_instance_holds() {
+    let base = temp_base("held");
+    let current = Workspace::create(&base).expect("current");
+    let other = Workspace::create(&base).expect("other running instance");
+    std::thread::sleep(Duration::from_millis(20));
+    assert_eq!(
+        clean_stale(&base, Duration::from_millis(1), current.root()),
+        0
+    );
+    assert!(other.root().is_dir());
+    let other_root = other.root().to_path_buf();
+    drop(other); // that instance exits without cleaning up (a crash)
+    assert_eq!(
+        clean_stale(&base, Duration::from_millis(1), current.root()),
+        1
+    );
+    assert!(!other_root.exists());
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
+fn atomic_writes_use_fresh_temp_files() {
+    let base = temp_base("atomic");
+    let target = base.join("out.stl");
+    write_atomic(&target, b"one").expect("first");
+    write_atomic(&target, b"two").expect("second");
+    assert_eq!(fs::read(&target).expect("read"), b"two");
+    let leftovers = fs::read_dir(&base).expect("dir").count();
+    assert_eq!(leftovers, 1, "no temp files left behind");
+    let _ = fs::remove_dir_all(base);
+}

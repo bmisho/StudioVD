@@ -1,12 +1,16 @@
 //! Per-project working directory (PLAN 1.1 decision 2, Phase 4.1). Imported geometry lives in
-//! `<app cache>/workspaces/<id>/geometry/<sha256>.glb`; the webview loads it through the asset
-//! protocol, scoped to this directory only. Phase 5 zips a workspace into a `.stvd` bundle.
+//! `<app cache>/workspaces/<id>/geometry/<sha256>.glb`; the webview loads it through the
+//! `stvd` URI scheme (`protocol`), which serves that folder only. Phase 5 zips a workspace
+//! into a `.stvd` bundle.
+
+pub mod protocol;
 
 use crate::error::{AppError, AppResult};
 use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 /// Largest single asset accepted from the webview (a 2-3 M triangle budget is the whole scene).
@@ -14,7 +18,11 @@ pub const MAX_ASSET_BYTES: usize = 512 * 1024 * 1024;
 
 pub struct Workspace {
     root: PathBuf,
+    /// Held for the session: `clean_stale` in another instance skips locked workspaces.
+    _lock: fs::File,
 }
+
+const LOCK_FILE: &str = ".lock";
 
 /// A content address: lowercase hex SHA-256 (the frontend `AssetIdSchema`).
 pub fn is_asset_id(id: &str) -> bool {
@@ -38,9 +46,13 @@ impl Workspace {
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_millis())
             .unwrap_or(0);
-        let root = base.join(format!("ws-{millis}-{}", std::process::id()));
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        let n = NEXT.fetch_add(1, Ordering::Relaxed);
+        let root = base.join(format!("ws-{millis}-{}-{n}", std::process::id()));
         fs::create_dir_all(root.join("geometry"))?;
-        Ok(Self { root })
+        let lock = fs::File::create(root.join(LOCK_FILE))?;
+        lock.lock()?;
+        Ok(Self { root, _lock: lock })
     }
 
     pub fn root(&self) -> &Path {
@@ -86,9 +98,15 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> AppResult<()> {
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let temp = dir.join(format!(".{name}.{}.tmp", std::process::id()));
+    // Unique per write (two exports to one file may overlap) and never an existing file.
+    static NEXT: AtomicU64 = AtomicU64::new(0);
+    let n = NEXT.fetch_add(1, Ordering::Relaxed);
+    let temp = dir.join(format!(".{name}.{}.{n}.tmp", std::process::id()));
     {
-        let mut file = fs::File::create(&temp)?;
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temp)?;
         file.write_all(bytes)?;
         file.sync_all()?;
     }
@@ -98,8 +116,19 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> AppResult<()> {
     Ok(())
 }
 
-/// Deletes workspaces under `base` whose last change is older than `max_age`, except `keep`.
-/// Errors on individual entries are skipped (another instance may be using one).
+/// Whether another running instance holds this workspace (its lock file is locked).
+fn in_use(root: &Path) -> bool {
+    let Ok(file) = fs::OpenOptions::new()
+        .write(true)
+        .open(root.join(LOCK_FILE))
+    else {
+        return false; // no lock file: not a live workspace
+    };
+    matches!(file.try_lock(), Err(fs::TryLockError::WouldBlock))
+}
+
+/// Deletes workspaces under `base` older than `max_age` (by folder date), except `keep` and
+/// any a running instance still holds. Errors on single entries are skipped.
 pub fn clean_stale(base: &Path, max_age: Duration, keep: &Path) -> usize {
     let Ok(entries) = fs::read_dir(base) else {
         return 0;
@@ -115,6 +144,7 @@ pub fn clean_stale(base: &Path, max_age: Duration, keep: &Path) -> usize {
                 .and_then(|t| now.duration_since(t).ok())
                 .is_some_and(|age| age > max_age)
         })
+        .filter(|e| !in_use(&e.path()))
         .filter(|e| fs::remove_dir_all(e.path()).is_ok())
         .count()
 }

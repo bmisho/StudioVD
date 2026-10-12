@@ -16,8 +16,8 @@ pub struct AppState {
 }
 
 impl AppState {
-    /// Creates this session's workspace and opens the asset protocol to its geometry folder
-    /// only. A failure is logged, not fatal: the app starts and imports report the error.
+    /// Creates this session's workspace. A failure is logged, not fatal: the app starts and
+    /// imports report the error.
     pub fn new<R: Runtime>(app: &AppHandle<R>) -> Self {
         let workspace = open_workspace(app)
             .inspect_err(|e| eprintln!("StudioVD: no workspace ({e}); importing is disabled."))
@@ -55,16 +55,8 @@ fn open_workspace<R: Runtime>(app: &AppHandle<R>) -> AppResult<Workspace> {
         .map_err(|e| AppError::Io(e.to_string()))?
         .join("workspaces");
     let ws = Workspace::create(&base)?;
-    clean_stale(&base, STALE_WORKSPACE_AGE, ws.root());
-    // The scope matches canonical request paths, so allow the canonical folder too (symlinked
-    // cache dirs on Linux, `\\?\` paths on Windows).
-    let scope = app.asset_protocol_scope();
-    let dir = ws.geometry_dir();
-    let canonical = dir.canonicalize()?;
-    for allowed in [&dir, &canonical] {
-        scope
-            .allow_directory(allowed, false)
-            .map_err(|e| AppError::Io(e.to_string()))?;
-    }
+    // Off the startup path: deleting a large leftover workspace takes a while.
+    let keep = ws.root().to_path_buf();
+    std::thread::spawn(move || clean_stale(&base, STALE_WORKSPACE_AGE, &keep));
     Ok(ws)
 }

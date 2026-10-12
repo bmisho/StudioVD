@@ -74,9 +74,9 @@ export function installTauriMockScript(): void {
       arch: "e2e-arch",
     }),
     pick_import_files: () => {
-      const picked = nextPick
+      const files = nextPick
       nextPick = []
-      return picked
+      return { files, skipped: [] }
     },
     read_import_file: (args) => {
       const file = files.get(String(args.token))
@@ -97,7 +97,6 @@ export function installTauriMockScript(): void {
       assets.set(id, bytes.slice())
       return !existed
     },
-    workspace_info: () => ({ geometryDir: "/e2e/workspace/geometry" }),
     pick_export_path: (args) => {
       const token = `x${++counter}`
       const name = `${String(args.suggestedName)}.${String(args.format)}`

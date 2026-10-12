@@ -2,11 +2,11 @@ import { Color, MeshStandardMaterial, type BufferGeometry } from "three"
 import type { FaceInfo } from "@/core/geometry/meshData"
 import { isPlaceholderAssetId } from "@/core/scene/testRig"
 import type { AssetId } from "@/core/schema"
-import { assetUrl, getWorkspaceInfo } from "@/lib/tauri/files"
-import type { AssetLoadReply, AssetLoadRequest } from "@/workers/assetLoadProtocol"
+import { assetUrl } from "@/lib/tauri/files"
 import { HULL_NORMAL } from "../highlight/hullOutlineMaterial"
 import { installBvh } from "../picking/bvh"
 import { toGeometry, type DecodedAsset } from "./assetDecode"
+import { decodeInWorker } from "./assetWorkerPool"
 
 export interface LoadedAsset {
   geometry: BufferGeometry
@@ -30,49 +30,8 @@ function materialFor(asset: DecodedAsset): MeshStandardMaterial | null {
   return null
 }
 
-// A few workers decode in parallel; each request goes to the least busy one.
-const pool: { worker: Worker; pending: number }[] = []
-const waiting = new Map<number, (reply: AssetLoadReply) => void>()
-let nextRequest = 0
-
-function decodeInWorker(bytes: ArrayBuffer): Promise<DecodedAsset> {
-  if (pool.length === 0) {
-    const size = Math.min(4, Math.max(1, (navigator.hardwareConcurrency || 2) - 1))
-    for (let i = 0; i < size; i++) {
-      const worker = new Worker(new URL("../../../workers/assetLoad.worker.ts", import.meta.url), {
-        type: "module",
-        name: "asset-load",
-      })
-      const slot = { worker, pending: 0 }
-      worker.onmessage = (event: MessageEvent<AssetLoadReply>) => {
-        slot.pending -= 1
-        waiting.get(event.data.requestId)?.(event.data)
-        waiting.delete(event.data.requestId)
-      }
-      pool.push(slot)
-    }
-  }
-  const slot = pool.reduce((a, b) => (b.pending < a.pending ? b : a))
-  const requestId = ++nextRequest
-  slot.pending += 1
-  return new Promise((resolve, reject) => {
-    waiting.set(requestId, (reply) =>
-      reply.ok ? resolve(reply.asset) : reject(new Error(reply.message))
-    )
-    const request: AssetLoadRequest = { requestId, bytes }
-    slot.worker.postMessage(request, [bytes])
-  })
-}
-
-let geometryDir: Promise<string> | null = null
-
 async function load(id: AssetId): Promise<LoadedAsset> {
-  geometryDir ??= getWorkspaceInfo().then((r) => {
-    if (r.ok) return r.value.geometryDir
-    geometryDir = null // ask again next time instead of failing every later load
-    throw new Error(r.error.message)
-  })
-  const response = await fetch(assetUrl(await geometryDir, id))
+  const response = await fetch(assetUrl(id))
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
   const decoded = await decodeInWorker(await response.arrayBuffer())
   installBvh()

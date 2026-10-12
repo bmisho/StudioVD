@@ -2,6 +2,7 @@ import { toast } from "sonner"
 import { viewportBridge } from "@/features/viewport/viewportBridge"
 import {
   onFilesDropped,
+  type ChosenFiles,
   pickImportFiles,
   readImportFile,
   readImportResource,
@@ -32,22 +33,28 @@ export const importController = createImportController({
   notify,
 })
 
-/** File › Import…: the file dialog runs in Rust; the options dialog opens on the result. */
-export async function chooseImportFiles(): Promise<Result<void>> {
+/** Opens the import dialog on picked or dropped files; reports the ones left out. */
+function openChosen({ files, skipped }: ChosenFiles): boolean {
+  if (skipped.length > 0) notify.warning("Some items cannot be imported", skipped.join("\n"))
+  if (files.length === 0) return false
+  if (useImportStore.getState().status.phase === "running") {
+    notify.info("An import is already running", "Try again when it has finished.")
+    return false
+  }
+  useImportStore.getState().open(files)
+  return true
+}
+
+/**
+ * File › Import…: the file dialog runs in Rust; the options dialog opens on the result.
+ * Returns whether it opened (if not, the caller's focus-return target is stale).
+ */
+export async function chooseImportFiles(): Promise<Result<boolean>> {
   const picked = await pickImportFiles()
-  if (!picked.ok) return picked
-  useImportStore.getState().open(picked.value)
-  return ok(undefined)
+  return picked.ok ? ok(openChosen(picked.value)) : picked
 }
 
 /** Files dropped on the window open the same dialog. Returns the unsubscribe function. */
 export function listenForDroppedFiles(): Promise<() => void> {
-  return onFilesDropped(({ files, skipped }) => {
-    if (skipped.length > 0)
-      notify.warning("Some dropped items cannot be imported", skipped.join("\n"))
-    if (files.length === 0) return
-    if (useImportStore.getState().status.phase === "running")
-      notify.info("An import is already running", "Drop the files again when it has finished.")
-    else useImportStore.getState().open(files)
-  })
+  return onFilesDropped((dropped) => void openChosen(dropped))
 }

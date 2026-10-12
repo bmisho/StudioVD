@@ -92,7 +92,7 @@ test.describe("import", () => {
 
   test("dropped files open the dialog; other items are reported", async ({ page }) => {
     await dropFiles(page, [fixtureFile("bracket.stl")], ["notes.txt"])
-    await expect(page.getByText("Some dropped items cannot be imported")).toBeVisible()
+    await expect(page.getByText("Some items cannot be imported")).toBeVisible()
     const dialog = page.getByRole("dialog", { name: "Import" })
     await expect(dialog.getByText("bracket.stl")).toBeVisible()
     await dialog.getByRole("button", { name: "Cancel" }).click()

@@ -1,6 +1,12 @@
 //! Files the user chose: in an open/save dialog or by dropping them on the window (PLAN 4.1).
 //! The webview never sends a path. It gets an opaque token per file and asks for that file's
-//! bytes, or for a sibling a .gltf/.obj names, which must resolve inside the same directory.
+//! bytes, or for a sibling the .gltf/.obj itself names (`refs`), which must also resolve
+//! inside the same directory.
+
+mod refs;
+mod resource;
+
+pub use resource::read_resource;
 
 use crate::error::{AppError, AppResult};
 use serde::Serialize;
@@ -37,10 +43,19 @@ enum Access {
     Write,
 }
 
+struct Entry {
+    path: PathBuf,
+    access: Access,
+    /// Sibling names the model refers to, read once on first use.
+    refs: Option<Vec<String>>,
+    /// Bytes of siblings served so far (capped at MAX_IMPORT_BYTES per model).
+    resource_bytes: u64,
+}
+
 #[derive(Default)]
 pub struct PickedFiles {
     next: u64,
-    entries: HashMap<String, (PathBuf, Access)>,
+    entries: HashMap<String, Entry>,
 }
 
 pub fn file_name(path: &Path) -> String {
@@ -59,7 +74,13 @@ impl PickedFiles {
     fn insert(&mut self, path: PathBuf, access: Access) -> String {
         self.next += 1;
         let token = format!("f{}", self.next);
-        self.entries.insert(token.clone(), (path, access));
+        let entry = Entry {
+            path,
+            access,
+            refs: None,
+            resource_bytes: 0,
+        };
+        self.entries.insert(token.clone(), entry);
         token
     }
 
@@ -107,9 +128,18 @@ impl PickedFiles {
         }
     }
 
+    fn entry(&mut self, token: &str, access: Access) -> AppResult<&mut Entry> {
+        match self.entries.get_mut(token) {
+            Some(entry) if entry.access == access => Ok(entry),
+            _ => Err(AppError::InvalidInput(format!(
+                "Unknown file token '{token}'."
+            ))),
+        }
+    }
+
     fn path(&self, token: &str, access: Access) -> AppResult<PathBuf> {
         match self.entries.get(token) {
-            Some((path, a)) if *a == access => Ok(path.clone()),
+            Some(entry) if entry.access == access => Ok(entry.path.clone()),
             _ => Err(AppError::InvalidInput(format!(
                 "Unknown file token '{token}'."
             ))),

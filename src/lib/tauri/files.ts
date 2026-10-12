@@ -13,19 +13,20 @@ export interface PickedFile {
   size: number
 }
 
-export interface DroppedFiles {
+/** Files picked or dropped: the importable ones, and the names of the rest. */
+export interface ChosenFiles {
   files: PickedFile[]
-  /** Names of dropped items that are not importable (folders, other file types). */
+  /** Items that cannot be imported (folders, other file types, unreadable files). */
   skipped: string[]
 }
 
-export const pickImportFiles = (): Promise<Result<PickedFile[]>> =>
-  call<PickedFile[]>("pick_import_files")
+export const pickImportFiles = (): Promise<Result<ChosenFiles>> =>
+  call<ChosenFiles>("pick_import_files")
 
 export const readImportFile = (token: string): Promise<Result<ArrayBuffer>> =>
   call<ArrayBuffer>("read_import_file", { token })
 
-/** A file next to a picked model (.gltf buffers, .obj material library), by relative URI. */
+/** A file the picked .gltf (buffers) or .obj (material libraries) names, by that name. */
 export const readImportResource = (token: string, relative: string): Promise<Result<ArrayBuffer>> =>
   call<ArrayBuffer>("read_import_resource", { token, relative })
 
@@ -33,16 +34,8 @@ export const readImportResource = (token: string, relative: string): Promise<Res
 export const writeAsset = (id: string, bytes: Uint8Array): Promise<Result<boolean>> =>
   call<boolean>("write_asset", bytes, { headers: { "x-asset-id": id } })
 
-export interface WorkspaceInfo {
-  geometryDir: string
-}
-
-export const getWorkspaceInfo = (): Promise<Result<WorkspaceInfo>> =>
-  call<WorkspaceInfo>("workspace_info")
-
-/** URL the webview loads an asset from (Tauri asset protocol, scoped to the workspace). */
-export const assetUrl = (geometryDir: string, id: string): string =>
-  convertFileSrc(`${geometryDir}/${id}.glb`)
+/** URL the webview loads an asset from: Rust's `stvd` scheme serves the workspace only. */
+export const assetUrl = (id: string): string => convertFileSrc(`${id}.glb`, "stvd")
 
 /** Save dialog for an export; `null` when the user cancelled. */
 export const pickExportPath = (
@@ -55,9 +48,7 @@ export const writeExport = (token: string, bytes: Uint8Array): Promise<Result<vo
   call<void>("write_export", bytes, { headers: { "x-export-token": token } })
 
 /** Files dropped on the window (Rust registers them and emits `import-drop`). */
-export async function onFilesDropped(
-  handler: (dropped: DroppedFiles) => void
-): Promise<UnlistenFn> {
+export async function onFilesDropped(handler: (dropped: ChosenFiles) => void): Promise<UnlistenFn> {
   if (!isTauri()) return () => undefined
-  return listen<DroppedFiles>("import-drop", (event) => handler(event.payload))
+  return listen<ChosenFiles>("import-drop", (event) => handler(event.payload))
 }

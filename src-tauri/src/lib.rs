@@ -28,6 +28,20 @@ pub fn run() {
                 commands::import::files_dropped(webview, paths);
             }
         })
+        // Workspace assets for the webview (`stvd://localhost/<sha256>.glb`).
+        .register_asynchronous_uri_scheme_protocol(
+            workspace::protocol::ASSET_SCHEME,
+            |ctx, request, responder| {
+                let app = ctx.app_handle().clone();
+                let path = request.uri().path().to_owned();
+                tauri::async_runtime::spawn_blocking(move || {
+                    let state = app.try_state::<state::AppState>();
+                    let dir = state.and_then(|s| s.workspace().ok().map(|w| w.geometry_dir()));
+                    let (status, body) = workspace::protocol::asset_reply(dir.as_deref(), &path);
+                    responder.respond(workspace::protocol::asset_response(status, body));
+                });
+            },
+        )
         .invoke_handler(tauri::generate_handler![
             commands::app::app_info,
             commands::project::project_new,
@@ -37,10 +51,9 @@ pub fn run() {
             commands::import::pick_import_files,
             commands::import::read_import_file,
             commands::import::read_import_resource,
-            commands::import::write_asset,
-            commands::import::workspace_info,
-            commands::import::pick_export_path,
-            commands::import::write_export,
+            commands::assets::write_asset,
+            commands::export::pick_export_path,
+            commands::export::write_export,
         ])
         .build(tauri::generate_context!());
     match app {

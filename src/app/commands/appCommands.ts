@@ -3,14 +3,14 @@ import { exportScene } from "@/features/export/exportService"
 import { chooseImportFiles } from "@/features/import/importService"
 import { viewportBridge } from "@/features/viewport/viewportBridge"
 import * as tauri from "@/lib/tauri/commands"
-import type { AppError } from "@/lib/tauri/result"
+import { ok, type AppError } from "@/lib/tauri/result"
 import { closeMainWindow } from "@/lib/tauri/window"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { documentHistory } from "@/store/document/history"
 import { usePreferencesStore } from "@/store/preferences/preferencesStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { connectSelectionPruning } from "@/store/selectionSync"
-import { rememberDialogReturnFocus } from "../dialogs/focusReturn"
+import { forgetDialogReturnFocus, rememberDialogReturnFocus } from "../dialogs/focusReturn"
 import { createCommandRegistry } from "./registry"
 
 function reportError(error: AppError, action: string): void {
@@ -35,9 +35,11 @@ export const appCommands = createCommandRegistry({
     openProject: tauri.openProject,
     saveProject: tauri.saveProject,
     saveProjectAs: tauri.saveProjectAs,
-    importFiles: () => {
+    importFiles: async () => {
       rememberDialogReturnFocus()
-      return chooseImportFiles()
+      const opened = await chooseImportFiles()
+      if (!opened.ok || !opened.value) forgetDialogReturnFocus()
+      return opened.ok ? ok(undefined) : opened
     },
     exportScene,
     closeWindow: closeMainWindow,

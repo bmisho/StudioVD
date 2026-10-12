@@ -23,3 +23,8 @@ export function restoreDialogFocus(event: Event): void {
     target.focus()
   }
 }
+
+/** The command opened nothing after all (a cancelled file picker): drop the stale target. */
+export function forgetDialogReturnFocus(): void {
+  returnTarget = null
+}

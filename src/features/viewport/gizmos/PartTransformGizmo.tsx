@@ -1,11 +1,13 @@
 import { TransformControls } from "@react-three/drei"
 import { useEffect, useRef, useSyncExternalStore } from "react"
+import type { Object3D } from "three"
 import type { PartId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
-import { documentHistory, type GestureToken } from "@/store/document/history"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { partObject, subscribePartObjects } from "../parts/partObjects"
+import { readSceneTokens } from "../theme/sceneTokens"
 import { gizmoState, type GizmoLike } from "./gizmoState"
+import { themeTransformControls } from "./themeGizmo"
 
 /** The single selected part, if the gizmo applies to it (design mode, drawn now). */
 function useGizmoTarget(): PartId | null {
@@ -17,9 +19,19 @@ function useGizmoTarget(): PartId | null {
   })
 }
 
+/** The pose the gizmo left the object in, written to the document as ONE change. */
+function writePose(id: PartId, object: Object3D): void {
+  useDocumentStore.getState().setPartPose(id, {
+    positionMm: object.position.toArray(),
+    quaternion: object.quaternion.normalize().toArray(),
+  })
+}
+
 /**
- * Move/rotate gizmo for free placement (PLAN 4.8). The part's scene object follows the drag
- * and the design pose is written to the store live; the whole drag is ONE undo entry.
+ * Move/rotate gizmo for free placement (PLAN 4.8). During a drag only the part's scene object
+ * moves; the design pose is written once on release, so a drag is ONE undo entry (no history
+ * gesture that a focused inspector field could hold) and the scene tree does not re-render on
+ * every pointer move.
  */
 export function PartTransformGizmo() {
   const id = useGizmoTarget()
@@ -29,40 +41,34 @@ export function PartTransformGizmo() {
   const object = useSyncExternalStore(subscribePartObjects, () =>
     id && visible ? (partObject(id) ?? null) : null
   )
-  const gesture = useRef<GestureToken | null>(null)
-  // A drag cut short (Escape clears the selection, undo deletes the part) still ends its
-  // gesture, or history would stay paused.
+  const dragging = useRef(false)
+  // A drag cut short (Escape clears the selection mid-drag) still keeps where it got to.
   useEffect(() => {
     return () => {
-      documentHistory.endGesture(gesture.current)
-      gesture.current = null
+      if (dragging.current && id && object) writePose(id, object)
+      dragging.current = false
     }
-  }, [object])
+  }, [id, object])
 
   if (!id || !object) return null
-  const write = () =>
-    useDocumentStore.getState().setPartPose(id, {
-      positionMm: object.position.toArray(),
-      quaternion: object.quaternion.normalize().toArray(),
-    })
-
   return (
     <TransformControls
-      // three-stdlib types `axis` as private; it is the public hover state of the handles.
-      ref={(controls) =>
-        controls ? gizmoState.attach(controls as unknown as GizmoLike) : undefined
-      }
+      ref={(controls) => {
+        if (!controls) return
+        themeTransformControls(controls, readSceneTokens())
+        // three-stdlib types `axis` as private; it is the public hover state of the handles.
+        return gizmoState.attach(controls as unknown as GizmoLike)
+      }}
       object={object}
       mode={mode}
       space={mode === "rotate" ? "local" : "world"}
       size={0.9}
       onMouseDown={() => {
-        gesture.current = documentHistory.beginGesture()
+        dragging.current = true
       }}
-      onObjectChange={write}
       onMouseUp={() => {
-        documentHistory.endGesture(gesture.current)
-        gesture.current = null
+        if (dragging.current) writePose(id, object)
+        dragging.current = false
       }}
     />
   )

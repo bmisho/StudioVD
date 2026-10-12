@@ -27,7 +27,17 @@ function Toggle({
       <Label htmlFor={id} className="text-xs">
         {label}
       </Label>
-      <Switch id={id} size="sm" checked={checked} onCheckedChange={onChange} />
+      <Switch
+        id={id}
+        size="sm"
+        checked={checked}
+        onCheckedChange={onChange}
+        aria-describedby={`${id}-hint`}
+      />
+      {/* The tooltip is mouse-only; screen readers get the same hint here. */}
+      <span id={`${id}-hint`} className="sr-only">
+        {hint}
+      </span>
     </div>
   )
 }

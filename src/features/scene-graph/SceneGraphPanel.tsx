@@ -13,7 +13,10 @@ export function SceneGraphPanel() {
   const groups = useDocumentStore((s) => s.doc.groups)
   const parts = useDocumentStore((s) => s.doc.parts)
   const tree = useMemo(() => buildSceneTree({ groups, parts }), [groups, parts])
-  const hasGroupSelected = useSessionStore((s) => s.selection.some((i) => i.kind === "group"))
+  // Same rule as Edit › Delete: any selected part or group.
+  const canDelete = useSessionStore((s) =>
+    s.selection.some((i) => i.kind === "group" || i.kind === "part")
+  )
 
   return (
     <div className="flex h-full flex-col">
@@ -33,11 +36,12 @@ export function SceneGraphPanel() {
           <Button
             variant="ghost"
             size="icon-xs"
-            className="size-7"
             aria-label="Delete selected"
-            title="Delete (Delete)"
-            disabled={!hasGroupSelected}
-            onClick={() => registry.run("edit.delete")}
+            title={canDelete ? "Delete (Delete)" : "Delete: select parts or groups first"}
+            // aria-disabled, not disabled: it stays focusable and its tooltip explains (§7).
+            aria-disabled={!canDelete}
+            className={canDelete ? "size-7" : "size-7 opacity-50"}
+            onClick={() => canDelete && registry.run("edit.delete")}
           >
             <Trash2 />
           </Button>

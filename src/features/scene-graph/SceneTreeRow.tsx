@@ -71,8 +71,9 @@ export function SceneTreeRow(props: SceneTreeRowProps) {
       <span
         className={cn(
           "ml-1 flex-1 truncate",
-          // Never muted-foreground on accent (4.15:1): selected rows keep accent-foreground.
-          hidden && !selected && "text-muted-foreground"
+          // Muted only on the plain row: on accent (4.15:1) and the hover tint (4.46:1) it
+          // fails AA, so selected and hovered rows use their normal text colour.
+          hidden && !selected && "text-muted-foreground group-hover/row:text-accent-foreground"
         )}
         title={node.name}
       >

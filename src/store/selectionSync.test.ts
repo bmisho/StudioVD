@@ -41,3 +41,20 @@ describe("selection pruning with inserted entities", () => {
     stop()
   })
 })
+
+describe("isolation pruning", () => {
+  it("drops deleted parts from the isolated set and ends isolation when none are left", () => {
+    const document = createDocumentStore()
+    const session = createSessionStore()
+    connectSelectionPruning(document, session)
+    const rig = createTestRig()
+    document.getState().insertEntities(rig)
+    const [base, leaf] = rig.parts
+    if (!base || !leaf) throw new Error("rig incomplete")
+    session.getState().toggleIsolation([base.id, leaf.id])
+    document.getState().deleteParts([leaf.id])
+    expect(session.getState().isolated).toEqual([base.id])
+    document.getState().deleteParts([base.id])
+    expect(session.getState().isolated).toBeNull()
+  })
+})

@@ -100,11 +100,11 @@ mod tests {
             path: Some("/projects/robot.stvd".into()),
             dirty: true,
             busy: true,
-            close_when_idle: true,
             pending: Some(Pending {
                 workspace: ws(1),
                 path: None,
                 scene: "scene.json".into(),
+                stamp: None,
             }),
             recovery: vec![("token".into(), "/somewhere".into())],
             ..Project::default()
@@ -116,7 +116,7 @@ mod tests {
             "both retired by the caller"
         );
         assert_eq!(project.info().file_name, None);
-        assert!(!project.dirty && !project.busy && !project.close_when_idle);
+        assert!(!project.dirty && !project.busy);
         assert!(project.pending.is_none() && project.recovery.is_empty());
         assert_eq!(
             project.generation,

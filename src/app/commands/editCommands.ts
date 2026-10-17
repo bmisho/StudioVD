@@ -1,4 +1,4 @@
-import type { GroupId, PartId } from "@/core/schema"
+import { SCENE_LIMITS, type GroupId, type PartId } from "@/core/schema"
 import type { Command, CommandDeps } from "./types"
 
 function selectedGroupIds(deps: CommandDeps): GroupId[] {
@@ -62,7 +62,11 @@ export function editCommands(deps: CommandDeps): Command[] {
       run: () => {
         const items = session.getState().selection
         const id = document.getState().groupItems(items, nextGroupName(deps))
-        session.getState().select([{ kind: "group", id }])
+        if (id) session.getState().select([{ kind: "group", id }])
+        else {
+          const message = `Groups can be nested at most ${SCENE_LIMITS.maxGroupDepth} deep.`
+          deps.reportError({ kind: "invalidInput", message }, "New Group")
+        }
       },
     },
     {

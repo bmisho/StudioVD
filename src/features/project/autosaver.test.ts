@@ -33,7 +33,17 @@ function setup() {
     appVersion: "0.1.0",
     now: () => Date.now(),
   })
-  return { document, history, project, write, clear, calls, autosaver, release: () => release() }
+  return {
+    document,
+    history,
+    project,
+    tracker,
+    write,
+    clear,
+    calls,
+    autosaver,
+    release: () => release(),
+  }
 }
 
 describe("autosaver", () => {
@@ -82,5 +92,20 @@ describe("autosaver", () => {
     expect(t.calls).toEqual(["write:start", "write:end", "clear"])
     await t.autosaver.idle()
     expect(t.project.getState().autosavedAt).toBeNull()
+  })
+
+  it("writes again when a save leaves the shown document unsaved", async () => {
+    const t = setup()
+    t.document.getState().createGroup("Edit")
+    const edited = t.document.getState().doc
+    await vi.advanceTimersByTimeAsync(2100)
+    t.release()
+    await vi.advanceTimersByTimeAsync(0)
+    t.history.undo() // during Save, which wrote `edited`: back at the old saved document
+    await vi.advanceTimersByTimeAsync(0)
+    t.tracker.markSaved(edited) // the save lands: the file holds `edited`, not what is shown
+    expect(t.project.getState().dirty).toBe(true)
+    await vi.advanceTimersByTimeAsync(2100)
+    expect(t.write).toHaveBeenCalledTimes(2)
   })
 })

@@ -36,6 +36,14 @@ describe("prepareAsset", () => {
     expect(asset.volumeMm3).toBeCloseTo(6000, 3)
   })
 
+  it("refuses a model reaching beyond 100 km, which a file could not hold", async () => {
+    const box = boxMesh(1, 1, 1)
+    const far = { name: "far", positions: box.positions.map((v) => v + 2e8) }
+    await expect(prepareAsset(far, MM)).rejects.toThrow("check the import unit")
+    const huge = { name: "huge", positions: box.positions.map((v) => v * 1e9) }
+    await expect(prepareAsset(huge, MM)).rejects.toThrow("check the import unit")
+  })
+
   it("dedups: the same shape somewhere else gets the same asset id", async () => {
     const a = boxMesh(4, 5, 6)
     const moved = a.positions.map((v, i) => v + (i % 3 === 0 ? 250 : 0))

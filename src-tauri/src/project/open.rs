@@ -1,6 +1,7 @@
 //! Opening a `.stvd` or restoring a crashed session: extract or adopt into a pending
 //! workspace, let the webview validate the scene, then commit or discard.
 
+use super::file::{changed_since, file_stamp, same_path};
 use super::session::retire;
 use super::{recent, remember_path, Pending, ProjectInfo};
 use crate::bundle::stvd;
@@ -21,6 +22,8 @@ pub struct PendingInfo {
     pub files: Vec<String>,
     /// A crashed session's unsaved work: it opens with unsaved changes.
     pub recovered: bool,
+    /// The file the project already has open (reopening it reverts to what is on disk).
+    pub same_file: bool,
 }
 
 /// Parks `pending`, replacing (and dropping) any earlier one.
@@ -35,6 +38,7 @@ fn park(state: &AppState, pending: Pending) -> AppResult<()> {
 /// Extracts the `.stvd` at `path` into a fresh workspace, every guard check included.
 pub fn load(state: &AppState, path: PathBuf) -> AppResult<PendingInfo> {
     let name = file_name(&path);
+    let stamp = file_stamp(&path); // before extracting: a write during it counts too
     let ws = Workspace::create_empty(state.workspaces_dir()?)?;
     let files = match stvd::extract(&path, &ws.bundle_dir()) {
         Ok(files) => files,
@@ -44,18 +48,25 @@ pub fn load(state: &AppState, path: PathBuf) -> AppResult<PendingInfo> {
         }
     };
     let scene = ws.bundle_dir().join(stvd::SCENE);
+    let same_file = state
+        .project()?
+        .path
+        .as_deref()
+        .is_some_and(|open| same_path(open, &path));
     park(
         state,
         Pending {
             workspace: ws,
             path: Some(path),
             scene,
+            stamp,
         },
     )?;
     Ok(PendingInfo {
         file_name: Some(name),
         files,
         recovered: false,
+        same_file,
     })
 }
 
@@ -80,12 +91,14 @@ pub fn restore(state: &AppState, root: PathBuf) -> AppResult<PendingInfo> {
             workspace: ws,
             path,
             scene,
+            stamp: None,
         },
     )?;
     Ok(PendingInfo {
         file_name,
         files,
         recovered: true,
+        same_file: false,
     })
 }
 
@@ -115,6 +128,18 @@ pub fn commit(state: &AppState) -> AppResult<ProjectInfo> {
         .pending
         .take()
         .ok_or_else(|| AppError::InvalidInput("Nothing is being opened.".into()))?;
+    if let (Some(path), Some(stamp)) = (&pending.path, pending.stamp) {
+        // Saved over (by Save As, or another program) after it was extracted: the extraction
+        // is out of date. The webview drops the open and reports this.
+        if changed_since(path, stamp) {
+            drop(project);
+            let name = file_name(path);
+            retire(pending.workspace, false);
+            return Err(AppError::InvalidInput(format!(
+                "{name} changed while it was being opened. Open it again."
+            )));
+        }
+    }
     let recovered = pending.scene == pending.workspace.autosave_path();
     if !recovered {
         remember_path(&pending.workspace, pending.path.as_deref());

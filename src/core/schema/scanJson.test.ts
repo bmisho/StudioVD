@@ -1,17 +1,49 @@
 import { describe, expect, it } from "vitest"
-import { jsonTextDepth, scanJsonValue } from "./scanJson"
+import { jsonTextShape, scanJsonValue, shownProblem } from "./scanJson"
+import { sampleDocument } from "./testing/sampleDocument"
 
 const limits = { maxDepth: 4, maxValues: 20, maxString: 12 }
+const wide = { maxDepth: 1_000, maxValues: 1_000_000 }
 
-describe("jsonTextDepth", () => {
-  it("counts bracket nesting outside strings, escapes included", () => {
-    expect(jsonTextDepth("1")).toBe(0)
-    expect(jsonTextDepth('{"a":[1,{"b":[]}]}')).toBe(4)
-    expect(jsonTextDepth('{"a":"[[[[{{{{","b":"\\"[["}')).toBe(1)
+/** Values in a parsed JSON value, the way the scan counts them (keys are not values). */
+const countValues = (v: unknown): number =>
+  typeof v === "object" && v !== null
+    ? 1 + Object.values(v).reduce((n: number, child) => n + countValues(child), 0)
+    : 1
+
+describe("jsonTextShape", () => {
+  it("counts nesting and values outside strings, escapes included", () => {
+    expect(jsonTextShape("1", wide)).toEqual({ depth: 0, values: 1 })
+    expect(jsonTextShape('{"a":[1,{"b":[]}]}', wide)).toEqual({ depth: 4, values: 5 })
+    expect(jsonTextShape('{"a":"[[[[{{{{","b":"\\"[["}', wide)).toEqual({ depth: 1, values: 3 })
+    const scalars = '{ "k" : "v" , "a" : [ -1.5e+3 , true , null , "x" ] , "e" : { } }'
+    expect(jsonTextShape(scalars, wide)).toEqual({ depth: 2, values: 8 })
   })
 
-  it("handles hostile nesting without recursion", () => {
-    expect(jsonTextDepth("[".repeat(1_000_000))).toBe(1_000_000)
+  it("agrees with the parsed value on a real document, with or without whitespace", () => {
+    const doc = sampleDocument()
+    for (const text of [JSON.stringify(doc), JSON.stringify(doc, null, 2)])
+      expect(jsonTextShape(text, wide).values).toBe(countValues(JSON.parse(text)))
+  })
+
+  it("stops at a limit instead of walking hostile input to the end", () => {
+    expect(jsonTextShape("[".repeat(1_000_000)).depth).toBe(33)
+    expect(jsonTextShape(`[${"0,".repeat(1_000)}0]`, limits).values).toBe(21)
+  })
+})
+
+describe("shownProblem", () => {
+  it("keeps names, ids and indexes; hides hostile keys; makes messages printable", () => {
+    const id = "0b5ad9a2-3c4e-4f6a-8b7c-9d0e1f2a3b4c"
+    expect(shownProblem({ path: `parts.${id}.anchors.0`, message: "bad" })).toEqual({
+      path: `parts.${id}.anchors.0`,
+      message: "bad",
+    })
+    const hostile = "\u202e\n\nThe file is damaged. Visit example.com" + "x".repeat(60_000)
+    expect(shownProblem({ path: `parts.${hostile}.name`, message: "a\nb" })).toEqual({
+      path: "parts.<invalid key>.name",
+      message: "a?b",
+    })
   })
 })
 
@@ -50,8 +82,8 @@ describe("scanJsonValue", () => {
       scanJsonValue(
         Array.from({ length: 25 }, () => 1),
         limits
-      )?.message
-    ).toBe("the file holds too many values")
+      )
+    ).toEqual({ path: "", message: "the file holds too many values" })
   })
 
   it("survives deep values without a stack overflow", () => {

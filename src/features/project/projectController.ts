@@ -2,7 +2,7 @@ import { createEmptyDocument } from "@/core/schema"
 import type { PendingProject } from "@/lib/tauri/project"
 import type { Result } from "@/lib/tauri/result"
 import type { ProjectState } from "@/store/session/projectStore"
-import { openPending } from "./openFlow"
+import { openPending, type Settled } from "./openFlow"
 import type { ProjectDeps } from "./projectDeps"
 import { saveDocument } from "./saveFlow"
 import { switchDocument } from "./switchDocument"
@@ -16,6 +16,8 @@ export function createProjectController(deps: ProjectDeps) {
   const { backend, notify, project } = deps
   /** A launch file arrived during another operation: Rust keeps it, we take it after. */
   let launchWaiting = false
+  /** The window was closed during another operation: the close runs after it. */
+  let closeWaiting = false
 
   /** Runs `op` unless another project operation or an import is running. */
   async function exclusive(busy: NonNullable<ProjectState["busy"]>, op: () => Promise<unknown>) {
@@ -31,7 +33,10 @@ export function createProjectController(deps: ProjectDeps) {
     } finally {
       project.getState().setBusy(null)
     }
-    if (launchWaiting) {
+    if (closeWaiting) {
+      closeWaiting = false
+      await close()
+    } else if (launchWaiting) {
       launchWaiting = false
       await openLaunch()
     }
@@ -45,23 +50,35 @@ export function createProjectController(deps: ProjectDeps) {
     return exclusive("opening", () => open("Open", backend.openLaunchProject()))
   }
 
-  /** Unsaved changes are saved or discarded by choice; false when the user cancels. */
-  async function settle(action: string): Promise<boolean> {
-    if (!project.getState().dirty) return true
-    const choice = await project.getState().ask(action)
-    if (choice === "cancel") return false
-    if (choice === "save") {
+  /**
+   * Unsaved changes are saved or discarded by choice. Asks again when edits were made while
+   * saving, so none are dropped without asking.
+   */
+  async function settle(action: string): Promise<Settled> {
+    let saved = false
+    while (project.getState().dirty) {
+      const choice = await project.getState().ask(action)
+      if (choice === "cancel") return "cancelled"
+      if (choice === "discard") {
+        await backend.clearAutosave() // Don't Save: nothing to recover later
+        return "proceed"
+      }
       const busy = project.getState().busy
       project.getState().setBusy("saving")
       try {
-        return await saveDocument(deps)
+        if (!(await saveDocument(deps))) return "cancelled"
       } finally {
         project.getState().setBusy(busy)
       }
+      saved = true
     }
-    await backend.clearAutosave() // Don't Save: nothing to recover later
-    return true
+    return saved ? "saved" : "proceed"
   }
+
+  const close = () =>
+    exclusive("closing", async () => {
+      if ((await settle("closing StudioVD")) !== "cancelled") await backend.confirmClose()
+    })
 
   async function open(origin: string, pending: Promise<Result<PendingProject | null>>) {
     const result = await pending
@@ -70,7 +87,7 @@ export function createProjectController(deps: ProjectDeps) {
   }
 
   async function newProject() {
-    if (!(await settle("starting a new project"))) return
+    if ((await settle("starting a new project")) === "cancelled") return
     const created = await backend.newProject()
     if (!created.ok) {
       notify.error("New project failed", created.error.message)
@@ -89,13 +106,16 @@ export function createProjectController(deps: ProjectDeps) {
     openLaunch,
     save: () => exclusive("saving", () => saveDocument(deps)),
     saveAs: () => exclusive("saving", () => saveDocument(deps, true)),
-    /** The window's close button or File › Exit, with unsaved changes (Rust held it). */
+    /**
+     * The window's close button or File › Exit, with unsaved changes (Rust held it). Ignored
+     * while a question is open or a close is already running; held during other operations.
+     */
     async requestClose() {
       await backend.acknowledgeClose()
-      if (project.getState().prompt !== null || project.getState().busy !== null) return
-      await exclusive("closing", async () => {
-        if (await settle("closing StudioVD")) await backend.confirmClose()
-      })
+      const { prompt, busy } = project.getState()
+      if (prompt !== null || busy === "closing") return
+      if (busy !== null) closeWaiting = true
+      else await close()
     },
     restore: (token: string) =>
       exclusive("opening", async () => {

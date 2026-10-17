@@ -54,6 +54,7 @@ export function setupImport(jobs: Record<string, () => Promise<ImportOutcome>>) 
     imports,
     fitAll: vi.fn(),
     notify: { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() },
+    projectBusy: vi.fn(() => false),
   }
   return {
     controller: createImportController(deps),

@@ -3,6 +3,7 @@ import { create } from "zustand"
 import { immer } from "zustand/middleware/immer"
 import { APP_VERSION } from "@/core/app-info"
 import { entityBatchProblems, type EntityBatch } from "@/core/scene/entityBatch"
+import { nestsTooDeep } from "@/core/scene/groupNesting"
 import {
   createEmptyDocument,
   NameSchema,
@@ -21,7 +22,10 @@ export interface DocumentState extends PartActions {
   doc: SceneDocument
   /** Replaces the whole document (open, new). The caller decides whether to clear history. */
   replaceDocument: (doc: SceneDocument) => void
-  /** Creates a group. An unknown parent (e.g. undone meanwhile) falls back to the root. */
+  /**
+   * Creates a group. An unknown parent (e.g. undone meanwhile) falls back to the root; one
+   * already at the deepest nesting a file may hold throws (callers pass known parents).
+   */
   createGroup: (name: string, parentId?: GroupId | null) => GroupId
   /** Renames a group; names the schema would reject (empty, too long) are ignored. */
   renameGroup: (id: GroupId, name: string) => void
@@ -53,6 +57,8 @@ export function createDocumentStore(initial?: SceneDocument) {
           set((s) => {
             const parent =
               parentId !== null && Object.hasOwn(s.doc.groups, parentId) ? parentId : null
+            if (nestsTooDeep(s.doc.groups, { [id]: parent }))
+              throw new Error("Groups cannot be nested any deeper.")
             s.doc.groups[id] = { id, name: valid, parentId: parent }
           })
           return id

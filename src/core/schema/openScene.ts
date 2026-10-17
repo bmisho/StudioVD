@@ -2,16 +2,17 @@ import { SCENE_LIMITS } from "./caps"
 import { parseDocument, type SceneDocument } from "./document"
 import { checkIntegrity } from "./integrity"
 import { migrate, savedByOf } from "./migrate"
-import { jsonTextDepth, scanJsonValue, type DocumentProblem } from "./scanJson"
+import { jsonTextShape, scanJsonValue, shownProblem, type DocumentProblem } from "./scanJson"
 
 export type OpenSceneResult =
   | { ok: true; document: SceneDocument; fromVersion: number; warnings: string[] }
   | { ok: false; message: string; problems: DocumentProblem[] }
 
+/** Problems name keys from the untrusted file: only a few, made safe to show. */
 const fail = (message: string, problems: DocumentProblem[] = []): OpenSceneResult => ({
   ok: false,
   message,
-  problems,
+  problems: problems.slice(0, 20).map(shownProblem),
 })
 
 /** True when semver-like `a` is newer than `b` (numeric major.minor.patch, rest ignored). */
@@ -37,7 +38,9 @@ export function openSceneBytes(bytes: Uint8Array, appVersion: string): OpenScene
   } catch {
     return fail("scene.json is not valid UTF-8 text.")
   }
-  if (jsonTextDepth(text) > SCENE_LIMITS.maxDepth) return fail("scene.json is nested too deeply.")
+  const shape = jsonTextShape(text)
+  if (shape.depth > SCENE_LIMITS.maxDepth) return fail("scene.json is nested too deeply.")
+  if (shape.values > SCENE_LIMITS.maxValues) return fail("scene.json holds too many values.")
   let raw: unknown
   try {
     raw = JSON.parse(text)

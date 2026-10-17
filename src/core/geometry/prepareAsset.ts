@@ -1,5 +1,5 @@
 import { computeHullNormals } from "@/core/math/hullNormals"
-import { AssetIdSchema, type AssetId, type Vec3 } from "@/core/schema"
+import { AssetIdSchema, MAX_COORDINATE_MM, type AssetId, type Vec3 } from "@/core/schema"
 import { classifyFaces } from "./classify"
 import { creasedNormals } from "./creasedNormals"
 import { encodeGlb } from "./glbWrite"
@@ -80,6 +80,11 @@ export async function prepareAsset(
   if (!source.normals) mesh = creasedNormals(mesh) // keeps triangle order, so B-rep ranges hold
   const centred = recentre(mesh)
   mesh = centred.mesh
+  const bounds = meshBounds(mesh)
+  const reach = [...centred.offsetMm, ...bounds.min, ...bounds.max].map(Math.abs)
+  // NaN fails the comparison too, so it is refused as well.
+  if (!reach.every((v) => v <= MAX_COORDINATE_MM))
+    throw new Error("It reaches more than 100 km from the origin: check the import unit.")
   const topology = buildTopology(mesh)
   const watertight = isWatertight(topology)
   let mass = watertight ? volumeAndCentroid(mesh) : undefined
@@ -103,7 +108,7 @@ export async function prepareAsset(
     glb,
     offsetMm: centred.offsetMm,
     triangleCount: mesh.indices.length / 3,
-    bboxMm: meshBounds(mesh),
+    bboxMm: bounds,
     watertight,
     ...(mass ?? {}),
     faceCount: faces.length,

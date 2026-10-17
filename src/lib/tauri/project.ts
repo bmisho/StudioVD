@@ -19,6 +19,8 @@ export interface PendingProject {
   files: string[]
   /** A crashed session's unsaved work. */
   recovered: boolean
+  /** The file the project already has open: reopening it reverts to what is on disk. */
+  sameFile: boolean
 }
 
 export interface RecentProject {

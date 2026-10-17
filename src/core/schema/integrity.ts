@@ -105,8 +105,11 @@ export function checkIntegrity(doc: SceneDocument, maxProblems = 50): DocumentPr
 }
 
 /** Groups whose parent chain loops or holds more than `maxDepth` groups. O(groups × depth). */
-function groupsTooDeep(groups: SceneDocument["groups"], maxDepth: number): string[] {
-  const parents: Readonly<Record<string, { parentId: string | null }>> = groups
+/** Groups whose chain of parents is longer than `maxDepth` (or ends in a cycle). */
+export function groupsTooDeep(
+  parents: Readonly<Record<string, { parentId: string | null }>>,
+  maxDepth: number
+): string[] {
   const bad: string[] = []
   for (const start of Object.keys(parents)) {
     let id: string | null = start

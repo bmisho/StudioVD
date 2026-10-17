@@ -1,4 +1,5 @@
 import type { Draft } from "immer"
+import { nestsTooDeep } from "@/core/scene/groupNesting"
 import { commonParent, topLevelItems } from "@/core/scene/partOps"
 import type { SelectionRef } from "@/core/scene/selection"
 import {
@@ -24,9 +25,10 @@ export interface PartActions {
   deleteItems: (parts: readonly PartId[], groups: readonly GroupId[]) => void
   /**
    * Moves the selected parts and groups (outermost ones) into a new group under their shared
-   * parent. With nothing to move, creates an empty group at the root. Returns its id.
+   * parent. With nothing to move, creates an empty group at the root. Returns its id, or
+   * null (and changes nothing) when groups would nest deeper than a file may hold.
    */
-  groupItems: (items: readonly SelectionRef[], name: string) => GroupId
+  groupItems: (items: readonly SelectionRef[], name: string) => GroupId | null
   /** Design pose from the transform gizmo; an invalid pose is ignored. */
   setPartPose: (id: PartId, pose: Pose) => void
 }
@@ -72,9 +74,14 @@ export function partActions(set: Set): PartActions {
     groupItems: (items, name) => {
       const valid = NameSchema.parse(name) // a programming error, not user input
       const id = newId<GroupId>()
+      let grouped = false
       set((s) => {
         const moving = topLevelItems(s.doc, items)
         const parentId = commonParent(s.doc, moving)
+        const moves: Record<string, string | null> = { [id]: parentId }
+        for (const item of moving) if (item.kind === "group") moves[item.id] = id
+        if (nestsTooDeep(s.doc.groups, moves)) return
+        grouped = true
         s.doc.groups[id] = { id, name: valid, parentId }
         for (const item of moving) {
           if (item.kind === "part") {
@@ -86,7 +93,7 @@ export function partActions(set: Set): PartActions {
           }
         }
       })
-      return id
+      return grouped ? id : null
     },
 
     setPartPose: (id, pose) => {

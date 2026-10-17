@@ -25,6 +25,8 @@ export interface ImportDeps {
   imports: ImportStore
   fitAll: () => void
   notify: Notifier
+  /** A project operation (Open, Save, New...) is running: imports wait for it. */
+  projectBusy: () => boolean
 }
 
 const unwrap = async <T>(result: Promise<Result<T>>): Promise<T> => {
@@ -150,6 +152,11 @@ export function createImportController(deps: ImportDeps) {
   return {
     /** Imports the files in the open dialog with its options. */
     async run(): Promise<void> {
+      if (deps.projectBusy()) {
+        // The workspace and document may be replaced under the import (PLAN 5.3).
+        deps.notify.info("The project is busy", "Import the files once it has finished.")
+        return
+      }
       const files = deps.imports.getState().start()
       if (!files) return
       const options = deps.imports.getState().options

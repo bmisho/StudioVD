@@ -703,9 +703,12 @@ Exit criteria
   no group parent cycles; asset ids match their paths; collection-size caps; keys
   `__proto__`/`constructor`/`prototype` refused before parsing (zod records drop
   `__proto__` silently). As built (§1.3): later phases' collections are gated empty and
-  their optional fields left out, so no migration is needed for them; nesting is checked on
-  the JSON text before parsing; group depth ≤ 64; inserts and every store action are held to
-  the same rules
+  their optional fields left out, so no migration is needed for them; nesting and the value
+  count are checked on the JSON text before parsing (a small zip can expand to 32M values);
+  group depth ≤ 64 (New Group refuses to go deeper); millimetre coordinates within 100 km,
+  so sizes, masses and inertias stay finite in float32 (import refuses larger models); keys
+  from the file are never shown verbatim in errors; inserts and every store action are held
+  to the same rules
 - [x] 5.2 Rust `bundle`: zip write (deflate JSON/GLB, store PNG/JPG), atomic temp+rename,
   extract into workspace. The zip guard is a generic module (limits and allowlist as
   parameters, symlink rejection, counted bytes, reserved names) reused by library packs.
@@ -722,10 +725,13 @@ Exit criteria
   is not the one saved (a reference compare: undo back to it is clean); Save writes the
   snapshot it took, so edits made during a save stay unsaved; Rust owns the window title
   and the close guard (`CloseRequested` held, the webview asks Save / Don't Save / Cancel;
-  a webview that does not answer for 10 s cannot block a second close; a close during a save
-  waits for it); recent files are ten paths in `<app config>/recent.json`, opened by id; a
-  page reload starts a new untitled session in Rust too (the old file cannot be saved over
-  with an empty document; its unsaved work is offered for recovery)
+  a webview that does not answer for 10 s cannot block a second close; a close during
+  another operation runs after it); recent files are ten paths in `<app config>/recent.json`,
+  opened by id; a page reload starts a new untitled session in Rust too (the old file cannot
+  be saved over with an empty document; its unsaved work is offered for recovery); edits made
+  during the Save chosen at the prompt are asked about again; reopening the open file reverts
+  to it with Don't Save and keeps the document with Save; an open whose file changed after it
+  was extracted is refused; imports wait for project operations
 - [x] 5.4 File association for `.stvd` + open-on-launch (single-instance forwarding). As
   built: Rust keeps the launch path and the webview pulls it (no event lost before it
   loads); a dropped `.stvd` opens too; deb/rpm ship a shared-mime-info package and a desktop

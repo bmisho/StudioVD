@@ -7,7 +7,7 @@ use crate::error::{AppError, AppResult};
 use crate::picked::PickedFile;
 use crate::project::launch::LaunchSlot;
 use crate::project::open::{self, PendingInfo};
-use crate::project::window::{update_title, MAIN_WINDOW};
+use crate::project::window::update_title;
 use crate::project::{recent, save, ProjectInfo};
 use crate::state::AppState;
 use tauri::ipc::{Request, Response};
@@ -175,14 +175,6 @@ pub async fn project_save<R: Runtime>(
         )
     })
     .await;
-    // The window was closed while the file was being written: close it now if that worked.
-    let close = std::mem::take(&mut state.project()?.close_when_idle);
     refresh_title(&app);
-    let info = saved?;
-    if close {
-        if let Some(window) = app.get_webview_window(MAIN_WINDOW) {
-            let _ = window.close();
-        }
-    }
-    Ok(info)
+    saved
 }

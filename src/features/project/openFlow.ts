@@ -4,16 +4,21 @@ import type { ProjectDeps } from "./projectDeps"
 import { problemLines } from "./saveFlow"
 import { switchDocument } from "./switchDocument"
 
+/** How the unsaved-changes question ended: nothing left unsaved (clean or Don't Save), saved,
+ * or cancelled. */
+export type Settled = "proceed" | "saved" | "cancelled"
+
 /**
  * Turns a pending bundle into the open project (PLAN 5.3): its scene goes through the full
  * open pipeline (limits, migrations, schema, integrity) and every file it names must be in
  * the bundle. Only then is the user asked about unsaved changes (`settle`), and only then does
- * Rust swap workspaces. Any refusal leaves the current project untouched.
+ * Rust swap workspaces. Any refusal leaves the current project untouched. Reopening the file
+ * that is open reverts to it, unless the user just saved: then the document is the file.
  */
 export async function openPending(
   deps: ProjectDeps,
   pending: PendingProject,
-  settle: (action: string) => Promise<boolean>
+  settle: (action: string) => Promise<Settled>
 ): Promise<boolean> {
   const { backend, notify } = deps
   const name = pending.fileName ?? "the recovered project"
@@ -32,9 +37,12 @@ export async function openPending(
   const missing = missingFiles(opened.document, new Set(pending.files))
   if (missing.length > 0)
     return refuse(`Files are missing from it:\n${missing.slice(0, 5).join("\n")}`)
-  if (!(await settle(`opening ${name}`))) {
+  const settled = await settle(`opening ${name}`)
+  if (settled === "cancelled" || (settled === "saved" && pending.sameFile)) {
+    // Cancelled; or saved into this very file, so the document is what it holds now and the
+    // extraction is older.
     await backend.discardProject()
-    return false
+    return settled === "saved"
   }
   const committed = await backend.commitProject()
   if (!committed.ok) return refuse(committed.error.message)

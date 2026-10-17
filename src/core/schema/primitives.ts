@@ -6,6 +6,16 @@ import { z } from "zod"
 export const Vec3Schema = z.tuple([z.number(), z.number(), z.number()])
 export type Vec3 = z.infer<typeof Vec3Schema>
 
+/**
+ * Largest millimetre coordinate a document holds: 100 km, far beyond any assembly. It keeps
+ * sizes, masses and inertias finite in float32 (GPU buffers, Rapier); an untrusted file
+ * with 1e39 would draw infinite boxes and give bodies no mass.
+ */
+export const MAX_COORDINATE_MM = 1e8
+const CoordinateMm = z.number().min(-MAX_COORDINATE_MM).max(MAX_COORDINATE_MM)
+/** A point or offset in millimetres, within `MAX_COORDINATE_MM` on every axis. */
+export const Vec3MmSchema = z.tuple([CoordinateMm, CoordinateMm, CoordinateMm])
+
 const UNIT_TOLERANCE = 1e-6
 
 function norm(v: readonly number[]): number {
@@ -26,7 +36,7 @@ export const UnitVec3Schema = Vec3Schema.refine(
 /** Rigid pose in millimetres (CLAUDE.md §5: no scale on parts, ever). */
 export const PoseSchema = z
   .object({
-    positionMm: Vec3Schema,
+    positionMm: Vec3MmSchema,
     quaternion: QuatSchema,
   })
   .strict()
@@ -37,7 +47,7 @@ export const IDENTITY_POSE: Pose = { positionMm: [0, 0, 0], quaternion: [0, 0, 0
 /** Orthonormal local frame: origin plus primary (z) and reference (x) axes. */
 export const FrameSchema = z
   .object({
-    originMm: Vec3Schema,
+    originMm: Vec3MmSchema,
     z: UnitVec3Schema,
     x: UnitVec3Schema,
   })

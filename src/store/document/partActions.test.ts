@@ -52,6 +52,7 @@ describe("part actions", () => {
       ],
       "Inner"
     )
+    if (!outer || !inner) throw new Error("not grouped")
     const { doc } = store.getState()
     expect(doc.groups[outer]?.parentId).toBeNull()
     expect(doc.groups[inner]?.parentId).toBeNull()
@@ -59,6 +60,8 @@ describe("part actions", () => {
     const before = store.getState().doc
     store.getState().setPartPose(base, { positionMm: [1, 2, 3], quaternion: [0, 0, 0, 2] })
     expect(store.getState().doc).toBe(before)
+    store.getState().setPartPose(base, { positionMm: [1e9, 0, 0], quaternion: [0, 0, 0, 1] })
+    expect(store.getState().doc).toBe(before) // beyond what a file may hold
     store.getState().setPartPose(base, { positionMm: [1, 2, 3], quaternion: [0, 0, 0, 1] })
     expect(store.getState().doc.parts[base]?.pose.positionMm).toEqual([1, 2, 3])
   })

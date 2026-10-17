@@ -6,11 +6,11 @@ import {
   PartIdSchema,
   TextureIdSchema,
 } from "./ids"
-import { NameSchema, PoseSchema, Vec3Schema } from "./primitives"
+import { NameSchema, PoseSchema, Vec3MmSchema } from "./primitives"
 
 /** Part-local bounds; `min` never exceeds `max` on any axis. */
 export const BoundsMmSchema = z
-  .object({ min: Vec3Schema, max: Vec3Schema })
+  .object({ min: Vec3MmSchema, max: Vec3MmSchema })
   .strict()
   .refine((b) => b.min.every((v, i) => v <= (b.max[i] ?? v)), "bbox min must not exceed max")
 
@@ -25,7 +25,7 @@ export const GeometryAssetSchema = z
     triangleCount: z.number().int().nonnegative(),
     bboxMm: BoundsMmSchema,
     volumeMm3: z.number().nonnegative().optional(),
-    centroidMm: Vec3Schema.optional(),
+    centroidMm: Vec3MmSchema.optional(),
     watertight: z.boolean().optional(),
   })
   .strict()
@@ -91,7 +91,7 @@ export const PartSchema = z
     visible: z.boolean(),
     collider: ColliderKindSchema,
     massOverrideKg: z.number().positive().optional(),
-    comOverrideMm: Vec3Schema.optional(),
+    comOverrideMm: Vec3MmSchema.optional(),
   })
   .strict()
 export type Part = z.infer<typeof PartSchema>

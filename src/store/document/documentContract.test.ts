@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest"
 import { createTestRig } from "@/core/scene/testRig"
-import { openSceneBytes, serializeScene } from "@/core/schema"
+import type { SelectionRef } from "@/core/scene/selection"
+import { openSceneBytes, SCENE_LIMITS, serializeScene, type GroupId } from "@/core/schema"
 import { createDocumentStore } from "./documentStore"
+
+type Store = ReturnType<typeof createDocumentStore>
+const group = (store: Store, items: SelectionRef[], name: string): GroupId => {
+  const id = store.getState().groupItems(items, name)
+  if (!id) throw new Error(`${name} was not created`)
+  return id
+}
 
 /**
  * scene.json is the contract (PLAN 5.1): after every store action the document must save,
@@ -25,8 +33,8 @@ describe("document store contract", () => {
     const [base, leaf] = rig.parts.map((p) => p.id)
     if (!base || !leaf) throw new Error("rig incomplete")
     const outer = s().createGroup("Outer")
-    const inner = s().groupItems([{ kind: "part", id: leaf }], "Inner")
-    s().groupItems([{ kind: "group", id: inner }], "Middle")
+    const inner = group(store, [{ kind: "part", id: leaf }], "Inner")
+    group(store, [{ kind: "group", id: inner }], "Middle")
     roundTrips("groups")
     s().renameGroup(outer, "Frame")
     s().renamePart(base, "Base plate")
@@ -43,5 +51,27 @@ describe("document store contract", () => {
     roundTrips("undo")
     s().insertEntities(createTestRig()) // a second rig shares the content-addressed assets
     roundTrips("second rig")
+  })
+
+  it("New Group stops at the deepest nesting a file may hold", () => {
+    const store = createDocumentStore()
+    const rig = createTestRig()
+    store.getState().insertEntities(rig)
+    const leaf = rig.parts[0]?.id
+    if (!leaf) throw new Error("rig incomplete")
+    let top = group(store, [{ kind: "part", id: leaf }], "G")
+    let depth = 1
+    for (; depth < 100; depth++) {
+      const next = store.getState().groupItems([{ kind: "group", id: top }], "G") // Ctrl+G
+      if (!next) break
+      top = next
+    }
+    expect(depth).toBe(SCENE_LIMITS.maxGroupDepth)
+    const before = store.getState().doc
+    expect(store.getState().groupItems([{ kind: "part", id: leaf }], "Below")).toBeNull()
+    expect(store.getState().doc).toBe(before)
+    const deepest = store.getState().doc.parts[leaf]?.parentId ?? null
+    expect(() => store.getState().createGroup("Below", deepest)).toThrow()
+    expect(serializeScene(store.getState().doc, "0.1.0").ok).toBe(true)
   })
 })

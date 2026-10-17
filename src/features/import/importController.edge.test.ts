@@ -48,4 +48,15 @@ describe("import controller: edges", () => {
     await t.controller.run()
     expect(t.session.getState().isolated).toBeNull()
   })
+
+  it("does not start while a project operation may replace the workspace", async () => {
+    const t = setupImport({ "a.stl": () => Promise.resolve(outcome(1)) })
+    vi.mocked(t.deps.projectBusy).mockReturnValue(true)
+    t.imports.getState().open([file("a.stl")])
+    await t.controller.run()
+    expect(t.deps.backend.readImportFile).not.toHaveBeenCalled()
+    expect(t.deps.backend.writeAsset).not.toHaveBeenCalled()
+    expect(t.imports.getState().status.phase).toBe("options") // Import works again after it
+    expect(t.deps.notify.info).toHaveBeenCalledWith("The project is busy", expect.any(String))
+  })
 })

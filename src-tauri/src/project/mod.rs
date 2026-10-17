@@ -5,6 +5,7 @@
 //! bundle into a fresh workspace (`Pending`), the webview validates its scene.json, and only
 //! then `commit` swaps it in (or `discard` drops it).
 
+pub mod file;
 pub mod launch;
 pub mod open;
 pub mod recent;
@@ -15,6 +16,7 @@ pub mod window;
 use crate::error::{AppError, AppResult};
 use crate::picked::file_name;
 use crate::workspace::{recovery, Workspace};
+use file::FileStamp;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -33,6 +35,8 @@ pub struct Pending {
     pub path: Option<PathBuf>,
     /// The scene to validate: `bundle/scene.json`, or the autosave of a recovered session.
     pub scene: PathBuf,
+    /// The file's size and modification time when it was extracted (`None` for a recovery).
+    pub stamp: Option<FileStamp>,
 }
 
 #[derive(Default)]
@@ -47,8 +51,6 @@ pub struct Project {
     pub recovery: Vec<(String, PathBuf)>,
     /// When the webview was last asked to confirm closing (cleared when it answers).
     pub close_asked: Option<Instant>,
-    /// The window was closed during a save: close it once the save has finished.
-    pub close_when_idle: bool,
     /// Bumped when the page reloads (a new session): work the old page started must not
     /// change the new one when it finishes.
     pub generation: u64,
@@ -93,7 +95,6 @@ impl Project {
         self.generation += 1;
         self.busy = false;
         self.close_asked = None;
-        self.close_when_idle = false;
         self.recovery.clear();
         let pending = self.pending.take();
         (self.install(fresh, None), pending)

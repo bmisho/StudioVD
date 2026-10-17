@@ -34,7 +34,8 @@ export function installProjectMockScript(): void {
   const park = (next: Pending) => {
     pending = next
     const files = [...mock.assets.keys()].map((id) => `geometry/${id}.glb`)
-    return { fileName: next.name, files, recovered: next.recovered }
+    const sameFile = !next.recovered && next.name !== null && next.name === current
+    return { fileName: next.name, files, recovered: next.recovered, sameFile }
   }
   const load = (name: string) => {
     const file = disk.get(name)

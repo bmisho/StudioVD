@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { SCENE_LIMITS } from "./caps"
 import { parseDocument, SCHEMA_VERSION, type SceneDocument } from "./document"
 import { isNewerVersion, openSceneBytes, serializeScene } from "./openScene"
@@ -49,6 +49,39 @@ describe("openSceneBytes refuses", () => {
     expect(openSceneBytes(bytes("[".repeat(100_000)), "0.1.0")).toMatchObject({
       message: "scene.json is nested too deeply.",
     })
+  })
+
+  it("too many values, before parsing them (a small zip expands to 32M of them)", () => {
+    const parse = vi.spyOn(JSON, "parse")
+    const text = `[${"0,".repeat(SCENE_LIMITS.maxValues)}0]`
+    expect(openSceneBytes(bytes(text), "0.1.0")).toMatchObject({
+      ok: false,
+      message: "scene.json holds too many values.",
+    })
+    expect(parse).not.toHaveBeenCalled()
+    parse.mockRestore()
+  })
+
+  it("with problems that are safe to show, whatever keys the file holds", () => {
+    const json = asJson(sampleDocument())
+    const hostile = "\u202e\n\nThe file is damaged. Visit example.com/fix" + "x".repeat(60_000)
+    json.parts = { ...(json.parts as object), [hostile]: {} }
+    const result = open(json)
+    if (result.ok) throw new Error("opened")
+    expect(result.problems.some((p) => p.path.startsWith("parts.<invalid key>"))).toBe(true)
+    for (const p of result.problems) {
+      expect(`${p.path}: ${p.message}`).not.toMatch(/[^\x20-\x7e]/)
+      expect(p.path.length + p.message.length).toBeLessThan(400)
+    }
+  })
+
+  it("coordinates beyond 100 km, which would overflow float32 sizes and masses", () => {
+    const json = asJson(sampleDocument()) as { assets: Record<string, { bboxMm: object }> }
+    const [asset] = Object.values(json.assets)
+    if (!asset) throw new Error("no asset")
+    asset.bboxMm = { min: [-1e39, 0, 0], max: [1e39, 1, 1] }
+    const result = open(json)
+    expect(!result.ok && result.problems.some((p) => p.path.endsWith("bboxMm.min.0"))).toBe(true)
   })
 
   it("a __proto__ record key, which zod alone silently drops", () => {

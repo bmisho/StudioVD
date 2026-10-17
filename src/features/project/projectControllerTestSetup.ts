@@ -34,6 +34,7 @@ export function setupProject() {
       fileName: pending?.name ?? null,
       files: Object.values(doc.assets).map((a) => a.path),
       recovered: pending?.recovered ?? false,
+      sameFile: pending !== null && !pending.recovered && pending.name === current,
     }
   }
   const backend = {

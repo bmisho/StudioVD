@@ -80,6 +80,14 @@ export function createAutosaver(deps: AutosaveDeps) {
     firstChange ??= now
     schedule(now - firstChange >= maxWaitMs ? 0 : delayMs)
   })
+  // Unsaved without a document change: a save finished after an undo back to the earlier
+  // saved document, so what the file holds is not what is shown.
+  const unsubscribeProject = deps.project.subscribe((state, prev) => {
+    if (state.dirty && !prev.dirty && timer === null) {
+      firstChange ??= deps.now()
+      schedule(delayMs)
+    }
+  })
 
   return {
     /** Resolves once no autosave write or clear is in flight. */
@@ -88,6 +96,7 @@ export function createAutosaver(deps: AutosaveDeps) {
     },
     dispose() {
       unsubscribe()
+      unsubscribeProject()
       if (timer !== null) clearTimeout(timer)
     },
   }

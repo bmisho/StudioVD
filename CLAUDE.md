@@ -148,6 +148,8 @@ Further rules:
 - World is **right-handed, Y-up** (three.js default). Z-up sources are rotated at import.
 - Part transforms are **rigid only** (position + quaternion). Scale is baked into geometry at
   import, never applied to parts (it breaks colliders and anchor frames).
+- Millimetre coordinates stay within ±1e8 mm (`MAX_COORDINATE_MM`, 100 km): the schema
+  refuses more, so mm fields use `Vec3MmSchema` and import refuses larger models.
 - Rapier world gravity is **zero**. Gravity exists only in the simulation solver.
 - The Rapier world is in **mm, kg, s** (forces in kg·mm/s², inertia in kg·mm²); conversions go
   through `units.ts`. Its settings (`physicsConfig.ts`: 120 Hz steps, `lengthUnit` 10, 5 mm

@@ -21,6 +21,13 @@ const groupsOnDisk = (t: Setup, name: string) => {
   return Object.keys(doc.groups).length
 }
 const groupsShown = (t: Setup) => Object.keys(t.document.getState().doc.groups).length
+const countPrompts = (t: Setup) => {
+  const count = { asked: 0 }
+  t.project.subscribe((s, prev) => {
+    if (s.prompt && !prev.prompt) count.asked++
+  })
+  return count
+}
 
 describe("project controller: reopening the open file", () => {
   it("after choosing Save, keeps the document it just saved", async () => {
@@ -48,6 +55,26 @@ describe("project controller: reopening the open file", () => {
     expect(t.project.getState().dirty).toBe(false)
     expect(t.backend.commitProject).toHaveBeenCalledOnce()
   })
+
+  it("does not ask again after Save for edits made meanwhile: the open is just over", async () => {
+    const t = setupProject()
+    t.insertRig()
+    await t.controller.save()
+    t.document.getState().createGroup("Saved")
+    const prompts = countPrompts(t)
+    const release = holdNextSave(t)
+    t.answerNext("save")
+    const opening = t.controller.open()
+    await vi.waitFor(() => expect(t.backend.saveProject).toHaveBeenCalledTimes(2))
+    t.document.getState().createGroup("Meanwhile")
+    const shown = t.document.getState().doc
+    release()
+    await opening
+    expect(prompts.asked).toBe(1)
+    expect(t.document.getState().doc).toBe(shown) // kept, still unsaved: nothing dropped
+    expect(t.project.getState().dirty).toBe(true)
+    expect(t.backend.commitProject).not.toHaveBeenCalled()
+  })
 })
 
 describe("project controller: work done during an operation", () => {
@@ -56,17 +83,14 @@ describe("project controller: work done during an operation", () => {
     t.insertRig()
     await t.controller.save()
     t.document.getState().createGroup("A")
-    let asked = 0
-    t.project.subscribe((s, prev) => {
-      if (s.prompt && !prev.prompt) asked++
-    })
+    const prompts = countPrompts(t)
     const release = holdNextSave(t)
     t.answerNext("save")
     const closing = t.controller.requestClose()
     await vi.waitFor(() => expect(t.backend.saveProject).toHaveBeenCalledTimes(2))
     t.document.getState().createGroup("B") // lands while the file is written
     release()
-    await vi.waitFor(() => expect(asked).toBe(2))
+    await vi.waitFor(() => expect(prompts.asked).toBe(2))
     expect(t.backend.confirmClose).not.toHaveBeenCalled()
     t.project.getState().prompt?.answer("cancel")
     await closing
@@ -85,5 +109,26 @@ describe("project controller: work done during an operation", () => {
     release()
     await saving
     expect(t.backend.confirmClose).toHaveBeenCalledOnce() // saved: nothing left to ask
+  })
+
+  it("ignores a second close during the Save chosen for the first one", async () => {
+    const t = setupProject()
+    t.insertRig()
+    await t.controller.save()
+    t.document.getState().createGroup("A")
+    const prompts = countPrompts(t)
+    const release = holdNextSave(t)
+    t.answerNext("save")
+    const closing = t.controller.requestClose()
+    await vi.waitFor(() => expect(t.backend.saveProject).toHaveBeenCalledTimes(2))
+    t.document.getState().createGroup("B")
+    await t.controller.requestClose() // X again while the file is written
+    release()
+    await vi.waitFor(() => expect(prompts.asked).toBe(2)) // asked again about B
+    t.project.getState().prompt?.answer("cancel")
+    await closing
+    expect(prompts.asked).toBe(2) // Cancel means cancel: no third question
+    expect(t.project.getState().prompt).toBeNull()
+    expect(t.backend.confirmClose).not.toHaveBeenCalled()
   })
 })

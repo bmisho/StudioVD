@@ -1,4 +1,5 @@
 import { SCENE_LIMITS } from "./caps"
+import { safeSegment } from "./shown"
 
 /** A problem in an opened document, at a dotted JSON path (`parts.<id>.assetId`). */
 export interface DocumentProblem {
@@ -75,26 +76,9 @@ interface Frame {
 
 const pathOf = (frame: Frame): string => {
   const keys: string[] = []
-  for (let f: Frame | null = frame; f?.parent; f = f.parent) keys.push(String(f.key))
+  for (let f: Frame | null = frame; f?.parent; f = f.parent) keys.push(safeSegment(f.key))
   return keys.reverse().join(".")
 }
-
-const SAFE_SEGMENT = /^[A-Za-z0-9_-]{1,64}$/
-const INVALID = "<invalid key>"
-
-/**
- * A problem from an untrusted file, safe to show: a path segment that is not a plain name,
- * id or index (a hostile key with newlines, bidi controls or a paragraph of text) shows as
- * `<invalid key>`, and the message is printable and short.
- */
-export const shownProblem = (p: DocumentProblem): DocumentProblem => ({
-  path: p.path
-    .split(".")
-    .map((s) => (s === "" || SAFE_SEGMENT.test(s) ? s : INVALID))
-    .filter((s, i, all) => s !== INVALID || all[i - 1] !== INVALID) // a key with dots in it
-    .join("."),
-  message: p.message.replace(/[^\x20-\x7e]/g, "?").slice(0, 200),
-})
 
 /**
  * Checks a parsed JSON value before any schema sees it (PLAN 5.1): reserved keys, nesting,

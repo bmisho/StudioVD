@@ -33,6 +33,7 @@ import {
   PartSchema,
   TextureSchema,
 } from "./scene"
+import { safeSegment } from "./shown"
 
 export const SCHEMA_VERSION = 1
 
@@ -123,6 +124,9 @@ export function parseDocument(input: unknown): ParseResult {
   if (result.success) return { ok: true, document: result.data }
   return {
     ok: false,
-    issues: result.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })),
+    issues: result.error.issues.map((i) => ({
+      path: i.path.map(safeSegment).join("."),
+      message: i.message,
+    })),
   }
 }

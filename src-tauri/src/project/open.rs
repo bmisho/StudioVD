@@ -48,11 +48,9 @@ pub fn load(state: &AppState, path: PathBuf) -> AppResult<PendingInfo> {
         }
     };
     let scene = ws.bundle_dir().join(stvd::SCENE);
-    let same_file = state
-        .project()?
-        .path
-        .as_deref()
-        .is_some_and(|open| same_path(open, &path));
+    // Compared outside the lock: the open file may sit on a share that is slow or gone.
+    let open = state.project()?.path.clone();
+    let same_file = open.is_some_and(|open| same_path(&open, &path));
     park(
         state,
         Pending {
@@ -118,21 +116,24 @@ pub fn scene(state: &AppState) -> AppResult<Vec<u8>> {
 
 /// The webview accepted the pending scene: it becomes the project.
 pub fn commit(state: &AppState) -> AppResult<ProjectInfo> {
-    let mut project = state.project()?;
-    if project.busy {
-        return Err(AppError::InvalidInput(
-            "Another project operation is still running.".into(),
-        ));
-    }
-    let pending = project
-        .pending
-        .take()
-        .ok_or_else(|| AppError::InvalidInput("Nothing is being opened.".into()))?;
+    let (pending, generation) = {
+        let mut project = state.project()?;
+        if project.busy {
+            return Err(AppError::InvalidInput(
+                "Another project operation is still running.".into(),
+            ));
+        }
+        let pending = project
+            .pending
+            .take()
+            .ok_or_else(|| AppError::InvalidInput("Nothing is being opened.".into()))?;
+        (pending, project.generation)
+    };
+    // File checks run outside the lock: the file may sit on a share that is slow or gone.
     if let (Some(path), Some(stamp)) = (&pending.path, pending.stamp) {
         // Saved over (by Save As, or another program) after it was extracted: the extraction
         // is out of date. The webview drops the open and reports this.
         if changed_since(path, stamp) {
-            drop(project);
             let name = file_name(path);
             retire(pending.workspace, false);
             return Err(AppError::InvalidInput(format!(
@@ -144,13 +145,21 @@ pub fn commit(state: &AppState) -> AppResult<ProjectInfo> {
     if !recovered {
         remember_path(&pending.workspace, pending.path.as_deref());
     }
-    if let (Some(path), Some(config)) = (&pending.path, state.config_dir()) {
-        recent::add(config, path);
+    let path = pending.path.clone();
+    let mut project = state.project()?;
+    if project.generation != generation {
+        // The page reloaded meanwhile: this open belonged to the old page.
+        drop(project);
+        retire(pending.workspace, true);
+        return Err(AppError::InvalidInput("The window was reloaded.".into()));
     }
     let old = project.install(pending.workspace, pending.path);
     project.dirty = recovered;
     let info = project.info();
     drop(project);
+    if let (Some(path), Some(config)) = (&path, state.config_dir()) {
+        recent::add(config, path);
+    }
     if let Some(old) = old {
         retire(old, false); // its changes were saved or discarded before this open
     }

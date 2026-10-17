@@ -2,7 +2,8 @@ import { SCENE_LIMITS } from "./caps"
 import { parseDocument, type SceneDocument } from "./document"
 import { checkIntegrity } from "./integrity"
 import { migrate, savedByOf } from "./migrate"
-import { jsonTextShape, scanJsonValue, shownProblem, type DocumentProblem } from "./scanJson"
+import { jsonTextShape, scanJsonValue, type DocumentProblem } from "./scanJson"
+import { shownProblem } from "./shown"
 
 export type OpenSceneResult =
   | { ok: true; document: SceneDocument; fromVersion: number; warnings: string[] }

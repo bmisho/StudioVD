@@ -18,7 +18,7 @@ export type Settled = "proceed" | "saved" | "cancelled"
 export async function openPending(
   deps: ProjectDeps,
   pending: PendingProject,
-  settle: (action: string) => Promise<Settled>
+  settle: (action: string, askAgain?: boolean) => Promise<Settled>
 ): Promise<boolean> {
   const { backend, notify } = deps
   const name = pending.fileName ?? "the recovered project"
@@ -37,7 +37,7 @@ export async function openPending(
   const missing = missingFiles(opened.document, new Set(pending.files))
   if (missing.length > 0)
     return refuse(`Files are missing from it:\n${missing.slice(0, 5).join("\n")}`)
-  const settled = await settle(`opening ${name}`)
+  const settled = await settle(`opening ${name}`, !pending.sameFile)
   if (settled === "cancelled" || (settled === "saved" && pending.sameFile)) {
     // Cancelled; or saved into this very file, so the document is what it holds now and the
     // extraction is older.

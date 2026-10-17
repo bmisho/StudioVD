@@ -18,6 +18,8 @@ export function createProjectController(deps: ProjectDeps) {
   let launchWaiting = false
   /** The window was closed during another operation: the close runs after it. */
   let closeWaiting = false
+  /** A close is running (its question, or the Save chosen there): more closes are ignored. */
+  let closing = false
 
   /** Runs `op` unless another project operation or an import is running. */
   async function exclusive(busy: NonNullable<ProjectState["busy"]>, op: () => Promise<unknown>) {
@@ -52,11 +54,12 @@ export function createProjectController(deps: ProjectDeps) {
 
   /**
    * Unsaved changes are saved or discarded by choice. Asks again when edits were made while
-   * saving, so none are dropped without asking.
+   * saving, so none are dropped without asking, unless `askAgain` is false (reopening the
+   * open file: once saved, the document is the file and the open has nothing left to do).
    */
-  async function settle(action: string): Promise<Settled> {
+  async function settle(action: string, askAgain = true): Promise<Settled> {
     let saved = false
-    while (project.getState().dirty) {
+    while (project.getState().dirty && (askAgain || !saved)) {
       const choice = await project.getState().ask(action)
       if (choice === "cancel") return "cancelled"
       if (choice === "discard") {
@@ -77,7 +80,12 @@ export function createProjectController(deps: ProjectDeps) {
 
   const close = () =>
     exclusive("closing", async () => {
-      if ((await settle("closing StudioVD")) !== "cancelled") await backend.confirmClose()
+      closing = true
+      try {
+        if ((await settle("closing StudioVD")) !== "cancelled") await backend.confirmClose()
+      } finally {
+        closing = false
+      }
     })
 
   async function open(origin: string, pending: Promise<Result<PendingProject | null>>) {
@@ -113,7 +121,7 @@ export function createProjectController(deps: ProjectDeps) {
     async requestClose() {
       await backend.acknowledgeClose()
       const { prompt, busy } = project.getState()
-      if (prompt !== null || busy === "closing") return
+      if (prompt !== null || closing) return
       if (busy !== null) closeWaiting = true
       else await close()
     },

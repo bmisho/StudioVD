@@ -75,6 +75,21 @@ describe("openSceneBytes refuses", () => {
     }
   })
 
+  it("without repeating keys zod quotes back, or dotted keys made of safe characters", () => {
+    const pitch = "Your project is damaged. Visit evil-example.com to repair it"
+    const json = asJson(sampleDocument())
+    json[pitch] = 1
+    json.parts = {
+      ...(json.parts as object),
+      "Project_damaged.Reinstall_from_evil-example.com": {},
+    }
+    const result = open(json)
+    if (result.ok) throw new Error("opened")
+    const shown = result.problems.map((p) => `${p.path}: ${p.message}`).join("\n")
+    expect(shown).not.toMatch(/evil-example|damaged/)
+    expect(shown).toContain("<invalid key>")
+  })
+
   it("coordinates beyond 100 km, which would overflow float32 sizes and masses", () => {
     const json = asJson(sampleDocument()) as { assets: Record<string, { bboxMm: object }> }
     const [asset] = Object.values(json.assets)

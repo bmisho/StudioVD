@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { jsonTextShape, scanJsonValue, shownProblem } from "./scanJson"
+import { jsonTextShape, scanJsonValue } from "./scanJson"
+import { safeMessage, safeSegment } from "./shown"
 import { sampleDocument } from "./testing/sampleDocument"
 
 const limits = { maxDepth: 4, maxValues: 20, maxString: 12 }
@@ -32,18 +33,25 @@ describe("jsonTextShape", () => {
   })
 })
 
-describe("shownProblem", () => {
-  it("keeps names, ids and indexes; hides hostile keys; makes messages printable", () => {
+describe("safe display of untrusted keys", () => {
+  it("keeps names, ids and indexes; hides any other key whole", () => {
     const id = "0b5ad9a2-3c4e-4f6a-8b7c-9d0e1f2a3b4c"
-    expect(shownProblem({ path: `parts.${id}.anchors.0`, message: "bad" })).toEqual({
-      path: `parts.${id}.anchors.0`,
-      message: "bad",
-    })
-    const hostile = "\u202e\n\nThe file is damaged. Visit example.com" + "x".repeat(60_000)
-    expect(shownProblem({ path: `parts.${hostile}.name`, message: "a\nb" })).toEqual({
-      path: "parts.<invalid key>.name",
-      message: "a?b",
-    })
+    expect([safeSegment("parts"), safeSegment(id), safeSegment(0)]).toEqual(["parts", id, "0"])
+    for (const key of ["a.b", "Visit evil.com", "\u202e\nhi", "x".repeat(65), ""])
+      expect(safeSegment(key)).toBe("<invalid key>")
+  })
+
+  it("replaces keys zod quotes back in messages, and keeps messages printable", () => {
+    expect(safeMessage('Unrecognized key: "Your project is damaged. Visit evil.com"')).toBe(
+      'Unrecognized key: "<invalid key>"'
+    )
+    expect(safeMessage('Unrecognized keys: "ok_key", "a \\"b\\" c"')).toBe(
+      'Unrecognized keys: "ok_key", "<invalid key>"'
+    )
+    expect(safeMessage('Invalid input: expected "studiovd"')).toBe(
+      'Invalid input: expected "studiovd"'
+    )
+    expect(safeMessage("a\nb")).toBe("a?b")
   })
 })
 

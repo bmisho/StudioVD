@@ -750,7 +750,7 @@ Exit criteria
   Rust). Linux desktop check (Xvfb, real dialogs): save, reopen, Open Recent, close prompt,
   crash recovery, a second launch and a drop forwarding a `.stvd`, a launch argument, a
   zip-slip file refused. Windows not yet checked (as 3.14)
-- [ ] ⛔ 5.8 **User approval**
+- [x] ⛔ 5.8 **User approval** (2026-10-17; Windows desktop check still open, as 3.14)
 
 ## Phase 6: Materials & appearance
 

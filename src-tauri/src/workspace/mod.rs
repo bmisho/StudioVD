@@ -8,12 +8,13 @@
 //!   manifest.json    the .stvd it belongs to (written by Rust only)
 //! ```
 //!
-//! The webview loads geometry through the `stvd` URI scheme (`protocol`), which serves
-//! `bundle/geometry` only.
+//! The webview loads geometry and textures through the `stvd` URI scheme (`protocol`), which
+//! serves `bundle/geometry` and `bundle/textures` only.
 
 pub mod protocol;
 pub mod recovery;
 pub mod sweep;
+pub mod texture;
 
 use crate::error::{AppError, AppResult};
 use crate::fsutil::write_atomic;
@@ -127,6 +128,10 @@ impl Workspace {
 
     pub fn geometry_dir(&self) -> PathBuf {
         self.bundle_dir().join("geometry")
+    }
+
+    pub fn textures_dir(&self) -> PathBuf {
+        self.bundle_dir().join("textures")
     }
 
     pub fn autosave_path(&self) -> PathBuf {

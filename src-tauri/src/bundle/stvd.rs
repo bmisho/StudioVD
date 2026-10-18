@@ -7,6 +7,7 @@ use super::guard::{extract_zip, inspect_zip, Limits};
 use super::writer::{write_zip, Entry, Source};
 use crate::error::{AppError, AppResult};
 use crate::fsutil::write_atomic_with;
+use crate::workspace::texture::{check_texture, MAX_TEXTURE_BYTES};
 use crate::workspace::{hex, is_asset_id, MAX_ASSET_BYTES};
 use serde::Deserialize;
 use std::collections::BTreeMap;
@@ -38,7 +39,7 @@ fn content(name: &str) -> Option<(u64, &str)> {
     let (hash, ext) = file.split_once('.')?;
     let cap = match (dir, ext) {
         ("geometry", "glb") => MAX_ASSET_BYTES as u64,
-        ("textures", "png" | "jpg") => 64 * 1024 * 1024,
+        ("textures", "png" | "jpg") => MAX_TEXTURE_BYTES,
         ("licenses", "txt") => 1024 * 1024,
         _ => return None,
     };
@@ -76,6 +77,19 @@ pub fn extract(path: &Path, dest: &Path) -> AppResult<Vec<String>> {
         for e in &extracted {
             if content(&e.name).is_some_and(|(_, hash)| hash != hex(&e.sha256)) {
                 return Err(damaged(&format!("{} does not match its content", e.name)));
+            }
+            if let Some(ext) = e
+                .name
+                .strip_prefix("textures/")
+                .and_then(|f| f.split('.').nth(1))
+            {
+                // Checked from the header before any decoder sees it (a tiny bomb can claim
+                // gigapixels); the extension must name the real format.
+                let bytes = fs::read(dest.join(&e.name))?;
+                match check_texture(&bytes) {
+                    Ok((kind, _, _)) if kind.ext() == ext => {}
+                    _ => return Err(damaged(&format!("{} is not a usable image", e.name))),
+                }
             }
         }
         fs::create_dir_all(dest.join("geometry"))?;

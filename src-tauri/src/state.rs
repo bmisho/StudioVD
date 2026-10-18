@@ -70,10 +70,22 @@ impl AppState {
         self.config.as_deref()
     }
 
-    /// Where the `stvd` scheme serves geometry from (the current workspace).
+    /// Where the webview's asset writes go (the current workspace).
     pub fn geometry_dir(&self) -> Option<PathBuf> {
         let project = self.project().ok()?;
         project.workspace.as_ref().map(Workspace::geometry_dir)
+    }
+
+    /// Where chosen texture images go (the current workspace).
+    pub fn textures_dir(&self) -> Option<PathBuf> {
+        let project = self.project().ok()?;
+        project.workspace.as_ref().map(Workspace::textures_dir)
+    }
+
+    /// Where the `stvd` scheme serves files from (the current workspace's `bundle/`).
+    pub fn bundle_dir(&self) -> Option<PathBuf> {
+        let project = self.project().ok()?;
+        project.workspace.as_ref().map(Workspace::bundle_dir)
     }
 
     /// On exit. Unsaved changes (the webview never confirmed the close, e.g. it hung) or a

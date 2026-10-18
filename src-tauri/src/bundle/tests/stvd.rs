@@ -3,6 +3,7 @@
 use super::raw::{entry, raw_zip, temp};
 use crate::bundle::stvd;
 use crate::workspace::sha256_hex;
+use crate::workspace::texture::tests::{jpeg, png};
 use std::fs;
 
 #[test]
@@ -141,5 +142,51 @@ fn saving_refuses_a_file_it_could_not_reopen() {
     assert!(!target.exists());
     let leftovers = fs::read_dir(&base).expect("list").count();
     assert_eq!(leftovers, 1, "only the bundle folder, no temp file");
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
+fn textures_round_trip_and_are_checked_before_anything_decodes_them() {
+    let base = temp("textures");
+    let bundle = base.join("ws/bundle");
+    fs::create_dir_all(bundle.join("textures")).expect("bundle");
+    let image = jpeg(64, 32);
+    let id = sha256_hex(&image);
+    let path = format!("textures/{id}.jpg");
+    fs::write(bundle.join(&path), &image).expect("texture");
+    let scene = format!(
+        r#"{{"assets":{{}},"textures":{{"{id}":{{"path":"{path}"}}}},"licenseTexts":{{}}}}"#
+    );
+    let target = base.join("textured.stvd");
+    stvd::write(&bundle, scene.as_bytes(), None, &target).expect("save");
+    let opened = base.join("ws2/bundle");
+    fs::create_dir_all(base.join("ws2")).expect("ws2");
+    let names = stvd::extract(&target, &opened).expect("open");
+    assert!(names.contains(&path));
+    assert_eq!(fs::read(opened.join(&path)).expect("texture"), image);
+
+    let open = |name: String, bytes: &[u8]| {
+        let file = base.join("bad.stvd");
+        fs::write(
+            &file,
+            raw_zip(&[entry("scene.json", b"{}"), entry(&name, bytes)]),
+        )
+        .expect("zip");
+        let dest = base.join("bad");
+        let result = stvd::extract(&file, &dest);
+        let _ = fs::remove_dir_all(&dest);
+        result
+    };
+    let bomb = png(65_535, 65_535); // a few bytes claiming 4 gigapixels
+    for (ext, bytes) in [
+        ("png", bomb),
+        ("png", image.clone()),
+        ("jpg", b"GIF89a".to_vec()),
+    ] {
+        let name = format!("textures/{}.{ext}", sha256_hex(&bytes));
+        assert!(open(name.clone(), &bytes).is_err(), "{name}");
+    }
+    let fine = png(16, 16);
+    assert!(open(format!("textures/{}.png", sha256_hex(&fine)), &fine).is_ok());
     let _ = fs::remove_dir_all(base);
 }

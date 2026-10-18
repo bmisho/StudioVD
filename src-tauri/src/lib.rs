@@ -58,7 +58,7 @@ pub fn run() {
                 commands::import::files_dropped(webview, paths);
             }
         })
-        // Workspace assets for the webview (`stvd://localhost/<sha256>.glb`).
+        // Workspace files for the webview (`stvd://localhost/<sha256>.glb|png|jpg`).
         .register_asynchronous_uri_scheme_protocol(
             workspace::protocol::ASSET_SCHEME,
             |ctx, request, responder| {
@@ -66,9 +66,10 @@ pub fn run() {
                 let path = request.uri().path().to_owned();
                 tauri::async_runtime::spawn_blocking(move || {
                     let state = app.try_state::<state::AppState>();
-                    let dir = state.and_then(|s| s.geometry_dir());
-                    let (status, body) = workspace::protocol::asset_reply(dir.as_deref(), &path);
-                    responder.respond(workspace::protocol::asset_response(status, body));
+                    let dir = state.and_then(|s| s.bundle_dir());
+                    let (status, mime, body) =
+                        workspace::protocol::asset_reply(dir.as_deref(), &path);
+                    responder.respond(workspace::protocol::asset_response(status, mime, body));
                 });
             },
         )
@@ -96,6 +97,7 @@ pub fn run() {
             commands::import::pick_import_files,
             commands::import::read_import_file,
             commands::import::read_import_resource,
+            commands::assets::import_texture,
             commands::assets::write_asset,
             commands::export::pick_export_path,
             commands::export::write_export,

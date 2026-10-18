@@ -37,6 +37,24 @@ export const writeAsset = (id: string, bytes: Uint8Array): Promise<Result<boolea
 /** URL the webview loads an asset from: Rust's `stvd` scheme serves the workspace only. */
 export const assetUrl = (id: string): string => convertFileSrc(`${id}.glb`, "stvd")
 
+/** A texture image Rust checked (PNG/JPEG, size, pixels) and stored under its SHA-256. */
+export interface ImportedTexture {
+  id: string
+  ext: "png" | "jpg"
+  /** The chosen file's name, for display. */
+  name: string
+  width: number
+  height: number
+}
+
+/** Material editor › Choose Image: the dialog and checks run in Rust; `null` if cancelled. */
+export const importTexture = (): Promise<Result<ImportedTexture | null>> =>
+  call<ImportedTexture | null>("import_texture")
+
+/** URL a texture loads from, through the same `stvd` scheme. */
+export const textureUrl = (id: string, ext: string): string =>
+  convertFileSrc(`${id}.${ext}`, "stvd")
+
 /** Save dialog for an export; `null` when the user cancelled. */
 export const pickExportPath = (
   format: "glb" | "stl",

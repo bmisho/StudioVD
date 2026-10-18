@@ -15,6 +15,8 @@ export function installTauriMockScript(): void {
   const files = new Map<string, { name: string; bytes: Uint8Array }>()
   const resources = new Map<string, Uint8Array>()
   const assets = new Map<string, Uint8Array<ArrayBuffer>>()
+  const textures = new Map<string, { ext: string; bytes: Uint8Array<ArrayBuffer> }>()
+  let nextTexture: { name: string; base64: string } | null = null
   const urls = new Map<string, string>()
   const exports = new Map<string, { name: string; bytes: Uint8Array }>()
   const listeners = new Map<string, { eventId: number; handler: number }[]>()
@@ -51,6 +53,10 @@ export function installTauriMockScript(): void {
     drop: (list: { name: string; base64: string }[], skipped: string[] = []) =>
       emit("import-drop", { files: list.map((f) => register(f.name, f.base64)), skipped }),
     assetIds: () => [...assets.keys()],
+    queueTexture: (file: { name: string; base64: string }) => {
+      nextTexture = file
+    },
+    textureIds: () => [...textures.keys()],
     exports: () =>
       [...exports.values()].map((e) => ({
         name: e.name,
@@ -92,6 +98,19 @@ export function installTauriMockScript(): void {
       assets.set(id, bytes.slice())
       return !existed
     },
+    import_texture: async () => {
+      const chosen = nextTexture
+      nextTexture = null
+      if (!chosen) return null // cancelled
+      const bytes = decode(chosen.base64)
+      const png = bytes[0] === 0x89 && bytes[1] === 0x50
+      const jpg = bytes[0] === 0xff && bytes[1] === 0xd8
+      if (!png && !jpg) return fail("invalidInput", "Only PNG and JPEG images can be used.")
+      const id = hex(await crypto.subtle.digest("SHA-256", bytes))
+      const ext = png ? "png" : "jpg"
+      textures.set(id, { ext, bytes: bytes.slice() })
+      return { id, ext, name: chosen.name, width: 0, height: 0 }
+    },
     pick_export_path: (args) => {
       const token = `x${++counter}`
       const name = `${String(args.suggestedName)}.${String(args.format)}`
@@ -123,8 +142,8 @@ export function installTauriMockScript(): void {
     },
   }
 
-  // Shared with tauriProjectMock.ts (a second init script): commands, events and assets.
-  w.__E2E_MOCK__ = { commands, emit, fail, assets }
+  // Shared with tauriProjectMock.ts (a second init script): commands, events and files.
+  w.__E2E_MOCK__ = { commands, emit, fail, assets, textures }
   w.isTauri = true
   w.__TAURI_EVENT_PLUGIN_INTERNALS__ = { unregisterListener: () => undefined }
   w.__TAURI_INTERNALS__ = {
@@ -134,12 +153,15 @@ export function installTauriMockScript(): void {
       return Promise.resolve(command ? command(args, options?.headers ?? {}) : null)
     },
     convertFileSrc: (path: string) => {
-      const id = /([0-9a-f]{64})\.glb$/.exec(path)?.[1] ?? ""
-      let url = urls.get(id)
+      const [, id = "", ext = ""] = /([0-9a-f]{64})\.(glb|png|jpg)$/.exec(path) ?? []
+      let url = urls.get(`${id}.${ext}`)
       if (!url) {
-        const bytes = assets.get(id)
-        url = URL.createObjectURL(new Blob(bytes ? [bytes] : []))
-        if (bytes) urls.set(id, url)
+        const texture = ext === "glb" ? undefined : textures.get(id)
+        const bytes = ext === "glb" ? assets.get(id) : texture?.ext === ext ? texture.bytes : null
+        const type =
+          ext === "glb" ? "model/gltf-binary" : ext === "png" ? "image/png" : "image/jpeg"
+        url = URL.createObjectURL(new Blob(bytes ? [bytes] : [], { type }))
+        if (bytes) urls.set(`${id}.${ext}`, url)
       }
       return url
     },
@@ -162,5 +184,8 @@ export interface E2EBackend {
   addResource(name: string, base64: string): void
   drop(files: { name: string; base64: string }[], skipped?: string[]): void
   assetIds(): string[]
+  /** The next Choose Image picks this file (none queued: the dialog is cancelled). */
+  queueTexture(file: { name: string; base64: string }): void
+  textureIds(): string[]
   exports(): { name: string; size: number; head: number[] }[]
 }

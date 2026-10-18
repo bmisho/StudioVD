@@ -72,15 +72,20 @@ pub fn load(state: &AppState, path: PathBuf) -> AppResult<PendingInfo> {
 pub fn restore(state: &AppState, root: PathBuf) -> AppResult<PendingInfo> {
     let ws = Workspace::adopt(&root)?;
     let path = recovery::project_path(&root);
-    let geometry = ws.geometry_dir();
-    let files = fs::read_dir(&geometry)
-        .map(|entries| {
-            entries
-                .flatten()
-                .map(|e| format!("geometry/{}", e.file_name().to_string_lossy()))
-                .collect()
+    let bundle = ws.bundle_dir();
+    let files = ["geometry", "textures"]
+        .iter()
+        .flat_map(|dir| {
+            fs::read_dir(bundle.join(dir))
+                .map(|entries| {
+                    entries
+                        .flatten()
+                        .map(|e| format!("{dir}/{}", e.file_name().to_string_lossy()))
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_default()
         })
-        .unwrap_or_default();
+        .collect();
     let scene = ws.autosave_path();
     let file_name = path.as_deref().map(file_name);
     park(

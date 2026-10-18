@@ -12,7 +12,7 @@ use tauri::{AppHandle, Emitter, Manager, Runtime, State, Window};
 use tauri_plugin_dialog::DialogExt;
 
 /// GTK file filters are case-sensitive, and CAD tools often write `.STEP`.
-fn both_cases(extensions: &[&str]) -> Vec<String> {
+pub(super) fn both_cases(extensions: &[&str]) -> Vec<String> {
     extensions
         .iter()
         .flat_map(|e| [e.to_ascii_lowercase(), e.to_ascii_uppercase()])

@@ -2,7 +2,10 @@ import type { MateId, PartId, Quat, SceneDocument, Vec3 } from "@/core/schema"
 import { densityKgM3ToKgMm3 } from "@/core/units"
 import { add, length, rotate, scale } from "./vec"
 
-/** Density for parts without a material: structural steel, 7850 kg/m³ (EN 10025, nominal). */
+/**
+ * Density for parts without a material: steel, 7850 kg/m³ (EN 1991-1-1 Annex A and steel design
+ * guides; `docs/research/materials.json`).
+ */
 export const DEFAULT_DENSITY_KG_M3 = 7850
 
 /** One rigid body per part (Phase 10 merges fixed-mated parts into compound bodies). */

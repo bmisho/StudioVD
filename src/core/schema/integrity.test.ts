@@ -124,11 +124,14 @@ describe("checkIntegrity", () => {
 })
 
 describe("missingFiles", () => {
-  it("lists the asset files a bundle lacks", () => {
+  it("lists the asset and texture files a bundle lacks", () => {
     const doc = sampleDocument()
     const assetPaths = Object.values(doc.assets).map((a) => a.path)
-    expect(missingFiles(doc, new Set(assetPaths))).toEqual([])
-    expect(missingFiles(doc, new Set(assetPaths.slice(1)))).toEqual([assetPaths[0]])
+    const texturePaths = Object.values(doc.textures).map((t) => t.path)
+    expect(missingFiles(doc, new Set([...assetPaths, ...texturePaths]))).toEqual([])
+    expect(missingFiles(doc, new Set(assetPaths.slice(1)))).toEqual(
+      [assetPaths[0], ...texturePaths].sort()
+    )
   })
 })
 

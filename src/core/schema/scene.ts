@@ -6,6 +6,7 @@ import {
   PartIdSchema,
   TextureIdSchema,
 } from "./ids"
+import { AssetSlotsSchema, MaterialSlotsSchema } from "./material"
 import { NameSchema, PoseSchema, Vec3MmSchema } from "./primitives"
 
 /** Part-local bounds; `min` never exceeds `max` on any axis. */
@@ -27,6 +28,8 @@ export const GeometryAssetSchema = z
     volumeMm3: z.number().nonnegative().optional(),
     centroidMm: Vec3MmSchema.optional(),
     watertight: z.boolean().optional(),
+    /** Material slot names, when the GLB has two or more (one glTF primitive each). */
+    slots: AssetSlotsSchema.optional(),
   })
   .strict()
   .refine((a) => a.path === `geometry/${a.id}.glb`, {
@@ -35,7 +38,7 @@ export const GeometryAssetSchema = z
   })
 export type GeometryAsset = z.infer<typeof GeometryAssetSchema>
 
-/** A texture image, stored once per content address (Phase 6 uses them). */
+/** A texture image (PNG or JPG), stored once per content address; materials refer to it. */
 export const TextureSchema = z
   .object({
     id: TextureIdSchema,
@@ -46,21 +49,7 @@ export const TextureSchema = z
     message: "texture path must be textures/<id>.png|jpg",
     path: ["path"],
   })
-
-/** Phase 2 draft: appearance is expanded to full PBR in Phase 6. */
-export const MaterialSchema = z
-  .object({
-    id: MaterialIdSchema,
-    name: NameSchema,
-    builtinKey: z.string().max(64).optional(),
-    color: z.string().regex(/^#[0-9a-f]{6}$/i),
-    metalness: z.number().min(0).max(1),
-    roughness: z.number().min(0).max(1),
-    opacity: z.number().min(0).max(1),
-    densityKgM3: z.number().positive(),
-  })
-  .strict()
-export type Material = z.infer<typeof MaterialSchema>
+export type Texture = z.infer<typeof TextureSchema>
 
 /** Scene-graph folder. Component instances map onto a group (PLAN.md 4.7). */
 export const GroupSchema = z
@@ -76,8 +65,9 @@ export const ColliderKindSchema = z.enum(["hull", "decomposed", "box", "trimesh"
 export type ColliderKind = z.infer<typeof ColliderKindSchema>
 
 /**
- * A placed instance of an asset. Later phases add optional fields (Phase 6 material slots,
- * Phase 9 the component reference); a v1 file never has them, so that needs no migration.
+ * A placed instance of an asset. `materialId` is the part's material (appearance and density);
+ * `materialSlots` overrides it on some of the asset's slots (appearance only). Later phases add
+ * optional fields (Phase 9 the component reference), which needs no migration.
  */
 export const PartSchema = z
   .object({
@@ -92,6 +82,7 @@ export const PartSchema = z
     collider: ColliderKindSchema,
     massOverrideKg: z.number().positive().optional(),
     comOverrideMm: Vec3MmSchema.optional(),
+    materialSlots: MaterialSlotsSchema.optional(),
   })
   .strict()
 export type Part = z.infer<typeof PartSchema>

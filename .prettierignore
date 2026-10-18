@@ -9,3 +9,5 @@ test-results
 *.md
 # Vendored copies, kept byte-identical to their packages (tools/vendor/vendored.test.js)
 public
+# Frozen scene.json fixtures: the exact bytes an earlier build saved
+src/core/schema/testing/fixtures

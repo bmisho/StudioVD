@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { createTestRig, TEST_RIG_HINGE_MM } from "@/core/scene/testRig"
-import { createEmptyDocument, type MaterialId, type SceneDocument } from "@/core/schema"
+import { createEmptyDocument, type SceneDocument } from "@/core/schema"
+import { testMaterial } from "@/core/schema/testing/sampleDocument"
 import { DEFAULT_DENSITY_KG_M3, physicsModelFromDocument } from "./physicsModel"
 import { quatFromAxisAngle } from "./vec"
 
@@ -38,17 +39,9 @@ describe("physicsModelFromDocument", () => {
 
   it("uses the part's material density", () => {
     const doc = rigDocument()
-    const id = "alu" as MaterialId
-    doc.materials[id] = {
-      id,
-      name: "Aluminium",
-      color: "#cccccc",
-      metalness: 1,
-      roughness: 0.4,
-      opacity: 1,
-      densityKgM3: 2700,
-    }
-    for (const p of Object.values(doc.parts)) p.materialId = id
+    const alu = testMaterial("std.aluminium-6061", 1)
+    doc.materials[alu.id] = alu
+    for (const p of Object.values(doc.parts)) p.materialId = alu.id
     expect(physicsModelFromDocument(doc).bodies[0]?.densityKgMm3).toBeCloseTo(2.7e-6, 15)
   })
 

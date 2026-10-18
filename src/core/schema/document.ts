@@ -26,13 +26,8 @@ import {
   SchematicEdgeSchema,
   SchematicNodeSchema,
 } from "./schematic"
-import {
-  GeometryAssetSchema,
-  GroupSchema,
-  MaterialSchema,
-  PartSchema,
-  TextureSchema,
-} from "./scene"
+import { GeometryAssetSchema, GroupSchema, PartSchema, TextureSchema } from "./scene"
+import { MaterialSchema } from "./material"
 import { safeSegment } from "./shown"
 
 export const SCHEMA_VERSION = 1
@@ -51,8 +46,8 @@ export const SceneDocumentSchema = z
     units: z.object({ length: z.literal("mm") }).strict(),
     project: z.object({ name: NameSchema }).strict(),
     assets: z.record(AssetIdSchema, GeometryAssetSchema),
-    textures: emptyUntil(z.record(TextureIdSchema, TextureSchema), 6, "Textures"),
-    materials: emptyUntil(z.record(MaterialIdSchema, MaterialSchema), 6, "Materials"),
+    textures: z.record(TextureIdSchema, TextureSchema),
+    materials: z.record(MaterialIdSchema, MaterialSchema),
     groups: z.record(GroupIdSchema, GroupSchema),
     parts: z.record(PartIdSchema, PartSchema),
     anchors: z.record(AnchorIdSchema, AnchorSchema),

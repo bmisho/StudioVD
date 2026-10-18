@@ -10,22 +10,14 @@ import {
   SOLVER_ITERATIONS,
   TIME_STEP_S,
 } from "./physicsConfig"
+import { runIdOf, stableModel } from "./physicsRun"
 import { PhysicsScene } from "./PhysicsScene"
-
-const runIds = new WeakMap<object, number>()
-let nextRunId = 0
-/** A stable number per model object (immer keeps it while the relevant document is unchanged). */
-const runIdOf = (model: object) => {
-  let id = runIds.get(model)
-  if (id === undefined) runIds.set(model, (id = ++nextRunId))
-  return id
-}
 
 /**
  * Test mode's physics (PLAN 3.7, 3.10). Mounted only while test mode is on, so design mode
  * has no world and no stepping at all (Rapier's WASM loads on first use). The world restarts
- * from the design pose on "Reset to Design Pose" and whenever the simulated part of the
- * document changes (key = run x model).
+ * from the design pose on "Reset to Design Pose" and whenever what it simulates changes
+ * (key = run x model; appearance edits keep the model object, `stableModel`).
  */
 export function PhysicsLayer() {
   const testMode = useSessionStore((s) => s.testMode)
@@ -36,7 +28,7 @@ export function PhysicsLayer() {
   const anchors = useDocumentStore((s) => s.doc.anchors)
   const mates = useDocumentStore((s) => s.doc.mates)
   const model = useMemo(
-    () => physicsModelFromDocument({ parts, assets, materials, anchors, mates }),
+    () => stableModel(physicsModelFromDocument({ parts, assets, materials, anchors, mates })),
     [parts, assets, materials, anchors, mates]
   )
   if (!testMode) return null

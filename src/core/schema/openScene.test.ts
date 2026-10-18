@@ -123,21 +123,12 @@ describe("openSceneBytes refuses", () => {
   it("collections a later phase owns, unless empty", () => {
     const json = asJson(sampleDocument())
     const id = uuid(1)
-    json.materials = {
-      [id]: {
-        id,
-        name: "Steel",
-        color: "#888888",
-        metalness: 1,
-        roughness: 0.3,
-        opacity: 1,
-        densityKgM3: 7850,
-      },
-    }
+    const [mateA, mateB] = Object.keys(json.mates as object)
+    json.couplings = { [id]: { id, kind: "gear", mateA, mateB: mateB ?? uuid(2), ratio: 2 } }
     const result = open(json)
     expect(result).toMatchObject({
       ok: false,
-      problems: [{ path: "materials", message: "Materials are not supported yet (Phase 6)" }],
+      problems: [{ path: "couplings", message: "Couplings are not supported yet (Phase 10)" }],
     })
   })
 

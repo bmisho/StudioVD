@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import type { AssetId } from "@/core/schema"
+import type { AssetId, TextureId } from "@/core/schema"
 import { sampleDocument } from "@/core/schema/testing/sampleDocument"
 import { collectGarbage } from "./collectGarbage"
 
@@ -34,5 +34,17 @@ describe("collectGarbage", () => {
     const sha = "a".repeat(64)
     doc.licenseTexts[sha] = { path: `licenses/${sha}.txt`, spdx: "MIT" }
     expect(collectGarbage(doc).licenseTexts).toEqual({})
+  })
+
+  it("drops textures no material uses, and keeps every material", () => {
+    const doc = sampleDocument()
+    const orphan = "cd".repeat(32) as TextureId
+    doc.textures[orphan] = { id: orphan, path: `textures/${orphan}.jpg` }
+    for (const p of Object.values(doc.parts)) p.materialId = null // materials stay anyway
+    const saved = collectGarbage(doc)
+    expect(Object.keys(saved.textures)).toEqual(
+      Object.keys(doc.textures).filter((id) => id !== orphan)
+    )
+    expect(saved.materials).toBe(doc.materials)
   })
 })

@@ -1,0 +1,467 @@
+[
+ {
+  "key": "std.abs",
+  "name": "ABS",
+  "densityKgM3": 1040,
+  "planDensityKgM3": 1040,
+  "densityRange": [
+   1030,
+   1060
+  ],
+  "densitySources": [
+   "https://plasticker.de/docs/recybase/40629_1772783736.pdf",
+   "https://materialdatacenter.com/ms/es/Terluran/INEOS+Styrolution/Terluran%C2%AE+GP-35/d4a7a7cd/367",
+   "https://static.chipdip.ru/lib/299/DOC015299117.pdf",
+   "https://www.boxumold.com/procurement-guides/scale/profiles/abs-for-consumer-goods-new-product-launch",
+   "https://ultrapolymers.com/en-DE/products/2736-sicoflex-s-309"
+  ],
+  "densityConfidence": "high",
+  "densityNotes": "INEOS Styrolution Terluran GP-35 (general-purpose ABS) datasheet, revised 2022: 1040 kg/m3, ISO 1183. The 2008 BASF sheet and Material Data Center give the same value. The 1030-1060 range for general-purpose grades comes from a secondary procurement guide (Boxumold), so the range is medium confidence. Flame-retardant ABS is denser: Sicoflex S 309 (UL94 V-0) is 1180 kg/m3, ISO 1183. Do not use the pellet bulk density (550-650 kg/m3 in the BASF sheet).",
+  "appearance": {
+   "colorHex": "#e6dfca",
+   "metalness": 0,
+   "roughness": 0.5
+  },
+  "appearanceSources": [
+   "https://en.wikipedia.org/wiki/Acrylonitrile_butadiene_styrene",
+   "https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/7767738"
+  ],
+  "appearanceConfidence": "low (colour and roughness are artistic defaults)",
+  "appearanceNotes": "The colour is an artistic default, not a measurement. Wikipedia describes unpigmented ABS as translucent ivory to white. It is opaque because its rubber phase and its matrix have different refractive indices. IOR: unknown, since no measured bulk value was found. The homopolymer indices bracket it: polybutadiene 1.515, polyacrylonitrile 1.515, polystyrene 1.591 (US 7767738). Any value in that bracket gives F0 = 4.2-5.2%, against 4.0% at three's default ior of 1.5. ior is therefore left out and the default applies. Roughness 0.5 is an artistic default for a moulded satin surface. The current default part material uses 0.55.",
+  "integrationNotes": "APPLIES TO EVERY PRESET. (1) Keys: PLAN.md:367-368 says component material slots refer to stable built-in keys (`std.steel`, `std.abs`). Suggested pattern: ^std\\.[a-z0-9]+(-[a-z0-9]+)*$. Today MaterialSchema.builtinKey is z.string().max(64).optional() (src/core/schema/scene.ts:55). Inserting a component reuses an unmodified project material with the same builtinKey, else creates one from the Phase 6 preset (docs/research/component-library/component-format.json:9). So a key and its preset values are a permanent contract: never rename or reuse a key. Changing a preset's numbers changes what 'unmodified' means for existing projects. (2) Colours here are lowercase sRGB hex. The schema regex is case-insensitive (scene.ts:56), so normalise to lowercase and an 'unmodified' check can compare exactly. three converts sRGB hex strings to its linear working space. Note that GLB base colours arrive already linear (src/features/viewport/parts/assetCache.ts:27-29). (3) Today MaterialSchema holds only color, metalness, roughness, opacity and densityKgM3 (scene.ts:50-63). ior, transmission, thickness and clearcoat (plus attenuation and dispersion, if used) need new optional fields (PLAN.md:757-761) when the gate is lifted (src/core/schema/document.ts:54-55). src/core/schema/openScene.test.ts:126-140 asserts the gate refusal and must change with it. (4) Density reaches physics: src/core/physics/physicsModel.ts:51-54 looks the material up with Object.hasOwn, and :65 converts it with densityKgM3ToKgMm3 (src/core/units.ts:11). Parts without a material use DEFAULT_DENSITY_KG_M3 = 7850 (physicsModel.ts:5-6). (5) Rendering: Neutral tone mapping keeps base colours (src/features/viewport/renderer/rendererConfig.ts:15-16). Image lighting is a RoomEnvironment PMREM of size 128, chosen for matte parts (src/features/viewport/scene/lightingPreset.ts:6-7; StudioEnvironment.tsx:26-34). Mirror-like presets (glass, PMMA and PC at roughness <= 0.05) may therefore show its low resolution. Metals need that environment (StudioEnvironment.tsx:8-9). The current default part look is metalness 0, roughness 0.55 (src/features/viewport/parts/defaultPartMaterial.ts:7-13; assetCache.ts:25). (6) Export loses the PBR extras: exportMaterial copies only color, metalness, roughness and vertexColors into a MeshStandardMaterial (src/features/export/buildExport.ts:37-45). three's GLTFExporter can write KHR_materials_clearcoat, KHR_materials_transmission, KHR_materials_volume and KHR_materials_ior (node_modules/three/examples/jsm/exporters/GLTFExporter.js:2991,3164,3211,3266) if exportMaterial moves to MeshPhysicalMaterial. Geometry is baked with the mm->m scale (buildExport.ts:32), so thickness and attenuationDistance must be scaled the same way. (7) F0 = ((n-1)/(n+1))^2: n 1.46 gives 3.5%, 1.49 gives 3.9%, 1.52 gives 4.3%, 1.585 gives 5.1%. three accepts ior from 1.0 to 2.333 (node_modules/three/src/materials/MeshPhysicalMaterial.js:143-148), and reflectivity is derived from ior (:161-169). For metals ior is ignored and the colour is F0. physicallybased's F82/edge-tint specularColor has no three equivalent: specularIntensity and specularColor act on non-metals only (MeshPhysicalMaterial.js:313-320). (8) No preset needs clearcoat. Keep it for painted or lacquered finishes; physicallybased's 'Plastic (PUR)' entry describes car-paint polyurethane clearcoats.",
+  "researchNotes": "APPLIES TO EVERY ENTRY. The research sandbox could not open most sites. Numbers attributed to vendor and standards URLs were confirmed from search-engine excerpts of those pages, not from full reads, and should be re-checked when implementing (CLAUDE.md section 12). physicallybased data was read in full from GitHub: AntonPalmqvist/physically-based-api at commit 9a0cd2cafa005cb734fd06b3aad00d58bd73e052, deploy/v2/materials.json (header license 'CC0 1.0 Universal', updated 202610110901, sha256 e7e8277badf41465c12dde721388192ca706a6413d06a48d25bb0bef6357be4d). The repo LICENSE is CC0 1.0, and the README says 'The database is made available under the CC0 1.0 license'. Only the shader-ball render asset is CC BY 4.0, and it is not used. The physicallybased.info site and api.physicallybased.info were unreachable. The refractiveindex.info database was read from GitHub: polyanskiy/refractiveindex.info-database at commit c5c2f188e848453def5970e347399d653df2ffc2, CC0 1.0 per its LICENSE and per-file headers. The Unreal Engine docs (Epic copyright) serve only as a cross-check of facts. Wikipedia text is CC BY-SA, but the numbers themselves are facts. Hex colours are linear values encoded with the sRGB transfer function and rounded to 8 bits.",
+  "factCheck": "Density confirmed (Terluran GP-35 1.04, ISO 1183). Range upper bound is about 1080 (Wikipedia 1.060-1.080). IOR citation US 7767738 not found; the PB/PAN/PS indices are in US 4083896. 'Translucent ivory' attribution unsupported; colour stays an artistic default.",
+  "used": {}
+ },
+ {
+  "key": "std.pla",
+  "name": "PLA",
+  "densityKgM3": 1240,
+  "planDensityKgM3": 1240,
+  "densityRange": [
+   1210,
+   1430
+  ],
+  "densitySources": [
+   "https://www.matterhackers.com/r/xFvGl8",
+   "https://www.utwente.nl/en/rpl/Data%20sheets/Ultimaker%203/PLA.pdf",
+   "https://entecpolymers.com/pt-BR/produtos/100150056-natureworks-ingeo-4043d",
+   "https://en.wikipedia.org/w/index.php?title=Polylactic_acid&oldid=1354580220",
+   "https://pmc.ncbi.nlm.nih.gov/articles/PMC12152067/table/Tab2"
+  ],
+  "densityConfidence": "high",
+  "densityNotes": "Sources for 1.24 g/cm3: the Prusament PLA TDS v1.1 (2022, MatterHackers mirror) by ISO 1183; the UltiMaker PLA TDS as specific gravity, with the method shown as ASTM D1505; NatureWorks Ingeo 4043D (distributor Entec) by ASTM D1505. The 1210-1430 range is Wikipedia's (via physicallybased) and spans amorphous to crystalline PLA. Printed parts weigh less than the filament: a 2025 study measured 1.20-1.23 g/cm3 for 100%-infill specimens. Partly infilled prints are much lighter, so FDM parts should use massOverrideKg (src/core/schema/scene.ts:93).",
+  "appearance": {
+   "colorHex": "#efede4",
+   "metalness": 0,
+   "roughness": 0.4,
+   "ior": 1.46
+  },
+  "appearanceSources": [
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json",
+   "https://refractiveindex.info/?shelf=organic&book=polylactic_acid&page=Bodurov",
+   "https://github.com/polyanskiy/refractiveindex.info-database"
+  ],
+  "appearanceConfidence": "medium for ior; low for colour and roughness (artistic)",
+  "appearanceNotes": "IOR 1.46: n = 1.4585 at 589.3 nm, computed from the Bodurov et al. 2016 fit (PDLA, 45 um film, 24 C) in the refractiveindex.info database (CC0). physicallybased 'Plastic (PLA)' gives 1.4586 (CC0). F0 = 3.5%. physicallybased models PLA as clear (transmission 1, colour white). Natural PLA filament is translucent, but PLAN 6.5 keeps transmission for glass presets, so this preset is opaque. The colour (milky off-white) and roughness 0.4 (FDM semi-gloss, layer lines not modelled) are artistic defaults. PLA is usually pigmented, so users will recolour it.",
+  "factCheck": "Density confirmed (Prusament ISO 1183, UltiMaker ASTM D1505). IOR 1.46 confirmed (Bodurov fit 1.4585). PMC12152067 figure unverified.",
+  "used": {}
+ },
+ {
+  "key": "std.pc-clear",
+  "name": "Polycarbonate (clear)",
+  "densityKgM3": 1200,
+  "planDensityKgM3": 1200,
+  "densityRange": [
+   1200,
+   1220
+  ],
+  "densitySources": [
+   "https://solutions.covestro.com/en/products/makrolon/makrolon-2405_00945088-00009643",
+   "https://quickparts.com/wp-content/uploads/2023/05/QP-Materials-Makrolon-2405.pdf",
+   "https://en.wikipedia.org/wiki/Polycarbonate"
+  ],
+  "densityConfidence": "high",
+  "densityNotes": "Covestro Makrolon 2405 (transparent general-purpose PC): 1200 kg/m3, ISO 1183-1. The Wikipedia infobox gives 1.20-1.22 g/cm3. Glass-fibre-filled PC grades are denser; they were not researched.",
+  "appearance": {
+   "colorHex": "#ffffff",
+   "metalness": 0,
+   "roughness": 0.05,
+   "ior": 1.585,
+   "transmission": 1,
+   "thickness": 3
+  },
+  "appearanceSources": [
+   "https://solutions.covestro.com/en/products/makrolon/makrolon-2405_00945088-00009643",
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json",
+   "https://refractiveindex.info/?shelf=3d&book=plastics&page=pc",
+   "https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_dispersion/README.md"
+  ],
+  "appearanceConfidence": "high for ior; medium for transmission; low for roughness and thickness (artistic)",
+  "appearanceNotes": "IOR 1.585 comes from the Covestro Makrolon 2405 datasheet (ISO 489 procedure A). Cross-checks: the Sultanova et al. 2009 fit (refractiveindex.info, CC0) gives 1.5846 at 589.3 nm, physicallybased gives 1.5848 and Wikipedia gives 1.584-1.586. F0 = 5.1%. Covestro reports luminous transmittance of 88% at 3 mm (ISO 13468-2) and haze below 0.8% (ISO 14782). Two surfaces at F0 5.1% already reflect about 10%, so transmission 1 with a white colour reproduces the measured value without extra absorption. thickness 3 is in mesh units, i.e. mm; it is an artistic default matching the 3 mm datasheet plaque, and 0 would make the part thin-walled. Roughness 0.05 is an artistic default for a polished moulding. physicallybased gives an Abbe number of 27.86, which corresponds to three's optional dispersion = 20/V = 0.72 (the KHR_materials_dispersion definition); leave it at 0 by default. If transmission stays limited to real glass (PLAN 6.5), the fallback is an alpha-blended opacity, whose value would be artistic: no source.",
+  "integrationNotes": "TRANSMISSIVE PRESET. thickness is in the mesh's coordinate space (mm here: parts carry no scale, CLAUDE.md section 5), and 0 means thin-walled (node_modules/three/src/materials/MeshPhysicalMaterial.js:273-280; KHR_materials_volume thicknessFactor). transmission > 0 requires opacity 1 (MeshPhysicalMaterial.js:519-525). On every render, any transmissive object makes the renderer draw the background and the opaque objects into a per-camera multisampled target of at least 4 samples (node_modules/three/src/renderers/WebGLRenderer.js:2016-2020, 2060, 2076). That is a full extra pass, and transparent or other transmissive objects do not show through. attenuationDistance is in world units, i.e. mm (MeshPhysicalMaterial.js:295-311). dispersion applies only to transmissive objects (MeshPhysicalMaterial.js:441-449). PLAN.md:768 limits transmission to glass presets; this research treats the clear PC and PMMA presets as glass presets.",
+  "factCheck": "Density and IOR confirmed (Covestro ISO 1183-1, ISO 489: 1.585). three applies the Fresnel loss once, so white + transmission 1 renders about 95%; colour #f7f7f7 (derived, not measured) matches the 88% measured at 3 mm. Abbe number contested (27.9 / 32 / 34): dispersion left at 0.",
+  "used": {
+   "colorHex": "#f7f7f7"
+  }
+ },
+ {
+  "key": "std.pmma",
+  "name": "Acrylic (PMMA)",
+  "densityKgM3": 1190,
+  "planDensityKgM3": 1180,
+  "densityRange": [
+   1180,
+   1190
+  ],
+  "densitySources": [
+   "https://www.zenit.cz/public/media/Plasty/Zenit_Bezpecnostni_List_Plasty_Plexiglas_EPD.pdf",
+   "https://en.plabase.com/plastic/items/5ec6adfd43428b0a5419f9ad",
+   "https://www.sunclear.fr/img/medias/bt/PMMA_COULE__BATONS_Fiche_technique_020124.pdf",
+   "https://otvplast.eu/knowledge-base/plastic-types/pmma-polymethyl-methacrylate-acrylic-plexiglas/",
+   "https://en.wikipedia.org/w/index.php?title=Poly(methyl_methacrylate)&oldid=1273782938"
+  ],
+  "densityConfidence": "high",
+  "densityNotes": "The Röhm PLEXIGLAS EPD (GS, XT, Satinice) gives 1.19 g/cm3. Plabase lists PLEXIGLAS at 1.19 (ISO 1183), a cast-PMMA sheet datasheet gives 1.19 (DIN 53479), and OTV gives 1.19 for both cast and extruded sheet. PLAN's 1180 matches only Wikipedia (via physicallybased). Recommended: 1190, the manufacturer value, a 0.8% change. One RS Online listing's 1.41 g/cm3 is an outlier and probably an error.",
+  "appearance": {
+   "colorHex": "#ffffff",
+   "metalness": 0,
+   "roughness": 0.03,
+   "ior": 1.49,
+   "transmission": 1,
+   "thickness": 3
+  },
+  "appearanceSources": [
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json",
+   "https://refractiveindex.info/?shelf=3d&book=plastics&page=pmma",
+   "https://www.eplastics.com/blog/physical-properties-plexiglass-g-sheet"
+  ],
+  "appearanceConfidence": "high for ior; low for roughness and thickness (artistic)",
+  "appearanceNotes": "IOR: the Sultanova et al. 2009 fit (refractiveindex.info, CC0) gives 1.4905 at 589.3 nm, physicallybased 'Plastic (Acrylic)' gives 1.4905, and the PLEXIGLAS G sheet datasheet gives 1.49 (ASTM D542). F0 = 3.9%. physicallybased: colour white, transmission 1, roughness 0. Its Abbe number of 53.18 gives an optional dispersion of 0.38. thickness 3 (mm, a common sheet thickness) and roughness 0.03 (cast sheet is very glossy) are artistic defaults. The integrationNotes of std.pc-clear (transmissive preset) apply here too.",
+  "factCheck": "Density 1190 confirmed (PLEXIGLAS GS ISO 1183, Plexiglas G ASTM D792); PLAN's 1180 corrected. eplastics says 1.18, not 1.19. IOR 1.49 confirmed. Colour #fafafa (derived) matches the 92% measured at 3 mm.",
+  "used": {
+   "colorHex": "#fafafa"
+  }
+ },
+ {
+  "key": "std.pom",
+  "name": "Acetal (POM)",
+  "densityKgM3": 1410,
+  "planDensityKgM3": 1410,
+  "densityRange": [
+   1400,
+   1420
+  ],
+  "densitySources": [
+   "https://entecpolymers.com/es-MX/productos/1277-hostaform-c9021",
+   "https://ultrapolymers.com/en-HR/products/100052413-ultraform-n-2320-u03",
+   "https://en.plabase.com/plastic/items/5ae1d759a54945332baa6b70",
+   "https://en.wikipedia.org/wiki/Polyoxymethylene"
+  ],
+  "densityConfidence": "high",
+  "densityNotes": "Celanese Hostaform C9021 (copolymer, POM-C): 1.41 g/cm3, ISO 1183, from distributor Entec. BASF Ultraform N 2320 (copolymer): 1.40 g/cm3, ISO 1183, from distributor Ultrapolymers. Delrin (homopolymer, POM-H) entries: 1.42 g/cm3, ISO 1183, from Plabase. These are distributor and database pages, not the makers' own datasheets. Filled grades differ: C9021 K (chalk) is 1.44 and C9021 M (MoS2) is 1.42.",
+  "appearance": {
+   "colorHex": "#f2f1ec",
+   "metalness": 0,
+   "roughness": 0.4
+  },
+  "appearanceSources": [
+   "https://en.wikipedia.org/wiki/Polyoxymethylene"
+  ],
+  "appearanceConfidence": "low (artistic)",
+  "appearanceNotes": "Natural POM is opaque white because it is highly crystalline (Wikipedia). The colour and the roughness (satin, slightly waxy) are artistic defaults. IOR: unknown, no sourced value was found. 1.48 is often quoted but could not be confirmed, so ior is left out and three's default of 1.5 applies (F0 4.0%).",
+  "factCheck": "Density confirmed (Hostaform C9021 1.41, Delrin 100 1.42, Ultraform 1.40; ISO 1183). No IOR source: the glTF default 1.5 is used.",
+  "used": {}
+ },
+ {
+  "key": "std.polyurethane",
+  "name": "Polyurethane (PU)",
+  "densityKgM3": 1200,
+  "planDensityKgM3": 1200,
+  "densityRange": [
+   1050,
+   1260
+  ],
+  "densitySources": [
+   "https://plastics-rubber.basf.com/global/en/performance_polymers/products/elastollan/30090008",
+   "https://www.rct-online.de/en/semi-finished-products/rods/rods-made-of-elastomers-plastics-or-glas-ceramic/30284/vulkollan-solid-rod-shore-900",
+   "https://www.kippusa.com/us/en/Catalog-Service/Material-overview/Elastomere/pid.1098.1145.1244.8881.8883/AU-EU.html",
+   "https://download.basf.com/p1/8a80821f94ef088e0194f6510aba0069/en/TDS_-_E_1185_A_10HFFR000",
+   "https://en.wikipedia.org/w/index.php?title=Polyurethane&oldid=1344512232"
+  ],
+  "densityConfidence": "low",
+  "densityNotes": "'Polyurethane' is a family, so this is a class default. BASF Elastollan 1185A10 (polyether TPU): 1120 kg/m3, ISO 1183. Vulkollan cast PU (NDI/polyester): 1240-1260 kg/m3 depending on hardness (70-90 Shore A), DIN 53479, from distributor RCT. Kipp gives 1.25 for the AU/EU family. Wikipedia (via physicallybased) gives 1050-1250. Flame-retardant TPU can reach 1420 (Elastollan 1185 A 10HFFR). Foams are one to two orders of magnitude lighter and must not use this preset; foam values were not researched. 1200 lies inside the solid-elastomer range. Use a mass override when the grade is known.",
+  "appearance": {
+   "colorHex": "#d4b483",
+   "metalness": 0,
+   "roughness": 0.6,
+   "ior": 1.52
+  },
+  "appearanceSources": [
+   "https://solutions.covestro.com/en/highlights/articles/theme/product-technology/optical-properties",
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json"
+  ],
+  "appearanceConfidence": "low",
+  "appearanceNotes": "Covestro gives n at 589.3 nm as 1.52-1.57 for aromatic Desmopan TPU grades, about 1.49-1.50 for aliphatic HDI grades and about 1.51 for Texin (Desmodur W). It also says TPUs are moderately to strongly opaque, apart from thin walls. 1.52 is the low end of the aromatic range; the right value depends on the grade, which is unknown for a generic preset. physicallybased 'Plastic (PUR)' uses 1.6, sourced to a high-index coating patent, so it is not used. The colour (an amber/tan for unpigmented PU) and the roughness are artistic defaults.",
+  "factCheck": "Class default 1200 confirmed within 1120-1260 (Elastollan, Vulkollan, Kipp). IOR 1.52 is the low end of the aromatic range 1.52-1.57 (Covestro); the choice is arbitrary.",
+  "used": {}
+ },
+ {
+  "key": "std.glass-soda-lime",
+  "name": "Glass (soda-lime)",
+  "densityKgM3": 2500,
+  "planDensityKgM3": 2500,
+  "densityRange": [
+   2500,
+   2520
+  ],
+  "densitySources": [
+   "https://www.agc-yourglass.com/sites/default/files/2024-12/TDS_Planibel_1224_EN.pdf",
+   "https://www.guardianglass.com/us/en/why-glass/understand-glass/properties-of-glass/physical-properties",
+   "https://www.pilkington.com/-/media/pilkington/site-content/usa/window-manufacturers/technical-bulletins/ats129propertiesofglass20130114.pdf",
+   "https://en.wikipedia.org/w/index.php?title=Soda%E2%80%93lime_glass&oldid=1262726109"
+  ],
+  "densityConfidence": "high",
+  "densityNotes": "AGC Planibel float glass (conforms to EN 572-1): 2500 kg/m3 at 18 C. Pilkington ATS-129: 2500 kg/m3 (156 lb/ft3). Guardian: 2500 kg/m3 (2.5 kg/m2 per mm of thickness). Wikipedia's soda-lime glass article (via physicallybased): 2520. EN 572-1 itself is paywalled and was not read.",
+  "appearance": {
+   "colorHex": "#fdfefe",
+   "metalness": 0,
+   "roughness": 0,
+   "ior": 1.52,
+   "transmission": 1,
+   "thickness": 4
+  },
+  "appearanceSources": [
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json",
+   "https://refractiveindex.info/?shelf=3d&book=glass&page=soda-lime-clear",
+   "https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_dispersion/README.md",
+   "https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_volume/README.md"
+  ],
+  "appearanceConfidence": "high for ior, transmission and colour; low for thickness (artistic)",
+  "appearanceNotes": "physicallybased 'Glass (Soda-lime)' (CC0): colour linear (0.984, 0.995, 0.995) = sRGB #fdfefe, roughness 0, ior 1.52, transmission 1, Abbe number 64, absorption (0.13941, 0.04527, 0.05334) per cm in linear RGB (its schema states cm^-1). Rubin 1985 clear window glass (refractiveindex.info, CC0): n = 1.5233 at 589.3 nm. F0 = 4.3%. thickness 4 is in mm (mesh units), an artistic default for a common pane thickness. Optional green edge tint derived from the physicallybased absorption: attenuationDistance 100 (mm) with attenuationColor sRGB #88d1c9, i.e. linear exp(-sigma*10 cm) = (0.248, 0.636, 0.587). At thickness 4 mm that transmits 94.6/98.2/97.9%. Use either this attenuation or the colour tint, not both. Optional dispersion: 20/64 = 0.31 (KHR_materials_dispersion stores 20/Abbe); off by default. The integrationNotes of std.pc-clear (transmissive preset) apply here too.",
+  "factCheck": "Density 2500 confirmed (AGC Planibel, Pilkington, Guardian). IOR 1.52 confirmed (Rubin 1.5233). Colour and transmission confirmed (physicallybased).",
+  "used": {}
+ },
+ {
+  "key": "std.aluminium-6061",
+  "name": "Aluminium 6061/6063",
+  "densityKgM3": 2700,
+  "planDensityKgM3": 2700,
+  "densityRange": [
+   2690,
+   2700
+  ],
+  "densitySources": [
+   "https://www.allianceorg.com/pdfs/alumext/6061t6.pdf",
+   "https://en.wikipedia.org/wiki/6063_aluminium_alloy",
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json"
+  ],
+  "densityConfidence": "high",
+  "densityNotes": "6061-T6: 2.70 g/cm3 (0.0975 lb/in3) in an extrusion datasheet. 6063: 2.69 g/cm3 (Wikipedia; the Aluminum Association maintains the composition). physicallybased gives 2700 for aluminium. The ASM Handbook and the Aluminum Association's 'Standards and Data' were not reachable. One preset covers both alloys, which differ by 0.4%. Other alloy series differ (not researched) and would need their own keys. Key choice: std.aluminium-6061 is precise, and the display name covers 6063. A generic std.aluminium would wrongly suggest that 2700 holds for every alloy.",
+  "appearance": {
+   "colorHex": "#f5f6f6",
+   "metalness": 1,
+   "roughness": 0.35
+  },
+  "appearanceSources": [
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json",
+   "https://refractiveindex.info/?shelf=main&book=Al&page=Cheng",
+   "https://dev.epicgames.com/documentation/en-us/unreal-engine/physically-based-materials-in-unreal-engine"
+  ],
+  "appearanceConfidence": "medium (measured pure-Al F0, two sources agree; alloy not measured)",
+  "appearanceNotes": "The base colour is the measured normal-incidence reflectance (F0) of pure aluminium. physicallybased (CC0, from refractiveindex.info Cheng data): linear (0.916, 0.923, 0.924), sRGB #f5f6f6. The Unreal Engine docs table gives linear (0.913, 0.921, 0.925), also #f5f6f6. No measured F0 for 6061/6063 themselves was found. These alloys are mostly aluminium with a few percent of Mg and Si, so treat the value as close. Roughness 0.35 is an artistic default for a machined or bead-blasted finish. physicallybased's F82 edge tint (linear 0.910, 0.936, 0.959) cannot be expressed in three. Bare metal only: an anodised finish (physicallybased has 'Aluminum (Anodized Red)') would be a separate preset.",
+  "factCheck": "Density 2700 confirmed (Aluminum Association typical for 6061; 6063 2.69-2.70). Colour confirmed by recomputation from Cheng n,k (an upper bound for a real alloy).",
+  "used": {}
+ },
+ {
+  "key": "std.steel",
+  "name": "Steel (carbon)",
+  "densityKgM3": 7850,
+  "planDensityKgM3": 7850,
+  "densityRange": [
+   7850,
+   7870
+  ],
+  "densitySources": [
+   "https://cdn.eurocodeapplied.com/design/en1993/steel-design-properties",
+   "https://orangebook.arcelormittal.com/node/178",
+   "https://tatasteeleurope.com/construction/products/tube/structural-hollow-sections/blue-book/appendix",
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json"
+  ],
+  "densityConfidence": "high",
+  "densityNotes": "EN 1993-1-1 (Eurocode 3) design density: 7850 kg/m3 (via eurocodeapplied). The ArcelorMittal and Tata Steel section tables compute masses with 7850. Pure iron is 7870 (physicallybased 'Iron', from Wikipedia). The often-quoted 7.87 g/cm3 for AISI 1020 was not confirmed. This preset equals the physics default for parts without a material, DEFAULT_DENSITY_KG_M3 = 7850 (src/core/physics/physicsModel.ts:5-6), so assigning std.steel does not change a part's mass.",
+  "appearance": {
+   "colorHex": "#c0bebb",
+   "metalness": 1,
+   "roughness": 0.4
+  },
+  "appearanceSources": [
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json",
+   "https://refractiveindex.info/?shelf=3d&book=metals&page=iron",
+   "https://dev.epicgames.com/documentation/en-us/unreal-engine/physically-based-materials-in-unreal-engine"
+  ],
+  "appearanceConfidence": "medium (measured iron F0; no steel-grade measurement)",
+  "appearanceNotes": "Iron F0 from physicallybased (CC0, refractiveindex.info metals/iron): linear (0.530, 0.513, 0.494), sRGB #c0bebb. The Unreal docs give iron as linear (0.560, 0.570, 0.580), sRGB #c5c7c8, a slightly cooler and brighter alternative. Carbon steel is mostly iron; no measured F0 for a steel grade was found. This preset is bare bright steel only. Real steel parts are often zinc-plated, black-oxide or painted, which would be separate finish presets (not researched). Roughness 0.4 is an artistic default for a machined surface.",
+  "factCheck": "Value 7850 confirmed, attribution corrected: steel construction design guides (Tata blue book, ArcelorMittal orange book) and EN 1991-1-1 Annex A (77.0-78.5 kN/m3), not EN 1993-1-1. Colour confirmed (Fe, Johnson and Christy).",
+  "used": {}
+ },
+ {
+  "key": "std.stainless-304",
+  "name": "Stainless steel 304",
+  "densityKgM3": 8000,
+  "planDensityKgM3": 8000,
+  "densityRange": [
+   7890,
+   8030
+  ],
+  "densitySources": [
+   "https://www.upmet.com:443/sites/default/files/datasheets/304-304l.pdf",
+   "https://www.combmet.com/wp-content/uploads/2024/01/304L-Stainless-Steel-Alloy-Data-Sheet-2024-01-11.pdf",
+   "https://www.rolledalloys.ca/wp-content/uploads/304-304L_stainless-steel-data-sheet-rolled-alloys.pdf",
+   "https://portal.powertec.com.au/technical-library/manufacturing/materials/stainless-steel-304",
+   "https://china-casting.com/density-of-stainless-steel/"
+  ],
+  "densityConfidence": "medium",
+  "densityNotes": "Published values for 304/304L spread over about 2%. 8.03 g/cm3 (0.29 lb/in3): United Performance Metals and Combined Metals. 8.00: Powertec. 7.93: industry tables, attributed to ASTM A240/EN 10088 without a clause. 0.285 lb/in3 = 7.89 g/cm3: Rolled Alloys. EN 10088-1 is paywalled and was not read. PLAN's 8000 is mid-range, so keep it. The earlier research also uses 8000 for stainless A2 (docs/research/component-library/catalog-mechanical.json:68).",
+  "appearance": {
+   "colorHex": "#d6d1cb",
+   "metalness": 1,
+   "roughness": 0.3
+  },
+  "appearanceSources": [
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json",
+   "https://refractiveindex.info/?shelf=3d&book=metals&page=stainless_steel"
+  ],
+  "appearanceConfidence": "medium (one measured source; grade not stated)",
+  "appearanceNotes": "physicallybased 'Stainless Steel' (CC0, refractiveindex.info stainless_steel; the source does not state the grade): linear (0.669, 0.639, 0.598), sRGB #d6d1cb. No second measured source was found. Roughness 0.3 is an artistic default for a brushed or 2B finish.",
+  "factCheck": "Density 8000 within the spread (1.4301 suppliers 7.9, Wermac 7.93; 8.03 is a 2-significant-figure conversion of 0.29 lb/in3). Colour data is Karlsson 'Avesta 832 MV' austenitic stainless (close to 304).",
+  "used": {}
+ },
+ {
+  "key": "std.brass",
+  "name": "Brass",
+  "densityKgM3": 8500,
+  "planDensityKgM3": 8500,
+  "densityRange": [
+   8410,
+   8500
+  ],
+  "densitySources": [
+   "https://fiskalloy.com/product/ma36b/",
+   "https://www.ezlok.com/brass-properties",
+   "https://alloys.copper.org/alloy/C36800",
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json"
+  ],
+  "densityConfidence": "medium",
+  "densityNotes": "C36000 free-cutting brass, the common machining brass: 8.5 g/cm3 (0.307 lb/in3, Fisk Alloy) and 8.49 g/cm3 at 20 C (Ezlok). CDA C36700/C36800: 0.304 lb/in3, specific gravity 8.41 (copper.org). Density depends on the Cu/Zn/Pb mix, and higher-copper brasses are denser (values not verified here). physicallybased lists 8600 (from Wikipedia). The copper.org page for C36000 was not indexed, and MakeItFrom's 8.2 is an outlier. The preset represents C36000.",
+  "appearance": {
+   "colorHex": "#f5e4ae",
+   "metalness": 1,
+   "roughness": 0.3
+  },
+  "appearanceSources": [
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json",
+   "https://refractiveindex.info/?shelf=3d&book=metals&page=brass"
+  ],
+  "appearanceConfidence": "medium (one measured source; composition not stated)",
+  "appearanceNotes": "physicallybased 'Brass' (CC0, refractiveindex.info metals/brass, composition not stated): linear (0.910, 0.778, 0.423), sRGB #f5e4ae. Only one measured source was found, and the colour shifts with zinc content. Roughness 0.3 is an artistic default for a machined surface.",
+  "factCheck": "Density 8500 confirmed for C36000 (Fisk, Ezlok). The colour data is Querry Cu70Zn30 (C26000, 8.53); the gap is negligible.",
+  "used": {}
+ },
+ {
+  "key": "std.copper",
+  "name": "Copper",
+  "densityKgM3": 8960,
+  "planDensityKgM3": 8960,
+  "densityRange": [
+   8890,
+   8960
+  ],
+  "densitySources": [
+   "https://en.wikipedia.org/wiki/Densities_of_the_elements_(data_page)",
+   "https://en.wikipedia.org/wiki/Copper",
+   "https://copper.org/publications/newsletters/innovations/2001/08/intro_fac.php",
+   "https://www.australwright.com.au/technical-data/alloys/copper-brass/c11000-etp-copper/"
+  ],
+  "densityConfidence": "high",
+  "densityNotes": "8960 is the elemental handbook value (CRC, via Wikipedia's densities data page). Wikipedia's copper infobox gives 8.935 g/cm3 at 20 C. Copper Development Association: typical 8.92 g/cm3 at 20 C, IEC standard 8.89. C11000 (ETP): 8.89 at 20 C (Austral Wright). Commercial copper is up to 0.8% lighter than 8960. Keeping 8960 or using 8920 (CDA typical) are both inside the range; this is a choice for the design.",
+  "appearance": {
+   "colorHex": "#f7cfbf",
+   "metalness": 1,
+   "roughness": 0.3
+  },
+  "appearanceSources": [
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json",
+   "https://refractiveindex.info/?shelf=main&book=Cu&page=Johnson",
+   "https://dev.epicgames.com/documentation/en-us/unreal-engine/physically-based-materials-in-unreal-engine"
+  ],
+  "appearanceConfidence": "high (two measured sources agree)",
+  "appearanceNotes": "physicallybased 'Copper' (CC0, refractiveindex.info Johnson and Christy): linear (0.932, 0.623, 0.522), sRGB #f7cfbf. The Unreal docs give linear (0.955, 0.637, 0.538), sRGB #fad1c2. The two agree within 2-3 sRGB levels per channel. The preset is bare, unoxidised copper; tarnish is not modelled. Roughness 0.3 is an artistic default.",
+  "factCheck": "8960 is the elemental value at about 25 C; engineering copper at 20 C is 8.92-8.94 (CDA typical 8.92, Wikipedia 8.935, physicallybased 8940). The app uses 8940. Colour confidence medium-high: Rakic-BB data moves green by 0.07.",
+  "used": {
+   "densityKgM3": 8940
+  }
+ },
+ {
+  "key": "std.rubber",
+  "name": "Rubber",
+  "densityKgM3": 1100,
+  "planDensityKgM3": 1100,
+  "densityRange": [
+   860,
+   1280
+  ],
+  "densitySources": [
+   "https://pmc.ncbi.nlm.nih.gov/articles/PMC10446097.2/table/T1",
+   "https://phelpsgaskets.com/useful-resources/general-properties-of-elastomers",
+   "https://www.stockwell.com/data-sheets/comparative-resistance-of-materials.pdf",
+   "https://www.open.edu/openlearn/science-maths-technology/chemistry/introduction-polymers/content-section-1.2.1"
+  ],
+  "densityConfidence": "low",
+  "densityNotes": "'Rubber' is a family whose density is dominated by fillers, so 1100 is a class default. Base polymers (Open University, Phelps, Stockwell): EPDM about 0.85-0.86, natural rubber 0.91-0.93, NBR 0.98-1.10, chloroprene (Neoprene) 1.20-1.23. A PMC study measured filled compounds at 1.12-1.20 (EPDM) and 1.22-1.28 (NBR). Heavily filled compounds may exceed this range (not verified). Use a mass override for known parts.",
+  "appearance": {
+   "colorHex": "#2a2a2a",
+   "metalness": 0,
+   "roughness": 0.7,
+   "ior": 1.52
+  },
+  "appearanceSources": [
+   "https://raw.githubusercontent.com/AntonPalmqvist/physically-based-api/9a0cd2cafa005cb734fd06b3aad00d58bd73e052/deploy/v2/materials.json",
+   "https://b2b.sigmaaldrich.com/GB/en/product/aldrich/182141"
+  ],
+  "appearanceConfidence": "medium for colour (spectrophotometer); low for roughness",
+  "appearanceNotes": "physicallybased 'Tire' (CC0): colour linear 0.023 from a spectrophotometer measurement, sRGB #2a2a2a; roughness 0.7 and ior 1.5. The source does not say where the roughness and ior come from, so treat them as artistic. This represents black, carbon-black-filled rubber. IOR 1.52 comes from cis-1,4-polyisoprene, n20/D 1.5191 (Sigma-Aldrich 182141). It looks the same as 1.5 (F0 4.3% against 4.0%).",
+  "factCheck": "Class default 1100 confirmed (base polymers 0.86-1.23, filled compounds 1.12-1.28). Colour, roughness and IOR (natural rubber n20/D 1.519) confirmed.",
+  "used": {}
+ },
+ {
+  "key": "std.fr4",
+  "name": "FR-4",
+  "densityKgM3": 1850,
+  "planDensityKgM3": 1850,
+  "densityRange": [
+   1800,
+   1950
+  ],
+  "densitySources": [
+   "https://en.wikipedia.org/wiki/FR-4",
+   "https://plastics.tridentplastics.com/compare/phenolic-laminate/nema-fr4-g-10-glass-epoxy-sheet",
+   "https://plasticsintl.com/products/laminate-g-10fr-4-glass-epoxy",
+   "https://portal.powertec.com.au/technical-library/manufacturing/materials/glass-epoxy-fr-4"
+  ],
+  "densityConfidence": "medium",
+  "densityNotes": "Wikipedia's FR-4 property table, labelled as one manufacturer's material: 1.850 g/cm3. NEMA FR4/G-10 sheet: 1.95 (ASTM D792, Trident Plastics). Plastics International: specific gravity 1.8. Powertec: 1.90. The value varies with resin and glass content; the Isola 370HR sheet that was found does not list density. A populated PCB is mixed-material (copper, solder mask, components). PLAN.md:205-207 gives boards a datasheet mass plus a centre-of-mass override, so this density is for bare laminate.",
+  "appearance": {
+   "colorHex": "#2f6b3e",
+   "metalness": 0,
+   "roughness": 0.35
+  },
+  "appearanceSources": [
+   "https://cool.culturalheritage.org/jaic/articles/jaic32-03-008_1.html"
+  ],
+  "appearanceConfidence": "low (artistic)",
+  "appearanceNotes": "Artistic default for the usual green solder-mask finish; the colour of bare laminate was not researched. ECAD STEP/GLB boards usually bring their own colours through material slots (PLAN.md:757-761). IOR: unknown. FR-4 is an epoxy/glass composite, and cured epoxies span about 1.515-1.565 in conservation literature, which is not FR-4 specific. ior is therefore left out and three's default of 1.5 applies.",
+  "factCheck": "Density 1850 confirmed within 1800-1950. The JAIC article is about conservation adhesives and supports neither the IOR nor the colour; the colour is artistic and the IOR uses the glTF default 1.5.",
+  "used": {}
+ }
+]

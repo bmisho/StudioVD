@@ -12,12 +12,13 @@ import {
   type SceneDocument,
 } from "@/core/schema"
 import { removeGroups } from "./deletion"
+import { materialActions, type MaterialActions } from "./materialActions"
 import { partActions, type PartActions } from "./partActions"
 
 /** Maximum undo depth. Snapshots share structure (immer), so each costs only what changed. */
 export const HISTORY_LIMIT = 200
 
-export interface DocumentState extends PartActions {
+export interface DocumentState extends PartActions, MaterialActions {
   /** The persisted, undoable document (CLAUDE.md §4, kind 1). */
   doc: SceneDocument
   /** Replaces the whole document (open, new). The caller decides whether to clear history. */
@@ -76,6 +77,7 @@ export function createDocumentStore(initial?: SceneDocument) {
         deleteGroups: (ids) => set((s) => removeGroups(s.doc, ids)),
 
         ...partActions(set),
+        ...materialActions(set, get),
 
         insertEntities: (batch) => {
           const problems = entityBatchProblems(get().doc, batch)

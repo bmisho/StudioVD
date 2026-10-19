@@ -56,6 +56,15 @@ export function ViewportProbe() {
           typeof WebGL2RenderingContext !== "undefined" && ctx instanceof WebGL2RenderingContext
         return { webgl2, ...summarizePixels(px, w, h, background) }
       },
+      pixelAt: (x, y) => {
+        const frame = renderAndRead()
+        if (!frame) return null
+        const rect = get().gl.domElement.getBoundingClientRect()
+        const px = Math.floor(((x - rect.left) / rect.width) * frame.w)
+        const py = Math.floor(((rect.bottom - y) / rect.height) * frame.h) // GL rows go up
+        const at = 4 * (py * frame.w + px)
+        return [frame.px[at] ?? 0, frame.px[at + 1] ?? 0, frame.px[at + 2] ?? 0]
+      },
       highlightPixels: (tolerance = 2) => {
         const frame = renderAndRead()
         return frame ? countColour(frame.px, highlight, tolerance) : 0

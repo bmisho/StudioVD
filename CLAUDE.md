@@ -43,7 +43,7 @@ src/
     viewport/     R3F canvas, camera, controls, grid, lighting, picking
     physics/      Rapier world, bodies, joints, drag controller
     assembly/     Anchors, mates, snapping, assembly graph
-    materials/    PBR library + editor
+    materials/    Material section of the inspector: picker, preset toolbar, editor, previews
     import/       Loaders, import dialog, workers
     schematic/    React Flow editor, node types, ports
     scene-graph/  Left sidebar tree
@@ -54,6 +54,8 @@ src/
   core/           PURE TypeScript. No React, no R3F, no DOM, no Tauri
     math/         Frames, transforms, fitting (three math types allowed)
     physics/      Drag spring, damping, joint tree, physics model from the document (no Rapier)
+    materials/    Built-in presets (with density sources), material -> three params, slot looks
+    geometry/     Asset preparation, GLB codec (v1/v2 slots), faces, feature edges
     sim/          Netlist compiler, MNA solver, signal propagation (no three.js at all)
     generators/   Parametric standard parts: <id>/v<major>.ts (pure, runs in a worker)
     schema/       zod schemas for scene.json, component.json, packs, catalog + migrations;
@@ -137,6 +139,10 @@ Further rules:
   schematic). A remount destroys the WebGL context and every GPU resource, and resets panel
   sizes and tabs. Show/hide through the panel API (collapse/expand) plus `inert`.
 - Never put geometry buffers, textures, or three.js objects in the store. Store asset IDs.
+- Materials: one shared `MeshPhysicalMaterial` (and X-ray variant) per document material
+  (`viewport/materials/materialCache.ts`). Edits reach it in place through `MaterialSync`, so
+  a slider scrub re-renders no part components; parts re-resolve only when their own
+  assignments, their loaded slots or the display mode change.
 - Simulation results live in the session store keyed by node/port ID, not inside React Flow
   node `data` (that would re-render the whole graph on every solve).
 
@@ -177,6 +183,19 @@ Further rules:
 - The **only** network access in the app is the Rust library downloader, and only on an
   explicit user action (Browse, Refresh, Download, Check for updates) or an opt-in periodic
   check (off by default). No startup network traffic. An "Offline mode" switch disables it.
+- Appearance (Phase 6): a slot draws the part's override for it, else the part's material,
+  else the imported colour, else the default (`core/materials/slotLooks.ts`). Transparent
+  materials go to the sorted transparent pass without depth writes; only transmission (glass)
+  uses three's transmission pass (half resolution). Never set `renderOrder` on parts: the
+  grid (-1), tint (1), stencil silhouette (2) and outline (3) rely on parts at 0. Texture
+  maps are triplanar in part-local mm (assets have no UVs), loaded at most 2048 px.
+- Display modes: feature edges are computed once per asset in the asset worker and drawn as
+  `LineSegments` over the asset's own position buffer (dispose them only with the asset: it
+  would free the shared buffer). Part meshes raycast with `partRaycast` (front faces, one
+  material) so picking is the same in every mode; wireframe hides faces with `visible`.
+- Material previews render with the 3D view's own renderer into its canvas (no second
+  WebGL context) and are read in the same task; never render previews to a render target
+  (r186 skips tone mapping and the output colour space there).
 - Large binaries never cross IPC as JSON. Assets live in the project workspace dir and are
   loaded through the `stvd` URI scheme (Rust serves `<sha256>.glb` from the workspace only);
   writes use raw binary IPC payloads.
@@ -278,6 +297,12 @@ Testing notes:
 - Vite's dev dependency scan does not follow `new Worker(...)`; workers are listed in
   `optimizeDeps.entries` (`src/workers/*.worker.ts`). Without that, the first import
   re-optimizes and reloads every open page, which breaks parallel E2E runs.
+- The dev probe (`window.__STUDIOVD_VIEWPORT__`) reads real pixels (`pixelAt`,
+  `highlightPixels`) and how parts are drawn (`partLook`: materials per slot, edges, faces
+  shown). CI renders with SwiftShader: assert pixel relations with tolerances, not images.
+- Do not verify a commit in a `git worktree` whose `node_modules` is a symlink to the main
+  checkout: the shared Vite dep cache is re-optimized for the other root and pages reload
+  mid-test (an import then looks lost). Run E2E in the main checkout.
 - `@playwright/test` is pinned to 1.56.1 because the dev sandbox ships Chromium build 1194. CI
   installs browsers itself, so bumping it only breaks local sandbox runs.
 - shadcn/ui: components in `src/components/ui/` come from `shadcn-ui/ui@e94cebe`
@@ -313,6 +338,11 @@ Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindi
   The open project's path, recent files, launch files and recovery candidates stay in Rust:
   the webview sees file names, ids and tokens. Saving zips only files `scene.json` names
   as `<dir>/<sha256>.<ext>`, each re-hashed.
+- Texture images are chosen in a Rust dialog and checked from their headers before anything
+  decodes them (PNG IHDR or JPEG SOF, at most 8192 px a side and 16 MiB), stored as
+  `textures/<sha256>.<png|jpg>` and served by the `stvd` scheme with image types; opening a
+  `.stvd` checks them the same way. Asset GLBs are read strictly (v1, or v2 with one
+  primitive per material slot); slot names are re-validated, never trusted.
 - Every `component.json`, including those inside an opened `.stvd` (a project file is
   untrusted input), passes the same strict zod validation.
 - A strict CSP replaces `"csp": null` before release (Phase 15).

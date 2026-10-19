@@ -137,7 +137,7 @@ MyAssembly.stvd
 ├── scene.json                         master file (schema-validated, versioned)
 ├── thumbnail.png                      512×320, the assembly without grid or gizmos
 ├── geometry/<sha256>.glb              normalized geometry, one per unique asset
-├── textures/<sha256>.<png|jpg>        (Phase 6)
+├── textures/<sha256>.<png|jpg>        PNG or JPEG, at most 16 MiB and 8192 px a side (Phase 6)
 └── licenses/<sha256>.txt              full licence texts of library content used (Phase 9)
 ```
 
@@ -156,9 +156,11 @@ Every collection is `Record<Id, Entity>`. Minted ids are lowercase UUIDs; assets
 and licence texts are keyed by the SHA-256 of their file, whose path is `<dir>/<sha256>.<ext>`.
 Collections a later phase owns are part of v1 but **accepted only empty** until that phase
 (`gates.ts`): relaxing a gate never invalidates a saved file, so it needs no migration.
-Optional fields a later phase defines (asset licence, part material slots and component
-reference, `component` anchor sources, Phase 6 PBR fields...) are left out of v1 and added
-then as optional fields, which no v1 file contains. Cross-entity rules (`integrity.ts`):
+Optional fields a later phase defines (asset licence, component reference, `component`
+anchor sources...) are left out of v1 and added then as optional fields, which no v1 file
+contains. Phase 6 lifted the gates on `textures` and `materials` and added the optional
+`assets[].slots` and `parts[].materialSlots` (a Phase 5 file opens and re-saves byte for
+byte: a frozen fixture checks it). Cross-entity rules (`integrity.ts`):
 record keys equal ids, minted ids unique across kinds, references resolve, no group cycles,
 group depth ≤ 64, collection caps.
 
@@ -167,13 +169,19 @@ interface SceneFile {
   format: "studiovd"; schemaVersion: 1; appVersion: string; units: { length: "mm" };
   project:   { name: string };
   assets:    Record<Sha256, GeometryAsset>;    // path geometry/<id>.glb, triangleCount, bboxMm, volumeMm3?,
-                                               // centroidMm?, watertight? (faces live in the GLB)
-  textures:  Record<Sha256, { id; path: "textures/<id>.png|jpg" }>;     // empty until Phase 6
-  materials: Record<MaterialId, Material>;                              // empty until Phase 6
+                                               // centroidMm?, watertight? (faces live in the GLB),
+                                               // slots? (2-64 material slot names, Phase 6)
+  textures:  Record<Sha256, { id; path: "textures/<id>.png|jpg" }>;     // since Phase 6
+  materials: Record<MaterialId, Material>;     // since Phase 6: name, builtinKey?, color (#rrggbb sRGB),
+                                               // metalness, roughness, opacity, transmission, ior,
+                                               // thicknessMm, clearcoat(+Roughness), emissive(+Intensity),
+                                               // densityKgM3, maps? { baseColor?, roughness? }
+                                               // ({ textureId, tileSizeMm }: triplanar, no UVs)
   groups:    Record<GroupId, { id; name; parentId: GroupId | null }>;
   parts:     Record<PartId, Part>;             // name, assetId, parentId, pose { positionMm, quaternion },
                                                // materialId | null, grounded, visible, collider,
-                                               // massOverrideKg?, comOverrideMm?
+                                               // massOverrideKg?, comOverrideMm?,
+                                               // materialSlots? [{ slot, materialId }] (Phase 6)
   anchors:   Record<AnchorId, Anchor>;         // partId, kind, frame (part-local), name?, interface?,
                                                // source: face | vertex | manual
   mates:     Record<MateId, Mate>;             // two different anchors on two different parts
@@ -754,20 +762,52 @@ Exit criteria
 
 ## Phase 6: Materials & appearance
 
-- [ ] 6.1 Material model: appearance (`MeshPhysicalMaterial`: colour, metalness, roughness,
+- [x] 6.1 Material model: appearance (`MeshPhysicalMaterial`: colour, metalness, roughness,
   clearcoat, transmission, IOR, thickness, opacity, emissive, texture maps) + physical (density);
   per-part material slots keyed by glTF material name (multi-colour STEP/GLB parts). Lifts
   the scene.json v1 gates on `materials` and `textures` (§1.3); slots are stored as a list of
-  `{ slot, materialId }`, since free-text names must not become record keys
-- [ ] 6.2 Built-in library with stable keys and densities (kg/m³): ABS 1040, PLA 1240,
-  PC clear 1200, Acrylic 1180, POM 1410, Polyurethane 1200, Glass 2500, Aluminium 6061/6063 2700,
-  Steel 7850, Stainless 8000, Brass 8500, Copper 8960, Rubber 1100, FR-4 1850
-- [ ] 6.3 Material editor (right sidebar): preset grid with rendered sphere thumbnails, sliders,
-  colour picker, texture slots (images stored in `textures/`)
-- [ ] 6.4 Assign to selection; drag a preset onto a part in the viewport
-- [ ] 6.5 Transparency: sorted transparent pass, no depth write; `transmission` only for glass presets
-- [ ] 6.6 Display modes: shaded, shaded + feature edges (~30° threshold), wireframe, X-ray
-- [ ] 6.7 Tests: material → three params mapping, schema round-trip, visual screenshot
+  `{ slot, materialId }`, since free-text names must not become record keys. As built: per
+  slot, the part's override for that slot, else the part's material, else the imported
+  colour, else the default; density comes from the part's material only. Slots come from
+  every format (STEP/IGES face colours, else the body's; glTF primitives, one part per glTF
+  mesh; OBJ `usemtl`; binary STL facet colours), named after the source material, else
+  `#RRGGBB`, else "Default", at most 64 (the rest fold into the last, with a warning).
+  Assets store them as GLB v2: one primitive per slot over shared vertex attributes, each a
+  window of one index buffer, named glTF materials; faces never cross slots. Single-slot
+  assets stay GLB v1 byte for byte (hashes pinned from the Phase 5 encoder), so re-imports
+  dedup against existing projects. Texture images: PNG/JPEG chosen in Rust, checked from
+  their headers before anything decodes them (≤ 16 MiB, ≤ 8192 px), drawn at ≤ 2048 px
+- [x] 6.2 Built-in library with stable keys and densities (kg/m³): ABS 1040, PLA 1240,
+  PC clear 1200, Acrylic 1190, POM 1410, Polyurethane 1200, Glass 2500, Aluminium 6061/6063 2700,
+  Steel 7850, Stainless 8000, Brass 8500, Copper 8940, Rubber 1100, FR-4 1850. As built:
+  fact-checked against datasheets (`docs/research/materials.json`): acrylic is 1190 (PMMA,
+  PLAN said 1180), copper 8940 (annealed C11000; 8960 is pure copper at 20 °C); each density
+  carries its source and confidence, shown in the editor. Assigning a preset reuses an
+  unchanged copy already in the project
+- [x] 6.3 Material editor (right sidebar): preset grid with rendered sphere thumbnails, sliders,
+  colour picker, texture slots (images stored in `textures/`). As built: thumbnails are
+  rendered by the 3D view's own renderer (scissored tiles in its canvas, read in the same
+  task: exact on-screen look, no second WebGL context), cached per appearance; a flat disc
+  until then. Colour: hex field, named swatches, the system picker. Every committed edit or
+  slider drag is one undo entry. Images are projected along the part's three local axes
+  (triplanar, tile size in mm): assets have no UVs
+- [x] 6.4 Assign to selection; drag a preset onto a part in the viewport. As built: a part,
+  a group or several items; the drag gives the preset to the part under the cursor only
+  (Escape cancels); per-slot materials for multi-material parts
+- [x] 6.5 Transparency: sorted transparent pass, no depth write; `transmission` only for glass
+  presets. As built: glass renders its transmission target at half resolution (about a
+  quarter of the memory). Known limit: the grid is in the transparent pass, so glass does
+  not refract it (moving it to the opaque pass would draw it under parts below the floor)
+- [x] 6.6 Display modes: shaded, shaded + feature edges (~30° threshold), wireframe, X-ray.
+  As built (View › Display Style): feature edges are where two faces meet at 30° or more,
+  plus borders (so a coarse hole or a cylinder seam stays clean), computed once per asset in
+  the asset worker; wireframe shows those edges with the faces hidden but pickable; X-ray is
+  an unlit fresnel multiply that needs no sorting. The selection outline is masked by a
+  stencil silhouette, so it stays an outline on transparent, X-ray and wireframe parts
+- [x] 6.7 Tests: material → three params mapping, schema round-trip, visual screenshot. As
+  built: the "visual" test reads rendered pixels (copper is warm, red is red, 10 % opacity is
+  nearly the background, X-ray is lighter), since CI renders with SwiftShader; screenshots
+  of every display style were checked by eye
 - [ ] ⛔ 6.8 **User approval**
 
 ## Phase 7: Anchor system

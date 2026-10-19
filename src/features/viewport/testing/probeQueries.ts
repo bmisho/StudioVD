@@ -1,5 +1,5 @@
 import type { RootState } from "@react-three/fiber"
-import { Box3, Vector2, Vector3, type LineSegments, type Mesh, type Object3D } from "three"
+import { Box3, Color, Vector2, Vector3, type LineSegments, type Mesh, type Object3D } from "three"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { assetCache } from "../parts/assetCache"
 import { partObject } from "../parts/partObjects"
@@ -76,7 +76,12 @@ export function partLook(id: string): PartLookState | null {
   )
   const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
   return {
-    materials: materials.map((m) => ({ type: m.type, name: m.name, transparent: m.transparent })),
+    materials: materials.map((m) => ({
+      type: m.type,
+      name: m.name,
+      transparent: m.transparent,
+      color: "color" in m && m.color instanceof Color ? `#${m.color.getHexString()}` : null,
+    })),
     facesVisible: mesh.visible,
     edgeSegments: (lines?.geometry.getIndex()?.count ?? 0) / 2,
   }

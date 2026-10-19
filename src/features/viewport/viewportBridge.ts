@@ -1,3 +1,4 @@
+import type { Material } from "three"
 import type { Direction } from "@/core/math/standardViews"
 import type { PartId } from "@/core/schema"
 
@@ -20,6 +21,14 @@ export interface ViewportApi {
   captureThumbnail(): Promise<Uint8Array | null>
   /** The part drawn under a point of the page (client px), if any. */
   partAt(clientX: number, clientY: number): PartId | null
+  /**
+   * Sphere previews of three.js materials, `tilePx` device px square, in order (PLAN 6.3).
+   * Async: shaders compile first without blocking. Null when it cannot render now.
+   */
+  renderMaterialPreviews(
+    materials: readonly Material[],
+    tilePx: number
+  ): Promise<ImageData[] | null>
 }
 
 export interface ViewportImpl {
@@ -28,6 +37,10 @@ export interface ViewportImpl {
   setView(direction: Direction, animate: boolean): void
   captureThumbnail(): Promise<Uint8Array | null>
   partAt(clientX: number, clientY: number): PartId | null
+  renderMaterialPreviews(
+    materials: readonly Material[],
+    tilePx: number
+  ): Promise<ImageData[] | null>
 }
 
 const prefersMotion = () =>
@@ -44,6 +57,8 @@ export function createViewportBridge(): ViewportApi & { attach(impl: ViewportImp
     setView: (direction) => current?.setView(direction, prefersMotion()),
     captureThumbnail: async () => (current ? current.captureThumbnail() : null),
     partAt: (x, y) => current?.partAt(x, y) ?? null,
+    renderMaterialPreviews: async (materials, tilePx) =>
+      current ? current.renderMaterialPreviews(materials, tilePx) : null,
     attach(impl) {
       current = impl
       return () => {

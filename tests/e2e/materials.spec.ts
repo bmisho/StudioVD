@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { expect, fixtureFile, queueImportPick, test } from "./fixtures"
+import { expect, fixtureFile, queueImportPick, test, type E2EWindow } from "./fixtures"
 import { partCenter, waitForViewport } from "./viewportHelpers"
 
 // Phase 6 end to end against the mocked backend: material slots from a coloured STEP file,
@@ -68,5 +68,57 @@ test.describe("materials", () => {
     await expect(panel.getByRole("combobox", { name: "Material" })).toHaveText("Imported colours")
     for (const slot of ["#999999", "#FF0000", "#0000FF"])
       await expect(panel.getByRole("combobox", { name: slot })).toHaveText("Part material")
+  })
+
+  test("presets, editing, a texture and dragging a preset onto a part", async ({ page }) => {
+    const warnings: string[] = []
+    page.on("console", (m) => {
+      if (m.type() === "warning" || m.type() === "error") warnings.push(m.text())
+    })
+    const id = await importColouredCube(page)
+    const centre = await partCenter(page, id)
+    await page.mouse.click(centre.x, centre.y)
+    const panel = page.getByRole("complementary", { name: "Properties" })
+    const names = async () => (await partLook(page, id))?.materials.map((m) => m.name)
+
+    // A preset applies to the selection; every slot follows the part's material.
+    const presets = panel.getByRole("toolbar", { name: "Material presets" })
+    await presets.getByRole("button", { name: "Steel", exact: true }).click()
+    await expect.poll(names).toEqual(["Steel", "Steel", "Steel"])
+    await expect(panel.getByRole("combobox", { name: "Material" })).toHaveText("Steel")
+
+    // Editing the shared material: one undo entry per committed edit.
+    const hex = panel.getByRole("textbox", { name: "Colour", exact: true })
+    await hex.fill("#ff0000")
+    await hex.press("Enter")
+    await expect.poll(async () => (await partLook(page, id))?.materials[0]?.color).toBe("#ff0000")
+    await page.keyboard.press("Control+z")
+    await expect
+      .poll(async () => (await partLook(page, id))?.materials[0]?.color)
+      .not.toBe("#ff0000")
+
+    // A colour image: chosen through Rust (mocked), stored once, drawn without errors.
+    await page.evaluate(
+      (file) => (window as unknown as E2EWindow).__E2E__.queueTexture(file),
+      fixtureFile("checker.png")
+    )
+    const image = panel.getByRole("group", { name: "Colour image" })
+    await image.getByRole("button", { name: "Choose image…" }).click()
+    await expect(image.getByText(/^Image [0-9a-f]{8}$/)).toBeVisible()
+    expect(
+      await page.evaluate(() => (window as unknown as E2EWindow).__E2E__.textureIds().length)
+    ).toBe(1)
+
+    // Dragging a preset tile onto the part gives that part the preset.
+    const copper = presets.getByRole("button", { name: "Copper", exact: true })
+    await copper.scrollIntoViewIfNeeded() // the editor below scrolled the panel
+    const box = await copper.boundingBox()
+    if (!box) throw new Error("no Copper tile")
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(centre.x, centre.y, { steps: 8 })
+    await page.mouse.up()
+    await expect.poll(names).toEqual(["Copper", "Copper", "Copper"])
+    expect(warnings.filter((w) => /texture|not loaded|shader/i.test(w))).toEqual([])
   })
 })

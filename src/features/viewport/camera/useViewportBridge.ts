@@ -3,6 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { Box3, type Group } from "three"
 import { partAtPoint } from "../picking/partAtPoint"
 import { captureThumbnail } from "../thumbnail/captureThumbnail"
+import { renderMaterialPreviews } from "../thumbnail/materialPreviews"
 import { viewportBridge } from "../viewportBridge"
 import type { CameraRig } from "./createCameraRig"
 import { fitAll, setViewDirection } from "./fitView"
@@ -10,7 +11,10 @@ import { visiblePartsBox } from "./sceneBounds"
 
 const box = new Box3()
 
-/** Registers fit-all, standard views and thumbnails with the command bridge; fits on mount. */
+/**
+ * Registers fit-all, standard views, thumbnails and material previews with the command
+ * bridge; fits on mount.
+ */
 export function useViewportBridge(rig: CameraRig, partsRoot: RefObject<Group | null>): void {
   const get = useThree((s) => s.get)
   const invalidate = useThree((s) => s.invalidate)
@@ -34,6 +38,8 @@ export function useViewportBridge(rig: CameraRig, partsRoot: RefObject<Group | n
       },
       captureThumbnail: () => captureThumbnail(get()),
       partAt: (x, y) => partAtPoint(get(), partsRoot.current, x, y),
+      renderMaterialPreviews: (materials, tilePx) =>
+        renderMaterialPreviews(get(), materials, tilePx),
     })
   }, [rig, partsRoot, get, invalidate])
 

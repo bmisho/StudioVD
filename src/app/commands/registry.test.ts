@@ -118,6 +118,7 @@ describe("3D view commands", () => {
       setView: vi.fn(),
       captureThumbnail: vi.fn(),
       partAt: vi.fn(() => null),
+      renderMaterialPreviews: vi.fn(() => Promise.resolve(null)),
     }
     const detach = viewport.attach(impl)
     expect(registry.run("view.fitAll")).toBe(true)

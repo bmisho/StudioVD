@@ -1,8 +1,8 @@
 import { Color, FrontSide, MeshPhysicalMaterial, type Material as ThreeMaterial } from "three"
-import { physicalParams } from "@/core/materials/physicalParams"
 import { lookKey, type SlotLook } from "@/core/materials/slotLooks"
 import type { Material, Texture } from "@/core/schema"
 import { readSceneTokens } from "../theme/sceneTokens"
+import { applyPhysical } from "./applyPhysical"
 import { textureCache } from "./textureCache"
 import { EdgeLineMaterial } from "./edgeLineMaterial"
 import { setTriplanarMaps, type TriplanarMaps } from "./triplanar"
@@ -53,25 +53,8 @@ function mapsOf(material: Material, textures: Readonly<Record<string, Texture>>)
 
 /** Copies a document material onto its three.js materials, in place (no new programs). */
 function apply(entry: Entry, material: Material, textures: Readonly<Record<string, Texture>>) {
-  const p = physicalParams(material)
   const s = entry.shaded
-  s.name = material.name
-  s.color.setRGB(...p.color)
-  s.metalness = p.metalness
-  s.roughness = p.roughness
-  s.opacity = p.opacity
-  // `transparent` is part of the program key, but three does not notice it changing.
-  if (s.transparent !== p.transparent) s.needsUpdate = true
-  s.transparent = p.transparent
-  s.depthWrite = p.depthWrite
-  // These setters recompile by themselves when a feature turns on or off (crosses 0).
-  s.transmission = p.transmission
-  s.ior = p.ior
-  s.thickness = p.thickness
-  s.clearcoat = p.clearcoat
-  s.clearcoatRoughness = p.clearcoatRoughness
-  s.emissive.setRGB(...p.emissive)
-  s.emissiveIntensity = p.emissiveIntensity
+  applyPhysical(s, material)
   setTriplanarMaps(s, mapsOf(material, textures))
   entry.xray.setTint(s.color)
   entry.applied = material

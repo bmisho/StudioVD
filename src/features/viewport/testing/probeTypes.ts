@@ -33,7 +33,7 @@ export interface PartPoseState {
 
 export interface PartLookState {
   /** One per material slot (one for a single-slot asset or an unloaded box). */
-  materials: { type: string; name: string; transparent: boolean }[]
+  materials: { type: string; name: string; transparent: boolean; color: string | null }[]
   /** False in wireframe (the faces stay pickable). */
   facesVisible: boolean
   /** Feature edge line segments drawn (0 when shaded, or not computed yet). */

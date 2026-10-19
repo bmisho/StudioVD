@@ -1,10 +1,13 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react"
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { PartId } from "@/core/schema"
 import { sampleDocument } from "@/core/schema/testing/sampleDocument"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { resetStores } from "@/test/resetStores"
 import { PartMaterialSection } from "./PartMaterialSection"
+
+// Previews need the 3D view's renderer; the section's behaviour does not.
+vi.mock("./MaterialThumb", () => ({ MaterialThumb: () => null }))
 
 /** The sample's two parts: the first is steel, the second has its Trim slot in rubber. */
 function setup() {

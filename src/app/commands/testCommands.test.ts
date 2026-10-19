@@ -22,6 +22,7 @@ describe("test mode commands", () => {
       setView: vi.fn(),
       captureThumbnail: vi.fn(),
       partAt: vi.fn(() => null),
+      renderMaterialPreviews: vi.fn(() => Promise.resolve(null)),
     }
     viewport.attach(impl)
     registry.run("dev.insertTestRig")

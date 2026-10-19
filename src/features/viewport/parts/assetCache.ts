@@ -1,5 +1,6 @@
 import { Color, MeshStandardMaterial, type BufferGeometry } from "three"
 import type { FaceInfo } from "@/core/geometry/meshData"
+import type { AssetSlot } from "@/core/geometry/slots"
 import { isPlaceholderAssetId } from "@/core/scene/testRig"
 import type { AssetId } from "@/core/schema"
 import { assetUrl } from "@/lib/tauri/files"
@@ -13,6 +14,7 @@ export interface LoadedAsset {
   /** Source colours (per-vertex or base colour); null = the default part material. */
   material: MeshStandardMaterial | null
   faces: FaceInfo[]
+  slots: AssetSlot[]
 }
 
 type Entry = { state: "loading" } | { state: "ready"; asset: LoadedAsset } | { state: "failed" }
@@ -25,9 +27,8 @@ function materialFor(asset: DecodedAsset): MeshStandardMaterial | null {
   const common = { metalness: 0, roughness: 0.55 }
   if (asset.colors) return new MeshStandardMaterial({ ...common, vertexColors: true })
   // Base colours are linear, which is three's working colour space.
-  if (asset.baseColor)
-    return new MeshStandardMaterial({ ...common, color: new Color(...asset.baseColor) })
-  return null
+  const color = asset.slots[0]?.color
+  return color ? new MeshStandardMaterial({ ...common, color: new Color(...color) }) : null
 }
 
 async function load(id: AssetId): Promise<LoadedAsset> {
@@ -39,6 +40,7 @@ async function load(id: AssetId): Promise<LoadedAsset> {
     geometry: toGeometry(decoded, HULL_NORMAL),
     material: materialFor(decoded),
     faces: decoded.faces,
+    slots: decoded.slots,
   }
 }
 

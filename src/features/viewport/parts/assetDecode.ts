@@ -2,7 +2,7 @@ import { BufferAttribute, BufferGeometry } from "three"
 import { MeshBVH, type MeshBVHOptions, type SerializedBVH } from "three-mesh-bvh"
 import { decodeGlb } from "@/core/geometry/glbRead"
 import type { FaceInfo } from "@/core/geometry/meshData"
-import type { Vec3 } from "@/core/schema"
+import type { AssetSlot } from "@/core/geometry/slots"
 
 /** The 0.8.3 typings omit `indirect`, which the library implements (MeshBVH.js). */
 type IndirectBuffer = Uint32Array | Uint16Array
@@ -17,7 +17,8 @@ export interface DecodedAsset {
   colors: Float32Array | null
   indices: Uint32Array
   faces: FaceInfo[]
-  baseColor: Vec3 | null
+  /** Material slots in index order (one for a single-colour mesh). */
+  slots: AssetSlot[]
   bvh: { roots: ArrayBuffer[]; indirectBuffer: IndirectBuffer | null }
 }
 
@@ -27,7 +28,7 @@ export interface DecodedAsset {
  * keep referring to the stored triangle order (Phase 7 picks faces by triangle index).
  */
 export function decodeAsset(bytes: Uint8Array): DecodedAsset {
-  const { mesh, hullNormals, faces, baseColor } = decodeGlb(bytes)
+  const { mesh, hullNormals, faces, slots } = decodeGlb(bytes)
   const geometry = new BufferGeometry()
   geometry.setAttribute("position", new BufferAttribute(mesh.positions, 3))
   geometry.setIndex(new BufferAttribute(mesh.indices, 1))
@@ -42,7 +43,7 @@ export function decodeAsset(bytes: Uint8Array): DecodedAsset {
     colors: mesh.colors ?? null,
     indices: mesh.indices,
     faces,
-    baseColor,
+    slots,
     bvh: { roots: bvh.roots, indirectBuffer: bvh.indirectBuffer },
   }
 }
@@ -69,6 +70,10 @@ export function toGeometry(asset: DecodedAsset, hullNormalName: string): BufferG
   geometry.setAttribute(hullNormalName, new BufferAttribute(asset.hullNormals, 3))
   if (asset.colors) geometry.setAttribute("color", new BufferAttribute(asset.colors, 3))
   geometry.setIndex(new BufferAttribute(asset.indices, 1))
+  // One draw group per slot (index order), used once a part gives its slots their own materials.
+  if (asset.slots.length > 1)
+    for (const [i, s] of asset.slots.entries())
+      geometry.addGroup(3 * s.first, 3 * (s.last - s.first + 1), i)
   geometry.computeBoundingBox()
   geometry.computeBoundingSphere()
   const serialized: IndirectSerialized = {

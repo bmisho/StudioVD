@@ -1,10 +1,20 @@
-import { BufferAttribute, BufferGeometry, type Mesh, type Object3D } from "three"
+import { BufferAttribute, BufferGeometry, type Material, type Mesh, type Object3D } from "three"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import type { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js"
 import { decodeUri } from "@/core/import/externalRefs"
 import type { Vec3 } from "@/core/schema"
-import { copyVec3, fromGeometry, type ParsedMesh } from "./parsedMesh"
 import { glbChunks, packGlb, stripTextures } from "./gltfJson"
+import { mergeMeshes } from "./mergeMeshes"
+import { copyVec3, fromGeometry, type ParsedMesh } from "./parsedMesh"
+
+/** What GLTFLoader's `parser.associations` records per object: glTF indices. */
+interface Association {
+  meshes?: number
+  primitives?: number
+  materials?: number
+  nodes?: number
+}
+export type Associations = ReadonlyMap<unknown, Association>
 
 export interface GltfInput {
   bytes: ArrayBuffer
@@ -48,7 +58,8 @@ export async function parseGltf(input: GltfInput): Promise<ParsedMesh[]> {
       data = JSON.stringify(json)
     }
     const gltf = await loader.parseAsync(data, "")
-    return collectMeshes(gltf.scene, input.fileName.replace(/\.[^.]+$/, ""))
+    const associations = gltf.parser.associations as Associations
+    return collectMeshes(gltf.scene, input.fileName.replace(/\.[^.]+$/, ""), associations)
   } finally {
     for (const url of blobUrls) URL.revokeObjectURL(url)
     input.draco?.dispose()
@@ -74,25 +85,79 @@ function floatGeometry(source: BufferGeometry): BufferGeometry {
   return out
 }
 
-/** Every mesh in world space (node transforms applied), named after its node. */
-export function collectMeshes(root: Object3D, fallbackName: string): ParsedMesh[] {
+/**
+ * GLTFLoader makes a glTF mesh with several primitives a Group of child Meshes, one per
+ * primitive: such a Mesh belongs to its parent, which becomes one part with a slot each.
+ */
+function primitivesOwner(mesh: Mesh, associations: Associations): Object3D | null {
+  const own = associations.get(mesh)
+  const parent = mesh.parent
+  const group = parent ? associations.get(parent) : undefined
+  if (!parent || !own || !group || own.primitives === undefined || own.nodes !== undefined)
+    return null
+  return group.meshes === own.meshes && group.primitives === undefined ? parent : null
+}
+
+/** A primitive's slot: its glTF material by name (or index), or "Default" when it has none. */
+function slotOf(material: Material | undefined, associations: Associations) {
+  const index = material ? associations.get(material)?.materials : undefined
+  const c = (material as { color?: { r: number; g: number; b: number } } | undefined)?.color
+  const color: Vec3 | null = c ? [c.r, c.g, c.b] : null
+  if (index === undefined) return { name: "Default", color }
+  return { name: material?.name || `material_${index}`, color }
+}
+
+/** One primitive in world space (node transforms applied), its material as its one slot. */
+function worldMesh(mesh: Mesh, name: string, path: string[], associations: Associations) {
+  // applyMatrix4 transforms normals too (normal matrix); a mirroring transform also needs
+  // the winding reversed, or the triangles would face inward.
+  const geometry = floatGeometry(mesh.geometry).applyMatrix4(mesh.matrixWorld)
+  if (mesh.matrixWorld.determinant() < 0) flipWinding(geometry)
+  const material = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material
+  const slot = slotOf(material, associations)
+  const parsed = fromGeometry(geometry, name, path, slot.color, true)
+  geometry.dispose()
+  const triangles = (parsed.indices?.length ?? parsed.positions.length / 3) / 3
+  return {
+    parsed,
+    slotted: { ...parsed, slots: [slot], triangleSlots: new Uint16Array(triangles) },
+  }
+}
+
+/**
+ * One part per glTF mesh, named after its node; the primitives of a mesh are its material
+ * slots, named after their glTF materials. Without `associations` (tests), one part per Mesh.
+ */
+export function collectMeshes(
+  root: Object3D,
+  fallbackName: string,
+  associations: Associations = new Map()
+): ParsedMesh[] {
   root.updateMatrixWorld(true)
-  const out: ParsedMesh[] = []
+  const owners = new Map<Object3D, Mesh[]>()
   root.traverse((object) => {
     const mesh = object as Mesh
     if (!mesh.isMesh) return
-    // applyMatrix4 transforms normals too (normal matrix); a mirroring transform also needs
-    // the winding reversed, or the triangles would face inward.
-    const geometry = floatGeometry(mesh.geometry).applyMatrix4(mesh.matrixWorld)
-    if (mesh.matrixWorld.determinant() < 0) flipWinding(geometry)
-    const material = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material
-    const c = (material as { color?: { r: number; g: number; b: number } } | undefined)?.color
-    const color: Vec3 | null = c ? [c.r, c.g, c.b] : null
-    const path: string[] = []
-    for (let p = mesh.parent; p && p !== root; p = p.parent) if (nameOf(p)) path.unshift(nameOf(p))
-    out.push(fromGeometry(geometry, nameOf(mesh) || fallbackName, path, color, true))
-    geometry.dispose()
+    const owner = primitivesOwner(mesh, associations) ?? mesh
+    owners.set(owner, [...(owners.get(owner) ?? []), mesh])
   })
+  const out: ParsedMesh[] = []
+  for (const [owner, meshes] of owners) {
+    const path: string[] = []
+    for (let p = owner.parent; p && p !== root; p = p.parent) if (nameOf(p)) path.unshift(nameOf(p))
+    const name = nameOf(owner) || (meshes[0] ? nameOf(meshes[0]) : "") || fallbackName
+    const parts = meshes.map((m) => worldMesh(m, name, path, associations))
+    const single = parts.length === 1 ? parts[0] : undefined
+    out.push(
+      single
+        ? single.parsed
+        : mergeMeshes(
+            parts.map((p) => p.slotted),
+            name,
+            path
+          )
+    )
+  }
   return out
 }
 

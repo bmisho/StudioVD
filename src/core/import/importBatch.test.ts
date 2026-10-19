@@ -3,7 +3,7 @@ import { createEmptyDocument, type AssetId } from "@/core/schema"
 import { entityBatchProblems } from "@/core/scene/entityBatch"
 import { buildImportBatch, cleanName, type ImportedPartInfo } from "./importBatch"
 
-const asset = (n: number, offset: [number, number, number] = [0, 0, 0]) => ({
+const asset = (n: number, offset: [number, number, number] = [0, 0, 0], slots: string[] = []) => ({
   id: n.toString(16).padStart(64, "0") as AssetId,
   offsetMm: offset,
   triangleCount: 12,
@@ -15,6 +15,8 @@ const asset = (n: number, offset: [number, number, number] = [0, 0, 0]) => ({
   volumeMm3: 8,
   centroidMm: [0, 0, 0] as [number, number, number],
   faceCount: 6,
+  slots,
+  slotsFolded: false,
 })
 const part = (name: string, path: string[], n: number): ImportedPartInfo => ({
   name,
@@ -75,6 +77,15 @@ describe("buildImportBatch", () => {
     ])
     expect(batch.assets).toHaveLength(1)
     expect(batch.parts).toHaveLength(2)
+  })
+
+  it("records the slot names of a multi-material asset, and none for a single one", () => {
+    const painted = { name: "Knob", path: [], asset: asset(6, [0, 0, 0], ["Cap", "Grip"]) }
+    const batch = buildImportBatch(createEmptyDocument("0.1.0"), [
+      { fileName: "knob.glb", parts: [painted, part("Plain", [], 7)] },
+    ])
+    expect(batch.assets.map((a) => a.slots)).toEqual([["Cap", "Grip"], undefined])
+    expect(entityBatchProblems(createEmptyDocument("0.1.0"), batch)).toEqual([])
   })
 
   it("cleans names the schema would reject", () => {

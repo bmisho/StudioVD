@@ -18,6 +18,8 @@ export const prepared = (n: number, triangleCount = 12): PreparedAsset => ({
   bboxMm: { min: [-1, -1, -1], max: [1, 1, 1] },
   watertight: true,
   faceCount: 6,
+  slots: [],
+  slotsFolded: false,
 })
 export const outcome = (...ns: number[]): ImportOutcome => ({
   parts: ns.map((n) => ({ name: `Part ${n}`, path: [], asset: prepared(n) })),

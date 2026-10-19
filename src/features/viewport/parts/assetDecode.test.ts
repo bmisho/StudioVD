@@ -13,7 +13,7 @@ function sphereGlb(): { glb: Uint8Array; indices: Uint32Array } {
     mesh: { positions, normals, indices },
     hullNormals: normals,
     faces: [{ first: 0, last: indices.length / 3 - 1, kind: "other" }],
-    baseColor: [0.5, 0.25, 0],
+    slots: [{ name: null, color: [0.5, 0.25, 0], first: 0, last: indices.length / 3 - 1 }],
   })
   return { glb, indices }
 }
@@ -22,7 +22,7 @@ describe("asset decode", () => {
   it("keeps the stored triangle order and hits the same triangles as brute force", () => {
     const { glb, indices } = sphereGlb()
     const decoded = decodeAsset(glb)
-    expect(decoded.baseColor).toEqual([0.5, 0.25, 0])
+    expect(decoded.slots.map((s) => s.color)).toEqual([[0.5, 0.25, 0]])
     const geometry = toGeometry(decoded, "hullNormal")
     expect(Array.from(geometry.getIndex()?.array ?? [])).toEqual(Array.from(indices))
     const bvh = geometry.boundsTree

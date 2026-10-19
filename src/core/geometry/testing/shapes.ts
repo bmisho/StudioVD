@@ -13,8 +13,43 @@ export function boxAsset(sx = 10, sy = 20, sz = 30): AssetGeometry {
     mesh,
     hullNormals: mesh.normals.slice(),
     faces: [{ first: 0, last: 11, kind: "other" }],
-    baseColor: [0.8, 0.1, 0.1],
+    slots: [{ name: null, color: [0.8, 0.1, 0.1], first: 0, last: 11 }],
   }
+}
+
+/** The box with its +z and -z faces (triangles 8-11) in a second slot, which has no colour. */
+export function twoSlotBoxAsset(): AssetGeometry {
+  const asset = boxAsset()
+  return {
+    ...asset,
+    faces: [
+      { first: 0, last: 7, kind: "other" },
+      { first: 8, last: 11, kind: "other" },
+    ],
+    slots: [
+      { name: "Body", color: [0.8, 0.1, 0.1], first: 0, last: 7 },
+      { name: "Trim", color: null, first: 8, last: 11 },
+    ],
+  }
+}
+
+/** An n x n vertex height grid (open, 2(n-1)² triangles): over 65535 vertices from n = 256. */
+export function gridMesh(n: number): MeshData {
+  const positions = new Float32Array(3 * n * n)
+  const normals = new Float32Array(3 * n * n)
+  for (let y = 0; y < n; y++)
+    for (let x = 0; x < n; x++) {
+      const i = y * n + x
+      positions.set([x * 0.5, y * 0.25, ((x * 7 + y * 3) % 5) * 0.1], 3 * i)
+      normals.set([0, 0, 1], 3 * i)
+    }
+  const indices: number[] = []
+  for (let y = 0; y < n - 1; y++)
+    for (let x = 0; x < n - 1; x++) {
+      const a = y * n + x
+      indices.push(a, a + 1, a + n, a + 1, a + n + 1, a + n)
+    }
+  return { positions, normals, indices: Uint32Array.from(indices) }
 }
 
 /**

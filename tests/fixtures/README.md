@@ -5,6 +5,7 @@ All files here are CC0-1.0, written for StudioVD's tests (no third-party geometr
 | File | Made by | Contents |
 |---|---|---|
 | `cube.step` | `tools/fixtures/makeCubeStep.mjs` | 10 mm cube as a faceted B-rep, AP214 |
+| `cube-colours.step` | `tools/fixtures/makeCubeStep.mjs` | The same cube: grey body, +x and -z faces red, +y blue (STYLED_ITEMs) |
 | `bracket.stl` | `tools/fixtures/makeBracketStl.mjs` | L-bracket, 6500 mm³, binary STL |
 | `sample.glb` | `tools/fixtures/makeSampleGlb.mjs` | Two parts under an "Assembly" node, metres |
 | `sample-draco.glb` | `npx @gltf-transform/cli@4.2.1 draco sample.glb sample-draco.glb` | `sample.glb` with `KHR_draco_mesh_compression` |

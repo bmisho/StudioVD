@@ -77,7 +77,7 @@ describe("runImport", () => {
     expect(plate?.asset.offsetMm.map((v) => Math.round(v))).toEqual([100, 0, 0])
     expect(plate?.asset.bboxMm.max.map((v) => Math.round(v))).toEqual([20, 5, 25])
     expect(peg?.asset.offsetMm.map((v) => Math.round(v))).toEqual([100, 20, 0])
-    expect(decodeGlb(plate?.asset.glb ?? new Uint8Array()).baseColor?.[2]).toBeCloseTo(0.8, 5)
+    expect(decodeGlb(plate?.asset.glb ?? new Uint8Array()).slots[0]?.color?.[2]).toBeCloseTo(0.8, 5)
   })
 
   it("meshopt-compressed, quantized GLB decodes to the same parts as the plain one", async () => {
@@ -128,7 +128,10 @@ describe("runImport", () => {
     const mtlText = "newmtl red\nKd 1 0.5 0\n"
     const { parts } = await runImport(job("pair.obj", "obj", bytes, { mtlText }), decoders)
     expect(parts.map((p) => p.name)).toEqual(["A", "B"])
-    expect(decodeGlb(parts[0]?.asset.glb ?? new Uint8Array()).baseColor?.[1]).toBeCloseTo(0.214, 3)
+    expect(decodeGlb(parts[0]?.asset.glb ?? new Uint8Array()).slots[0]?.color?.[1]).toBeCloseTo(
+      0.214,
+      3
+    )
     const single = await runImport(
       job("pair.obj", "obj", bytes, {
         mtlText,

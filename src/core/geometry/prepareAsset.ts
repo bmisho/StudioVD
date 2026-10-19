@@ -4,8 +4,9 @@ import { classifyFaces } from "./classify"
 import { creasedNormals } from "./creasedNormals"
 import { encodeGlb } from "./glbWrite"
 import { volumeAndCentroid } from "./massProperties"
-import { meshBounds, type Bounds, type MeshData } from "./meshData"
+import { dropUnusedVertices, meshBounds, type Bounds, type MeshData } from "./meshData"
 import { growFaces, orderByFace } from "./segment"
+import { groupBySlot, normalizeSlots, slotNames, type AssetSlot, type SourceSlot } from "./slots"
 import { buildTopology, isWatertight } from "./topology"
 import { recentre, toSceneFrame, type SourceFrame } from "./transform"
 
@@ -19,8 +20,11 @@ export interface SourceMesh {
   indices?: Uint32Array
   /** B-rep faces as inclusive triangle ranges (occt `brep_faces`); else faces are grown. */
   faceRanges?: { first: number; last: number }[]
-  /** Linear RGB 0..1. */
+  /** Linear RGB 0..1, for a single-colour mesh (ignored when `slots` is given). */
   color?: Vec3 | null
+  /** Material regions (PLAN 6.1), with `triangleSlots[t]` the slot of source triangle `t`. */
+  slots?: SourceSlot[]
+  triangleSlots?: Uint16Array
 }
 
 /** A normalized asset ready to store, plus what the document needs to place it. */
@@ -38,6 +42,10 @@ export interface PreparedAsset {
   volumeMm3?: number
   centroidMm?: Vec3
   faceCount: number
+  /** Slot names when the asset has two or more material slots, else empty. */
+  slots: string[]
+  /** Source materials beyond the slot limit were merged into the last slot. */
+  slotsFolded: boolean
 }
 
 /** SHA-256 as lowercase hex: the content address of an asset (Web Crypto: Node, browsers, workers). */
@@ -70,13 +78,28 @@ export async function prepareAsset(
   const count = source.positions.length / 3
   const indices = source.indices ?? Uint32Array.from({ length: count }, (_, i) => i)
   if (indices.length < 3) return null
-  const raw: MeshData = {
+  const raw = dropUnusedVertices({
     positions: source.positions,
     normals: source.normals ?? new Float32Array(source.positions.length),
     indices,
-  }
+  })
   let mesh = toSceneFrame(raw, frame)
-  const brep = validRanges(source.faceRanges, indices.length / 3) ? source.faceRanges : undefined
+  const triangles = indices.length / 3
+  const multi = source.slots && source.triangleSlots?.length === triangles
+  const sourceSlots: SourceSlot[] = multi
+    ? (source.slots ?? [])
+    : [{ name: null, color: source.color ?? null }]
+  const normalized = normalizeSlots(
+    sourceSlots,
+    multi ? (source.triangleSlots ?? []) : new Uint16Array(triangles)
+  )
+  let slotOf = normalized.slotOf
+  // An empty occt face (no triangles) would otherwise fail the range check and drop all faces.
+  const faceRanges = source.faceRanges?.filter((r) => r.last >= r.first)
+  const brep =
+    validRanges(faceRanges, triangles) && faceRanges?.every((r) => sameSlot(slotOf, r))
+      ? faceRanges
+      : undefined
   if (!source.normals) mesh = creasedNormals(mesh) // keeps triangle order, so B-rep ranges hold
   const centred = recentre(mesh)
   mesh = centred.mesh
@@ -94,14 +117,35 @@ export async function prepareAsset(
   }
   let ranges = brep
   if (!ranges) {
-    const grown = growFaces(mesh, undefined, topology)
+    const grown = growFaces(
+      mesh,
+      undefined,
+      topology,
+      normalized.slots.length > 1 ? slotOf : undefined
+    )
     const ordered = orderByFace(mesh.indices, grown.faceOf, grown.count)
     mesh = { ...mesh, indices: ordered.indices }
     ranges = ordered.ranges
+    const before = slotOf
+    slotOf = Uint16Array.from(ordered.order, (t) => before[t] ?? 0)
   }
-  const faces = classifyFaces(mesh, ranges)
+  const grouped = groupBySlot(
+    mesh.indices,
+    ranges,
+    ranges.map((r) => slotOf[r.first] ?? 0),
+    normalized.slots.length
+  )
+  mesh = { ...mesh, indices: grouped.indices }
+  const present = normalized.slots.flatMap((slot, i) => {
+    const range = grouped.slotRanges[i]
+    return range && range.first >= 0 ? [{ ...slot, ...range }] : []
+  })
+  const names = slotNames(present)
+  const slots: AssetSlot[] =
+    present.length > 1 ? present.map((s, i) => ({ ...s, name: names[i] ?? null })) : present
+  const faces = classifyFaces(mesh, grouped.ranges)
   const hullNormals = computeHullNormals(mesh.positions, mesh.indices, mesh.normals)
-  const glb = encodeGlb({ mesh, hullNormals, faces, baseColor: source.color ?? null })
+  const glb = encodeGlb({ mesh, hullNormals, faces, slots })
   return {
     name: source.name,
     id: AssetIdSchema.parse(await sha256Hex(glb)),
@@ -112,7 +156,16 @@ export async function prepareAsset(
     watertight,
     ...(mass ?? {}),
     faceCount: faces.length,
+    slots: slots.length > 1 ? names : [],
+    slotsFolded: normalized.folded,
   }
+}
+
+/** Every triangle of a B-rep face is in one slot (faces must not straddle slots). */
+function sameSlot(slotOf: Uint16Array, range: { first: number; last: number }): boolean {
+  for (let t = range.first; t <= range.last; t++)
+    if (slotOf[t] !== slotOf[range.first]) return false
+  return true
 }
 
 /** Reverses every triangle's winding and every normal. */

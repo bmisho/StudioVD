@@ -1,5 +1,6 @@
 import type { BufferGeometry } from "three"
 import type { SourceMesh } from "@/core/geometry/prepareAsset"
+import type { SourceSlot } from "@/core/geometry/slots"
 import type { Vec3 } from "@/core/schema"
 
 /** A source mesh plus where it sat in the file's hierarchy (assembly / group names). */
@@ -10,6 +11,18 @@ export interface ParsedMesh extends SourceMesh {
 /** sRGB (file colours: MTL Kd) -> linear, as glTF base colours are linear. */
 export const srgbToLinear = (c: number): number =>
   c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+
+/**
+ * A mesh's materials as slots, `triangleSlots[t]` being triangle t's. A single slot keeps its
+ * name for a later merge (split mode "single"), and stays a single-colour asset otherwise.
+ */
+export function slotFields(
+  slots: readonly SourceSlot[],
+  triangleSlots: Uint16Array
+): Required<Pick<SourceMesh, "color" | "slots" | "triangleSlots">> {
+  const color = slots.length === 1 ? (slots[0]?.color ?? null) : null
+  return { color, slots: [...slots], triangleSlots }
+}
 
 /**
  * Copies a three.js geometry into a SourceMesh. `trustNormals`: keep the file's normals

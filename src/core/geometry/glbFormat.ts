@@ -1,19 +1,25 @@
 import { z } from "zod"
-import type { Vec3 } from "@/core/schema"
+import { MAX_SLOTS } from "@/core/schema"
 import type { FaceInfo, MeshData } from "./meshData"
+import type { AssetSlot } from "./slots"
 
 /**
  * The normalized geometry asset (PLAN 1.1 decision 3), stored as a standard glTF 2.0 GLB
  * (`geometry/<sha256>.glb`). Geometry only: names and provenance live in the document, so the
  * SHA-256 of these bytes identifies the shape and identical imports are stored once.
+ *
+ * Version 1 is one primitive (at most one unnamed material). Version 2 (PLAN 6.1) is one
+ * primitive per material slot, all sharing the vertex attributes, each a consecutive window of
+ * one index buffer, with the slot name as its glTF material name. Single-slot assets are still
+ * written as version 1, byte for byte, so their content addresses never change.
  */
 export interface AssetGeometry {
   mesh: MeshData
   /** Outline directions for the selection highlight (`_HULLNORMAL`, PLAN 3.6). */
   hullNormals: Float32Array
   faces: FaceInfo[]
-  /** Base colour from the source file, linear RGB 0..1; null when it had none. */
-  baseColor: Vec3 | null
+  /** Material slots in index order, covering every triangle; one for a single-colour mesh. */
+  slots: AssetSlot[]
 }
 
 export const GLB_MAGIC = 0x46546c67 // "glTF"
@@ -28,6 +34,7 @@ export const ELEMENT_ARRAY_BUFFER = 34963
 export const HULL_NORMAL_ATTRIBUTE = "_HULLNORMAL"
 export const EXTRAS_KEY = "studiovd"
 export const EXTRAS_VERSION = 1
+export const EXTRAS_VERSION_SLOTS = 2
 
 // Reading: only what our writer produces, every index and size bounded. A project file is
 // untrusted input (CLAUDE.md §9), so the reader validates before touching the binary chunk.
@@ -59,29 +66,27 @@ const AccessorSchema = z.object({
   byteOffset: index.optional(),
 })
 
+const PrimitiveSchema = z.object({
+  attributes: z.record(z.string(), index),
+  indices: index,
+  material: index.optional(),
+  mode: z.literal(4).optional(),
+})
+
 export const GltfJsonSchema = z.object({
   asset: z.object({ version: z.literal("2.0") }).loose(),
-  accessors: z.array(AccessorSchema).max(16),
+  accessors: z.array(AccessorSchema).max(4 + MAX_SLOTS),
   bufferViews: z
     .array(z.object({ buffer: z.literal(0), byteOffset: index.optional(), byteLength: index }))
     .max(16),
   meshes: z
     .array(
       z.object({
-        primitives: z
-          .array(
-            z.object({
-              attributes: z.record(z.string(), index),
-              indices: index,
-              material: index.optional(),
-              mode: z.literal(4).optional(),
-            })
-          )
-          .length(1),
+        primitives: z.array(PrimitiveSchema).min(1).max(MAX_SLOTS),
         extras: z
           .object({
             [EXTRAS_KEY]: z.object({
-              v: z.literal(EXTRAS_VERSION),
+              v: z.union([z.literal(EXTRAS_VERSION), z.literal(EXTRAS_VERSION_SLOTS)]),
               faces: z.array(FaceInfoSchema).max(1_000_000),
             }),
           })
@@ -92,11 +97,15 @@ export const GltfJsonSchema = z.object({
   materials: z
     .array(
       z.object({
+        name: z.string().max(120).optional(),
         pbrMetallicRoughness: z
-          .object({ baseColorFactor: z.tuple([z.number(), z.number(), z.number(), z.number()]) })
+          .object({
+            baseColorFactor: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional(),
+          })
           .loose(),
       })
     )
+    .max(MAX_SLOTS)
     .optional(),
 })
 export type GltfJson = z.infer<typeof GltfJsonSchema>

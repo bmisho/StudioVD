@@ -1,8 +1,13 @@
-// Writes tests/fixtures/cube.step: a 10 mm cube as an AP214 faceted B-rep, written from
+// Writes tests/fixtures/cube.step (a 10 mm cube as an AP214 faceted B-rep) and
+// cube-colours.step (the same cube with a body colour and per-face colours), written from
 // scratch for StudioVD's tests (CC0-1.0). Run: node tools/fixtures/makeCubeStep.mjs
 import { writeFileSync } from "node:fs"
 
-export function cubeStep(size = 10) {
+/**
+ * `colours`: optional `{ body, faces }` in STEP's sRGB 0..1, `faces` keyed by face index
+ * (-x, +x, -y, +y, -z, +z), written as STYLED_ITEMs in a presentation representation.
+ */
+export function cubeStep(size = 10, colours = null, fileName = "cube.step") {
   const lines = []
   let id = 0
   const add = (text) => {
@@ -71,6 +76,18 @@ export function cubeStep(size = 10) {
   const def = add(`PRODUCT_DEFINITION('design','',${formation},${defCtx})`)
   const pds = add(`PRODUCT_DEFINITION_SHAPE('','',${def})`)
   add(`SHAPE_DEFINITION_REPRESENTATION(${pds},${shapeRep})`)
+  if (colours) {
+    const style = (rgb, item) => {
+      const colour = add(`COLOUR_RGB('',${rgb.map((v) => v.toFixed(3)).join(",")})`)
+      const fill = add(`FILL_AREA_STYLE('',(${add(`FILL_AREA_STYLE_COLOUR('',${colour})`)}))`)
+      const side = add(`SURFACE_SIDE_STYLE('',(${add(`SURFACE_STYLE_FILL_AREA(${fill})`)}))`)
+      const usage = add(`SURFACE_STYLE_USAGE(.BOTH.,${side})`)
+      return add(`STYLED_ITEM('',(${add(`PRESENTATION_STYLE_ASSIGNMENT((${usage}))`)}),${item})`)
+    }
+    const styled = colours.body ? [style(colours.body, brep)] : []
+    for (const [k, rgb] of Object.entries(colours.faces ?? {})) styled.push(style(rgb, faceRefs[k]))
+    add(`MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION('',(${styled.join(",")}),${ctx})`)
+  }
   const body = lines
     .join("\n")
     .replace("#U", unc)
@@ -80,7 +97,7 @@ export function cubeStep(size = 10) {
   return `ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('StudioVD test fixture: 10 mm cube'),'2;1');
-FILE_NAME('cube.step','2026-10-11T00:00:00',('StudioVD'),(''),'','','');
+FILE_NAME('${fileName}','2026-10-11T00:00:00',('StudioVD'),(''),'','','');
 FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));
 ENDSEC;
 DATA;
@@ -90,7 +107,15 @@ END-ISO-10303-21;
 `
 }
 
+/** Grey body; +x and -z red, +y blue: three colours, one of them on two faces. */
+export const CUBE_COLOURS = {
+  body: [0.6, 0.6, 0.6],
+  faces: { 1: [1, 0, 0], 3: [0, 0, 1], 4: [1, 0, 0] },
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
-  writeFileSync(new URL("../../tests/fixtures/cube.step", import.meta.url), cubeStep())
-  console.log("wrote tests/fixtures/cube.step")
+  const out = (name) => new URL(`../../tests/fixtures/${name}`, import.meta.url)
+  writeFileSync(out("cube.step"), cubeStep())
+  writeFileSync(out("cube-colours.step"), cubeStep(10, CUBE_COLOURS, "cube-colours.step"))
+  console.log("wrote tests/fixtures/cube.step and cube-colours.step")
 }

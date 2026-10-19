@@ -1,9 +1,11 @@
 import type { Occt } from "occt-import-js"
 import { mmPerUnit, type ImportFormat, type ImportOptions } from "@/core/import/importOptions"
 import { prepareAsset, type PreparedAsset } from "@/core/geometry/prepareAsset"
+import { MAX_SLOTS } from "@/core/schema"
 import type { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js"
 import { parseGltf } from "./parsers/gltfParser"
 import { parseStl, parseObj } from "./parsers/meshParsers"
+import { mergeMeshes } from "./parsers/mergeMeshes"
 import { parseCad } from "./parsers/occtParser"
 import type { ParsedMesh } from "./parsers/parsedMesh"
 
@@ -74,44 +76,6 @@ function parse(job: ImportJob, decoders: ImportDecoders): Promise<ParsedMesh[]> 
   }
 }
 
-/** Concatenates meshes into one (split mode "single"). Normals survive only if all have them. */
-export function mergeMeshes(meshes: ParsedMesh[], name: string): ParsedMesh {
-  const keepNormals = meshes.every((m) => m.normals)
-  const indexOf = (m: ParsedMesh) =>
-    m.indices ?? Uint32Array.from({ length: m.positions.length / 3 }, (_, i) => i)
-  const vertexFloats = meshes.reduce((n, m) => n + m.positions.length, 0)
-  const indexCount = meshes.reduce((n, m) => n + indexOf(m).length, 0)
-  const positions = new Float32Array(vertexFloats)
-  const normals = keepNormals ? new Float32Array(vertexFloats) : undefined
-  const indices = new Uint32Array(indexCount)
-  const faceRanges: { first: number; last: number }[] = []
-  let allRanges = true
-  let floatAt = 0
-  let indexAt = 0
-  for (const m of meshes) {
-    const base = floatAt / 3
-    const triangleBase = indexAt / 3
-    positions.set(m.positions, floatAt)
-    if (normals && m.normals) normals.set(m.normals, floatAt)
-    for (const i of indexOf(m)) indices[indexAt++] = base + i
-    floatAt += m.positions.length
-    if (m.faceRanges) {
-      for (const r of m.faceRanges) {
-        faceRanges.push({ first: r.first + triangleBase, last: r.last + triangleBase })
-      }
-    } else allRanges = false
-  }
-  return {
-    name,
-    path: [],
-    positions,
-    ...(normals ? { normals } : {}),
-    indices,
-    ...(allRanges ? { faceRanges } : {}),
-    color: meshes.find((m) => m.color)?.color ?? null,
-  }
-}
-
 /** Parse, then normalize every mesh into a stored asset (PLAN 4.3-4.6). */
 export async function runImport(
   job: ImportJob,
@@ -131,6 +95,10 @@ export async function runImport(
     const asset = await prepareAsset(mesh, frame)
     if (asset) parts.push({ name: mesh.name, path: mesh.path, asset })
     else warnings.push(`${job.fileName}: skipped "${mesh.name}" (no triangles).`)
+    if (asset?.slotsFolded)
+      warnings.push(
+        `${job.fileName}: "${mesh.name}" has more than ${MAX_SLOTS} materials; the rest share the last one.`
+      )
   }
   progress(meshes.length, meshes.length, "Done")
   if (parts.length === 0) warnings.push(`${job.fileName}: nothing to import.`)

@@ -11,11 +11,15 @@ import { buildTopology, type Topology } from "./topology"
  */
 export const DEFAULT_REGION_ANGLE_DEG = 40
 
-/** Face id of every triangle, ids 0..count-1 in order of first triangle. */
+/**
+ * Face id of every triangle, ids 0..count-1 in order of first triangle. With `slotOf`, a face
+ * never crosses from one material slot into another.
+ */
 export function growFaces(
   mesh: MeshData,
   angleDeg = DEFAULT_REGION_ANGLE_DEG,
-  { neighbours }: Topology = buildTopology(mesh)
+  { neighbours }: Topology = buildTopology(mesh),
+  slotOf?: ArrayLike<number>
 ) {
   const t = mesh.indices.length / 3
   const { unit } = faceNormals(mesh.positions, mesh.indices)
@@ -32,6 +36,7 @@ export function growFaces(
       for (let e = 0; e < 3; e++) {
         const b = neighbours[3 * a + e] ?? -1
         if (b < 0 || (faceOf[b] ?? 0) >= 0) continue
+        if (slotOf && slotOf[a] !== slotOf[b]) continue
         const dot =
           (unit[3 * a] ?? 0) * (unit[3 * b] ?? 0) +
           (unit[3 * a + 1] ?? 0) * (unit[3 * b + 1] ?? 0) +
@@ -48,7 +53,8 @@ export function growFaces(
 
 /**
  * Reorders triangles so each face is one contiguous range (stable within a face) and returns
- * the ranges, inclusive like occt's `brep_faces`. The vertex arrays are untouched.
+ * the ranges, inclusive like occt's `brep_faces`, and `order` (new triangle -> old). The vertex
+ * arrays are untouched.
  */
 export function orderByFace(indices: Uint32Array, faceOf: Int32Array, count: number) {
   const t = indices.length / 3
@@ -61,12 +67,14 @@ export function orderByFace(indices: Uint32Array, faceOf: Int32Array, count: num
   for (let f = 1; f < count; f++) starts[f] = (starts[f - 1] ?? 0) + (sizes[f - 1] ?? 0)
   const fill = starts.slice()
   const out = new Uint32Array(indices.length)
+  const order = new Uint32Array(t)
   for (let i = 0; i < t; i++) {
     const f = faceOf[i] ?? 0
-    const slot = fill[f] ?? 0
-    fill[f] = slot + 1
-    out.set(indices.subarray(3 * i, 3 * i + 3), 3 * slot)
+    const at = fill[f] ?? 0
+    fill[f] = at + 1
+    out.set(indices.subarray(3 * i, 3 * i + 3), 3 * at)
+    order[at] = i
   }
   const ranges = Array.from(starts, (first, f) => ({ first, last: first + (sizes[f] ?? 0) - 1 }))
-  return { indices: out, ranges: ranges.filter((r) => r.last >= r.first) }
+  return { indices: out, ranges: ranges.filter((r) => r.last >= r.first), order }
 }

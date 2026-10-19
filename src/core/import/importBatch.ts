@@ -98,6 +98,7 @@ export function buildImportBatch(
           watertight: asset.watertight,
           ...(asset.volumeMm3 !== undefined ? { volumeMm3: asset.volumeMm3 } : {}),
           ...(asset.centroidMm ? { centroidMm: [...asset.centroidMm] } : {}),
+          ...(asset.slots.length >= 2 ? { slots: [...asset.slots] } : {}),
         })
       }
       const part: Part = {

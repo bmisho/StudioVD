@@ -57,6 +57,37 @@ export function meshBounds(mesh: MeshData): Bounds {
   return { min: [x0, y0, z0], max: [x1, y1, z1] }
 }
 
+/**
+ * Drops vertices no triangle uses (glTF primitives often share one vertex buffer), keeping the
+ * order of the rest. Returns the mesh itself when every vertex is used, so its bytes, and the
+ * asset id, stay the same.
+ */
+export function dropUnusedVertices(mesh: MeshData): MeshData {
+  const n = vertexCount(mesh)
+  if (!Number.isInteger(n)) throw new Error("positions length is not a multiple of 3")
+  const used = new Uint8Array(n)
+  for (const i of mesh.indices) {
+    if (i >= n) throw new Error(`index ${i} out of range (${n})`)
+    used[i] = 1
+  }
+  const remap = new Uint32Array(n)
+  let kept = 0
+  for (let v = 0; v < n; v++) if (used[v]) remap[v] = kept++
+  if (kept === n) return mesh
+  const pick = (a: Float32Array) => {
+    const out = new Float32Array(3 * kept)
+    for (let v = 0; v < n; v++)
+      if (used[v]) out.set(a.subarray(3 * v, 3 * v + 3), 3 * (remap[v] ?? 0))
+    return out
+  }
+  return {
+    positions: pick(mesh.positions),
+    normals: pick(mesh.normals),
+    indices: mesh.indices.map((i) => remap[i] ?? 0),
+    ...(mesh.colors ? { colors: pick(mesh.colors) } : {}),
+  }
+}
+
 /** Throws if the arrays are inconsistent (lengths, index range, non-finite values). */
 export function assertValidMesh(mesh: MeshData): void {
   const n = vertexCount(mesh)

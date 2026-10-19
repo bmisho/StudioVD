@@ -10,7 +10,7 @@ import { useViewport } from "../ViewportContext"
 import { viewportHover } from "../picking/hoverStore"
 import { countColour, summarizePixels } from "./pixelStats"
 import { gizmoState } from "../gizmos/gizmoState"
-import { partMesh, partPose, pickAt, projectPart, projectPoint } from "./probeQueries"
+import { partLook, partMesh, partPose, pickAt, projectPart, projectPoint } from "./probeQueries"
 import "./probeTypes"
 
 function rgb8(css: string): RGB8 {
@@ -66,6 +66,7 @@ export function ViewportProbe() {
       hoveredId: () => viewportHover.get()?.id ?? null,
       partPose,
       partMesh,
+      partLook,
       gizmoAxis: () => gizmoState.axis(),
       dragReady: () => partGrab.current !== null,
       parts: () =>

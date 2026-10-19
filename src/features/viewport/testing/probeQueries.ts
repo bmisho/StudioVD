@@ -1,10 +1,10 @@
 import type { RootState } from "@react-three/fiber"
-import { Box3, Vector2, Vector3, type Mesh, type Object3D } from "three"
+import { Box3, Vector2, Vector3, type LineSegments, type Mesh, type Object3D } from "three"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { assetCache } from "../parts/assetCache"
 import { partObject } from "../parts/partObjects"
 import { pickRefOf } from "../picking/pickTarget"
-import type { ClientPoint, PartPoseState } from "./probeTypes"
+import type { ClientPoint, PartLookState, PartPoseState } from "./probeTypes"
 
 // Dev-only E2E queries (ViewportProbe). They read the live scene; nothing here is app logic.
 
@@ -63,5 +63,21 @@ export function partMesh(id: string): { triangles: number; loaded: boolean } | n
   return {
     triangles: (index ? index.count : mesh.geometry.getAttribute("position").count) / 3,
     loaded: assetCache.get(part.assetId)?.geometry === mesh.geometry,
+  }
+}
+
+/** How a part is drawn: its materials (one per slot), faces shown, feature edge segments. */
+export function partLook(id: string): PartLookState | null {
+  const object = partObject(id as Parameters<typeof partObject>[0])
+  const mesh = object?.children.find((c): c is Mesh => (c as Mesh).isMesh === true)
+  if (!mesh) return null
+  const lines = object?.children.find(
+    (c): c is LineSegments => (c as LineSegments).isLineSegments === true
+  )
+  const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+  return {
+    materials: materials.map((m) => ({ type: m.type, name: m.name, transparent: m.transparent })),
+    facesVisible: mesh.visible,
+    edgeSegments: (lines?.geometry.getIndex()?.count ?? 0) / 2,
   }
 }

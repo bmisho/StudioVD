@@ -11,6 +11,6 @@ export function switchDocument(deps: ProjectDeps, doc: SceneDocument, saved: boo
   deps.document.getState().replaceDocument(doc)
   deps.history.clear()
   deps.session.getState().resetForDocument()
-  deps.retainAssets(new Set(Object.keys(doc.assets)))
+  deps.retainAssets(new Set([...Object.keys(doc.assets), ...Object.keys(doc.textures)]))
   deps.fitAll()
 }

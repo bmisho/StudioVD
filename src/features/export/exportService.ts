@@ -2,7 +2,7 @@ import { partsInSelection } from "@/core/scene/partsInSelection"
 import type { Part } from "@/core/schema"
 import { assetBoxGeometry } from "@/features/viewport/parts/assetBoxGeometry"
 import { assetCache } from "@/features/viewport/parts/assetCache"
-import { defaultPartMaterial } from "@/features/viewport/parts/defaultPartMaterial"
+import { partMaterials } from "@/features/viewport/materials/partMaterials"
 import { partObject } from "@/features/viewport/parts/partObjects"
 import { pickExportPath, writeExport } from "@/lib/tauri/files"
 import { err, ok, type Result } from "@/lib/tauri/result"
@@ -36,7 +36,8 @@ function exportItems(): { items: ExportItem[]; parts: Part[] } {
     items.push({
       name: part.name,
       geometry: loaded?.geometry ?? assetBoxGeometry(asset),
-      material: loaded?.material ?? defaultPartMaterial(),
+      // As drawn when shaded (never the X-ray variant), one material per slot.
+      material: partMaterials(part, loaded?.slots ?? null, "shaded", doc),
       matrixWorld: object.matrixWorld.clone(),
     })
     exported.push(part)

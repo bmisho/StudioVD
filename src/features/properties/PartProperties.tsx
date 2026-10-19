@@ -1,7 +1,8 @@
-import { useId } from "react"
+import { useId, useMemo } from "react"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import type { PartId } from "@/core/schema"
+import { PartMaterialSection } from "@/features/materials/PartMaterialSection"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { NameField } from "./NameField"
 import { PropertyField } from "./PropertyField"
@@ -42,13 +43,14 @@ function Toggle({
   )
 }
 
-/** Part inspector (PLAN 4.7): name, visibility, grounding, placement and geometry facts. */
+/** Part inspector (PLAN 4.7, 6.3): name, visibility, grounding, material, placement, geometry. */
 export function PartProperties({ id }: { id: PartId }) {
   const part = useDocumentStore((s) => s.doc.parts[id])
   const asset = useDocumentStore((s) => (part ? s.doc.assets[part.assetId] : undefined))
   const renamePart = useDocumentStore((s) => s.renamePart)
   const setVisible = useDocumentStore((s) => s.setPartsVisible)
   const setGrounded = useDocumentStore((s) => s.setPartsGrounded)
+  const partIds = useMemo(() => [id], [id])
   if (!part) return null
   const size = asset ? asset.bboxMm.max.map((v, i) => v - (asset.bboxMm.min[i] ?? 0)) : null
 
@@ -69,6 +71,9 @@ export function PartProperties({ id }: { id: PartId }) {
           checked={part.grounded}
           onChange={(v) => setGrounded([id], v)}
         />
+      </div>
+      <div className="mt-3">
+        <PartMaterialSection partIds={partIds} />
       </div>
       <h4 className="mt-3 text-xs font-semibold">Placement</h4>
       <PropertyField label="Position (mm)" value={triple(part.pose.positionMm)} />

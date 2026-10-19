@@ -1,4 +1,5 @@
 import type { Direction } from "@/core/math/standardViews"
+import type { PartId } from "@/core/schema"
 
 /**
  * How commands reach the 3D view without depending on R3F. The canvas attaches an
@@ -17,6 +18,8 @@ export interface ViewportApi {
   setView(direction: Direction): void
   /** A PNG of the assembly for the project bundle (PLAN 5.5); null when it cannot render. */
   captureThumbnail(): Promise<Uint8Array | null>
+  /** The part drawn under a point of the page (client px), if any. */
+  partAt(clientX: number, clientY: number): PartId | null
 }
 
 export interface ViewportImpl {
@@ -24,6 +27,7 @@ export interface ViewportImpl {
   fitAllNextFrame(animate: boolean): void
   setView(direction: Direction, animate: boolean): void
   captureThumbnail(): Promise<Uint8Array | null>
+  partAt(clientX: number, clientY: number): PartId | null
 }
 
 const prefersMotion = () =>
@@ -39,6 +43,7 @@ export function createViewportBridge(): ViewportApi & { attach(impl: ViewportImp
     fitAllAfterChange: () => current?.fitAllNextFrame(prefersMotion()),
     setView: (direction) => current?.setView(direction, prefersMotion()),
     captureThumbnail: async () => (current ? current.captureThumbnail() : null),
+    partAt: (x, y) => current?.partAt(x, y) ?? null,
     attach(impl) {
       current = impl
       return () => {

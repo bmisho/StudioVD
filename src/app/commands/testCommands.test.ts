@@ -21,6 +21,7 @@ describe("test mode commands", () => {
       fitAllNextFrame: vi.fn(),
       setView: vi.fn(),
       captureThumbnail: vi.fn(),
+      partAt: vi.fn(() => null),
     }
     viewport.attach(impl)
     registry.run("dev.insertTestRig")

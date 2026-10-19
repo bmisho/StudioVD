@@ -5,6 +5,7 @@ export const SCENE_TOKEN_VARS = {
   viewportTop: "--viewport-top",
   viewportBottom: "--viewport-bottom",
   highlight: "--highlight-3d",
+  edge: "--edge-3d",
   gridMinor: "--grid-minor",
   gridMajor: "--grid-major",
   axisX: "--axis-x",

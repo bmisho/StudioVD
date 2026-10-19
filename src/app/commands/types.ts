@@ -5,7 +5,7 @@ import type { AppError, Result } from "@/lib/tauri/result"
 import type { History } from "@/store/document/history"
 import type { DocumentStore } from "@/store/document/documentStore"
 import type { PreferencesStore } from "@/store/preferences/preferencesStore"
-import type { SessionStore } from "@/store/session/sessionStore"
+import type { DisplayMode, SessionStore } from "@/store/session/sessionStore"
 
 export type CommandId =
   | "file.new"
@@ -38,6 +38,7 @@ export type CommandId =
   | "transform.rotate"
   | `view.orient.${StandardView}`
   | `view.navigation.${NavigationPresetId}`
+  | `view.display.${DisplayMode}`
   | "tool.select"
   | "tool.anchor"
   | "tool.mate"

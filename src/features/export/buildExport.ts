@@ -1,9 +1,10 @@
 import {
   BufferGeometry,
   Color,
+  FrontSide,
   Matrix4,
   Mesh,
-  MeshStandardMaterial,
+  MeshPhysicalMaterial,
   Scene,
   type Material,
 } from "three"
@@ -15,7 +16,8 @@ import { MM_PER_UNIT } from "@/core/units"
 export interface ExportItem {
   name: string
   geometry: BufferGeometry
-  material: Material
+  /** One per draw group of the geometry (material slots), or one for all of it. */
+  material: Material | Material[]
   matrixWorld: Matrix4
 }
 
@@ -29,18 +31,36 @@ function bake(item: ExportItem, scale: number): BufferGeometry {
   }
   const index = item.geometry.getIndex()
   if (index) out.setIndex(index.clone())
+  // One glTF primitive per material slot (GLTFExporter ignores groups with one material).
+  for (const g of item.geometry.groups) out.addGroup(g.start, g.count, g.materialIndex)
   out.applyMatrix4(new Matrix4().makeScale(scale, scale, scale).multiply(item.matrixWorld))
   return out
 }
 
-/** A plain material glTF can describe: the part's colour, roughness and vertex colours. */
-function exportMaterial(material: Material): MeshStandardMaterial {
-  const source = material as Partial<MeshStandardMaterial>
-  return new MeshStandardMaterial({
+/**
+ * What glTF can describe of a part's material: PBR values plus transmission, IOR, thickness,
+ * clearcoat and emissive strength (GLTFExporter writes the KHR_materials_* extensions).
+ * Texture maps are left out: they are projected in the shader, and assets have no UVs.
+ */
+function exportMaterial(material: Material): MeshPhysicalMaterial {
+  const source = material as Partial<MeshPhysicalMaterial>
+  const number = (v: number | undefined, fallback: number) => (typeof v === "number" ? v : fallback)
+  return new MeshPhysicalMaterial({
+    name: material.name,
     color: source.color instanceof Color ? source.color.clone() : new Color(0.8, 0.8, 0.8),
-    metalness: source.metalness ?? 0,
-    roughness: source.roughness ?? 0.55,
-    vertexColors: source.vertexColors ?? false,
+    metalness: number(source.metalness, 0),
+    roughness: number(source.roughness, 0.55),
+    opacity: material.opacity,
+    transparent: material.transparent,
+    transmission: number(source.transmission, 0),
+    ior: number(source.ior, 1.5),
+    thickness: number(source.thickness, 0),
+    clearcoat: number(source.clearcoat, 0),
+    clearcoatRoughness: number(source.clearcoatRoughness, 0),
+    emissive: source.emissive instanceof Color ? source.emissive.clone() : new Color(0, 0, 0),
+    emissiveIntensity: number(source.emissiveIntensity, 1),
+    vertexColors: material.vertexColors,
+    side: FrontSide,
   })
 }
 
@@ -52,11 +72,13 @@ function sceneOf(
   const disposables: { dispose: () => void }[] = []
   for (const item of items) {
     const geometry = bake(item, scale)
-    const material = exportMaterial(item.material)
+    const material = Array.isArray(item.material)
+      ? item.material.map(exportMaterial)
+      : exportMaterial(item.material)
     const mesh = new Mesh(geometry, material)
     mesh.name = item.name
     scene.add(mesh)
-    disposables.push(geometry, material)
+    disposables.push(geometry, ...(Array.isArray(material) ? material : [material]))
   }
   return { scene, dispose: () => disposables.forEach((d) => d.dispose()) }
 }

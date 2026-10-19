@@ -1,6 +1,7 @@
 import { useEffect, useRef, type RefObject } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Box3, type Group } from "three"
+import { partAtPoint } from "../picking/partAtPoint"
 import { captureThumbnail } from "../thumbnail/captureThumbnail"
 import { viewportBridge } from "../viewportBridge"
 import type { CameraRig } from "./createCameraRig"
@@ -32,6 +33,7 @@ export function useViewportBridge(rig: CameraRig, partsRoot: RefObject<Group | n
         invalidate()
       },
       captureThumbnail: () => captureThumbnail(get()),
+      partAt: (x, y) => partAtPoint(get(), partsRoot.current, x, y),
     })
   }, [rig, partsRoot, get, invalidate])
 

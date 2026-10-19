@@ -1,13 +1,16 @@
 import { memo, useCallback, useEffect, useMemo } from "react"
 import type { Group } from "three"
 import type { GeometryAsset, Part } from "@/core/schema"
-import type { SelectionItem } from "@/store/session/sessionStore"
+import { useSessionStore, type SelectionItem } from "@/store/session/sessionStore"
 import { PartHighlight, type HighlightState } from "../highlight/PartHighlight"
 import { viewportHover } from "../picking/hoverStore"
-import { setPickRef } from "../picking/pickTarget"
+import { edgeLineMaterial } from "../materials/materialCache"
+import { noRaycast, setPickRef } from "../picking/pickTarget"
 import { useIsHovered } from "../picking/useIsHovered"
 import { registerPartObject } from "./partObjects"
+import { partRaycast } from "./partRaycast"
 import { useAssetDisplay } from "./useAssetDisplay"
+import { usePartMaterial } from "./usePartMaterial"
 
 interface PartViewProps {
   part: Part
@@ -20,7 +23,9 @@ interface PartViewProps {
 export const PartView = memo(function PartView({ part, asset, selected }: PartViewProps) {
   const item = useMemo<SelectionItem>(() => ({ kind: "part", id: part.id }), [part.id])
   const hovered = useIsHovered(item)
-  const { geometry, material } = useAssetDisplay(asset)
+  const mode = useSessionStore((s) => s.displayMode)
+  const { geometry, slots, edges } = useAssetDisplay(asset, mode !== "shaded")
+  const material = usePartMaterial(part, slots, mode)
   // React 19 ref callback with cleanup: the pick mark and the registry entry live exactly as
   // long as the group.
   const register = useCallback(
@@ -41,8 +46,13 @@ export const PartView = memo(function PartView({ part, asset, selected }: PartVi
 
   return (
     <group ref={register} position={part.pose.positionMm} quaternion={part.pose.quaternion}>
-      {/* Source colours until Phase 6 resolves part.materialId. */}
-      <mesh geometry={geometry} material={material} />
+      <mesh
+        geometry={geometry}
+        material={material}
+        visible={mode !== "wireframe"}
+        raycast={partRaycast}
+      />
+      {edges && <lineSegments geometry={edges} material={edgeLineMaterial()} raycast={noRaycast} />}
       <PartHighlight geometry={geometry} state={state} />
     </group>
   )

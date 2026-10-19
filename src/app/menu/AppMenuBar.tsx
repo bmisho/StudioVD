@@ -83,6 +83,19 @@ export function AppMenuBar() {
           </MenubarSub>
           <CommandMenuItem id="view.toggleProjection" />
           <MenubarSub>
+            <MenubarSubTrigger>Display Style</MenubarSubTrigger>
+            <MenubarSubContent>
+              <CommandRadioGroup
+                ids={[
+                  "view.display.shaded",
+                  "view.display.shadedEdges",
+                  "view.display.wireframe",
+                  "view.display.xray",
+                ]}
+              />
+            </MenubarSubContent>
+          </MenubarSub>
+          <MenubarSub>
             <MenubarSubTrigger>Mouse Navigation</MenubarSubTrigger>
             <MenubarSubContent>
               <CommandRadioGroup

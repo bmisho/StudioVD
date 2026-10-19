@@ -4,7 +4,11 @@ import { fileCommands } from "./fileCommands"
 import { testCommands } from "./testCommands"
 import type { Command, CommandDeps, CommandId } from "./types"
 import { viewCommands } from "./viewCommands"
-import { navigationCommands, viewOrientationCommands } from "./viewOrientationCommands"
+import {
+  displayModeCommands,
+  navigationCommands,
+  viewOrientationCommands,
+} from "./viewOrientationCommands"
 
 export interface CommandRegistry {
   readonly list: readonly Command[]
@@ -25,6 +29,7 @@ export function createCommandRegistry(deps: CommandDeps): CommandRegistry {
     ...partCommands(deps),
     ...viewCommands(deps),
     ...viewOrientationCommands(deps),
+    ...displayModeCommands(deps),
     ...navigationCommands(deps),
     ...testCommands(deps),
   ]

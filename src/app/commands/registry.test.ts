@@ -117,6 +117,7 @@ describe("3D view commands", () => {
       fitAllNextFrame: vi.fn(),
       setView: vi.fn(),
       captureThumbnail: vi.fn(),
+      partAt: vi.fn(() => null),
     }
     const detach = viewport.attach(impl)
     expect(registry.run("view.fitAll")).toBe(true)
@@ -145,5 +146,14 @@ describe("3D view commands", () => {
       (c) => c.id.startsWith("view.navigation.") && c.isChecked?.()
     )
     expect(checked.map((c) => c.id)).toEqual(["view.navigation.onshape"])
+  })
+
+  it("switches the display style as a radio group, shaded by default", () => {
+    const { registry, session } = setup()
+    expect(registry.get("view.display.shaded").isChecked?.()).toBe(true)
+    registry.run("view.display.xray")
+    expect(session.getState().displayMode).toBe("xray")
+    const checked = registry.list.filter((c) => c.id.startsWith("view.display.") && c.isChecked?.())
+    expect(checked.map((c) => c.id)).toEqual(["view.display.xray"])
   })
 })

@@ -1,4 +1,5 @@
 import { APP_VERSION } from "@/core/app-info"
+import { textureCache } from "@/features/viewport/materials/textureCache"
 import { assetCache } from "@/features/viewport/parts/assetCache"
 import { viewportBridge } from "@/features/viewport/viewportBridge"
 import { toastNotifier } from "@/lib/notify"
@@ -38,7 +39,11 @@ export const projectController = createProjectController({
   project: useProjectStore,
   tracker: dirtyTracker,
   // After React has unmounted the old document's parts, so nothing draws freed buffers.
-  retainAssets: (ids) => setTimeout(() => assetCache.retain(ids), 0),
+  retainAssets: (ids) =>
+    setTimeout(() => {
+      assetCache.retain(ids)
+      textureCache.retain(ids)
+    }, 0),
   fitAll: () => viewportBridge.fitAllAfterChange(),
   captureThumbnail: () => viewportBridge.captureThumbnail(),
   autosaveIdle: autosaver.idle,

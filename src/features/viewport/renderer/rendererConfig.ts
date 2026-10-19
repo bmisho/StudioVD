@@ -14,7 +14,16 @@ export const GL_PARAMS = {
   failIfMajorPerformanceCaveat: false,
   // Khronos PBR Neutral keeps base colours (ACES washes out the blue).
   toneMapping: NeutralToneMapping,
+  // The selection outline masks the part's own silhouette (highlight/PartHighlight.tsx), so it
+  // works for parts that write no depth (transparent, X-ray, wireframe). Only settable here.
+  stencil: true,
 } as const
+
+/**
+ * Glass (transmission) re-renders the opaque scene into a target first: at half size it costs
+ * about a quarter of the memory (about 54 MB instead of 216 MB for a 1280x720 pane at DPR 2).
+ */
+export const TRANSMISSION_RESOLUTION_SCALE = 0.5
 
 export const DPR: [number, number] = [1, 2]
 

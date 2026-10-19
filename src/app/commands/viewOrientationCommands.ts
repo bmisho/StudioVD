@@ -1,5 +1,6 @@
 import { STANDARD_VIEW_DIRECTIONS, type StandardView } from "@/core/math/standardViews"
 import { NAVIGATION_PRESET_IDS, NAVIGATION_PRESETS } from "@/core/navigation/mousePresets"
+import { DISPLAY_MODES, type DisplayMode } from "@/store/session/sessionStore"
 import type { Command, CommandDeps } from "./types"
 
 // SolidWorks standard-view shortcuts (Ctrl+8 "Normal To" needs face selection: Phase 7).
@@ -31,5 +32,22 @@ export function navigationCommands({ preferences }: CommandDeps): Command[] {
     label: NAVIGATION_PRESETS[id].label,
     run: () => preferences.getState().setNavigationPreset(id),
     isChecked: () => preferences.getState().navigationPreset === id,
+  }))
+}
+
+const DISPLAY_LABELS: Record<DisplayMode, string> = {
+  shaded: "Shaded",
+  shadedEdges: "Shaded with Edges",
+  wireframe: "Wireframe",
+  xray: "X-Ray",
+}
+
+/** Display styles (PLAN 6.6), shown as a radio group. */
+export function displayModeCommands({ session }: CommandDeps): Command[] {
+  return DISPLAY_MODES.map((mode) => ({
+    id: `view.display.${mode}` as const,
+    label: DISPLAY_LABELS[mode],
+    run: () => session.getState().setDisplayMode(mode),
+    isChecked: () => session.getState().displayMode === mode,
   }))
 }

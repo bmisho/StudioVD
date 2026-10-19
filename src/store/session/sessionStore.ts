@@ -10,6 +10,9 @@ export type Pane = "viewport" | "schematic"
 export type SimStatus = "idle" | "solving" | "error"
 export type DialogId = "about"
 export type GizmoMode = "translate" | "rotate"
+/** How parts are drawn (PLAN 6.6). Wireframe shows feature edges only, not the triangles. */
+export type DisplayMode = "shaded" | "shadedEdges" | "wireframe" | "xray"
+export const DISPLAY_MODES: readonly DisplayMode[] = ["shaded", "shadedEdges", "wireframe", "xray"]
 /** WebGL context of the 3D view: not created yet (e.g. the pane is collapsed), working, or lost. */
 export type ViewportGpu = "starting" | "ready" | "lost"
 
@@ -38,6 +41,7 @@ export interface SessionState {
   isolated: readonly PartId[] | null
   /** What the transform gizmo on a selected part does. */
   gizmoMode: GizmoMode
+  displayMode: DisplayMode
 
   select: (items: SelectionItem[]) => void
   /** Ctrl+click / Ctrl+Space: adds the item to the selection or removes it. */
@@ -60,6 +64,7 @@ export interface SessionState {
   /** Isolates `ids`; when already isolating (or `ids` is empty), shows everything again. */
   toggleIsolation: (ids: readonly PartId[]) => void
   setGizmoMode: (mode: GizmoMode) => void
+  setDisplayMode: (mode: DisplayMode) => void
   /** Another document replaced the open one (New, Open): drop what pointed into the old. */
   resetForDocument: () => void
 }
@@ -79,6 +84,7 @@ export const initialSessionState = {
   viewportGpu: "starting",
   isolated: null,
   gizmoMode: "translate",
+  displayMode: "shaded",
 } satisfies Partial<SessionState>
 
 export function createSessionStore() {
@@ -121,6 +127,7 @@ export function createSessionStore() {
     toggleIsolation: (ids) =>
       set((s) => ({ isolated: s.isolated !== null || ids.length === 0 ? null : [...ids] })),
     setGizmoMode: (gizmoMode) => set({ gizmoMode }),
+    setDisplayMode: (displayMode) => set({ displayMode }),
   }))
 }
 

@@ -5,6 +5,7 @@ import { useSessionStore } from "@/store/session/sessionStore"
 import { CameraRigController } from "./camera/CameraRigController"
 import { PartTransformGizmo } from "./gizmos/PartTransformGizmo"
 import { createCameraRig } from "./camera/createCameraRig"
+import { MaterialSync } from "./materials/MaterialSync"
 import { PartsLayer } from "./parts/PartsLayer"
 import { createViewportMissHandler } from "./picking/viewportMiss"
 import { ContextLossGuard } from "./renderer/ContextLossGuard"
@@ -60,6 +61,7 @@ export function Viewport3D() {
           <Suspense fallback={null}>
             <SceneDressing />
           </Suspense>
+          <MaterialSync />
           <PartsLayer />
           <PartTransformGizmo />
           {testMode && (

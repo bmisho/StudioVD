@@ -39,12 +39,16 @@ export function slotCollector() {
 }
 
 /**
- * Merges slots with the same name and colour, and folds everything past `MAX_SLOTS` into the
- * last one. Returns the kept slots and each triangle's new slot index.
+ * Merges slots with the same name and colour, drops slots no triangle uses (an empty occt
+ * face still has a colour), and folds everything past `MAX_SLOTS` into the last one.
+ * Returns the kept slots and each triangle's new slot index.
  */
 export function normalizeSlots(slots: readonly SourceSlot[], triangleSlots: ArrayLike<number>) {
+  const used = new Uint8Array(slots.length)
+  for (let t = 0; t < triangleSlots.length; t++) used[triangleSlots[t] ?? 0] = 1
   const kept: SourceSlot[] = []
-  const remap = slots.map((slot) => {
+  const remap = slots.map((slot, i) => {
+    if (!used[i]) return 0 // never looked up
     const same = kept.findIndex((k) => k.name === slot.name && sameColour(k.color, slot.color))
     if (same >= 0) return same
     if (kept.length === MAX_SLOTS) return MAX_SLOTS - 1
@@ -52,7 +56,8 @@ export function normalizeSlots(slots: readonly SourceSlot[], triangleSlots: Arra
     return kept.length - 1
   })
   const slotOf = Uint16Array.from(triangleSlots, (s) => remap[s] ?? 0)
-  return { slots: kept, slotOf, folded: slots.length > kept.length && kept.length === MAX_SLOTS }
+  const present = slots.filter((_, i) => used[i]).length
+  return { slots: kept, slotOf, folded: present > kept.length && kept.length === MAX_SLOTS }
 }
 
 /** At most `n` UTF-16 units, never splitting a surrogate pair. */

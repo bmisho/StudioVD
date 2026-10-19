@@ -82,3 +82,16 @@ export function stripTextures(input: unknown): Json {
   }
   return json
 }
+
+/**
+ * Keeps only the scene that is imported (`scene`, else the first). GLTFLoader loads every
+ * scene, and each one it finishes replaces `parser.associations` with its own objects, so the
+ * imported scene would lose the mesh/primitive links that group primitives into one part.
+ */
+export function defaultSceneOnly(json: Json): Json {
+  const scenes = json.scenes
+  if (!Array.isArray(scenes) || scenes.length <= 1) return json
+  const index = typeof json.scene === "number" ? json.scene : 0
+  const scene: unknown = scenes[index]
+  return scene === undefined ? json : { ...json, scenes: [scene], scene: 0 }
+}

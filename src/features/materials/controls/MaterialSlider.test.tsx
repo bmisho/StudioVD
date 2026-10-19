@@ -24,6 +24,7 @@ const THICKNESS = field("thicknessMm", GLASS_FIELDS)
 function setup() {
   resetStores()
   const id = useDocumentStore.getState().createMaterial()
+  if (!id) throw new Error("no material")
   useDocumentStore.temporal.getState().clear()
   return id
 }

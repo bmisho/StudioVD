@@ -1,12 +1,14 @@
 import type { Draft } from "immer"
 import {
   builtinByKey,
+  matchesBuiltin,
   materialFromBuiltin,
   newCustomMaterial,
   reusableMaterial,
   uniqueMaterialName,
 } from "@/core/materials/presets"
 import {
+  COLLECTION_CAPS,
   MaterialSchema,
   materialMaps,
   newId,
@@ -30,8 +32,8 @@ export interface MaterialActions {
   assignBuiltin: (partIds: readonly PartId[], key: string) => MaterialId | null
   /** Sets the parts' material (`null`: their source colours). An unknown id is ignored. */
   assignMaterial: (partIds: readonly PartId[], id: MaterialId | null) => void
-  /** Creates a custom material and gives it to `partIds`. */
-  createMaterial: (partIds?: readonly PartId[]) => MaterialId
+  /** Creates a custom material and gives it to `partIds`; null at the project's limit. */
+  createMaterial: (partIds?: readonly PartId[]) => MaterialId | null
   /** Copies a material ("Make Unique") and gives the copy to `partIds`. */
   duplicateMaterial: (id: MaterialId, partIds?: readonly PartId[]) => MaterialId | null
   /** Changes values; a result the schema would refuse, or no change, is ignored. */
@@ -66,25 +68,36 @@ function dropUnusedTextures(doc: Draft<SceneDocument>) {
 }
 
 export function materialActions(set: Set, get: Get): MaterialActions {
-  const insert = (material: Material, partIds: readonly PartId[]) =>
+  /** Adds a material unless the project holds as many as a file may (then: false). */
+  const insert = (material: Material, partIds: readonly PartId[]) => {
+    if (Object.keys(get().doc.materials).length >= COLLECTION_CAPS.materials) return false
     set((s) => {
       s.doc.materials[material.id] = material
       assign(s.doc, partIds, material.id)
     })
+    return true
+  }
 
   return {
     assignBuiltin: (partIds, key) => {
       const builtin = builtinByKey(key)
       if (!builtin) return null
       const doc = get().doc
+      // Parts that already show this preset keep the copy they have (no undo entry either).
+      const current = partIds.map((id) => (Object.hasOwn(doc.parts, id) ? doc.parts[id] : null))
+      const kept = current[0]?.materialId
+      const unchanged = (id: MaterialId | null | undefined) => {
+        const material = id && hasMaterial(doc, id) ? doc.materials[id] : undefined
+        return material !== undefined && matchesBuiltin(material, builtin)
+      }
+      if (kept && current.every((part) => unchanged(part?.materialId))) return kept
       const reused = reusableMaterial(doc, builtin)
       if (reused) {
         set((s) => assign(s.doc, partIds, reused.id))
         return reused.id
       }
       const material = materialFromBuiltin(builtin, newId(), uniqueMaterialName(doc, builtin.name))
-      insert(material, partIds)
-      return material.id
+      return insert(material, partIds) ? material.id : null
     },
 
     assignMaterial: (partIds, id) => {
@@ -94,8 +107,7 @@ export function materialActions(set: Set, get: Get): MaterialActions {
 
     createMaterial: (partIds = []) => {
       const material = newCustomMaterial(newId(), uniqueMaterialName(get().doc, "Material"))
-      insert(material, partIds)
-      return material.id
+      return insert(material, partIds) ? material.id : null
     },
 
     duplicateMaterial: (id, partIds = []) => {
@@ -104,8 +116,9 @@ export function materialActions(set: Set, get: Get): MaterialActions {
       if (!source) return null
       const copy: Material = { ...structuredClone(source), id: newId() }
       copy.name = uniqueMaterialName(doc, source.name)
-      insert(copy, partIds)
-      return copy.id
+      // The user's own copy from now on: never handed out again as the preset (reuse).
+      delete copy.builtinKey
+      return insert(copy, partIds) ? copy.id : null
     },
 
     updateMaterial: (id, patch) => {
@@ -124,6 +137,7 @@ export function materialActions(set: Set, get: Get): MaterialActions {
       if (map && !TextureMapSchema.safeParse(map).success) return
       const known = map === null || Object.hasOwn(doc.textures, map.textureId)
       if (!known && texture?.id !== map.textureId) return
+      if (!known && Object.keys(doc.textures).length >= COLLECTION_CAPS.textures) return
       if (deepEqual(doc.materials[id]?.maps?.[kind] ?? null, map)) return
       set((s) => {
         const material = s.doc.materials[id]

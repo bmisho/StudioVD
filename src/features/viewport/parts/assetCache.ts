@@ -2,7 +2,7 @@ import { BufferAttribute, BufferGeometry } from "three"
 import type { FaceInfo } from "@/core/geometry/meshData"
 import type { AssetSlot } from "@/core/geometry/slots"
 import { isPlaceholderAssetId } from "@/core/scene/testRig"
-import type { AssetId } from "@/core/schema"
+import type { AssetId, GeometryAsset } from "@/core/schema"
 import { assetUrl } from "@/lib/tauri/files"
 import { HULL_NORMAL } from "../highlight/hullOutlineMaterial"
 import { installBvh } from "../picking/bvh"
@@ -25,6 +25,17 @@ const listeners = new Set<() => void>()
 const notify = () => listeners.forEach((l) => l())
 const ready = <T>(entry: Entry<T> | undefined) =>
   entry?.state === "ready" ? entry.value : undefined
+
+/**
+ * The GLB's slots are the ones the document lists (a project file is untrusted: per-slot
+ * materials are edited by the document's names and drawn by the GLB's).
+ */
+function slotsAgree(loaded: LoadedAsset, asset: GeometryAsset): boolean {
+  const names = asset.slots
+  if (!names) return loaded.slots.length === 1
+  return names.length === loaded.slots.length && loaded.slots.every((s, i) => s.name === names[i])
+}
+const disagreeing = new Set<AssetId>()
 
 async function load(id: AssetId): Promise<LoadedAsset> {
   const response = await fetch(assetUrl(id))
@@ -65,6 +76,16 @@ export const assetCache = {
     return () => listeners.delete(listener)
   },
   get: (id: AssetId): LoadedAsset | undefined => ready(entries.get(id)),
+  /** The loaded asset if its slots match the document's record, else undefined (the box). */
+  getFor: (asset: GeometryAsset): LoadedAsset | undefined => {
+    const loaded = ready(entries.get(asset.id))
+    if (!loaded || slotsAgree(loaded, asset)) return loaded
+    if (!disagreeing.has(asset.id)) {
+      disagreeing.add(asset.id)
+      console.warn(`Asset ${asset.id.slice(0, 12)}… has other slots than the project lists.`)
+    }
+    return undefined
+  },
   /** The asset's feature edges once computed (`requestEdges`). */
   edges: (id: AssetId): BufferGeometry | undefined => ready(edgeEntries.get(id)),
   /**

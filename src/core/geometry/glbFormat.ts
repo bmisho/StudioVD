@@ -35,6 +35,8 @@ export const HULL_NORMAL_ATTRIBUTE = "_HULLNORMAL"
 export const EXTRAS_KEY = "studiovd"
 export const EXTRAS_VERSION = 1
 export const EXTRAS_VERSION_SLOTS = 2
+/** Most faces one asset stores: the reader refuses more, so the writer never writes more. */
+export const MAX_FACES = 1_000_000
 
 // Reading: only what our writer produces, every index and size bounded. A project file is
 // untrusted input (CLAUDE.md §9), so the reader validates before touching the binary chunk.
@@ -87,7 +89,7 @@ export const GltfJsonSchema = z.object({
           .object({
             [EXTRAS_KEY]: z.object({
               v: z.union([z.literal(EXTRAS_VERSION), z.literal(EXTRAS_VERSION_SLOTS)]),
-              faces: z.array(FaceInfoSchema).max(1_000_000),
+              faces: z.array(FaceInfoSchema).max(MAX_FACES),
             }),
           })
           .optional(),

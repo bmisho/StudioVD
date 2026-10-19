@@ -2,6 +2,7 @@ import { computeHullNormals } from "@/core/math/hullNormals"
 import { AssetIdSchema, MAX_COORDINATE_MM, type AssetId, type Vec3 } from "@/core/schema"
 import { classifyFaces } from "./classify"
 import { creasedNormals } from "./creasedNormals"
+import { MAX_FACES } from "./glbFormat"
 import { encodeGlb } from "./glbWrite"
 import { volumeAndCentroid } from "./massProperties"
 import { dropUnusedVertices, meshBounds, type Bounds, type MeshData } from "./meshData"
@@ -143,7 +144,9 @@ export async function prepareAsset(
   const names = slotNames(present)
   const slots: AssetSlot[] =
     present.length > 1 ? present.map((s, i) => ({ ...s, name: names[i] ?? null })) : present
-  const faces = classifyFaces(mesh, grouped.ranges)
+  // Faces split at every slot change: a mesh coloured per triangle could have one face per
+  // triangle. Past what an asset may store, each slot becomes one face instead.
+  const faces = classifyFaces(mesh, grouped.ranges.length > MAX_FACES ? slots : grouped.ranges)
   const hullNormals = computeHullNormals(mesh.positions, mesh.indices, mesh.normals)
   const glb = encodeGlb({ mesh, hullNormals, faces, slots })
   return {

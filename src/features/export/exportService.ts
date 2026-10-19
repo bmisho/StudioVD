@@ -32,7 +32,7 @@ function exportItems(): { items: ExportItem[]; parts: Part[] } {
     if (!object || !asset) continue
     // The pose drawn right now: the design pose, or the live pose in test mode.
     object.updateWorldMatrix(true, false)
-    const loaded = assetCache.get(asset.id)
+    const loaded = assetCache.getFor(asset)
     items.push({
       name: part.name,
       geometry: loaded?.geometry ?? assetBoxGeometry(asset),

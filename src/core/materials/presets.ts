@@ -39,10 +39,19 @@ export function newCustomMaterial(id: MaterialId, name: string): Material {
   return custom
 }
 
-/** The material still has exactly its preset's values (no edits, no maps). */
+/** The preset's own name, or that name numbered by `uniqueMaterialName`. */
+const presetName = (name: string, builtin: BuiltinMaterial) =>
+  name === builtin.name ||
+  (name.startsWith(`${builtin.name} `) && /^\d+$/.test(name.slice(builtin.name.length + 1)))
+
+/**
+ * The material is still the preset as inserted: its values (no edits, no maps) and its name
+ * (a renamed copy is the user's own).
+ */
 export function matchesBuiltin(material: Material, builtin: BuiltinMaterial): boolean {
   return (
     material.builtinKey === builtin.key &&
+    presetName(material.name, builtin) &&
     material.maps === undefined &&
     material.densityKgM3 === builtin.densityKgM3 &&
     APPEARANCE_KEYS.every((k) => material[k] === builtin.look[k])
@@ -56,11 +65,23 @@ export function reusableMaterial(doc: SceneDocument, builtin: BuiltinMaterial): 
   return null
 }
 
-/** `base`, or `base 2`, `base 3`... whichever no material uses yet. */
+/** Longest material name (NameSchema). */
+const NAME_MAX = 120
+
+/**
+ * `base`, or `base 2`, `base 3`... whichever no material uses yet, shortening `base` so the
+ * number still fits in a name.
+ */
 export function uniqueMaterialName(doc: SceneDocument, base: string): string {
   const taken = new Set(Object.values(doc.materials).map((m) => m.name))
   if (!taken.has(base)) return base
+  const numbered = (n: number) => {
+    const suffix = ` ${n}`
+    const head = base.slice(0, NAME_MAX - suffix.length)
+    // Never end on half a surrogate pair, nor on a space the schema would trim away.
+    return `${(/[\ud800-\udbff]$/.test(head) ? head.slice(0, -1) : head).trimEnd()}${suffix}`
+  }
   let n = 2
-  while (taken.has(`${base} ${n}`)) n++
-  return `${base} ${n}`
+  while (taken.has(numbered(n))) n++
+  return numbered(n)
 }

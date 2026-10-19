@@ -20,11 +20,26 @@ describe("material slots", () => {
 
   it(`folds everything past ${MAX_SLOTS} slots into the last one, and says so`, () => {
     const many = Array.from({ length: MAX_SLOTS + 6 }, (_, i) => named(`m${i}`))
-    const { slots, slotOf, folded } = normalizeSlots(many, [0, MAX_SLOTS - 1, MAX_SLOTS + 5])
+    const every = many.map((_, i) => i)
+    const { slots, slotOf, folded } = normalizeSlots(many, every)
     expect(slots).toHaveLength(MAX_SLOTS)
-    expect(Array.from(slotOf)).toEqual([0, MAX_SLOTS - 1, MAX_SLOTS - 1])
+    expect([0, MAX_SLOTS - 1, MAX_SLOTS + 5].map((t) => slotOf[t])).toEqual([
+      0,
+      MAX_SLOTS - 1,
+      MAX_SLOTS - 1,
+    ])
     expect(folded).toBe(true)
     expect(normalizeSlots(many.slice(0, MAX_SLOTS), [0]).folded).toBe(false)
+  })
+
+  it("leaves out slots no triangle uses before folding (an empty occt face has a colour)", () => {
+    const many = Array.from({ length: MAX_SLOTS + 1 }, (_, i) => named(`m${i}`))
+    const triangles = Array.from({ length: MAX_SLOTS }, (_, t) => t + 1) // m0 unused
+    const { slots, slotOf, folded } = normalizeSlots(many, triangles)
+    expect(folded).toBe(false)
+    expect(slots).toHaveLength(MAX_SLOTS)
+    expect(slots[0]?.name).toBe("m1")
+    expect(new Set(slotOf).size).toBe(MAX_SLOTS)
   })
 
   it("names slots: source name, else sRGB hex of the colour, else Default; repeats numbered", () => {

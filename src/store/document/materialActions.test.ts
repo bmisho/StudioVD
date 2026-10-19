@@ -38,6 +38,7 @@ describe("material actions", () => {
     expect(t.s().assignBuiltin([t.leaf], "std.steel")).toBe(steel) // reused, not copied
     t.roundTrips("assign preset")
     const custom = t.s().createMaterial([t.leaf])
+    if (!custom) throw new Error("no material")
     t.s().updateMaterial(custom, { name: "  Anodised ", color: "#123abc", roughness: 0.2 })
     expect(t.s().doc.materials[custom]?.name).toBe("Anodised")
     t.s().setMaterialMap(custom, "baseColor", { textureId: TEXTURE, tileSizeMm: 20 }, texture)
@@ -61,6 +62,7 @@ describe("material actions", () => {
   it("ignores edits the schema would refuse, and edits that change nothing", () => {
     const t = setup()
     const id = t.s().createMaterial([t.base])
+    if (!id) throw new Error("no material")
     const before = t.s().doc
     t.s().updateMaterial(id, { color: "#ABCDEF" })
     t.s().updateMaterial(id, { densityKgM3: 0 })

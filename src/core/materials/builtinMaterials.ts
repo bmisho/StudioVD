@@ -149,7 +149,11 @@ export const BUILTIN_MATERIALS: readonly BuiltinMaterial[] = [
     key: "std.rubber",
     name: "Rubber",
     densityKgM3: 1100,
-    density: { source: "Class default; filled EPDM/NBR compounds 1.12-1.28", confidence: "low" },
+    density: {
+      source:
+        "Class default between base elastomers (0.86-1.23 g/cm³) and filled EPDM/NBR compounds (1.12-1.28 g/cm³)",
+      confidence: "low",
+    },
     look: look({ color: "#2a2a2a", roughness: 0.7, ior: 1.52 }),
     lookSource: `${PB} ("Tire"); IOR of natural rubber 1.519 (Sigma)`,
   },

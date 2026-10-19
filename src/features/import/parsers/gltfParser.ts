@@ -3,7 +3,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import type { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js"
 import { decodeUri } from "@/core/import/externalRefs"
 import type { Vec3 } from "@/core/schema"
-import { glbChunks, packGlb, stripTextures } from "./gltfJson"
+import { defaultSceneOnly, glbChunks, packGlb, stripTextures } from "./gltfJson"
 import { mergeMeshes } from "./mergeMeshes"
 import { copyVec3, fromGeometry, type ParsedMesh } from "./parsedMesh"
 
@@ -43,9 +43,11 @@ export async function parseGltf(input: GltfInput): Promise<ParsedMesh[]> {
     let data: ArrayBuffer | string
     if (isGlb) {
       const { json, bin } = glbChunks(new Uint8Array(input.bytes))
-      data = packGlb(stripTextures(json), bin).slice().buffer
+      data = packGlb(defaultSceneOnly(stripTextures(json)), bin).slice().buffer
     } else {
-      const json = stripTextures(JSON.parse(new TextDecoder().decode(input.bytes)) as unknown)
+      const json = defaultSceneOnly(
+        stripTextures(JSON.parse(new TextDecoder().decode(input.bytes)) as unknown)
+      )
       const buffers = (json as { buffers?: { uri?: string }[] }).buffers ?? []
       for (const buffer of buffers) {
         if (!buffer.uri || buffer.uri.startsWith("data:")) continue
@@ -117,11 +119,9 @@ function worldMesh(mesh: Mesh, name: string, path: string[], associations: Assoc
   const slot = slotOf(material, associations)
   const parsed = fromGeometry(geometry, name, path, slot.color, true)
   geometry.dispose()
+  // The slot keeps its material name for a later merge (one glTF mesh, or split "single").
   const triangles = (parsed.indices?.length ?? parsed.positions.length / 3) / 3
-  return {
-    parsed,
-    slotted: { ...parsed, slots: [slot], triangleSlots: new Uint16Array(triangles) },
-  }
+  return { ...parsed, slots: [slot], triangleSlots: new Uint16Array(triangles) }
 }
 
 /**
@@ -148,15 +148,7 @@ export function collectMeshes(
     const name = nameOf(owner) || (meshes[0] ? nameOf(meshes[0]) : "") || fallbackName
     const parts = meshes.map((m) => worldMesh(m, name, path, associations))
     const single = parts.length === 1 ? parts[0] : undefined
-    out.push(
-      single
-        ? single.parsed
-        : mergeMeshes(
-            parts.map((p) => p.slotted),
-            name,
-            path
-          )
-    )
+    out.push(single ?? mergeMeshes(parts, name, path))
   }
   return out
 }

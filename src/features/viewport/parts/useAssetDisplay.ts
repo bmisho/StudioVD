@@ -13,7 +13,7 @@ export function useAssetDisplay(
   asset: GeometryAsset,
   withEdges: boolean
 ): { geometry: BufferGeometry; slots: readonly AssetSlot[] | null; edges: BufferGeometry | null } {
-  const loaded = useSyncExternalStore(assetCache.subscribe, () => assetCache.get(asset.id))
+  const loaded = useSyncExternalStore(assetCache.subscribe, () => assetCache.getFor(asset))
   const edges = useSyncExternalStore(assetCache.subscribe, () => assetCache.edges(asset.id))
   useEffect(() => assetCache.request(asset.id), [asset.id])
   useEffect(() => {

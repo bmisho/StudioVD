@@ -24,6 +24,7 @@ function setup() {
   resetStores()
   vi.mocked(importTexture).mockReset()
   const id = useDocumentStore.getState().createMaterial()
+  if (!id) throw new Error("no material")
   useDocumentStore.temporal.getState().clear()
   render(<TextureMapField materialId={id} kind="baseColor" label="Colour image" />)
   return id

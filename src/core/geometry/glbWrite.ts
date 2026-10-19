@@ -9,6 +9,7 @@ import {
   FLOAT,
   GLB_MAGIC,
   HULL_NORMAL_ATTRIBUTE,
+  MAX_FACES,
   UNSIGNED_INT,
   UNSIGNED_SHORT,
   type AssetGeometry,
@@ -67,6 +68,7 @@ export function encodeGlb(asset: AssetGeometry): Uint8Array {
   if (mesh.indices.length === 0) throw new Error("cannot encode an empty mesh")
   if (hullNormals.length !== mesh.positions.length) throw new Error("hull normals length mismatch")
   assertTiling(slots, mesh.indices.length / 3)
+  if (faces.length > MAX_FACES) throw new Error(`more than ${MAX_FACES} faces`)
   const baseColor = slots.length === 1 ? (slots[0]?.color ?? null) : null
   const n = vertexCount(mesh)
   const indices = n <= 0xffff ? Uint16Array.from(mesh.indices) : mesh.indices

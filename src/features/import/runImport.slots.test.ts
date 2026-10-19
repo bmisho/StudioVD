@@ -150,4 +150,28 @@ describe("runImport material slots", () => {
     expect(parts[0]?.asset.id).toBe(parts[1]?.asset.id)
     expect(parts[1]?.asset.offsetMm[0]).toBeCloseTo(1000, 3)
   })
+
+  it("glTF: only the imported scene counts, so its mesh still groups its primitives", async () => {
+    const scenes = knobGlb((j) => {
+      j.nodes.push({ mesh: 0, name: "Other" })
+      j.scenes = [{ nodes: [0] }, { nodes: [1] }]
+    })
+    const { parts } = await runImport(job("scenes.glb", "glb", scenes), decoders)
+    expect(parts.map((p) => [p.name, p.asset.slots])).toEqual([["Knob", ["Body", "Trim"]]])
+  })
+
+  it('glTF split "single": one-primitive meshes keep their material names as slots', async () => {
+    const split = knobGlb((j) => {
+      const [body, trim] = j.meshes[0]?.primitives ?? []
+      j.meshes = [{ primitives: body ? [body] : [] }, { primitives: trim ? [trim] : [] }]
+      j.nodes = [
+        { mesh: 0, name: "A" },
+        { mesh: 1, name: "B" },
+      ]
+      j.scenes = [{ nodes: [0, 1] }]
+    })
+    const options = { ...DEFAULT_IMPORT_OPTIONS, split: "single" as const }
+    const { parts } = await runImport(job("pair.glb", "glb", split, { options }), decoders)
+    expect(parts.map((p) => [p.name, p.asset.slots])).toEqual([["pair", ["Body", "Trim"]]])
+  })
 })

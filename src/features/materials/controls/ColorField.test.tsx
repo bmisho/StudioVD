@@ -10,6 +10,7 @@ import { ColorField } from "./ColorField"
 function setup() {
   resetStores()
   const id = useDocumentStore.getState().createMaterial()
+  if (!id) throw new Error("no material")
   useDocumentStore.temporal.getState().clear()
   render(<Bound id={id} />)
   return id

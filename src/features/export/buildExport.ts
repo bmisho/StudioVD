@@ -42,7 +42,7 @@ function bake(item: ExportItem, scale: number): BufferGeometry {
  * clearcoat and emissive strength (GLTFExporter writes the KHR_materials_* extensions).
  * Texture maps are left out: they are projected in the shader, and assets have no UVs.
  */
-function exportMaterial(material: Material): MeshPhysicalMaterial {
+function exportMaterial(material: Material, scale: number): MeshPhysicalMaterial {
   const source = material as Partial<MeshPhysicalMaterial>
   const number = (v: number | undefined, fallback: number) => (typeof v === "number" ? v : fallback)
   return new MeshPhysicalMaterial({
@@ -54,7 +54,8 @@ function exportMaterial(material: Material): MeshPhysicalMaterial {
     transparent: material.transparent,
     transmission: number(source.transmission, 0),
     ior: number(source.ior, 1.5),
-    thickness: number(source.thickness, 0),
+    // Volume thickness is in mesh units: scaled like the geometry (mm -> m for glTF).
+    thickness: number(source.thickness, 0) * scale,
     clearcoat: number(source.clearcoat, 0),
     clearcoatRoughness: number(source.clearcoatRoughness, 0),
     emissive: source.emissive instanceof Color ? source.emissive.clone() : new Color(0, 0, 0),
@@ -73,8 +74,8 @@ function sceneOf(
   for (const item of items) {
     const geometry = bake(item, scale)
     const material = Array.isArray(item.material)
-      ? item.material.map(exportMaterial)
-      : exportMaterial(item.material)
+      ? item.material.map((m) => exportMaterial(m, scale))
+      : exportMaterial(item.material, scale)
     const mesh = new Mesh(geometry, material)
     mesh.name = item.name
     scene.add(mesh)

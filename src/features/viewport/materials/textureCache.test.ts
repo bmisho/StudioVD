@@ -1,7 +1,7 @@
 import { NoColorSpace, RepeatWrapping, SRGBColorSpace } from "three"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { TextureId } from "@/core/schema"
-import { MAX_TEXTURE_SIDE_PX, textureCache } from "./textureCache"
+import { MAX_TEXTURE_SIDE_PX, TEXTURE_BUDGET_PX, textureCache } from "./textureCache"
 
 vi.mock("@/lib/tauri/files", () => ({
   textureUrl: (id: string, ext: string) => `stvd://localhost/${id}.${ext}`,
@@ -70,23 +70,59 @@ function stored(width = 512, height = 256): TextureId {
 }
 
 describe("texture cache", () => {
-  it("fetches each image once per use, from the stvd scheme", async () => {
+  it("fetches and decodes each image once, from the stvd scheme, for both uses", async () => {
     const id = stored()
-    textureCache.request(record(id), "color")
-    textureCache.request(record(id), "color")
-    textureCache.request(record(id), "data")
+    textureCache.request(record(id))
+    textureCache.request(record(id))
     await settle()
-    textureCache.request(record(id), "color")
-    expect(fetchMock.mock.calls).toEqual([
-      [`stvd://localhost/${id}.png`],
-      [`stvd://localhost/${id}.png`],
-    ])
-    expect(textureCache.get(id, "color")).not.toBe(textureCache.get(id, "data"))
+    textureCache.request(record(id))
+    expect(fetchMock.mock.calls).toEqual([[`stvd://localhost/${id}.png`]])
+    expect(decodeMock).toHaveBeenCalledOnce()
+    const color = textureCache.get(id, "color")
+    expect(color).not.toBe(textureCache.get(id, "data"))
+    expect(color?.image).toBe(textureCache.get(id, "data")?.image) // one bitmap
+    expect(textureCache.get(id, "color")).toBe(color)
+  })
+
+  it("decodes one image at a time (a full-size decode holds up to 256 MB)", async () => {
+    let active = 0
+    let most = 0
+    decodeMock.mockImplementation(async (source: FakeFile) => {
+      most = Math.max(most, ++active)
+      await settle()
+      active--
+      return new FakeBitmap(source.width, source.height)
+    })
+    const ids = [stored(), stored(), stored()]
+    for (const id of ids) textureCache.request(record(id))
+    for (let i = 0; i < 6; i++) await settle()
+    expect(ids.map((id) => textureCache.get(id, "color") !== undefined)).toEqual([true, true, true])
+    expect(most).toBe(1)
+  })
+
+  it("keeps at most the pixel budget, and decodes nothing more past it", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    const fit = TEXTURE_BUDGET_PX / MAX_TEXTURE_SIDE_PX ** 2
+    const ids = Array.from({ length: fit + 2 }, () =>
+      stored(MAX_TEXTURE_SIDE_PX, MAX_TEXTURE_SIDE_PX)
+    )
+    for (const id of ids) textureCache.request(record(id))
+    await settle()
+    const loaded = ids.filter((id) => textureCache.get(id, "color") !== undefined)
+    expect(loaded).toEqual(ids.slice(0, fit))
+    expect(fetchMock).toHaveBeenCalledTimes(fit) // the rest are not even fetched
+    expect(warn).toHaveBeenCalledTimes(2)
+
+    textureCache.retain(new Set()) // the next document starts with the whole budget
+    const next = stored(MAX_TEXTURE_SIDE_PX, MAX_TEXTURE_SIDE_PX)
+    textureCache.request(record(next))
+    await settle()
+    expect(textureCache.get(next, "color")).toBeDefined()
   })
 
   it("takes the file extension from the texture's path", async () => {
     const id = stored()
-    textureCache.request(record(id, "jpg"), "color")
+    textureCache.request(record(id, "jpg"))
     await settle()
     expect(fetchMock).toHaveBeenCalledWith(`stvd://localhost/${id}.jpg`)
     expect(textureCache.get(id, "color")).toBeDefined()
@@ -94,8 +130,8 @@ describe("texture cache", () => {
 
   it("makes repeating textures, sRGB for colour and raw for data, flipped at decode", async () => {
     const id = stored(300, 200)
-    textureCache.request(record(id), "color")
-    textureCache.request(record(id), "data")
+    textureCache.request(record(id))
+    textureCache.request(record(id))
     await settle()
     const color = textureCache.get(id, "color")
     const data = textureCache.get(id, "data")
@@ -113,14 +149,14 @@ describe("texture cache", () => {
       premultiplyAlpha: "none",
       colorSpaceConversion: "none",
     })
-    expect(decodeMock).toHaveBeenCalledTimes(2) // within the limit: no resample
+    expect(decodeMock).toHaveBeenCalledOnce() // within the limit: no resample
   })
 
   it("resamples a large image to the side limit, keeping its aspect", async () => {
     const wide = stored(8192, 2048)
     const tall = stored(3000, 8192)
-    textureCache.request(record(wide), "color")
-    textureCache.request(record(tall), "data")
+    textureCache.request(record(wide))
+    textureCache.request(record(tall))
     await settle()
     const resamples = decodeMock.mock.calls.filter(([source]) => source instanceof FakeBitmap)
     expect(resamples.map(([, options]) => options as ImageBitmapOptions)).toEqual([
@@ -149,12 +185,12 @@ describe("texture cache", () => {
     const listener = vi.fn()
     const unsubscribe = textureCache.subscribe(listener)
     const id = stored()
-    textureCache.request(record(id), "color")
+    textureCache.request(record(id))
     expect(textureCache.get(id, "color")).toBeUndefined()
     await settle()
     expect(listener).toHaveBeenCalledOnce()
     unsubscribe()
-    textureCache.request(record(stored()), "color")
+    textureCache.request(record(stored()))
     await settle()
     expect(listener).toHaveBeenCalledOnce()
   })
@@ -164,19 +200,19 @@ describe("texture cache", () => {
     const missing = newId()
     const broken = stored()
     decodeMock.mockRejectedValueOnce(new Error("corrupt"))
-    textureCache.request(record(missing), "color")
-    textureCache.request(record(broken), "color")
+    textureCache.request(record(missing))
+    textureCache.request(record(broken))
     await settle()
     expect(warn).toHaveBeenCalledTimes(2)
-    textureCache.request(record(missing), "color")
-    textureCache.request(record(broken), "color")
+    textureCache.request(record(missing))
+    textureCache.request(record(broken))
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(textureCache.get(broken, "color")).toBeUndefined()
 
     textureCache.retain(new Set([missing, broken]))
     files.set(missing, new FakeFile(64, 64))
-    textureCache.request(record(missing), "color")
-    textureCache.request(record(broken), "color")
+    textureCache.request(record(missing))
+    textureCache.request(record(broken))
     await settle()
     expect(fetchMock).toHaveBeenCalledTimes(4)
     expect(textureCache.get(missing, "color")).toBeDefined()
@@ -186,9 +222,9 @@ describe("texture cache", () => {
   it("frees the textures a new document does not list", async () => {
     const kept = stored()
     const dropped = stored()
-    textureCache.request(record(kept), "color")
-    textureCache.request(record(dropped), "color")
-    textureCache.request(record(dropped), "data")
+    textureCache.request(record(kept))
+    textureCache.request(record(dropped))
+    textureCache.request(record(dropped))
     await settle()
     const texture = textureCache.get(dropped, "color")
     const bitmap = texture?.image as FakeBitmap
@@ -199,6 +235,7 @@ describe("texture cache", () => {
 
     textureCache.retain(new Set([kept]))
     expect(disposed).toHaveBeenCalledOnce()
+    expect(textureCache.get(dropped, "color")).toBeUndefined()
     expect(bitmap.close).toHaveBeenCalledOnce()
     expect(textureCache.get(dropped, "color")).toBeUndefined()
     expect(textureCache.get(dropped, "data")).toBeUndefined()
@@ -206,19 +243,30 @@ describe("texture cache", () => {
     expect(listener).toHaveBeenCalledOnce() // materials re-sync and drop the freed one
     unsubscribe()
 
-    textureCache.request(record(dropped), "color")
+    textureCache.request(record(dropped))
     await settle()
-    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 
-  it("keeps a load in flight through retain", async () => {
-    let respond: (value: unknown) => void = () => undefined
-    fetchMock.mockReturnValueOnce(new Promise((resolve) => (respond = resolve)))
-    const id = newId()
-    textureCache.request(record(id), "color")
-    textureCache.retain(new Set())
-    respond({ ok: true, status: 200, blob: () => Promise.resolve(new FakeFile(16, 16)) })
+  it("keeps a load in flight the next document lists, and drops the others", async () => {
+    const responses: ((value: unknown) => void)[] = []
+    fetchMock.mockImplementation(() => new Promise((resolve) => responses.push(resolve)))
+    const [kept, dropped, queued] = [newId(), newId(), newId()]
+    textureCache.request(record(kept))
+    textureCache.request(record(dropped))
+    textureCache.request(record(queued))
     await settle()
-    expect(textureCache.get(id, "color")).toBeDefined()
+    const file = { ok: true, status: 200, blob: () => Promise.resolve(new FakeFile(16, 16)) }
+    responses.shift()?.(file)
+    await settle()
+    textureCache.retain(new Set([kept])) // `dropped` is in flight, `queued` still waits
+    responses.shift()?.(file)
+    await settle()
+    expect(textureCache.get(kept, "color")).toBeDefined()
+    expect(textureCache.get(dropped, "color")).toBeUndefined()
+    const decoded = decodeMock.mock.results.map((r) => r.value as Promise<FakeBitmap>)
+    const bitmaps = await Promise.all(decoded)
+    expect(bitmaps.map((b) => b.close.mock.calls.length)).toEqual([0, 1]) // dropped's is freed
+    expect(fetchMock).toHaveBeenCalledTimes(2) // `queued` never started
   })
 })

@@ -45,7 +45,7 @@ function mapsOf(material: Material, textures: Readonly<Record<string, Texture>>)
     const record = ref && Object.hasOwn(textures, ref.textureId) ? textures[ref.textureId] : null
     if (!ref || !record) return null
     const texture = textureCache.get(record.id, space)
-    if (!texture) textureCache.request(record, space)
+    if (!texture) textureCache.request(record)
     return texture ? { texture, tileSizeMm: ref.tileSizeMm } : null
   }
   return { baseColor: map("baseColor", "color"), roughness: map("roughness", "data") }

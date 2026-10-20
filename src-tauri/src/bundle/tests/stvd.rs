@@ -3,7 +3,7 @@
 use super::raw::{entry, raw_zip, temp};
 use crate::bundle::stvd;
 use crate::workspace::sha256_hex;
-use crate::workspace::texture::tests::{jpeg, png};
+use crate::workspace::texture::tests::{hidden_frame_jpeg, jpeg, png};
 use std::fs;
 
 #[test]
@@ -182,6 +182,7 @@ fn textures_round_trip_and_are_checked_before_anything_decodes_them() {
         ("png", bomb),
         ("png", image.clone()),
         ("jpg", b"GIF89a".to_vec()),
+        ("jpg", hidden_frame_jpeg()),
     ] {
         let name = format!("textures/{}.{ext}", sha256_hex(&bytes));
         assert!(open(name.clone(), &bytes).is_err(), "{name}");

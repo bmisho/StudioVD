@@ -12,6 +12,9 @@ use std::path::Path;
 pub const MAX_TEXTURE_BYTES: u64 = 16 * 1024 * 1024;
 /// Largest side in pixels (the WebGL2 minimum guarantee is 2048; desktop GPUs do 8192+).
 pub const MAX_TEXTURE_SIDE: u32 = 8192;
+/// Most scans in a JPEG. Encoders write 1 (baseline) to about 18 (libjpeg's progressive
+/// script for 4 components); each extra scan of an 8K image costs the decoder ~70 ms.
+pub const MAX_JPEG_SCANS: usize = 32;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ImageKind {
@@ -41,9 +44,30 @@ fn be32(bytes: &[u8], at: usize) -> Option<u32> {
     Some(u32::from_be_bytes([b[0], b[1], b[2], b[3]]))
 }
 
-/// JPEG frame size from the first start-of-frame marker before the scan data.
+/// Offset of the marker (its FF) that ends the entropy-coded data at `at`, None at the end.
+/// Inside it, FF is followed by 00 (a stuffed FF), a restart marker or a fill byte.
+fn end_of_scan(bytes: &[u8], mut at: usize) -> Option<usize> {
+    loop {
+        let ff = at + bytes.get(at..)?.iter().position(|&b| b == 0xFF)?;
+        let mut code = ff + 1;
+        while *bytes.get(code)? == 0xFF {
+            code += 1;
+        }
+        match bytes.get(code)? {
+            0x00 | 0xD0..=0xD7 => at = code + 1,
+            _ => return Some(code - 1),
+        }
+    }
+}
+
+/// JPEG frame size, walking every marker to the end. Strict where libjpeg is lenient: a
+/// decoder skips stray bytes to the next FF and so may read another frame than this walk
+/// (review: FF 00 hid a 20000 x 20000 frame), so anything but well-formed segments, one
+/// frame and at most `MAX_JPEG_SCANS` scans is refused.
 fn jpeg_size(bytes: &[u8]) -> Option<(u32, u32)> {
     let mut at = 2; // after SOI (FF D8)
+    let mut frame = None;
+    let mut scans = 0;
     loop {
         if *bytes.get(at)? != 0xFF {
             return None;
@@ -52,14 +76,40 @@ fn jpeg_size(bytes: &[u8]) -> Option<(u32, u32)> {
             at += 1; // fill bytes
         }
         let marker = *bytes.get(at + 1)?;
-        match marker {
-            0x01 | 0xD0..=0xD7 => at += 2, // no length
-            0xD8..=0xDA => return None,    // SOI again, EOI or scan before any frame
-            0xC0..=0xCF if !matches!(marker, 0xC4 | 0xC8 | 0xCC) => {
-                return Some((be16(bytes, at + 7)?, be16(bytes, at + 5)?));
-            }
-            _ => at += 2 + usize::try_from(be16(bytes, at + 2)?).ok()?,
+        if marker == 0xD9 {
+            return frame.filter(|_| scans > 0); // EOI
         }
+        let length = usize::try_from(be16(bytes, at + 2)?).ok()?;
+        let end = at + 2 + length;
+        match marker {
+            _ if length < 2 => return None,
+            // Start of frame (C4 DHT, C8 reserved and CC DAC are not frames).
+            0xC0..=0xC3 | 0xC5..=0xC7 | 0xC9..=0xCB | 0xCD..=0xCF => {
+                if frame.is_some() || length < 8 {
+                    return None; // libjpeg refuses a second frame too
+                }
+                frame = Some((be16(bytes, at + 7)?, be16(bytes, at + 5)?));
+            }
+            0xDA => {
+                frame?; // a scan before any frame
+                scans += 1;
+                if scans > MAX_JPEG_SCANS {
+                    return None;
+                }
+                match end_of_scan(bytes, end) {
+                    Some(next) => {
+                        at = next;
+                        continue;
+                    }
+                    None => return frame, // cut short: decoded as far as it goes
+                }
+            }
+            // Tables, restart interval, comments, application data; DNL after the frame.
+            0xC4 | 0xCC | 0xDB | 0xDD | 0xE0..=0xEF | 0xFE => {}
+            0xDC if frame.is_some() => {}
+            _ => return None,
+        }
+        at = end;
     }
 }
 

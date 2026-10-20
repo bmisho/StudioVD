@@ -187,8 +187,10 @@ Further rules:
   else the imported colour, else the default (`core/materials/slotLooks.ts`). Transparent
   materials go to the sorted transparent pass without depth writes; only transmission (glass)
   uses three's transmission pass (half resolution). Never set `renderOrder` on parts: the
-  grid (-1), tint (1), stencil silhouette (2) and outline (3) rely on parts at 0. Texture
-  maps are triplanar in part-local mm (assets have no UVs), loaded at most 2048 px.
+  grid (-1), tint (1), stencil silhouette (2) and outline (3) rely on parts at 0; each
+  highlighted part masks its outline with its own stencil bit (`stencilBits.ts`). Texture
+  maps are triplanar in part-local mm (assets have no UVs), loaded at most 2048 px, decoded
+  one at a time, once per image for both uses, within a pixel budget per project.
 - Display modes: feature edges are computed once per asset in the asset worker and drawn as
   `LineSegments` over the asset's own position buffer (dispose them only with the asset: it
   would free the shared buffer). Part meshes raycast with `partRaycast` (front faces, one
@@ -342,7 +344,9 @@ Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindi
   the webview sees file names, ids and tokens. Saving zips only files `scene.json` names
   as `<dir>/<sha256>.<ext>`, each re-hashed.
 - Texture images are chosen in a Rust dialog and checked from their headers before anything
-  decodes them (PNG IHDR or JPEG SOF, at most 8192 px a side and 16 MiB), stored as
+  decodes them (PNG IHDR or JPEG SOF, at most 8192 px a side and 16 MiB; a JPEG is walked
+  marker by marker to its end and refused unless well formed, with one frame and at most 32
+  scans, since decoders skip stray bytes and could read another frame), stored as
   `textures/<sha256>.<png|jpg>` and served by the `stvd` scheme with image types; opening a
   `.stvd` checks them the same way. Asset GLBs are read strictly (v1, or v2 with one
   primitive per material slot); slot names are re-validated, never trusted.

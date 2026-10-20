@@ -160,6 +160,9 @@ export function installProjectMockScript(): void {
   Object.assign(w.__E2E__ as object, {
     nextOpen: (name: string) => (nextOpen = name),
     nextSaveAs: (name: string | null) => (nextSaveAs = name),
+    /** Puts a project on the disk directly (an edited or hand-made scene.json). */
+    putProject: (name: string, scene: string) =>
+      disk.set(name, { scene: new TextEncoder().encode(scene), thumbnail: 0 }),
     savedProjects: () => [...disk.keys()],
     savedScene: (name: string) => {
       const file = disk.get(name)
@@ -183,6 +186,7 @@ export function installProjectMockScript(): void {
 export interface E2EProjectBackend {
   nextOpen(name: string): void
   nextSaveAs(name: string | null): void
+  putProject(name: string, scene: string): void
   savedProjects(): string[]
   savedScene(name: string): string | null
   thumbnailBytes(name: string): number

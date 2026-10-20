@@ -24,7 +24,7 @@ export const PartView = memo(function PartView({ part, asset, selected }: PartVi
   const item = useMemo<SelectionItem>(() => ({ kind: "part", id: part.id }), [part.id])
   const hovered = useIsHovered(item)
   const mode = useSessionStore((s) => s.displayMode)
-  const { geometry, slots, edges } = useAssetDisplay(asset, mode !== "shaded")
+  const { geometry, slots, edges, edgeless } = useAssetDisplay(asset, mode !== "shaded")
   const material = usePartMaterial(part, slots, mode)
   // React 19 ref callback with cleanup: the pick mark and the registry entry live exactly as
   // long as the group.
@@ -49,7 +49,9 @@ export const PartView = memo(function PartView({ part, asset, selected }: PartVi
       <mesh
         geometry={geometry}
         material={material}
-        visible={mode !== "wireframe"}
+        // Wireframe draws edges instead of faces; a part without edges would vanish (yet
+        // stay pickable), so it keeps its faces.
+        visible={mode !== "wireframe" || edgeless}
         raycast={partRaycast}
       />
       {edges && <lineSegments geometry={edges} material={edgeLineMaterial()} raycast={noRaycast} />}

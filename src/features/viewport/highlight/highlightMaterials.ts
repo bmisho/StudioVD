@@ -25,7 +25,8 @@ const SILHOUETTE_REF = 1
 /**
  * The outline is the part's back faces pushed outward. Opaque parts hide those faces inside
  * their own silhouette by depth; transparent, X-ray and wireframe parts write no depth, so the
- * outline only draws where the stencil does not hold the silhouette mask.
+ * outline only draws where the stencil does not hold the silhouette mask: the part's own bit
+ * (stencilBits.ts, set per draw), so other highlighted parts' silhouettes do not hide it.
  */
 function outsideSilhouette(outline: HullOutlineMaterial): HullOutlineMaterial {
   outline.stencilWrite = true // enables the stencil test; Keep ops leave the buffer as is

@@ -776,7 +776,9 @@ Exit criteria
   window of one index buffer, named glTF materials; faces never cross slots. Single-slot
   assets stay GLB v1 byte for byte (hashes pinned from the Phase 5 encoder), so re-imports
   dedup against existing projects. Texture images: PNG/JPEG chosen in Rust, checked from
-  their headers before anything decodes them (≤ 16 MiB, ≤ 8192 px), drawn at ≤ 2048 px
+  their headers before anything decodes them (≤ 16 MiB, ≤ 8192 px; JPEGs walked strictly to
+  the end, ≤ 32 scans), decoded one at a time within a per-project pixel budget, drawn at
+  ≤ 2048 px
 - [x] 6.2 Built-in library with stable keys and densities (kg/m³): ABS 1040, PLA 1240,
   PC clear 1200, Acrylic 1190, POM 1410, Polyurethane 1200, Glass 2500, Aluminium 6061/6063 2700,
   Steel 7850, Stainless 8000, Brass 8500, Copper 8940, Rubber 1100, FR-4 1850. As built:
@@ -803,7 +805,8 @@ Exit criteria
   plus borders (so a coarse hole or a cylinder seam stays clean), computed once per asset in
   the asset worker; wireframe shows those edges with the faces hidden but pickable; X-ray is
   an unlit fresnel multiply that needs no sorting. The selection outline is masked by a
-  stencil silhouette, so it stays an outline on transparent, X-ray and wireframe parts
+  stencil silhouette (one stencil bit per highlighted part, also in the glass pass), so it
+  stays an outline on transparent, X-ray and wireframe parts
 - [x] 6.7 Tests: material → three params mapping, schema round-trip, visual screenshot. As
   built: the "visual" test reads rendered pixels (copper is warm, red is red, 10 % opacity is
   nearly the background, X-ray is lighter), since CI renders with SwiftShader; screenshots

@@ -1,9 +1,10 @@
-import { useMemo } from "react"
-import type { BufferGeometry } from "three"
+import { useLayoutEffect, useMemo, useRef } from "react"
+import type { BufferGeometry, Camera, Material, Scene, WebGLRenderer } from "three"
 import { noRaycast } from "../picking/pickTarget"
 import { highlightMaterials, OUTLINE_ORDER, SILHOUETTE_ORDER } from "./highlightMaterials"
 import { ensureHullNormals } from "./hullGeometry"
 import { syncOutlineUniforms } from "./hullOutlineMaterial"
+import { acquireStencilBit, applyStencilBit, releaseStencilBit } from "./stencilBits"
 import { OVERLAY } from "../thumbnail/overlay"
 
 export type HighlightState = "none" | "hover" | "selected"
@@ -17,7 +18,25 @@ export function PartHighlight({
   state: HighlightState
 }) {
   const outlineGeometry = useMemo(() => ensureHullNormals(geometry), [geometry])
-  if (state === "none") return null
+  const lit = state !== "none"
+  // Read at draw time: no re-render when the bit is handed out (before the first frame).
+  const bit = useRef(1)
+  useLayoutEffect(() => {
+    if (!lit) return
+    const own = acquireStencilBit()
+    bit.current = own
+    return () => releaseStencilBit(own)
+  }, [lit])
+  const draw = useMemo(() => {
+    type Before = (r: WebGLRenderer, s: Scene, c: Camera, g: BufferGeometry, m: Material) => void
+    const silhouette: Before = (_r, _s, _c, _g, material) => applyStencilBit(material, bit.current)
+    const outline: Before = (renderer, scene, camera, g, material) => {
+      syncOutlineUniforms(renderer, scene, camera, g, material)
+      applyStencilBit(material, bit.current)
+    }
+    return { silhouette, outline }
+  }, [])
+  if (!lit) return null
   const m = highlightMaterials()
   return (
     <>
@@ -35,6 +54,7 @@ export function PartHighlight({
         material={m.silhouette}
         raycast={noRaycast}
         renderOrder={SILHOUETTE_ORDER}
+        onBeforeRender={draw.silhouette}
         userData={OVERLAY}
       />
       <mesh
@@ -42,7 +62,7 @@ export function PartHighlight({
         material={state === "selected" ? m.selectedOutline : m.hoverOutline}
         raycast={noRaycast}
         renderOrder={OUTLINE_ORDER}
-        onBeforeRender={syncOutlineUniforms}
+        onBeforeRender={draw.outline}
         userData={OVERLAY}
       />
     </>

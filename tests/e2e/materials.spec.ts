@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test"
 import { expect, fixtureFile, queueImportPick, test, type E2EWindow } from "./fixtures"
-import { partCenter, waitForViewport } from "./viewportHelpers"
+import { insertTestRig, partCenter, waitForViewport } from "./viewportHelpers"
 
 // Phase 6 end to end against the mocked backend: material slots from a coloured STEP file,
 // display modes, assigning and editing materials.
@@ -8,6 +8,8 @@ import { partCenter, waitForViewport } from "./viewportHelpers"
 const parts = (page: Page) => page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.parts() ?? [])
 const partLook = (page: Page, id: string) =>
   page.evaluate((i) => window.__STUDIOVD_VIEWPORT__?.partLook(i) ?? null, id)
+const savedScene = (page: Page, name: string) =>
+  page.evaluate((n) => (window as unknown as E2EWindow).__E2E__.savedScene(n), name)
 const pickAt = (page: Page, x: number, y: number) =>
   page.evaluate(([px, py]) => window.__STUDIOVD_VIEWPORT__?.pickAt(px, py) ?? null, [x, y])
 
@@ -56,6 +58,33 @@ test.describe("materials", () => {
 
     await displayStyle(page, "Shaded")
     await expect.poll(async () => (await partLook(page, id))?.edgeSegments).toBe(0)
+  })
+
+  test("wireframe keeps the faces of a part drawn as its bounding box", async ({ page }) => {
+    await waitForViewport(page)
+    await insertTestRig(page)
+    await page.keyboard.press("Control+s") // untitled: Save As
+    await expect.poll(() => savedScene(page, "Untitled.stvd")).not.toBeNull()
+    // The same project listing slots its geometry lacks (a hand-edited or hostile file): the
+    // GLBs load, disagree with it, and the parts keep their bounding boxes for good.
+    const scene = JSON.parse((await savedScene(page, "Untitled.stvd")) ?? "{}") as {
+      assets: Record<string, { slots?: string[] }>
+    }
+    for (const asset of Object.values(scene.assets)) asset.slots = ["Body", "Trim"]
+    await page.evaluate((text) => {
+      const backend = (window as unknown as E2EWindow).__E2E__
+      backend.putProject("edited.stvd", text)
+      backend.nextOpen("edited.stvd")
+    }, JSON.stringify(scene))
+    const [part] = await parts(page)
+    const id = part?.id ?? "" // the same ids: the same scene, opened again
+    const loaded = () => page.evaluate((i) => window.__STUDIOVD_VIEWPORT__?.partMesh(i)?.loaded, id)
+    expect(await loaded()).toBe(true)
+    await page.keyboard.press("Control+o")
+    await expect.poll(loaded).toBe(false)
+    await displayStyle(page, "Wireframe")
+    await expect.poll(() => partLook(page, id)).toMatchObject({ edgeSegments: 0 })
+    expect((await partLook(page, id))?.facesVisible).toBe(true) // not invisible yet pickable
   })
 
   test("the slots of a coloured STEP part are listed with their own materials", async ({

@@ -88,6 +88,8 @@ export const assetCache = {
   },
   /** The asset's feature edges once computed (`requestEdges`). */
   edges: (id: AssetId): BufferGeometry | undefined => ready(edgeEntries.get(id)),
+  /** Whether computing the asset's feature edges failed (until `retain` forgets it). */
+  edgesFailed: (id: AssetId): boolean => edgeEntries.get(id)?.state === "failed",
   /**
    * A new document replaced the open one (New, Open): frees geometry it does not use, and
    * forgets failed loads, since its workspace may hold the files an earlier one lacked.

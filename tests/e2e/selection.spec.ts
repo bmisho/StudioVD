@@ -5,6 +5,7 @@ import {
   hoveredId,
   insertTestRig,
   partCenter,
+  project,
   waitForViewport,
 } from "./viewportHelpers"
 
@@ -89,6 +90,51 @@ test.describe("3D selection", () => {
     await page.mouse.move(b.x + 20, b.y + 10)
     await expect.poll(() => hoveredId(page)).toBeNull()
     await page.mouse.up({ button: "middle" })
+  })
+
+  test("a hovered part keeps its outline over a selected part behind it", async ({ page }) => {
+    const { leaf } = await insertTestRig(page) // the leaf overlaps the base on screen
+    const l = await partCenter(page, leaf)
+    const empty = await emptySpot(page)
+    await page.mouse.move(l.x, l.y)
+    await expect.poll(() => hoveredId(page)).toBe(leaf)
+    const leafAlone = await highlightPixels(page)
+    await page.mouse.move(empty.x, empty.y)
+    await expect.poll(() => hoveredId(page)).toBeNull()
+    await row(page, "Base").click()
+    const baseAlone = await highlightPixels(page)
+    await page.mouse.move(l.x, l.y)
+    await expect.poll(() => hoveredId(page)).toBe(leaf)
+    // Each outline is masked by its own silhouette only (once the base's masked the leaf's).
+    expect(await highlightPixels(page)).toBeGreaterThan(baseAlone + 0.8 * leafAlone)
+  })
+
+  test("a selected part seen through glass keeps its outline", async ({ page }) => {
+    await insertTestRig(page) // the leaf is in front of the base's right edge, near its top
+    const panel = page.getByRole("complementary", { name: "Properties" })
+    await row(page, "Leaf").click()
+    const presets = panel.getByRole("toolbar", { name: "Material presets" })
+    await presets.getByRole("button", { name: "Glass", exact: true }).click()
+    /** Most blue (b - r) across the base's back right edge where the glass leaf covers it. */
+    const blueAcrossEdge = async () => {
+      let most = -255
+      for (const y of [70, 76]) {
+        const p = await project(page, [60, y, -30])
+        for (let dx = -4; dx <= 10; dx++) {
+          const c = await page.evaluate(
+            ([px, py]) => window.__STUDIOVD_VIEWPORT__?.pixelAt(px, py),
+            [p.x + dx, p.y]
+          )
+          if (c) most = Math.max(most, c[2] - c[0])
+        }
+      }
+      return most
+    }
+    await page.keyboard.press("Escape")
+    expect(await blueAcrossEdge()).toBeLessThan(50) // the slate base and the grid, refracted
+    await row(page, "Base").click()
+    // Refracted from the half-size glass pass: blurred, so bluish rather than the exact token.
+    expect(await blueAcrossEdge()).toBeGreaterThan(70)
   })
 
   test("a tree selection lights up the part in 3D", async ({ page }) => {

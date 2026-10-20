@@ -56,13 +56,12 @@ export class HullOutlineMaterial extends ShaderMaterial {
     }
   }
 
-  /** Width follows the renderer pixel ratio and drawing-buffer size (DPR, resizes). */
+  /**
+   * Width follows the renderer pixel ratio and drawing-buffer size (DPR, resizes). Also drawn
+   * into glass's transmission target: it has a stencil buffer too (GL_PARAMS `stencil`), so
+   * a part seen through glass keeps its outline.
+   */
   sync(renderer: WebGLRenderer): void {
-    // Drawn on screen only. Glass first renders the opaque scene into a target that has no
-    // stencil, where the hull of a selected glass part would fill its own silhouette.
-    const onScreen = renderer.getRenderTarget() === null
-    this.colorWrite = onScreen
-    this.depthWrite = onScreen
     renderer.getDrawingBufferSize(this.bufferSize)
     this.thickness.value = this.cssPx * renderer.getPixelRatio()
   }

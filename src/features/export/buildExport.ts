@@ -71,15 +71,27 @@ function sceneOf(
 ): { scene: Scene; dispose: () => void } {
   const scene = new Scene()
   const disposables: { dispose: () => void }[] = []
+  // One export material per view material: parts and slots sharing a document material
+  // share one glTF material (the exporter merges by object identity).
+  const converted = new Map<Material, MeshPhysicalMaterial>()
+  const convert = (source: Material) => {
+    let out = converted.get(source)
+    if (!out) {
+      out = exportMaterial(source, scale)
+      converted.set(source, out)
+      disposables.push(out)
+    }
+    return out
+  }
   for (const item of items) {
     const geometry = bake(item, scale)
     const material = Array.isArray(item.material)
-      ? item.material.map((m) => exportMaterial(m, scale))
-      : exportMaterial(item.material, scale)
+      ? item.material.map(convert)
+      : convert(item.material)
     const mesh = new Mesh(geometry, material)
     mesh.name = item.name
     scene.add(mesh)
-    disposables.push(geometry, ...(Array.isArray(material) ? material : [material]))
+    disposables.push(geometry)
   }
   return { scene, dispose: () => disposables.forEach((d) => d.dispose()) }
 }

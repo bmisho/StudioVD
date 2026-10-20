@@ -27,15 +27,18 @@ function Provenance({ material }: { material: Material }) {
 
 /**
  * Editor for one document material (PLAN 6.3): every part using it changes with it. `partIds`
- * are the parts it is shown for (they get the copy on "Make unique"). Renders nothing once
- * the material is gone (undo, delete).
+ * are the parts it is shown for (they get the copy on "Make unique"); `afterAction` takes
+ * focus after "Make unique" or "Delete material". Renders nothing once the material is gone
+ * (undo, delete).
  */
 export function MaterialEditor({
   materialId,
   partIds,
+  afterAction,
 }: {
   materialId: MaterialId
   partIds: readonly PartId[]
+  afterAction?: () => void
 }) {
   const material = useDocumentStore((s) =>
     Object.hasOwn(s.doc.materials, materialId) ? s.doc.materials[materialId] : undefined
@@ -62,7 +65,7 @@ export function MaterialEditor({
         <TextureMapField materialId={materialId} kind="roughness" label="Roughness image" />
       </div>
       <Provenance material={material} />
-      <MaterialActionsRow materialId={materialId} partIds={partIds} />
+      <MaterialActionsRow materialId={materialId} partIds={partIds} afterAction={afterAction} />
     </div>
   )
 }

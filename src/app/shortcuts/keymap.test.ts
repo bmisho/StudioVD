@@ -79,6 +79,10 @@ describe("isTextInputTarget", () => {
     expect(isTextInputTarget(make("input", "text"))).toBe(true)
     expect(isTextInputTarget(make("input", "number"))).toBe(true)
     expect(isTextInputTarget(make("textarea"))).toBe(true)
+    // A combobox (Radix select trigger) picks items by typing: letters are not shortcuts.
+    const combobox = make("button")
+    combobox.setAttribute("role", "combobox")
+    expect(isTextInputTarget(combobox)).toBe(true)
     expect(isTextInputTarget(make("input", "checkbox"))).toBe(false)
     expect(isTextInputTarget(make("input", "range"))).toBe(false)
     expect(isTextInputTarget(make("button"))).toBe(false)

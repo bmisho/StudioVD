@@ -1,7 +1,14 @@
 // Number text for the material inspector's fields.
 
-/** Up to 3 decimals and no grouping, so a shown value parses back when it is edited. */
-const shown = new Intl.NumberFormat(undefined, { maximumFractionDigits: 3, useGrouping: false })
+/**
+ * Up to 3 decimals, no grouping and Latin digits (Arabic or Bengali locales would show their
+ * own), so a shown value parses back when it is edited.
+ */
+const shown = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 3,
+  useGrouping: false,
+  numberingSystem: "latn",
+})
 
 export const formatValue = (value: number): string => shown.format(value)
 

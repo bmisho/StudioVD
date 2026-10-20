@@ -43,6 +43,25 @@ describe("part material section", () => {
     expect([partOf(first)?.materialId, partOf(second)?.materialId]).toEqual([null, null])
   })
 
+  it("moves focus to the Material select when Make unique or Delete removes the button", () => {
+    const { first, second } = setup()
+    const steel = partOf(first)?.materialId
+    act(() => useDocumentStore.getState().assignMaterial([second], steel ?? null))
+    render(<PartMaterialSection partIds={[first]} />)
+    const trigger = screen.getByRole("combobox", { name: "Material" })
+    const press = (name: string) => {
+      const button = screen.getByRole("button", { name })
+      act(() => button.focus())
+      fireEvent.click(button)
+    }
+    press("Make unique")
+    expect(document.activeElement).toBe(trigger)
+    expect(trigger).toHaveTextContent("Steel 2")
+    press("Delete material")
+    expect(document.activeElement).toBe(trigger)
+    expect(trigger).toHaveTextContent("Imported colours")
+  })
+
   it("lists a single part's slots with their own materials", () => {
     const { first, second } = setup()
     const { unmount } = render(<PartMaterialSection partIds={[second]} />)

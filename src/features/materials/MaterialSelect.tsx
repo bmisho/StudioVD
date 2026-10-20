@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, type Ref } from "react"
 import {
   Select,
   SelectContent,
@@ -22,6 +22,7 @@ export function MaterialSelect({
   noneLabel,
   onChange,
   label,
+  ref,
 }: {
   id: string
   value: MaterialId | null | undefined
@@ -29,6 +30,7 @@ export function MaterialSelect({
   onChange: (id: MaterialId | null) => void
   /** Accessible name when no visible label points at `id`. */
   label?: string
+  ref?: Ref<HTMLButtonElement>
 }) {
   const materials = useDocumentStore((s) => s.doc.materials)
   const sorted = useMemo(
@@ -41,7 +43,13 @@ export function MaterialSelect({
   }
   return (
     <Select value={value === undefined ? "" : (value ?? NONE)} onValueChange={select}>
-      <SelectTrigger id={id} size="sm" className="w-full min-w-0 text-xs" aria-label={label}>
+      <SelectTrigger
+        ref={ref}
+        id={id}
+        size="sm"
+        className="w-full min-w-0 text-xs"
+        aria-label={label}
+      >
         <SelectValue placeholder="Mixed" />
       </SelectTrigger>
       <SelectContent>

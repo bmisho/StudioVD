@@ -14,14 +14,17 @@ const plural = (n: number) => (n === 1 ? "1 part" : `${n} parts`)
 /**
  * How many parts share the material, and what to do with it: "Make unique" gives `partIds`
  * their own copy (offered while they use it and other parts do too), "Delete material" sends
- * its parts and slots back to their imported colours.
+ * its parts and slots back to their imported colours. Both remove the button pressed, so
+ * `afterAction` gets focus somewhere that stays (WCAG 2.4.3).
  */
 export function MaterialActionsRow({
   materialId,
   partIds,
+  afterAction,
 }: {
   materialId: MaterialId
   partIds: readonly PartId[]
+  afterAction?: () => void
 }) {
   const used = useDocumentStore((s) => usersOf(s.doc, materialId))
   const others = useDocumentStore((s) => usersOf(s.doc, materialId, partIds))
@@ -44,7 +47,10 @@ export function MaterialActionsRow({
                 ? "Give the selected part its own copy"
                 : "Give the selected parts their own copy"
             }
-            onClick={() => duplicateMaterial(materialId, partIds)}
+            onClick={() => {
+              duplicateMaterial(materialId, partIds)
+              afterAction?.()
+            }}
           >
             Make unique
           </Button>
@@ -54,7 +60,10 @@ export function MaterialActionsRow({
           size="sm"
           // sky-50 keeps red text above 4.5:1 on hover (accent would not).
           className="h-7 text-xs text-destructive hover:bg-accent-subtle hover:text-destructive"
-          onClick={() => deleteMaterial(materialId)}
+          onClick={() => {
+            deleteMaterial(materialId)
+            afterAction?.()
+          }}
         >
           Delete material
         </Button>

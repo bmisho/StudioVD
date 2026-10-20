@@ -34,6 +34,14 @@ describe("material actions: reuse and limits", () => {
     expect(t.s().doc).toBe(doc)
   })
 
+  it("gives parts that went away nothing, and adds no unused material", () => {
+    const t = setup()
+    const doc = t.s().doc
+    const gone = crypto.randomUUID() as PartId // deleted (or undone) during a drag
+    expect(t.s().assignBuiltin([gone], "std.steel")).toBeNull()
+    expect(t.s().doc).toBe(doc)
+  })
+
   it("numbers a copy of a 120-character name within the name limit", () => {
     const t = setup()
     const id = t.s().createMaterial([t.a])

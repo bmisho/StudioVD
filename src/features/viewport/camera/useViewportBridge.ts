@@ -37,7 +37,11 @@ export function useViewportBridge(rig: CameraRig, partsRoot: RefObject<Group | n
         invalidate()
       },
       captureThumbnail: () => captureThumbnail(get()),
-      partAt: (x, y) => partAtPoint(get(), partsRoot.current, x, y),
+      // Only where the canvas itself is under the point (not a toast or overlay on top of it).
+      partAt: (x, y) =>
+        document.elementFromPoint(x, y) === get().gl.domElement
+          ? partAtPoint(get(), partsRoot.current, x, y)
+          : null,
       renderMaterialPreviews: (materials, tilePx) =>
         renderMaterialPreviews(get(), materials, tilePx),
     })

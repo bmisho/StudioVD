@@ -25,14 +25,16 @@ export function useDragToPart(onDrop: (partId: PartId) => void) {
   const drag = useRef<Drag | null>(null)
   const suppressClick = useRef(false)
 
-  const end = (drop: boolean) => {
+  /** `at`: where the drop happens (the cursor may not have moved since the camera did). */
+  const end = (at: { x: number; y: number } | null) => {
     const d = drag.current
     drag.current = null
     if (!d?.dragging) return
     suppressClick.current = true
     viewportHover.set(null)
     document.body.style.removeProperty("cursor")
-    if (drop && d.target) onDrop(d.target)
+    const target = at ? viewportBridge.partAt(at.x, at.y) : null
+    if (target) onDrop(target)
   }
 
   // Escape cancels a drag in progress (a gesture key, not an app shortcut: capture phase, so
@@ -42,12 +44,12 @@ export function useDragToPart(onDrop: (partId: PartId) => void) {
       if (e.key !== "Escape" || !drag.current?.dragging) return
       e.preventDefault()
       e.stopPropagation()
-      end(false)
+      end(null)
     }
     window.addEventListener("keydown", onKey, true)
     return () => {
       window.removeEventListener("keydown", onKey, true)
-      end(false)
+      end(null)
     }
     // `end` reads refs only; re-subscribing on every render is not needed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,9 +78,9 @@ export function useDragToPart(onDrop: (partId: PartId) => void) {
       document.body.style.cursor = d.target ? "copy" : "no-drop"
     },
     onPointerUp: (e: ReactPointerEvent<HTMLElement>) => {
-      if (drag.current?.pointerId === e.pointerId) end(true)
+      if (drag.current?.pointerId === e.pointerId) end({ x: e.clientX, y: e.clientY })
     },
-    onLostPointerCapture: () => end(false),
+    onLostPointerCapture: () => end(null),
     clickAllowed: () => {
       const allowed = !suppressClick.current
       suppressClick.current = false

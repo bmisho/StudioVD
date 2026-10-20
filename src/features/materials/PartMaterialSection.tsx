@@ -1,4 +1,4 @@
-import { useId } from "react"
+import { useId, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import type { MaterialId, PartId, SceneDocument } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
@@ -25,6 +25,7 @@ function sharedMaterial(doc: SceneDocument, partIds: readonly PartId[]) {
  */
 export function PartMaterialSection({ partIds }: { partIds: readonly PartId[] }) {
   const id = useId()
+  const select = useRef<HTMLButtonElement>(null)
   const materialId = useDocumentStore((s) => sharedMaterial(s.doc, partIds))
   const assign = useDocumentStore((s) => s.assignMaterial)
   const create = useDocumentStore((s) => s.createMaterial)
@@ -36,6 +37,7 @@ export function PartMaterialSection({ partIds }: { partIds: readonly PartId[] })
       </h4>
       <div className="flex gap-1.5">
         <MaterialSelect
+          ref={select}
           id={id}
           label="Material"
           value={materialId}
@@ -53,7 +55,14 @@ export function PartMaterialSection({ partIds }: { partIds: readonly PartId[] })
         </Button>
       </div>
       <PresetGrid partIds={partIds} />
-      {materialId && <MaterialEditor materialId={materialId} partIds={partIds} />}
+      {materialId && (
+        <MaterialEditor
+          materialId={materialId}
+          partIds={partIds}
+          // The select shows the outcome: the copy's name, or the imported colours.
+          afterAction={() => select.current?.focus()}
+        />
+      )}
       {single && <SlotMaterials partId={single} />}
     </section>
   )

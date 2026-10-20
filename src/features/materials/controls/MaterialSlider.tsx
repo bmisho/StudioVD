@@ -42,7 +42,9 @@ export function MaterialSlider({
   const gesture = useRef<GestureToken | null>(null)
   const unit = field.unit ? ` (${field.unit})` : ""
   const sliderMin = field.min
-  const sliderMax = field.sliderMax ?? field.max
+  // A value past the slider's usual span (glow 50 of 0-10) widens it, so a key step moves
+  // from the real value instead of snapping it into the span.
+  const sliderMax = Math.max(field.sliderMax ?? field.max, value)
 
   const end = () => {
     documentHistory.endGesture(gesture.current)
@@ -88,13 +90,14 @@ export function MaterialSlider({
             if (!SLIDER_KEYS.has(e.key) && !MODIFIER_KEYS.has(e.key)) end()
           }}
         >
-          <SliderPrimitive.Track className="relative h-1 grow overflow-hidden rounded-full bg-input">
+          {/* muted-foreground: the track is the control's extent, so it needs 3:1 (input: 1.48:1). */}
+          <SliderPrimitive.Track className="relative h-1 grow overflow-hidden rounded-full bg-muted-foreground">
             <SliderPrimitive.Range className="absolute h-full bg-primary" />
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb
             aria-label={field.label}
             aria-describedby={`${id}-hint`}
-            aria-valuetext={field.unit ? `${formatValue(value)} ${field.unit}` : undefined}
+            aria-valuetext={field.unit ? `${formatValue(value)} ${field.unit}` : formatValue(value)}
             className="block size-3.5 rounded-full border border-primary bg-background shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onBlur={end}
           />

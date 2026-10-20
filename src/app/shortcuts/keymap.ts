@@ -97,12 +97,16 @@ export function normalizeCombo(combo: string): string {
   return [...ordered, normalized].join("+")
 }
 
-/** True when the event target is a place where the user types text. */
+/**
+ * True when the event target is a place where the user types text, or picks from a list by
+ * typing (a select, a combobox: letters jump to an item, so they are not shortcuts there).
+ */
 export function isTextInputTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
   if (target.isContentEditable) return true
   const tag = target.tagName
   if (tag === "TEXTAREA" || tag === "SELECT") return true
+  if (target.closest('[role="combobox"]')) return true
   if (tag !== "INPUT") return false
   const type = (target as HTMLInputElement).type
   return !["button", "checkbox", "radio", "range", "submit", "reset", "color"].includes(type)

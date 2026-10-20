@@ -1,10 +1,11 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react"
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { MaterialId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { documentHistory } from "@/store/document/history"
 import { resetStores } from "@/test/resetStores"
 import { ColorField } from "./ColorField"
+import { PICK_IDLE_MS } from "./SystemColorPicker"
 
 /** A new custom material (colour #a3a9b1, not a swatch) with a clean history. */
 function setup() {
@@ -98,23 +99,46 @@ describe("ColorField", () => {
     expect(color(id)).toMatch(/^#[0-9a-f]{6}$/)
   })
 
-  it("applies the system picker's input events live as ONE entry", () => {
+  it("applies the system picker's events live as ONE entry (Chromium: one change)", () => {
+    vi.useFakeTimers()
     const id = setup()
     const picker = screen.getByLabelText("System colour picker")
     act(() => picker.focus())
     fireEvent.input(picker, { target: { value: "#ff0000" } })
     fireEvent.input(picker, { target: { value: "#00ff00" } })
     expect(color(id)).toBe("#00ff00")
-    expect(documentHistory.isInGesture()).toBe(true)
     fireEvent.change(picker, { target: { value: "#0000ff" } }) // the dialog closed on a choice
     expect(color(id)).toBe("#0000ff")
+    act(() => {
+      vi.advanceTimersByTime(PICK_IDLE_MS)
+    })
     expect(documentHistory.isInGesture()).toBe(false)
     expect(undoSteps()).toBe(1)
     fireEvent.input(picker, { target: { value: "#123456" } })
-    act(() => picker.blur()) // dismissed: no change event
+    act(() => picker.blur()) // dismissed
     expect(documentHistory.isInGesture()).toBe(false)
     expect(undoSteps()).toBe(2)
     documentHistory.undo()
     expect(color(id)).toBe("#0000ff")
+    vi.useRealTimers()
+  })
+
+  it("WebKitGTK: live updates and a Cancel back to the old colour add no entry", () => {
+    vi.useFakeTimers()
+    const id = setup()
+    const before = useDocumentStore.getState().doc
+    const old = color(id) ?? ""
+    const picker = screen.getByLabelText("System colour picker")
+    // GTK reports every live change as input + change, and Cancel as one more with the old value.
+    for (const hex of ["#ff0000", "#00ff00", "#0000ff", old]) {
+      fireEvent.input(picker, { target: { value: hex } })
+      fireEvent.change(picker, { target: { value: hex } })
+    }
+    act(() => {
+      vi.advanceTimersByTime(PICK_IDLE_MS)
+    })
+    expect(undoSteps()).toBe(0)
+    expect(useDocumentStore.getState().doc).toBe(before) // not an unsaved change either
+    vi.useRealTimers()
   })
 })

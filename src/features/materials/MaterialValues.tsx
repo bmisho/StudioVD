@@ -73,7 +73,9 @@ export function MaterialValues({ material }: { material: Material }) {
         // Glass is see-through by transmission alone, so opacity goes back to 1 (PLAN 6.5).
         onChange={(on) => update(on ? { transmission: 1, opacity: 1 } : { transmission: 0 })}
       />
-      {glass && GLASS_FIELDS.map(slider)}
+      {/* Only the switch turns glass off: live edits stop at 0.01, or the fields would unmount
+          under the caret (typing "0.5" starts with 0). */}
+      {glass && GLASS_FIELDS.map((f) => slider(f.key === "transmission" ? { ...f, min: 0.01 } : f))}
       <ColorField
         label="Glow colour"
         value={material.emissive}

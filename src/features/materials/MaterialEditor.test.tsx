@@ -75,6 +75,31 @@ describe("MaterialEditor", () => {
     expect(undoSteps()).toBe(3)
   })
 
+  it("keeps the glass values while transmission is typed (0 of 0.5 stops at 0.01)", () => {
+    const { first, steel } = setup()
+    render(<MaterialEditor materialId={steel} partIds={[first]} />)
+    fireEvent.click(screen.getByRole("switch", { name: "Glass" }))
+    const transmission = screen.getByRole("textbox", { name: "Transmission" })
+    act(() => transmission.focus())
+    fireEvent.change(transmission, { target: { value: "0" } })
+    expect(material(steel)?.transmission).toBe(0.01)
+    expect(transmission).toBeInTheDocument()
+    expect(document.activeElement).toBe(transmission)
+    fireEvent.change(transmission, { target: { value: "0.5" } })
+    expect(material(steel)?.transmission).toBe(0.5)
+  })
+
+  it("steps a slider from a value past its usual span, and reads values out", () => {
+    const { first, steel } = setup()
+    s().updateMaterial(steel, { emissiveIntensity: 50 }) // typed: the field takes up to 100
+    render(<MaterialEditor materialId={steel} partIds={[first]} />)
+    const glow = screen.getByRole("slider", { name: "Glow" })
+    expect(glow).toHaveAttribute("aria-valuetext", "50")
+    act(() => glow.focus())
+    fireEvent.keyDown(glow, { key: "ArrowDown" })
+    expect(material(steel)?.emissiveIntensity).toBeCloseTo(49.9, 9)
+  })
+
   it("gives the shown parts a copy on Make unique, offered only while others share it", () => {
     const { first, second, steel } = setup()
     render(<PartMaterial partId={first} />)

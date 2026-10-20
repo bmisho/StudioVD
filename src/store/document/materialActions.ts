@@ -83,6 +83,8 @@ export function materialActions(set: Set, get: Get): MaterialActions {
       const builtin = builtinByKey(key)
       if (!builtin) return null
       const doc = get().doc
+      // Parts that went away (undo during a drag) get nothing; no unused material either.
+      if (partIds.length > 0 && !partIds.some((id) => Object.hasOwn(doc.parts, id))) return null
       // Parts that already show this preset keep the copy they have (no undo entry either).
       const current = partIds.map((id) => (Object.hasOwn(doc.parts, id) ? doc.parts[id] : null))
       const kept = current[0]?.materialId

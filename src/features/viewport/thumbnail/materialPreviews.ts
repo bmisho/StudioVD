@@ -1,5 +1,6 @@
 import type { RootState } from "@react-three/fiber"
 import { Group, Mesh, Vector4, type Material, type Scene, type WebGLRenderer } from "three"
+import { redrawNow } from "../renderer/redrawNow"
 import { toImagePixels } from "./encodeThumbnail"
 import { previewScene, type PreviewScene } from "./previewScene"
 
@@ -140,7 +141,7 @@ export async function renderMaterialPreviews(
     gl.setViewport(viewport)
     gl.setScissor(scissor)
     gl.setScissorTest(scissorTest)
-    state.advance(performance.now())
+    redrawNow(state)
   }
   return ctx.isContextLost() ? null : out
 }

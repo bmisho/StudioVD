@@ -196,6 +196,9 @@ Further rules:
 - Material previews render with the 3D view's own renderer into its canvas (no second
   WebGL context) and are read in the same task; never render previews to a render target
   (r186 skips tone mapping and the output colour space there).
+- A frame drawn outside the render loop (thumbnail, previews, probe reads) goes through
+  `renderer/redrawNow.ts`, never a bare `state.advance()`: R3F counts down the controls'
+  own `invalidate` at the end of a manual frame, which freezes a camera move mid-way.
 - Large binaries never cross IPC as JSON. Assets live in the project workspace dir and are
   loaded through the `stvd` URI scheme (Rust serves `<sha256>.glb` from the workspace only);
   writes use raw binary IPC payloads.

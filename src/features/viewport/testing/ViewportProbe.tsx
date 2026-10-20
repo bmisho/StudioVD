@@ -5,6 +5,7 @@ import type { RGB8 } from "@/core/math/colorGradient"
 import { visibleHeightMm } from "@/core/math/gridLevels"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { viewSpecOf } from "../camera/useCameraFrame"
+import { redrawNow } from "../renderer/redrawNow"
 import { readSceneTokens } from "../theme/sceneTokens"
 import { useViewport } from "../ViewportContext"
 import { viewportHover } from "../picking/hoverStore"
@@ -40,7 +41,7 @@ export function ViewportProbe() {
       const state = get()
       const ctx = state.gl.getContext()
       if (ctx.isContextLost()) return null
-      state.advance(performance.now())
+      redrawNow(state)
       const { drawingBufferWidth: w, drawingBufferHeight: h } = ctx
       const px = new Uint8Array(w * h * 4)
       ctx.readPixels(0, 0, w, h, ctx.RGBA, ctx.UNSIGNED_BYTE, px)

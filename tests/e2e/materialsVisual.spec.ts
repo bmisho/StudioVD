@@ -1,9 +1,14 @@
 import type { Page } from "@playwright/test"
 import { expect, fixtureFile, queueImportPick, test } from "./fixtures"
-import { partCenter, waitForViewport } from "./viewportHelpers"
+import { partPose, project, waitForViewport } from "./viewportHelpers"
 
 // PLAN 6.7 "visual": what a material does to real rendered pixels (SwiftShader in CI, so
-// tolerances, not golden images). Read at the centre of a 10 mm cube, isometric view.
+// tolerances, not golden images). Read on the top face of a 10 mm cube in the isometric view,
+// away from every edge: the centre is where three faces meet, and the face's own centre lies
+// on the hidden back edge, which X-ray shows.
+
+// Camera moves are immediate with reduced motion: every run reads the same view.
+test.use({ contextOptions: { reducedMotion: "reduce" } })
 
 type RGB = [number, number, number]
 const pixelAt = async (page: Page, x: number, y: number): Promise<RGB> => {
@@ -29,19 +34,45 @@ test("materials change the rendered pixels as their values say", async ({ page }
   await expect
     .poll(() => page.evaluate((i) => window.__STUDIOVD_VIEWPORT__?.partMesh(i)?.loaded, id))
     .toBe(true)
-  await page.keyboard.press("Control+7") // isometric: three faces, the centre on a face
-  // Select through the tree so no highlight covers the pixels read in the viewport.
-  await page.getByRole("treeitem", { name: /^Cube/ }).click()
-  const { x, y } = await partCenter(page, id)
-  const background = await pixelAt(page, x + 400, y - 300)
+  await page.keyboard.press("Control+7") // isometric: three faces
+  const pose = await partPose(page, id)
+  const [px, py, pz] = pose.position // the cube's centre (import centres the geometry)
+  const topFace = () => project(page, [px + 2.5, py + 5, pz - 2.5])
+  // The view turns over several frames, and frames are drawn on demand: draw them (pixelAt
+  // renders one) until the point stays put, or the reads below land on another face or
+  // highlight.
+  let at = await topFace()
+  let still = 0
+  await expect
+    .poll(async () => {
+      await pixelAt(page, at.x, at.y)
+      const now = await topFace()
+      still = Math.hypot(now.x - at.x, now.y - at.y) < 0.25 ? still + 1 : 0
+      at = now
+      return still
+    })
+    .toBeGreaterThanOrEqual(3)
+  const { x, y } = at
+  expect(
+    await page.evaluate(([cx, cy]) => window.__STUDIOVD_VIEWPORT__?.pickAt(cx, cy), [x, y])
+  ).toBe(id)
   const panel = page.getByRole("complementary", { name: "Properties" })
   const presets = panel.getByRole("toolbar", { name: "Material presets" })
-  await page.keyboard.press("Escape") // deselect: no tint over the part
   const sample = async () => {
     await page.waitForTimeout(300)
     return pixelAt(page, x, y)
   }
+  // Selected through the tree, then deselected (Escape), so no highlight covers the pixel.
   const select = () => page.getByRole("treeitem", { name: /^Cube/ }).click()
+
+  // What is behind that pixel: the same pixel with the cube hidden.
+  await select()
+  const visible = panel.getByRole("switch", { name: "Visible" })
+  await visible.click()
+  await page.keyboard.press("Escape")
+  const background = await sample()
+  await select()
+  await visible.click()
 
   // Copper: warm, red over blue.
   await select()

@@ -1,5 +1,6 @@
 import type { RootState } from "@react-three/fiber"
 import type { Object3D } from "three"
+import { redrawNow } from "../renderer/redrawNow"
 import { readSceneTokens } from "../theme/sceneTokens"
 import { encodeThumbnail, toImagePixels } from "./encodeThumbnail"
 import { isOverlay } from "./overlay"
@@ -28,7 +29,7 @@ export async function captureThumbnail(state: RootState): Promise<Uint8Array | n
     ctx.readPixels(0, 0, w, h, ctx.RGBA, ctx.UNSIGNED_BYTE, px)
   } finally {
     for (const object of hidden) object.visible = true
-    state.advance(performance.now())
+    redrawNow(state)
   }
   return encodeThumbnail(toImagePixels(px, w, h), w, h, readSceneTokens().viewportTop)
 }

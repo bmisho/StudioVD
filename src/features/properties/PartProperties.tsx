@@ -4,6 +4,7 @@ import { Switch } from "@/components/ui/switch"
 import type { PartId } from "@/core/schema"
 import { PartMaterialSection } from "@/features/materials/PartMaterialSection"
 import { useDocumentStore } from "@/store/document/documentStore"
+import { AnchorList } from "./AnchorList"
 import { NameField } from "./NameField"
 import { PropertyField } from "./PropertyField"
 
@@ -43,7 +44,10 @@ function Toggle({
   )
 }
 
-/** Part inspector (PLAN 4.7, 6.3): name, visibility, grounding, material, placement, geometry. */
+/**
+ * Part inspector (PLAN 4.7, 6.3, 7.4): name, visibility, grounding, material, anchors,
+ * placement, geometry.
+ */
 export function PartProperties({ id }: { id: PartId }) {
   const part = useDocumentStore((s) => s.doc.parts[id])
   const asset = useDocumentStore((s) => (part ? s.doc.assets[part.assetId] : undefined))
@@ -74,6 +78,9 @@ export function PartProperties({ id }: { id: PartId }) {
       </div>
       <div className="mt-3">
         <PartMaterialSection partIds={partIds} />
+      </div>
+      <div className="mt-3">
+        <AnchorList partId={id} />
       </div>
       <h4 className="mt-3 text-xs font-semibold">Placement</h4>
       <PropertyField label="Position (mm)" value={triple(part.pose.positionMm)} />

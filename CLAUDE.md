@@ -42,7 +42,7 @@ src/
   features/       One folder per feature, each owning its components + hooks
     viewport/     R3F canvas, camera, controls, grid, lighting, picking
     physics/      Rapier world, bodies, joints, drag controller
-    assembly/     Anchors, mates, snapping, assembly graph
+    assembly/     Anchors (Place Anchor tool, glyphs, picking), mates, snapping, assembly graph
     materials/    Material section of the inspector: picker, preset toolbar, editor, previews
     import/       Loaders, import dialog, workers
     schematic/    React Flow editor, node types, ports
@@ -196,6 +196,11 @@ Further rules:
   `LineSegments` over the asset's own position buffer (dispose them only with the asset: it
   would free the shared buffer). Part meshes raycast with `partRaycast` (front faces, one
   material) so picking is the same in every mode; wireframe hides faces with `visible`.
+- Anchors (Phase 7): snap features (`core/geometry/snapFeatures.ts`) are computed once per
+  asset in the asset worker, like feature edges; candidates (`core/assembly/snapCandidates.ts`)
+  are pure and pixel-based. Glyphs are overlays in CSS px (`features/assembly/glyphs.ts` scales
+  them every frame and picks anchors by screen distance): children of the part's group, never
+  raycast, left out of bounds (`visiblePartsBox` skips overlays), thumbnails and exports.
 - Material previews render with the 3D view's own renderer into its canvas (no second
   WebGL context) and are read in the same task; never render previews to a render target
   (r186 skips tone mapping and the output colour space there).

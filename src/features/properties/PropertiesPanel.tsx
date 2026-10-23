@@ -4,6 +4,7 @@ import { partsInSelection } from "@/core/scene/partsInSelection"
 import { PartMaterialSection } from "@/features/materials/PartMaterialSection"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
+import { AnchorProperties } from "./AnchorProperties"
 import { GroupProperties } from "./GroupProperties"
 import { PartProperties } from "./PartProperties"
 import { ProjectProperties } from "./ProjectProperties"
@@ -30,6 +31,7 @@ export function PropertiesPanel() {
       </div>
     )
   else if (single?.kind === "part") content = <PartProperties key={single.id} id={single.id} />
+  else if (single?.kind === "anchor") content = <AnchorProperties key={single.id} id={single.id} />
   else {
     const n = selection.length
     content = (

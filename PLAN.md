@@ -815,15 +815,39 @@ Exit criteria
 
 ## Phase 7: Anchor system
 
-- [ ] 7.1 Anchor model: part-local frame (origin, z, x), kind (point/planar/axial), optional
-  name and interface tag (e.g. `shaft-8mm`), source reference (face id, vertex, manual, component)
-- [ ] 7.2 "Place Anchor" tool: live preview of the candidate frame under the cursor before click
-- [ ] 7.3 Snap modes: face (hit point or face centre), axis (cylinder from face classification),
-  vertex, edge midpoint, circle centre (hole edge); pixel-based snap thresholds
-- [ ] 7.4 Anchor glyphs (screen-constant size triads), list in properties, rename, numeric offset
-  edit, delete; anchors follow their part
-- [ ] 7.5 Tests: classification and circle-fit on synthetic meshes (plane, full/partial cylinder,
-  sphere); snap selection logic; E2E place anchor on fixture STEP hole → axial anchor
+- [x] 7.1 Anchor model: part-local frame (origin, z, x), kind (point/planar/axial), optional
+  name and interface tag (e.g. `shaft-8mm`), source reference (face id, vertex, manual, component).
+  As built: the v1 schema already held it (`component` sources come with Phase 9); store
+  actions add, update (name, tag, kind, frame), flip and delete anchors (with the mates on
+  them), all in the scene.json contract test; frames never hold -0 (JSON reads it back as 0);
+  anchors are selectable, pruned like every selection
+- [x] 7.2 "Place Anchor" tool: live preview of the candidate frame under the cursor before click.
+  As built: a see-through glyph plus the edge or circle it snapped to, and a hint over the view
+  ("Hole Ø8 centre"); a click adds the anchor (one undo entry), named apart from the part's
+  others ("Face 2"), and selects it; the tool stays on. Escape ends a tool before it clears the
+  selection; test mode ends it; the move gizmo hides while a tool is on
+- [x] 7.3 Snap modes: face (hit point or face centre), axis (cylinder from face classification),
+  vertex, edge midpoint, circle centre (hole edge); pixel-based snap thresholds. As built: per
+  asset, once, in the asset worker, the feature edges with the faces on each side are joined
+  into chains that end at corners (1 or 3+ edges, or a turn over 60°) and where the faces
+  beside them change; a chain is a line (midpoint), a circle or arc (centre, axis, radius) or
+  neither. On the face under the cursor, within 12 px: corner, else edge midpoint, else circle
+  centre (cursor near the rim or the centre), else face centre; otherwise the cylinder's axis
+  at the cursor's depth, the plane, or a point on the surface. A hole's axis points out of its
+  mouth; cylinders are told apart as holes and shafts ("Hole Ø8", "Shaft Ø6")
+- [x] 7.4 Anchor glyphs (screen-constant size triads), list in properties, rename, numeric offset
+  edit, delete; anchors follow their part. As built: a dot, a z arrow and a red x (planar adds a
+  square, axial its axis and a ring), in CSS px scaled each frame, drawn over the parts as
+  children of the part's group (test mode too); shown for selected parts or anchors and for
+  every part while Place Anchor is on; a click within 8 px of an origin selects the anchor.
+  Inspector: name, kind, interface tag, origin X/Y/Z (part mm), direction with Flip, source,
+  Delete; the part inspector lists its anchors and starts Place Anchor
+- [x] 7.5 Tests: classification and circle-fit on synthetic meshes (plane, full/partial cylinder,
+  sphere); snap selection logic; E2E place anchor on fixture STEP hole → axial anchor. As built:
+  `tests/fixtures/plate-hole.step` (an advanced B-rep plate with a Ø8 hole, the bore as two half
+  cylinders) is checked through the real import (faces, corners, edges, rims, hole sense) and in
+  E2E (rim → axial "Hole Ø8" out of the top face, undo/redo, face and corner snaps, picking and
+  deleting an anchor)
 - [ ] ⛔ 7.6 **User approval**
 
 ## Phase 8: Mates & snapping

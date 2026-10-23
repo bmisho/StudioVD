@@ -15,10 +15,17 @@ export function NameField({
   id,
   name,
   rename,
+  label = "Name",
+  maxLength = NAME_MAX,
+  placeholder,
 }: {
   id: string
   name: string | undefined
   rename: (name: string) => void
+  /** The field's label (other short texts use the same gesture: an anchor's interface tag). */
+  label?: string
+  maxLength?: number
+  placeholder?: string
 }) {
   // Raw text while editing (may hold spaces the store trims); null otherwise, so undo/redo
   // and other views show through without syncing state in an effect.
@@ -48,12 +55,13 @@ export function NameField({
   return (
     <>
       <Label htmlFor={id} className="text-xs text-muted-foreground">
-        Name
+        {label}
       </Label>
       <Input
         id={id}
         className="h-7 text-sm"
-        maxLength={NAME_MAX}
+        maxLength={maxLength}
+        placeholder={placeholder}
         value={draft ?? name}
         onFocus={() => {
           gesture.current = documentHistory.beginGesture()

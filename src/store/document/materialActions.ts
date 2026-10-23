@@ -23,6 +23,7 @@ import {
   type TextureMap,
 } from "@/core/schema"
 import { deepEqual } from "@/core/util/deepEqual"
+import type { Get, Set } from "./actionTypes"
 
 /** Values the editor changes; identity, provenance and maps have their own actions. */
 export type MaterialPatch = Partial<Omit<Material, "id" | "builtinKey" | "maps">>
@@ -45,9 +46,6 @@ export interface MaterialActions {
   /** Gives one slot of a part its own material (`null`: back to the part's material). */
   setSlotMaterial: (partId: PartId, slot: string, id: MaterialId | null) => void
 }
-
-type Set = (fn: (state: Draft<{ doc: SceneDocument }>) => void) => void
-type Get = () => { doc: SceneDocument }
 
 const hasMaterial = (doc: SceneDocument, id: MaterialId) => Object.hasOwn(doc.materials, id)
 

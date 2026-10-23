@@ -1,7 +1,7 @@
 // @vitest-environment node
 import RAPIER from "@dimforge/rapier3d-compat"
 import { beforeAll, describe, expect, it } from "vitest"
-import { quatFromAxisAngle, sub } from "@/core/physics/vec"
+import { quatFromAxisAngle, sub } from "@/core/math/vec3"
 import { TEST_RIG_STOP_RAD } from "@/core/scene/testRig"
 import type { Quat, Vec3 } from "@/core/schema"
 import { createRigSim } from "./testing/rigHarness"

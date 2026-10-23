@@ -8,6 +8,8 @@ export const AnchorSourceSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("vertex"), vertexIndex: z.number().int().nonnegative() }).strict(),
   z.object({ kind: z.literal("manual") }).strict(),
 ])
+export type AnchorSource = z.infer<typeof AnchorSourceSchema>
+export type AnchorKind = z.infer<typeof AnchorSchema>["kind"]
 
 export const AnchorSchema = z
   .object({

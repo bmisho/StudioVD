@@ -1,6 +1,6 @@
 import type { MateId, PartId, Quat, SceneDocument, Vec3 } from "@/core/schema"
 import { densityKgM3ToKgMm3 } from "@/core/units"
-import { add, length, rotate, scale } from "./vec"
+import { add, length, rotate, scale } from "@/core/math/vec3"
 
 /**
  * Density for parts without a material: steel, 7850 kg/m³ (EN 1991-1-1 Annex A and steel design

@@ -42,6 +42,20 @@ describe("document store contract", () => {
     s().setPartsGrounded([leaf], true)
     s().setPartPose(leaf, { positionMm: [1, 2, 3], quaternion: [0, 0, 0.6, 0.8] })
     roundTrips("edits")
+    const frame = { originMm: [0, 40, 30] as const, z: [0, 0, 1] as const, x: [1, 0, 0] as const }
+    const anchor = s().addAnchor({
+      partId: base,
+      kind: "planar",
+      frame: { originMm: [...frame.originMm], z: [...frame.z], x: [...frame.x] },
+      source: { kind: "face", faceIndex: 2 },
+      name: "Front",
+    })
+    if (!anchor) throw new Error("anchor not added")
+    s().updateAnchor(anchor, { name: "Front face", interface: "M3-hole", kind: "axial" })
+    s().flipAnchor(anchor)
+    roundTrips("anchors")
+    s().deleteAnchors([rig.anchors[0]?.id ?? anchor])
+    roundTrips("delete anchor with its mate")
     s().deleteGroups([inner])
     roundTrips("delete group")
     s().deleteItems([base], [outer])

@@ -1,6 +1,6 @@
 import type { World } from "@dimforge/rapier3d-compat"
 import { physicsModelFromDocument } from "@/core/physics/physicsModel"
-import { add, dot, quatMultiply, rotate, sub } from "@/core/physics/vec"
+import { add, dot, quatMultiply, rotate, sub } from "@/core/math/vec3"
 import { createTestRig, TEST_RIG_HINGE_MM, TEST_RIG_LEAF } from "@/core/scene/testRig"
 import { createEmptyDocument, type Quat, type SceneDocument, type Vec3 } from "@/core/schema"
 import { buildPhysicsScene, type PhysicsBody, type RapierApi } from "../buildPhysicsScene"

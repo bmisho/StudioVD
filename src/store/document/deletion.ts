@@ -1,6 +1,6 @@
 import type { Draft } from "immer"
-import { partDeletion } from "@/core/scene/partOps"
-import type { GroupId, PartId, SceneDocument } from "@/core/schema"
+import { anchorDeletion, partDeletion } from "@/core/scene/partOps"
+import type { AnchorId, GroupId, PartId, SceneDocument } from "@/core/schema"
 
 // Deletion steps on an immer draft, so one store action can combine them in ONE undo entry.
 
@@ -13,6 +13,15 @@ export function removeParts(doc: Draft<SceneDocument>, ids: readonly PartId[]): 
   for (const id of gone.couplings) delete doc.couplings[id]
   for (const id of gone.bindings) delete doc.bindings[id]
   for (const id of gone.assets) delete doc.assets[id]
+}
+
+/** Removes anchors with the mates on them, their couplings and bindings (PLAN 7.4). */
+export function removeAnchors(doc: Draft<SceneDocument>, ids: readonly AnchorId[]): void {
+  const gone = anchorDeletion(doc, ids)
+  for (const id of gone.anchors) delete doc.anchors[id]
+  for (const id of gone.mates) delete doc.mates[id]
+  for (const id of gone.couplings) delete doc.couplings[id]
+  for (const id of gone.bindings) delete doc.bindings[id]
 }
 
 /** Removes groups; their child groups and parts move up to the deleted group's parent. */

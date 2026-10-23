@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import type { Vec3 } from "@/core/schema"
 import { DRAG_SPRING, dragForce, effectiveMass } from "./dragSpring"
-import { length } from "./vec"
+import { length } from "@/core/math/vec3"
 
 const zero: Vec3 = [0, 0, 0]
 

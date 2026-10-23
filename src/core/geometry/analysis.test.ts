@@ -127,4 +127,28 @@ describe("normals, faces and classification", () => {
     expect(faces[0]?.kind).toBe("cylinder")
     expect(faces[0]?.radiusMm).toBeCloseTo(8, 3)
   })
+
+  it("PLAN 7.5: a sphere is neither a plane nor a cylinder (no anchor axis from it)", () => {
+    const { faces } = analyse(sphereSoup(6, 16, 24))
+    expect(faces).toHaveLength(1)
+    expect(faces[0]?.kind).toBe("other")
+  })
 })
+
+/** UV sphere as an STL would give it, `rings` from pole to pole and `segments` around. */
+function sphereSoup(radius: number, rings: number, segments: number) {
+  const at = (i: number, j: number): [number, number, number] => {
+    const t = (i / rings) * Math.PI
+    const p = (j / segments) * 2 * Math.PI
+    const r = radius * Math.sin(t)
+    return [r * Math.cos(p), r * Math.sin(p), radius * Math.cos(t)]
+  }
+  const positions: number[] = []
+  for (let i = 0; i < rings; i++)
+    for (let j = 0; j < segments; j++) {
+      const [a, b, c, d] = [at(i, j), at(i + 1, j), at(i + 1, j + 1), at(i, j + 1)]
+      if (i > 0) positions.push(...a, ...b, ...d) // no sliver at the north pole
+      if (i < rings - 1) positions.push(...b, ...c, ...d) // nor at the south pole
+    }
+  return soup(positions)
+}

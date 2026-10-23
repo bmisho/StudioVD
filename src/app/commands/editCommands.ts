@@ -1,4 +1,4 @@
-import { SCENE_LIMITS, type GroupId, type PartId } from "@/core/schema"
+import { SCENE_LIMITS, type AnchorId, type GroupId, type PartId } from "@/core/schema"
 import type { Command, CommandDeps } from "./types"
 
 function selectedGroupIds(deps: CommandDeps): GroupId[] {
@@ -11,6 +11,12 @@ function selectedDirectPartIds(deps: CommandDeps): PartId[] {
   return deps.session
     .getState()
     .selection.flatMap((item) => (item.kind === "part" ? [item.id] : []))
+}
+
+function selectedAnchorIds(deps: CommandDeps): AnchorId[] {
+  return deps.session
+    .getState()
+    .selection.flatMap((item) => (item.kind === "anchor" ? [item.id] : []))
 }
 
 function nextGroupName(deps: CommandDeps): string {
@@ -43,15 +49,21 @@ export function editCommands(deps: CommandDeps): Command[] {
       id: "edit.delete",
       label: "Delete",
       shortcuts: ["Delete"],
-      // Parts go with their anchors and mates; a deleted group's children move up a level.
+      // Parts go with their anchors and mates; a deleted group's children move up a level;
+      // anchors go with their mates.
       run: () => {
         const parts = selectedDirectPartIds(deps)
         const groups = selectedGroupIds(deps)
-        if (parts.length === 0 && groups.length === 0) return
-        document.getState().deleteItems(parts, groups)
+        const anchors = selectedAnchorIds(deps)
+        if (parts.length + groups.length + anchors.length === 0) return
+        document.getState().deleteItems(parts, groups, anchors)
         session.getState().clearSelection()
       },
-      isEnabled: () => selectedDirectPartIds(deps).length + selectedGroupIds(deps).length > 0,
+      isEnabled: () =>
+        selectedDirectPartIds(deps).length +
+          selectedGroupIds(deps).length +
+          selectedAnchorIds(deps).length >
+        0,
     },
     {
       id: "edit.newGroup",

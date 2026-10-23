@@ -2,7 +2,7 @@ import type * as Rapier from "@dimforge/rapier3d-compat"
 import type { RigidBody, World } from "@dimforge/rapier3d-compat"
 import { splitJointTree } from "@/core/physics/jointTree"
 import type { PhysicsJointModel, PhysicsModel } from "@/core/physics/physicsModel"
-import { rotate, sub } from "@/core/physics/vec"
+import { rotate, sub } from "@/core/math/vec3"
 import type { PartId, Quat, Vec3 } from "@/core/schema"
 
 /** The parts of the Rapier module the builder uses (the app passes useRapier().rapier). */

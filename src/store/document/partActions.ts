@@ -3,6 +3,7 @@ import { nestsTooDeep } from "@/core/scene/groupNesting"
 import { commonParent, topLevelItems } from "@/core/scene/partOps"
 import type { SelectionRef } from "@/core/scene/selection"
 import {
+  type AnchorId,
   NameSchema,
   newId,
   PoseSchema,
@@ -11,7 +12,7 @@ import {
   type Pose,
   type SceneDocument,
 } from "@/core/schema"
-import { removeGroups, removeParts } from "./deletion"
+import { removeAnchors, removeGroups, removeParts } from "./deletion"
 
 export interface PartActions {
   /** Renames a part; names the schema would reject are ignored (like `renameGroup`). */
@@ -21,8 +22,15 @@ export interface PartActions {
   setPartsGrounded: (ids: readonly PartId[], grounded: boolean) => void
   /** Deletes parts with their anchors, mates, couplings, bindings and unused assets. */
   deleteParts: (ids: readonly PartId[]) => void
-  /** Deletes parts and groups together: ONE undo entry (Edit › Delete on a mixed selection). */
-  deleteItems: (parts: readonly PartId[], groups: readonly GroupId[]) => void
+  /**
+   * Deletes parts, groups and anchors together: ONE undo entry (Edit › Delete on a mixed
+   * selection). Anchors go with the mates on them.
+   */
+  deleteItems: (
+    parts: readonly PartId[],
+    groups: readonly GroupId[],
+    anchors?: readonly AnchorId[]
+  ) => void
   /**
    * Moves the selected parts and groups (outermost ones) into a new group under their shared
    * parent. With nothing to move, creates an empty group at the root. Returns its id, or
@@ -65,10 +73,11 @@ export function partActions(set: Set): PartActions {
 
     deleteParts: (ids) => set((s) => removeParts(s.doc, ids)),
 
-    deleteItems: (parts, groups) =>
+    deleteItems: (parts, groups, anchors = []) =>
       set((s) => {
         removeParts(s.doc, parts)
         removeGroups(s.doc, groups)
+        removeAnchors(s.doc, anchors)
       }),
 
     groupItems: (items, name) => {

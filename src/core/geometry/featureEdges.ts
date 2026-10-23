@@ -31,6 +31,16 @@ export function featureEdges(
   faces: readonly TriangleRange[],
   angleDeg = FEATURE_EDGE_DEG
 ): Uint32Array<ArrayBuffer> {
+  const { draw, liveIndices } = markFeatureSlots(mesh, faces, angleDeg)
+  return emit(draw, liveIndices)
+}
+
+/** Marks the edge slots to draw: 0 skip, 1 feature edge, 2 border or non-manifold. */
+export function markFeatureSlots(
+  mesh: { positions: Float32Array; indices: Uint32Array },
+  faces: readonly TriangleRange[],
+  angleDeg: number
+) {
   const { positions, indices } = mesh
   const weld = weldVertices(positions)
   const { unit } = faceNormals(positions, indices)
@@ -66,7 +76,7 @@ export function featureEdges(
     }
   }
   if (loose > 1) dedupeLoose(draw, loose, liveIndices, weld.ids, weld.count)
-  return emit(draw, liveIndices)
+  return { draw, liveIndices, live, neighbours, faceOf, weld }
 }
 
 /** Triangles with three distinct welded corners (a repeated corner means a zero-length edge). */
@@ -140,7 +150,7 @@ function dedupeLoose(
 }
 
 /** The marked edge slots as vertex index pairs (edge e of a triangle: corner e -> e + 1). */
-function emit(draw: Uint8Array, indices: Uint32Array): Uint32Array<ArrayBuffer> {
+export function emit(draw: Uint8Array, indices: Uint32Array): Uint32Array<ArrayBuffer> {
   let count = 0
   for (const d of draw) if (d !== 0) count++
   const out = new Uint32Array(2 * count)

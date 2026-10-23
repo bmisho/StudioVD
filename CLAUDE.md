@@ -54,8 +54,9 @@ src/
   core/           PURE TypeScript. No React, no R3F, no DOM, no Tauri
     math/         Frames, transforms, fitting (three math types allowed)
     physics/      Drag spring, damping, joint tree, physics model from the document (no Rapier)
+    assembly/     Anchor frames and snap candidates (Phase 7); mate math and the assembly graph
     materials/    Built-in presets (with density sources), material -> three params, slot looks
-    geometry/     Asset preparation, GLB codec (v1/v2 slots), faces, feature edges
+    geometry/     Asset preparation, GLB codec (v1/v2 slots), faces, feature edges, snap features
     sim/          Netlist compiler, MNA solver, signal propagation (no three.js at all)
     generators/   Parametric standard parts: <id>/v<major>.ts (pure, runs in a worker)
     schema/       zod schemas for scene.json, component.json, packs, catalog + migrations;

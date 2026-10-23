@@ -32,23 +32,10 @@ export interface PartDeletion {
  */
 export function partDeletion(doc: Doc, ids: readonly PartId[]): PartDeletion {
   const parts = new Set(ids.filter((id) => Object.hasOwn(doc.parts, id)))
-  const anchors = new Set(
-    Object.values(doc.anchors)
-      .filter((a) => parts.has(a.partId))
-      .map((a) => a.id)
-  )
-  const mates = new Set(
-    Object.values(doc.mates)
-      .filter((m) => anchors.has(m.anchorA) || anchors.has(m.anchorB))
-      .map((m) => m.id)
-  )
-  const couplings = Object.values(doc.couplings)
-    .filter((c) => mates.has(c.mateA) || mates.has(c.mateB))
-    .map((c) => c.id)
-  const gone = new Set<string>([...parts, ...anchors, ...mates])
-  const bindings = Object.values(doc.bindings)
-    .filter((b) => gone.has(b.from.ref) || gone.has(b.to.ref))
-    .map((b) => b.id)
+  const anchors = Object.values(doc.anchors)
+    .filter((a) => parts.has(a.partId))
+    .map((a) => a.id)
+  const { mates, couplings, bindings } = anchorDependents(doc, anchors, parts)
   const used = new Set(
     Object.values(doc.parts)
       .filter((p) => !parts.has(p.id))
@@ -57,14 +44,29 @@ export function partDeletion(doc: Doc, ids: readonly PartId[]): PartDeletion {
   const assets = [...new Set(Object.values(doc.parts).map((p) => p.assetId))].filter(
     (a) => !used.has(a) && [...parts].some((id) => doc.parts[id]?.assetId === a)
   )
-  return {
-    parts: [...parts],
-    anchors: [...anchors],
-    mates: [...mates],
-    couplings,
-    bindings,
-    assets,
-  }
+  return { parts: [...parts], anchors, mates, couplings, bindings, assets }
+}
+
+/** Everything that goes with these anchors (PLAN 7.4): the mates on them, and so on. */
+export function anchorDeletion(doc: Doc, ids: readonly AnchorId[]) {
+  const anchors = [...new Set(ids.filter((id) => Object.hasOwn(doc.anchors, id)))]
+  return { anchors, ...anchorDependents(doc, anchors, new Set()) }
+}
+
+/** Mates on the anchors, couplings on those mates, bindings naming any of them (or `alsoGone`). */
+function anchorDependents(doc: Doc, ids: readonly AnchorId[], alsoGone: ReadonlySet<string>) {
+  const anchors = new Set(ids)
+  const mates = Object.values(doc.mates)
+    .filter((m) => anchors.has(m.anchorA) || anchors.has(m.anchorB))
+    .map((m) => m.id)
+  const gone = new Set<string>([...alsoGone, ...anchors, ...mates])
+  const couplings = Object.values(doc.couplings)
+    .filter((c) => gone.has(c.mateA) || gone.has(c.mateB))
+    .map((c) => c.id)
+  const bindings = Object.values(doc.bindings)
+    .filter((b) => gone.has(b.from.ref) || gone.has(b.to.ref))
+    .map((b) => b.id)
+  return { mates, couplings, bindings }
 }
 
 const parentOf = (doc: Pick<Doc, "parts" | "groups">, item: SelectionRef): GroupId | null => {

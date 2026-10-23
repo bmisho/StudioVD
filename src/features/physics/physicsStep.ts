@@ -6,7 +6,7 @@ import {
   effectiveMass,
   type DragSpringParams,
 } from "@/core/physics/dragSpring"
-import { add, cross, length, quatConjugate, quatMultiply, rotate, sub } from "@/core/physics/vec"
+import { add, cross, length, quatConjugate, quatMultiply, rotate, sub } from "@/core/math/vec3"
 import type { Quat, Vec3 } from "@/core/schema"
 import type { PhysicsBody, PhysicsScene } from "./buildPhysicsScene"
 

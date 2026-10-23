@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { DAMPING_RATE_PER_S, dampingForce, dampingTorque } from "./damping"
-import { quatFromAxisAngle } from "./vec"
+import { quatFromAxisAngle } from "@/core/math/vec3"
 
 describe("damping", () => {
   it("opposes linear velocity in proportion to mass", () => {

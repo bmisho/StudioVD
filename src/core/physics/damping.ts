@@ -1,5 +1,5 @@
 import type { Quat, Vec3 } from "@/core/schema"
-import { quatConjugate, rotate, scale } from "./vec"
+import { quatConjugate, rotate, scale } from "@/core/math/vec3"
 
 /**
  * Viscous damping as forces, so released parts come to rest (PLAN 3.9). Rapier's own body

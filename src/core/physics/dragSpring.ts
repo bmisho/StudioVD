@@ -1,5 +1,5 @@
 import type { Vec3 } from "@/core/schema"
-import { clampLength, scale, sub } from "./vec"
+import { clampLength, scale, sub } from "@/core/math/vec3"
 
 /**
  * Mouse drag in test mode (PLAN 3.9): a force-limited spring pulls the grab point toward the

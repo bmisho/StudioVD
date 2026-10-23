@@ -3,7 +3,7 @@ import { createTestRig, TEST_RIG_HINGE_MM } from "@/core/scene/testRig"
 import { createEmptyDocument, type SceneDocument } from "@/core/schema"
 import { testMaterial } from "@/core/schema/testing/sampleDocument"
 import { DEFAULT_DENSITY_KG_M3, physicsModelFromDocument } from "./physicsModel"
-import { quatFromAxisAngle } from "./vec"
+import { quatFromAxisAngle } from "@/core/math/vec3"
 
 function rigDocument(): SceneDocument {
   const doc = createEmptyDocument("0.1.0")

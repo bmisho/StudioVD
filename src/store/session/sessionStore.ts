@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { GroupId, MateId, NodeId, PartId } from "@/core/schema"
+import type { AnchorId, GroupId, MateId, NodeId, PartId } from "@/core/schema"
 
 // Session state (CLAUDE.md §4, kind 2): not persisted, not undoable.
 
@@ -19,6 +19,7 @@ export type ViewportGpu = "starting" | "ready" | "lost"
 export type SelectionItem =
   | { kind: "group"; id: GroupId }
   | { kind: "part"; id: PartId }
+  | { kind: "anchor"; id: AnchorId }
   | { kind: "mate"; id: MateId }
   | { kind: "node"; id: NodeId }
 

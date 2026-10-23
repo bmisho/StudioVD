@@ -811,7 +811,7 @@ Exit criteria
   built: the "visual" test reads rendered pixels (copper is warm, red is red, 10 % opacity is
   nearly the background, X-ray is lighter), since CI renders with SwiftShader; screenshots
   of every display style were checked by eye
-- [ ] ⛔ 6.8 **User approval**
+- [x] ⛔ 6.8 **User approval**
 
 ## Phase 7: Anchor system
 

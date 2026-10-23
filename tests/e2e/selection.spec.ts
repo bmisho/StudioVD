@@ -117,18 +117,15 @@ test.describe("3D selection", () => {
     await presets.getByRole("button", { name: "Glass", exact: true }).click()
     /** Most blue (b - r) across the base's back right edge where the glass leaf covers it. */
     const blueAcrossEdge = async () => {
-      let most = -255
+      const points = []
       for (const y of [70, 76]) {
         const p = await project(page, [60, y, -30])
-        for (let dx = -4; dx <= 10; dx++) {
-          const c = await page.evaluate(
-            ([px, py]) => window.__STUDIOVD_VIEWPORT__?.pixelAt(px, py),
-            [p.x + dx, p.y]
-          )
-          if (c) most = Math.max(most, c[2] - c[0])
-        }
+        for (let dx = -4; dx <= 10; dx++) points.push({ x: p.x + dx, y: p.y })
       }
-      return most
+      // One frame for all points: with glass, a frame takes a second on CI's SwiftShader.
+      const rgb = await page.evaluate((ps) => window.__STUDIOVD_VIEWPORT__?.pixelsAt(ps), points)
+      if (!rgb) throw new Error("no frame")
+      return Math.max(...rgb.map(([r, , b]) => b - r))
     }
     await page.keyboard.press("Escape")
     expect(await blueAcrossEdge()).toBeLessThan(50) // the slate base and the grid, refracted

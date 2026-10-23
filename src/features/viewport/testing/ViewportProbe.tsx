@@ -47,6 +47,18 @@ export function ViewportProbe() {
       ctx.readPixels(0, 0, w, h, ctx.RGBA, ctx.UNSIGNED_BYTE, px)
       return { ctx, px, w, h }
     }
+    /** RGB under a client point, from a frame read in this task. */
+    const rgbAt = (frame: { px: Uint8Array; w: number; h: number }, x: number, y: number) => {
+      const rect = get().gl.domElement.getBoundingClientRect()
+      const px = Math.floor(((x - rect.left) / rect.width) * frame.w)
+      const py = Math.floor(((rect.bottom - y) / rect.height) * frame.h) // GL rows go up
+      const at = 4 * (py * frame.w + px)
+      return [frame.px[at] ?? 0, frame.px[at + 1] ?? 0, frame.px[at + 2] ?? 0] as [
+        number,
+        number,
+        number,
+      ]
+    }
     window.__STUDIOVD_VIEWPORT__ = {
       framesRendered: () => frames.current,
       sample: () => {
@@ -59,12 +71,11 @@ export function ViewportProbe() {
       },
       pixelAt: (x, y) => {
         const frame = renderAndRead()
-        if (!frame) return null
-        const rect = get().gl.domElement.getBoundingClientRect()
-        const px = Math.floor(((x - rect.left) / rect.width) * frame.w)
-        const py = Math.floor(((rect.bottom - y) / rect.height) * frame.h) // GL rows go up
-        const at = 4 * (py * frame.w + px)
-        return [frame.px[at] ?? 0, frame.px[at + 1] ?? 0, frame.px[at + 2] ?? 0]
+        return frame ? rgbAt(frame, x, y) : null
+      },
+      pixelsAt: (points) => {
+        const frame = renderAndRead()
+        return frame ? points.map((p) => rgbAt(frame, p.x, p.y)) : null
       },
       highlightPixels: (tolerance = 2) => {
         const frame = renderAndRead()

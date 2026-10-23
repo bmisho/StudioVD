@@ -58,6 +58,8 @@ export interface ViewportProbeApi {
   hoveredId(): string | null
   /** Renders a frame and reads the RGB of the pixel under a client point; null if lost. */
   pixelAt(x: number, y: number): [number, number, number] | null
+  /** Like `pixelAt` for many points, from one rendered frame (a frame can take a second). */
+  pixelsAt(points: ClientPoint[]): [number, number, number][] | null
   /** Renders a frame and counts pixels within `tolerance` of the 3D highlight colour. */
   highlightPixels(tolerance?: number): number
   /** Test mode: the physics world is built and a press on a part starts a drag. */

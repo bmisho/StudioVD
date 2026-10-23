@@ -82,4 +82,32 @@ describe("snap features", () => {
     expect(lines(edges)).toHaveLength(4) // each side one line, not three segments
     for (const e of lines(edges)) expect(e.faces).toEqual([-1, 0])
   })
+
+  it("a spline outline is no circle; an exact large arc is one", () => {
+    // A sheet in z = 0 between y = -10 and a top edge at y = f(x), x 0..100 in 5 mm steps.
+    const sheet = (f: (x: number) => number) => {
+      const xs = Array.from({ length: 21 }, (_, i) => 5 * i)
+      const positions = Float32Array.from([
+        ...xs.flatMap((x) => [x, f(x), 0]),
+        ...xs.flatMap((x) => [x, -10, 0]),
+      ])
+      const indices = xs.slice(1).flatMap((_, i) => [i, 21 + i, i + 1, i + 1, 21 + i, 22 + i])
+      const mesh = { positions, indices: Uint32Array.from(indices) }
+      return arcs(snapFeatures(mesh, [{ first: 0, last: 39, kind: "plane" }]).edges)
+    }
+    expect(sheet((x) => 10 * (x / 100) ** 3)).toEqual([]) // fits r ≈ 330 to 0.19 mm rms
+    const [round] = sheet((x) => Math.sqrt(1000 ** 2 - (x - 50) ** 2) - 1000)
+    expect(round?.radius).toBeCloseTo(1000, 0)
+    // The sweep's sign follows the chain's direction; its size is the arc's angle.
+    expect(Math.abs(round?.sweep ?? 0)).toBeCloseTo(2 * Math.asin(50 / 1000), 4)
+    expect((round?.start[0] ?? NaN) + (round?.end[0] ?? NaN)).toBeCloseTo(100, 3) // ends at x 0, 100
+  })
+
+  it("a mesh with more feature segments than the limit gets none, only cylinder senses", () => {
+    const box = boxMesh(10, 20, 30)
+    const dense = snapFeatures(box, BOX_FACES, 11) // the box has 12
+    expect(dense).toMatchObject({ corners: [], edges: [], dense: true })
+    expect(dense.cylinderSense).toHaveLength(6)
+    expect(snapFeatures(box, BOX_FACES, 12).dense).toBeUndefined()
+  })
 })

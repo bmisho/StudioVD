@@ -1,7 +1,18 @@
 import { fitCircle } from "@/core/math/circleFit"
 import { eigenSymmetric3, type Sym3 } from "@/core/math/eigen3"
-import { add, cross, dot, length, normalize, scale, sub } from "@/core/math/vec3"
+import {
+  add,
+  cross,
+  dot,
+  inPlane,
+  length,
+  normalize,
+  scale,
+  signedAngle,
+  sub,
+} from "@/core/math/vec3"
 import type { Vec3 } from "@/core/schema"
+import { cylinderSenses } from "./cylinderSense"
 import { edgeChains } from "./edgeChains"
 import { featureSegments } from "./featureSegments"
 import type { FaceInfo } from "./meshData"
@@ -31,6 +42,11 @@ export interface SnapArc {
   axis: Vec3
   radius: number
   closed: boolean
+  /** Its ends on the circle (the same point when closed) and its signed angle about `axis`
+   *  from start to end (±2π when closed). */
+  start: Vec3
+  end: Vec3
+  sweep: number
 }
 
 export type SnapEdge = SnapLine | SnapArc
@@ -41,7 +57,16 @@ export interface SnapFeatures {
   edges: SnapEdge[]
   /** Per face: 1 a convex cylinder (shaft, boss), -1 a concave one (hole), 0 otherwise. */
   cylinderSense: Int8Array
+  /** Too many feature edges to snap to (a scan, a voxel model): no corners or edges then. */
+  dense?: boolean
 }
+
+/**
+ * Above this many feature segments a mesh gets no edge snaps: every triangle edge of a noisy
+ * scan is a feature, snapping to them is noise, and their objects would cost the main thread
+ * a long pause to receive (about 130 ms per 43k segments, measured). CAD parts stay far below.
+ */
+export const MAX_SNAP_SEGMENTS = 50_000
 
 /** Deviation allowed from a line or circle, relative to its size (tessellations are exact). */
 const RELATIVE_TOLERANCE = 1e-3
@@ -54,7 +79,8 @@ const ABSOLUTE_TOLERANCE = 1e-6
  */
 export function snapFeatures(
   mesh: { positions: Float32Array; indices: Uint32Array },
-  faces: readonly FaceInfo[]
+  faces: readonly FaceInfo[],
+  maxSegments = MAX_SNAP_SEGMENTS
 ): SnapFeatures {
   const { positions } = mesh
   const point = (v: number): Vec3 => [
@@ -62,7 +88,11 @@ export function snapFeatures(
     positions[3 * v + 1] ?? 0,
     positions[3 * v + 2] ?? 0,
   ]
-  const { chains, corners } = edgeChains(featureSegments(mesh, faces), positions)
+  const segments = featureSegments(mesh, faces)
+  const cylinderSense = cylinderSenses(mesh, faces)
+  if (segments.ends.length / 2 > maxSegments)
+    return { corners: [], edges: [], cylinderSense, dense: true }
+  const { chains, corners } = edgeChains(segments, positions)
   const edges: SnapEdge[] = []
   for (const chain of chains) {
     const points = chain.vertices.map(point)
@@ -73,7 +103,7 @@ export function snapFeatures(
   return {
     corners: corners.map((c) => ({ at: point(c.vertex), vertex: c.vertex, faces: c.faces })),
     edges,
-    cylinderSense: cylinderSenses(mesh, faces),
+    cylinderSense,
   }
 }
 
@@ -117,15 +147,33 @@ function classifyChain(points: Vec3[], closed: boolean, faces: [number, number])
     points.map((p) => dot(sub(p, c), w))
   )
   if (!circle || circle.r > extent * 1e3) return null
-  if (circle.rms > RELATIVE_TOLERANCE * circle.r + ABSOLUTE_TOLERANCE) return null
+  // Relative to the chain's own size, not the radius: a gentle spline fits some huge circle
+  // to within 1e-3 of that radius, while a tessellated arc is exact.
+  if (circle.rms > RELATIVE_TOLERANCE * Math.min(circle.r, extent) + ABSOLUTE_TOLERANCE) return null
   const centre = add(c, add(scale(u, circle.cx), scale(w, circle.cy)))
+  const axis = canonical(normal)
+  const onCircle = (p: Vec3) =>
+    add(centre, scale(normalize(inPlane(sub(p, centre), axis)), circle.r))
+  let sweep = 2 * Math.PI
+  if (!closed) {
+    sweep = 0
+    for (let i = 1; i < points.length; i++)
+      sweep += signedAngle(
+        sub(points[i - 1] ?? first, centre),
+        sub(points[i] ?? last, centre),
+        axis
+      )
+  }
   return {
     kind: "arc",
     faces,
     centre,
-    axis: canonical(normal),
+    axis,
     radius: circle.r,
     closed,
+    start: onCircle(first),
+    end: onCircle(closed ? first : last),
+    sweep,
   } satisfies SnapArc
 }
 
@@ -133,27 +181,4 @@ function classifyChain(points: Vec3[], closed: boolean, faces: [number, number])
 function canonical(v: Vec3): Vec3 {
   const big = v.reduce((m, x, i) => (Math.abs(x) > Math.abs(v[m] ?? 0) ? i : m), 0)
   return (v[big] ?? 0) < 0 ? scale(v, -1) : v
-}
-
-/** A cylinder whose face normals point away from its axis is a shaft, towards it a hole. */
-function cylinderSenses(
-  { positions, indices }: { positions: Float32Array; indices: Uint32Array },
-  faces: readonly FaceInfo[]
-): Int8Array {
-  const sense = new Int8Array(faces.length)
-  const at = (i: number): Vec3 => {
-    const v = indices[i] ?? 0
-    return [positions[3 * v] ?? 0, positions[3 * v + 1] ?? 0, positions[3 * v + 2] ?? 0]
-  }
-  faces.forEach((face, f) => {
-    if (face.kind !== "cylinder" || !face.axis || !face.point) return
-    const [a, b, c] = [at(3 * face.first), at(3 * face.first + 1), at(3 * face.first + 2)]
-    const n = cross(sub(b, a), sub(c, a))
-    const mid = scale([a[0] + b[0] + c[0], a[1] + b[1] + c[1], a[2] + b[2] + c[2]], 1 / 3)
-    const off = sub(mid, face.point)
-    const radial = sub(off, scale(face.axis, dot(off, face.axis)))
-    const d = dot(n, radial)
-    sense[f] = d > 0 ? 1 : d < 0 ? -1 : 0
-  })
-  return sense
 }

@@ -19,6 +19,13 @@ export const cross = (a: Vec3, b: Vec3): Vec3 => [
   a[0] * b[1] - a[1] * b[0],
 ]
 
+/** `v` without its component along the unit `axis`. */
+export const inPlane = (v: Vec3, axis: Vec3): Vec3 => sub(v, scale(axis, dot(v, axis)))
+
+/** The angle from `a` to `b` about the unit `axis`, in (-π, π]. */
+export const signedAngle = (a: Vec3, b: Vec3, axis: Vec3): number =>
+  Math.atan2(dot(cross(a, b), axis), dot(a, b))
+
 /** `a` shortened to at most `max` (direction kept). */
 export function clampLength(a: Vec3, max: number): Vec3 {
   const l = length(a)

@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { classifyFaces } from "@/core/geometry/classify"
 import type { FaceInfo } from "@/core/geometry/meshData"
-import { snapFeatures, type SnapFeatures } from "@/core/geometry/snapFeatures"
+import { snapFeatures, type SnapArc, type SnapFeatures } from "@/core/geometry/snapFeatures"
 import { boxMesh } from "@/core/geometry/testing/shapes"
 import type { Vec3 } from "@/core/schema"
+import { normalize, signedAngle, sub } from "@/core/math/vec3"
 import { faceOfTriangle, snapCandidate, type SnapQuery } from "./snapCandidates"
 
 // A 10 x 20 x 30 mm box seen from +z, orthographic, 10 px per mm, its centre at (100, 100).
@@ -80,7 +81,17 @@ describe("anchor snap candidates on a hole", () => {
   const features: SnapFeatures = {
     corners: [],
     edges: [
-      { kind: "arc", faces: [0, 1], centre: [5, 4, 0], axis: [0, 1, 0], radius: 4, closed: false },
+      {
+        kind: "arc",
+        faces: [0, 1],
+        centre: [5, 4, 0],
+        axis: [0, 1, 0],
+        radius: 4,
+        closed: true,
+        start: [9, 4, 0],
+        end: [9, 4, 0],
+        sweep: 2 * Math.PI,
+      },
     ],
     cylinderSense: Int8Array.from([0, -1]),
   }
@@ -115,6 +126,101 @@ describe("anchor snap candidates on a hole", () => {
     expect(c).toMatchObject({ snap: "axis", kind: "axial", hint: "Hole Ø8 axis" })
     expect(c.frame.originMm).toEqual([5, 0, 0])
     expect(c.frame.z).toEqual([0, 1, 0])
+  })
+})
+
+describe("anchor snap candidates on arcs", () => {
+  const fromAbove = (p: Vec3) => ({ x: 100 + 10 * p[0], y: 100 + 10 * p[2] })
+  const Y: Vec3 = [0, 1, 0]
+  /** An arc in the y = 4 plane about (cx, 4, cz), from `start` to `end` the short way. */
+  function arc(faces: [number, number], c: Vec3, r: number, start: Vec3, end: Vec3): SnapArc {
+    const sweep = signedAngle(sub(start, c), sub(end, c), Y)
+    return { kind: "arc", faces, centre: c, axis: Y, radius: r, closed: false, start, end, sweep }
+  }
+  function onTop(point: Vec3, arcs: SnapArc[], faces: FaceInfo[]): SnapQuery {
+    return {
+      point,
+      normal: Y,
+      triangle: 0,
+      toViewer: Y,
+      faces,
+      features: { corners: [], edges: arcs, cylinderSense: new Int8Array(faces.length) },
+      toScreen: fromAbove,
+      cursor: fromAbove(point),
+    }
+  }
+  const top: FaceInfo = { first: 0, last: 0, kind: "plane", normal: Y, point: [-40, 4, -40] }
+  const wall = (i: number): FaceInfo => ({
+    first: i,
+    last: i,
+    kind: "cylinder",
+    axis: Y,
+    point: [0, 0, 0],
+    radiusMm: 5,
+  })
+
+  it("a rounded corner snaps near its arc, not across the circle's missing part", () => {
+    const fillet = arc([0, 1], [0, 4, 0], 5, [5, 4, 0], [0, 4, 5])
+    const faces = [top, wall(1)]
+    expect(snapCandidate(onTop([3.39, 4, 3.39], [fillet], faces)).snap).toBe("circle")
+    // 10 mm inside the plate, on the circle where the arc is not: the face, not its centre.
+    expect(snapCandidate(onTop([-3.54, 4, -3.54], [fillet], faces)).snap).toBe("face")
+  })
+
+  it("a gentle curve offers no centre (R 5000 over a 100 mm chord)", () => {
+    const c: Vec3 = [0, 4, 5000]
+    const z = 5000 - Math.sqrt(5000 ** 2 - 50 ** 2)
+    const gentle = arc([0, 1], c, 5000, [-50, 4, z], [50, 4, z])
+    expect(snapCandidate(onTop([0, 4, 0.3], [gentle], [top, wall(1)])).snap).toBe("face")
+  })
+
+  it("a rim split in halves: the half beside the cursor is the anchor's source", () => {
+    const c: Vec3 = [5, 4, 0]
+    const nearHalf = arc([0, 1], c, 4, [9, 4, 0], [1, 4, 0]) // through +z
+    nearHalf.sweep = -Math.PI
+    const farHalf = arc([0, 2], c, 4, [9, 4, 0], [1, 4, 0]) // through -z
+    farHalf.sweep = Math.PI
+    const faces = [top, wall(1), wall(2)]
+    const s = snapCandidate(onTop([5, 4, 4.5], [nearHalf, farHalf], faces))
+    expect(s).toMatchObject({ snap: "circle", source: { kind: "face", faceIndex: 1 } })
+  })
+
+  it("a hole's far rim seen from its wall still points out of that mouth", () => {
+    const faces: FaceInfo[] = [
+      { first: 0, last: 0, kind: "plane", normal: Y, point: [0, 4, 0] },
+      { first: 1, last: 1, kind: "plane", normal: [0, -1, 0], point: [0, -4, 0] },
+      { first: 2, last: 2, kind: "cylinder", axis: Y, point: [5, 0, 0], radiusMm: 4 },
+    ]
+    const rim = (face: number, y: number): SnapArc => ({
+      ...arc([face, 2], [5, y, 0], 4, [9, y, 0], [9, y, 0]),
+      closed: true,
+      sweep: 2 * Math.PI,
+    })
+    const fromFront = (p: Vec3) => ({ x: 100 + 10 * p[0], y: 100 - 10 * p[1] })
+    const point: Vec3 = [9, -3.8, 0] // on the wall, just above the bottom rim
+    const c = snapCandidate({
+      point,
+      normal: [-1, 0, 0],
+      triangle: 2,
+      toViewer: normalize([0.2, 1, 1]),
+      faces,
+      features: {
+        corners: [],
+        edges: [rim(0, 4), rim(1, -4)],
+        cylinderSense: Int8Array.from([0, 0, -1]),
+      },
+      toScreen: fromFront,
+      cursor: fromFront(point),
+    })
+    expect(c).toMatchObject({ snap: "circle", name: "Hole Ø8" })
+    expect(c.frame.originMm).toEqual([5, -4, 0])
+    expect(c.frame.z).toEqual([0, -1, 0])
+  })
+
+  it("a mesh too dense for edge snaps says so in the hint", () => {
+    const dense: SnapFeatures = { ...boxFeatures, corners: [], edges: [], dense: true }
+    const c = snapCandidate({ ...onFront([4.6, 9.6, 15]), features: dense })
+    expect(c).toMatchObject({ snap: "face", hint: "Face (too many edges to snap to)" })
   })
 })
 

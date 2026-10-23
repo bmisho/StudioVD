@@ -20,9 +20,11 @@ export interface ChainCorner {
 /**
  * A vertex with two edges is still a corner when the outline turns more than this there (the
  * border of an open sheet). Tessellated holes turn 360°/n per vertex: an octagon (45°) or a
- * hexagon (60°) stays one circle, a square splits into four lines.
+ * hexagon (60°, a degree clear of the limit so rounding cannot decide it) stays one circle; a
+ * pentagon (72°) or a square splits into lines. The faces beside an edge break chains too, so
+ * a hex nut's outline (one side face per edge) still gets its corners.
  */
-const CORNER_DEG = 60
+const CORNER_DEG = 61
 const CORNER_COS = Math.cos((CORNER_DEG * Math.PI) / 180)
 
 /**
@@ -100,7 +102,8 @@ export function edgeChains(seg: FeatureSegments, positions: Float32Array) {
       ahead.push(w)
       cur = t
       if (w === start) {
-        closed = true
+        // Back at the start: a loop, unless the start is a corner it ends at both ways.
+        closed = !corner[start]
         break
       }
     }

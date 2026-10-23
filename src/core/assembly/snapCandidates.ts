@@ -1,11 +1,17 @@
 import type { FaceInfo } from "@/core/geometry/meshData"
-import type { SnapArc, SnapCorner, SnapFeatures, SnapLine } from "@/core/geometry/snapFeatures"
-import { add, dot, length, normalize, scale, sub } from "@/core/math/vec3"
+import type { SnapArc, SnapFeatures, SnapLine } from "@/core/geometry/snapFeatures"
+import { add, dot, normalize, scale, sub } from "@/core/math/vec3"
 import type { AnchorSource, Frame, Vec3 } from "@/core/schema"
 import { anchorFrame, diameterLabel } from "./anchorFrames"
+import { faceOfTriangle, nearFace, nearestOnArc } from "./snapLookup"
+
+export { faceOfTriangle }
 
 /** How close (CSS px) the cursor must be to a corner, midpoint or centre to snap to it. */
 export const SNAP_THRESHOLD_PX = 12
+
+/** Arcs shorter than this offer no centre: a gentle curve's centre lies far off the part. */
+const MIN_ARC_SWEEP = Math.PI / 4
 
 export type SnapKind = "corner" | "edgeMid" | "circle" | "faceCentre" | "axis" | "face" | "surface"
 
@@ -43,50 +49,6 @@ export interface SnapQuery {
   thresholdPx?: number
 }
 
-/** The face holding triangle `t` (faces are sorted, disjoint triangle ranges), or -1. */
-export function faceOfTriangle(faces: readonly FaceInfo[], t: number): number {
-  let lo = 0
-  let hi = faces.length - 1
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1
-    const f = faces[mid]
-    if (!f) return -1
-    if (t < f.first) hi = mid - 1
-    else if (t > f.last) lo = mid + 1
-    else return mid
-  }
-  return -1
-}
-
-interface NearFace {
-  corners: SnapCorner[]
-  lines: SnapLine[]
-  arcs: SnapArc[]
-}
-const byFace = new WeakMap<SnapFeatures, Map<number, NearFace>>()
-
-/** The corners and edges on the boundary of each face, built once per feature set. */
-function nearFace(features: SnapFeatures, face: number): NearFace {
-  let index = byFace.get(features)
-  if (!index) {
-    const map = new Map<number, NearFace>()
-    const of = (f: number) => {
-      let entry = map.get(f)
-      if (!entry) map.set(f, (entry = { corners: [], lines: [], arcs: [] }))
-      return entry
-    }
-    for (const c of features.corners) for (const f of c.faces) of(f).corners.push(c)
-    for (const e of features.edges)
-      for (const f of new Set(e.faces)) {
-        if (f < 0) continue
-        if (e.kind === "line") of(f).lines.push(e)
-        else of(f).arcs.push(e)
-      }
-    byFace.set(features, (index = map))
-  }
-  return index.get(face) ?? { corners: [], lines: [], arcs: [] }
-}
-
 /** Nearest item within the threshold, by screen distance. */
 function nearest<T>(items: readonly T[], distance: (item: T) => number, threshold: number) {
   let best: T | null = null
@@ -119,6 +81,12 @@ function roundName(features: SnapFeatures | null, faces: readonly number[], radi
  * (a cylinder's axis, a plane, or a point on any other surface).
  */
 export function snapCandidate(q: SnapQuery): AnchorCandidate {
+  const c = pickCandidate(q)
+  // A mesh too dense for edge snaps says so, or its missing vertex snaps would puzzle.
+  return q.features?.dense ? { ...c, hint: `${c.hint} (too many edges to snap to)` } : c
+}
+
+function pickCandidate(q: SnapQuery): AnchorCandidate {
   const threshold = q.thresholdPx ?? SNAP_THRESHOLD_PX
   const face = faceOfTriangle(q.faces, q.triangle)
   const info = face >= 0 ? q.faces[face] : undefined
@@ -152,17 +120,19 @@ export function snapCandidate(q: SnapQuery): AnchorCandidate {
       hint: "Edge midpoint",
       feature: { type: "segment", a: line.start, b: line.end },
     }
-  const rimPx = (a: SnapArc) => {
-    const off = sub(q.point, a.centre)
-    const radial = sub(off, scale(a.axis, dot(off, a.axis)))
-    const l = length(radial)
-    const rim = l > 1e-9 ? add(a.centre, scale(radial, a.radius / l)) : a.centre
-    return Math.min(px(a.centre), px(rim))
+  // Near the arc itself or its centre; on a tie (at the centre of a rim split in halves) the
+  // half nearer the cursor.
+  const arcPx = (a: SnapArc) => {
+    const rim = px(nearestOnArc(a, q.point))
+    return Math.min(px(a.centre), rim) + 1e-6 * rim
   }
-  const arc = near && nearest(near.arcs, rimPx, threshold)
+  const arcs = near?.arcs.filter((a) => a.closed || Math.abs(a.sweep) >= MIN_ARC_SWEEP)
+  const arc = arcs && nearest(arcs, arcPx, threshold)
   if (arc) {
-    // Out of the planar face around a hole's mouth; on a cylinder's wall, towards the viewer.
-    const z = facing(arc.axis, info?.kind === "plane" ? normal : q.toViewer)
+    // Out of the planar face around a hole's mouth (also seen from the wall); with no plane
+    // beside the edge, towards the viewer.
+    const mouth = arc.faces.map((f) => q.faces[f]).find((f) => f?.kind === "plane" && f.normal)
+    const z = facing(arc.axis, mouth?.normal ?? q.toViewer)
     const round = arc.faces.find((f) => q.faces[f]?.kind === "cylinder") ?? face
     const name = roundName(q.features, arc.faces, arc.radius)
     return {

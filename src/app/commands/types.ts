@@ -62,6 +62,8 @@ export interface Command {
   isChecked?: () => boolean
   /** Shown in the tooltip/menu when the command is not available yet. */
   availableInPhase?: number
+  /** What to do to enable it, for the toolbar tooltip ("leave test mode first"). */
+  disabledReason?: string
 }
 
 /** Backend calls used by commands (src/lib/tauri wrappers; mocked in tests). */

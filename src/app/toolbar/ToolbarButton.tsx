@@ -21,10 +21,11 @@ interface ToolbarButtonProps {
  */
 export function ToolbarButton({ command, icon: Icon, pressed, disabled }: ToolbarButtonProps) {
   const registry = useCommands()
-  const { label, shortcuts, availableInPhase } = registry.get(command)
+  const { label, shortcuts, availableInPhase, disabledReason } = registry.get(command)
   const off = (disabled ?? false) || !registry.isEnabled(command)
   let tip = shortcuts?.[0] ? `${label} (${shortcuts[0]})` : label
   if (availableInPhase) tip = `${label}: available in Phase ${availableInPhase}`
+  else if (off && disabledReason) tip = `${label}: ${disabledReason}`
 
   return (
     <Tooltip>

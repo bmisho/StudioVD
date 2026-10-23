@@ -13,10 +13,9 @@ export function SceneGraphPanel() {
   const groups = useDocumentStore((s) => s.doc.groups)
   const parts = useDocumentStore((s) => s.doc.parts)
   const tree = useMemo(() => buildSceneTree({ groups, parts }), [groups, parts])
-  // Same rule as Edit › Delete: any selected part or group.
-  const canDelete = useSessionStore((s) =>
-    s.selection.some((i) => i.kind === "group" || i.kind === "part")
-  )
+  // Edit › Delete's own rule (any selected part, group or anchor), re-read when the
+  // selection changes.
+  const canDelete = useSessionStore(() => registry.isEnabled("edit.delete"))
 
   return (
     <div className="flex h-full flex-col">
@@ -37,7 +36,7 @@ export function SceneGraphPanel() {
             variant="ghost"
             size="icon-xs"
             aria-label="Delete selected"
-            title={canDelete ? "Delete (Delete)" : "Delete: select parts or groups first"}
+            title={canDelete ? "Delete (Delete)" : "Delete: select parts, groups or anchors first"}
             // aria-disabled, not disabled: it stays focusable and its tooltip explains (§7).
             aria-disabled={!canDelete}
             className={canDelete ? "size-7" : "size-7 opacity-50"}

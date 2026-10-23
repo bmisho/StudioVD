@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { partsInSelection } from "@/core/scene/partsInSelection"
 import { PartMaterialSection } from "@/features/materials/PartMaterialSection"
@@ -8,12 +8,15 @@ import { AnchorProperties } from "./AnchorProperties"
 import { GroupProperties } from "./GroupProperties"
 import { PartProperties } from "./PartProperties"
 import { ProjectProperties } from "./ProjectProperties"
+import { useFocusRescue } from "./useFocusRescue"
 
 export function PropertiesPanel() {
   const selection = useSessionStore((s) => s.selection)
   const single = selection.length === 1 ? selection[0] : undefined
   const parts = useDocumentStore((s) => s.doc.parts)
   const groups = useDocumentStore((s) => s.doc.groups)
+  const body = useRef<HTMLDivElement>(null)
+  useFocusRescue(body, selection)
   // A group or several items: assign a material to every part in them (PLAN 6.4).
   const partIds = useMemo(
     () => (single?.kind === "part" ? [] : [...partsInSelection({ parts, groups }, selection)]),
@@ -47,7 +50,14 @@ export function PropertiesPanel() {
   return (
     <ScrollArea className="h-full">
       {/* Inspector values are selectable so they can be copied into bug reports. */}
-      <div className="p-3 select-text">{content}</div>
+      <div
+        ref={body}
+        // Where focus goes when the control holding it disappears (useFocusRescue).
+        tabIndex={-1}
+        className="p-3 outline-none select-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+      >
+        {content}
+      </div>
     </ScrollArea>
   )
 }

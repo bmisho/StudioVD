@@ -95,6 +95,7 @@ describe("command registry", () => {
     session.getState().toggleTestMode()
     expect(session.getState().activeTool).toBe("select") // tools edit the design pose
     expect(registry.isEnabled("tool.anchor")).toBe(false)
+    expect(registry.get("tool.anchor").disabledReason).toBe("leave test mode first")
   })
 
   it("marks only undo/redo as auto-repeatable", () => {

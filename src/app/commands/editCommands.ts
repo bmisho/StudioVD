@@ -19,6 +19,16 @@ function selectedAnchorIds(deps: CommandDeps): AnchorId[] {
     .selection.flatMap((item) => (item.kind === "anchor" ? [item.id] : []))
 }
 
+/** The parts the given anchors are on, each once, in selection order. */
+function anchorParts(deps: CommandDeps, anchors: AnchorId[]): PartId[] {
+  const all = deps.document.getState().doc.anchors
+  const parts = anchors.flatMap((id) => {
+    const anchor = Object.hasOwn(all, id) ? all[id] : undefined
+    return anchor ? [anchor.partId] : []
+  })
+  return [...new Set(parts)]
+}
+
 function nextGroupName(deps: CommandDeps): string {
   const names = new Set(Object.values(deps.document.getState().doc.groups).map((g) => g.name))
   let n = 1
@@ -50,14 +60,16 @@ export function editCommands(deps: CommandDeps): Command[] {
       label: "Delete",
       shortcuts: ["Delete"],
       // Parts go with their anchors and mates; a deleted group's children move up a level;
-      // anchors go with their mates.
+      // anchors go with their mates, and then their parts are shown (the inspector's Delete
+      // anchor does the same).
       run: () => {
         const parts = selectedDirectPartIds(deps)
         const groups = selectedGroupIds(deps)
         const anchors = selectedAnchorIds(deps)
         if (parts.length + groups.length + anchors.length === 0) return
+        const owners = parts.length + groups.length === 0 ? anchorParts(deps, anchors) : []
         document.getState().deleteItems(parts, groups, anchors)
-        session.getState().clearSelection()
+        session.getState().select(owners.map((id) => ({ kind: "part", id })))
       },
       isEnabled: () =>
         selectedDirectPartIds(deps).length +

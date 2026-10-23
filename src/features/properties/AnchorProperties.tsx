@@ -2,14 +2,14 @@ import { useId } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { anchorLabel } from "@/core/assembly/anchorNames"
-import type { AnchorId, AnchorSource } from "@/core/schema"
+import type { AnchorId, AnchorSource, PartId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { AnchorKindSelect } from "./AnchorKindSelect"
 import { AnchorOriginFields } from "./AnchorOriginFields"
 import { NameField } from "./NameField"
 import { PropertyField } from "./PropertyField"
-import { focusAnchorList } from "./anchorListFocus"
+import { FOCUSABLE_HEADING, anchorHeadingId, focusAnchorList } from "./inspectorFocus"
 
 const unit = new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 })
 const SOURCE: Record<AnchorSource["kind"], string> = {
@@ -20,7 +20,8 @@ const SOURCE: Record<AnchorSource["kind"], string> = {
 
 /**
  * Anchor inspector (PLAN 7.4): name, kind, interface tag, origin, direction (flip) and what it
- * was snapped to; Delete removes it with the mates on it and shows its part again.
+ * was snapped to; Delete removes it with the mates on it and shows its part again, as does the
+ * part's name (back to its anchor list).
  */
 export function AnchorProperties({ id }: { id: AnchorId }) {
   const kindId = useId()
@@ -33,12 +34,31 @@ export function AnchorProperties({ id }: { id: AnchorId }) {
   const remove = useDocumentStore((s) => s.deleteAnchors)
   const select = useSessionStore((s) => s.select)
   if (!anchor) return null
+  const showPart = (partId: PartId) => {
+    select([{ kind: "part", id: partId }])
+    focusAnchorList(partId)
+  }
 
   return (
     <div className="flex flex-col gap-1.5">
-      <h3 className="text-xs font-semibold">Anchor</h3>
-      <p className="truncate text-xs text-muted-foreground" title={partName}>
-        On {partName ?? "a part"}
+      <h3
+        id={anchorHeadingId(id)}
+        tabIndex={-1}
+        className={`text-xs font-semibold ${FOCUSABLE_HEADING}`}
+      >
+        Anchor
+      </h3>
+      <p className="flex min-w-0 items-baseline gap-1 text-xs text-muted-foreground">
+        On
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto min-w-0 shrink p-0 text-xs"
+          title={`Show ${partName ?? "the part"}`}
+          onClick={() => showPart(anchor.partId)}
+        >
+          <span className="truncate">{partName ?? "a part"}</span>
+        </Button>
       </p>
       <NameField
         id={`anchor-name-${id}`}
@@ -85,8 +105,7 @@ export function AnchorProperties({ id }: { id: AnchorId }) {
             const partId = anchor.partId
             remove([id])
             // The button goes with the anchor: show its part, focus on its remaining anchors.
-            select([{ kind: "part", id: partId }])
-            focusAnchorList(partId)
+            showPart(partId)
           }}
         >
           Delete anchor

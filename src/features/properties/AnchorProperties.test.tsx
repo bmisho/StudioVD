@@ -37,7 +37,7 @@ describe("AnchorProperties", () => {
   it("shows the anchor's part, name, kind, origin and direction", () => {
     const { hinge } = setup()
     render(<AnchorProperties id={hinge} />)
-    expect(screen.getByText("On Base")).toBeInTheDocument()
+    expect(screen.getByText("On")).toContainElement(screen.getByRole("button", { name: "Base" }))
     expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Hinge")
     expect(screen.getByRole("combobox", { name: "Kind" })).toHaveTextContent("Axial (an axis)")
     expect(screen.getByRole("textbox", { name: "Origin X (mm)" })).toHaveValue("60.5")
@@ -88,5 +88,29 @@ describe("AnchorList", () => {
     )
     fireEvent.click(screen.getByRole("button", { name: "Place Anchor" }))
     expect(useSessionStore.getState().activeTool).toBe("select")
+  })
+
+  it("names an unnamed anchor by its kind once", () => {
+    const { base, hinge } = setup()
+    act(() => useDocumentStore.getState().updateAnchor(hinge, { name: "" }))
+    render(<AnchorList partId={base} />)
+    expect(screen.getByRole("button", { name: "Axial" })).toBeInTheDocument()
+  })
+
+  it("keeps the kind label readable on the hovered row (no muted text on accent, §7)", () => {
+    const { base } = setup()
+    render(<AnchorList partId={base} />)
+    const kind = screen.getByText("Axial")
+    expect(kind.closest("button")).toHaveClass("group", "hover:bg-accent")
+    expect(kind).toHaveClass("group-hover:text-accent-foreground")
+  })
+
+  it("shows Place Anchor as unavailable in test mode and says why", () => {
+    const { base } = setup()
+    act(() => useSessionStore.getState().toggleTestMode())
+    render(<AnchorList partId={base} />)
+    const place = screen.getByRole("button", { name: "Place Anchor" })
+    expect(place).toHaveClass("aria-disabled:opacity-50", "aria-disabled:hover:bg-transparent")
+    expect(place).toHaveAccessibleDescription("Leave test mode to place anchors")
   })
 })

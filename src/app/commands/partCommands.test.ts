@@ -57,6 +57,18 @@ describe("part commands", () => {
     expect(t.document.getState().doc.mates).toEqual({})
     expect(t.session.getState().selection).toEqual([])
   })
+
+  it("Delete on anchors alone removes them and shows their parts (as Delete anchor does)", () => {
+    const t = withRig()
+    const anchors = Object.values(t.document.getState().doc.anchors)
+    t.session.getState().select(anchors.map((a) => ({ kind: "anchor", id: a.id })))
+    t.registry.run("edit.delete")
+    expect(t.document.getState().doc.anchors).toEqual({})
+    expect(t.session.getState().selection).toEqual([
+      { kind: "part", id: t.base },
+      { kind: "part", id: t.leaf },
+    ])
+  })
 })
 
 describe("delete", () => {

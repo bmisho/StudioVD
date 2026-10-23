@@ -1,4 +1,6 @@
 import type { TriangleRange } from "@/core/geometry/featureEdges"
+import type { FaceInfo } from "@/core/geometry/meshData"
+import type { SnapFeatures } from "@/core/geometry/snapFeatures"
 import type { AssetLoadReply, AssetLoadRequest } from "@/workers/assetLoadProtocol"
 import type { DecodedAsset } from "./assetDecode"
 
@@ -6,6 +8,7 @@ import type { DecodedAsset } from "./assetDecode"
 type Pending =
   | { kind: "decode"; resolve: (asset: DecodedAsset) => void; reject: (error: Error) => void }
   | { kind: "edges"; resolve: (edges: Uint32Array) => void; reject: (error: Error) => void }
+  | { kind: "snaps"; resolve: (snaps: SnapFeatures) => void; reject: (error: Error) => void }
 
 interface Slot {
   worker: Worker
@@ -23,6 +26,7 @@ function settle(pending: Pending, reply: AssetLoadReply): void {
   if (!reply.ok) pending.reject(new Error(reply.message))
   else if (pending.kind === "decode" && reply.kind === "decode") pending.resolve(reply.asset)
   else if (pending.kind === "edges" && reply.kind === "edges") pending.resolve(reply.edges)
+  else if (pending.kind === "snaps" && reply.kind === "snaps") pending.resolve(reply.snaps)
   else
     pending.reject(
       new Error(
@@ -107,5 +111,23 @@ export function edgesInWorker(
       ...(angleDeg === undefined ? {} : { angleDeg }),
     }
     send({ kind: "edges", resolve, reject }, request, [])
+  })
+}
+
+/** Anchor snap features of a decoded asset (PLAN 7.3), in a worker; arrays copied as for edges. */
+export function snapsInWorker(
+  positions: Float32Array,
+  indices: Uint32Array,
+  faces: readonly FaceInfo[]
+): Promise<SnapFeatures> {
+  return new Promise((resolve, reject) => {
+    const request: AssetLoadRequest = {
+      kind: "snaps",
+      requestId: ++nextRequest,
+      positions,
+      indices,
+      faces: [...faces],
+    }
+    send({ kind: "snaps", resolve, reject }, request, [])
   })
 }

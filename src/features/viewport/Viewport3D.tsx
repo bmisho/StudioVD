@@ -3,6 +3,9 @@ import { Canvas } from "@react-three/fiber"
 import type { Group } from "three"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { CameraRigController } from "./camera/CameraRigController"
+import { AnchorPreview } from "@/features/assembly/AnchorPreview"
+import { AnchorToolHint } from "@/features/assembly/AnchorToolHint"
+import { GlyphScaler } from "@/features/assembly/GlyphScaler"
 import { PartTransformGizmo } from "./gizmos/PartTransformGizmo"
 import { createCameraRig } from "./camera/createCameraRig"
 import { MaterialSync } from "./materials/MaterialSync"
@@ -64,6 +67,8 @@ export function Viewport3D() {
           <MaterialSync />
           <PartsLayer />
           <PartTransformGizmo />
+          <AnchorPreview />
+          <GlyphScaler />
           {testMode && (
             <Suspense fallback={null}>
               <PhysicsLayer />
@@ -73,6 +78,7 @@ export function Viewport3D() {
         </ViewportContext>
       </Canvas>
       <ViewportStatusOverlay />
+      <AnchorToolHint />
     </div>
   )
 }

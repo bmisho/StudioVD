@@ -118,7 +118,9 @@ export function createSessionStore() {
     toggleRightPanel: () => set((s) => ({ rightPanelOpen: !s.rightPanelOpen })),
     setPanelOpen: (side, open) =>
       set(side === "left" ? { leftPanelOpen: open } : { rightPanelOpen: open }),
-    toggleTestMode: () => set((s) => ({ testMode: !s.testMode })),
+    // Tools edit the design pose: entering test mode ends them.
+    toggleTestMode: () =>
+      set((s) => ({ testMode: !s.testMode, activeTool: s.testMode ? s.activeTool : "select" })),
     resetForDocument: () =>
       set({ selection: [], isolated: null, testMode: false, activeTool: "select" }),
     restartTestMode: () => set((s) => (s.testMode ? { testRun: s.testRun + 1 } : {})),

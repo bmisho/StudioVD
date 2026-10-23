@@ -72,6 +72,16 @@ export interface ViewportProbeApi {
   partMesh(id: string): { triangles: number; loaded: boolean } | null
   /** A part's materials, face visibility and feature edges; null if not shown. */
   partLook(id: string): PartLookState | null
+  /** The document's anchors (part-local frames). */
+  anchors(): {
+    id: string
+    partId: string
+    kind: string
+    name: string | null
+    frame: { originMm: number[]; z: number[]; x: number[] }
+  }[]
+  /** What Place Anchor would place under the cursor now, or null. */
+  anchorPreview(): { partId: string; snap: string; kind: string; name: string } | null
   /** The transform gizmo handle under the pointer ("X", "XY", …), or null. */
   gizmoAxis(): string | null
 }

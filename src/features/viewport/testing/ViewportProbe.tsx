@@ -3,6 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { Color, SRGBColorSpace, Vector3 } from "three"
 import type { RGB8 } from "@/core/math/colorGradient"
 import { visibleHeightMm } from "@/core/math/gridLevels"
+import { anchorPreview } from "@/features/assembly/anchorPreview"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { viewSpecOf } from "../camera/useCameraFrame"
 import { redrawNow } from "../renderer/redrawNow"
@@ -88,6 +89,20 @@ export function ViewportProbe() {
       partPose,
       partMesh,
       partLook,
+      anchors: () =>
+        Object.values(useDocumentStore.getState().doc.anchors).map((a) => ({
+          id: a.id,
+          partId: a.partId,
+          kind: a.kind,
+          name: a.name ?? null,
+          frame: a.frame,
+        })),
+      anchorPreview: () => {
+        const p = anchorPreview.get()
+        if (!p) return null
+        const { snap, kind, name } = p.candidate
+        return { partId: p.partId, snap, kind, name }
+      },
       gizmoAxis: () => gizmoState.axis(),
       dragReady: () => partGrab.current !== null,
       parts: () =>

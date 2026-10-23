@@ -13,7 +13,7 @@ import { themeTransformControls } from "./themeGizmo"
 function useGizmoTarget(): PartId | null {
   return useSessionStore((s) => {
     const only = s.selection.length === 1 ? s.selection[0] : undefined
-    if (s.testMode || only?.kind !== "part") return null
+    if (s.testMode || s.activeTool !== "select" || only?.kind !== "part") return null
     if (s.isolated && !s.isolated.includes(only.id)) return null
     return only.id
   })

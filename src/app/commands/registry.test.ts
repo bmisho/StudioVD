@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { buildShortcutMap } from "@/app/shortcuts/useGlobalShortcuts"
 import type { Result } from "@/lib/tauri/result"
+import type { GroupId } from "@/core/schema"
 import { notImplemented, setupRegistry as setup } from "./registryTestSetup"
 
 describe("command registry", () => {
@@ -74,15 +75,26 @@ describe("command registry", () => {
 
   it("keeps not-yet-built commands visibly disabled, with their phase", () => {
     const { registry, session } = setup()
-    for (const [id, phase] of [
-      ["tool.anchor", 7],
-      ["tool.mate", 8],
-    ] as const) {
-      expect(registry.isEnabled(id)).toBe(false)
-      expect(registry.get(id).availableInPhase).toBe(phase)
-    }
-    expect(registry.run("tool.anchor")).toBe(false)
+    expect(registry.isEnabled("tool.mate")).toBe(false)
+    expect(registry.get("tool.mate").availableInPhase).toBe(8)
+    expect(registry.run("tool.mate")).toBe(false)
     expect(session.getState().activeTool).toBe("select")
+  })
+
+  it("Place Anchor: on outside test mode; Escape ends it before it clears the selection", () => {
+    const { registry, session } = setup()
+    session.getState().select([{ kind: "group", id: "g" as GroupId }])
+    expect(registry.run("tool.anchor")).toBe(true)
+    expect(session.getState().activeTool).toBe("anchor")
+    registry.run("edit.clearSelection")
+    expect(session.getState().activeTool).toBe("select")
+    expect(session.getState().selection).toHaveLength(1) // what the tool made stays selected
+    registry.run("edit.clearSelection")
+    expect(session.getState().selection).toHaveLength(0)
+    registry.run("tool.anchor")
+    session.getState().toggleTestMode()
+    expect(session.getState().activeTool).toBe("select") // tools edit the design pose
+    expect(registry.isEnabled("tool.anchor")).toBe(false)
   })
 
   it("marks only undo/redo as auto-repeatable", () => {

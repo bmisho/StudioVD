@@ -1,10 +1,12 @@
 import type { TriangleRange } from "@/core/geometry/featureEdges"
+import type { FaceInfo } from "@/core/geometry/meshData"
+import type { SnapFeatures } from "@/core/geometry/snapFeatures"
 import type { DecodedAsset } from "@/features/viewport/parts/assetDecode"
 
 /**
  * Main thread -> asset worker. `decode`: the stored GLB bytes (transferred). `edges`: feature
- * edges of a decoded asset (PLAN 6.6); its arrays are copies, since the originals back the GPU
- * geometry on the main thread.
+ * edges of a decoded asset (PLAN 6.6); `snaps`: its anchor snap features (PLAN 7.3). Their
+ * arrays are copies, since the originals back the GPU geometry on the main thread.
  */
 export type AssetLoadRequest =
   | { kind: "decode"; requestId: number; bytes: ArrayBuffer }
@@ -16,9 +18,17 @@ export type AssetLoadRequest =
       faces: TriangleRange[]
       angleDeg?: number
     }
+  | {
+      kind: "snaps"
+      requestId: number
+      positions: Float32Array
+      indices: Uint32Array
+      faces: FaceInfo[]
+    }
 
 /** Asset worker -> main thread; a reply's `kind` matches its request's, errors carry none. */
 export type AssetLoadReply =
   | { kind: "decode"; requestId: number; ok: true; asset: DecodedAsset }
   | { kind: "edges"; requestId: number; ok: true; edges: Uint32Array }
+  | { kind: "snaps"; requestId: number; ok: true; snaps: SnapFeatures }
   | { requestId: number; ok: false; message: string }

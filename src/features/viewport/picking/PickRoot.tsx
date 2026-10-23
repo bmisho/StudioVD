@@ -1,8 +1,15 @@
-import type { ThreeEvent } from "@react-three/fiber"
+import { useThree, type ThreeEvent } from "@react-three/fiber"
 import type { ReactNode, Ref } from "react"
 import type { Group } from "three"
 import { hoverTargetForMove, selectionChangeForClick } from "@/core/scene/pickPolicy"
-import { useSessionStore, type SessionStore } from "@/store/session/sessionStore"
+import { anchorPreview } from "@/features/assembly/anchorPreview"
+import { clickAnchor, previewAnchor } from "@/features/assembly/anchorTool"
+import { anchorAt } from "@/features/assembly/glyphs"
+import {
+  useSessionStore,
+  type SelectionItem,
+  type SessionStore,
+} from "@/store/session/sessionStore"
 import { useViewport } from "../ViewportContext"
 import { gizmoState } from "../gizmos/gizmoState"
 import { applySelectionChange } from "./applySelectionChange"
@@ -28,25 +35,36 @@ export function PickRoot(props: PickRootProps) {
   const { ref, children, session = useSessionStore, hover = viewportHover } = props
   const { partGrab } = useViewport()
   const testMode = useSessionStore((s) => s.testMode)
+  const placing = useSessionStore((s) => s.activeTool === "anchor")
+  const get = useThree((s) => s.get)
   // Test mode: parts move under a still cursor, so the hover is also refreshed periodically.
   useHoverRefresh(testMode ? { periodicMs: 100 } : {})
 
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation() // nearest hit only
     hover.set(hoverTargetForMove(e.nativeEvent.buttons, pickRefOf(e.object)))
+    if (placing) previewAnchor(e, get())
   }
   // R3F passes the NEW hits (priority, then distance order). If the top one is another part,
   // onPointerMove (right after) takes over; if it is empty space or a higher-priority layer
   // that stops propagation (drei view cube Hud), nothing else will clear the hover.
   const onPointerOut = (e: ThreeEvent<PointerEvent>) => {
     const top = e.intersections[0]
-    if (!top || pickRefOf(top.object) === null) hover.set(null)
+    if (!top || pickRefOf(top.object) === null) {
+      hover.set(null)
+      anchorPreview.set(null)
+    }
   }
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
+    if (placing) return clickAnchor(e, get())
     if (gizmoState.ownsClick()) return // the click belongs to a gizmo handle
     const n = e.nativeEvent
-    const target = pickRefOf(e.object)
+    // An anchor glyph drawn over the part wins (glyphs are picked by screen distance).
+    const anchor = anchorAt(n.clientX, n.clientY)
+    const target: SelectionItem | null = anchor
+      ? { kind: "anchor", id: anchor }
+      : pickRefOf(e.object)
     const additive = n.ctrlKey || n.metaKey // same rule as SceneTreeRow
     applySelectionChange(
       session,

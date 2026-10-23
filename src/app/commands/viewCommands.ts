@@ -62,7 +62,13 @@ export function viewCommands({
       run: focusMenuBar,
     },
     { id: "tool.select", label: "Select", run: () => s().setTool("select") },
-    { id: "tool.anchor", label: "Place Anchor", run: () => s().setTool("anchor"), ...later(7) },
+    {
+      id: "tool.anchor",
+      label: "Place Anchor",
+      run: () => s().setTool("anchor"),
+      // Anchors are placed on the design pose, not on parts moving in test mode.
+      isEnabled: () => !s().testMode,
+    },
     { id: "tool.mate", label: "Mate", run: () => s().setTool("mate"), ...later(8) },
     { id: "help.about", label: "About StudioVD", run: () => openDialog("about") },
   ]

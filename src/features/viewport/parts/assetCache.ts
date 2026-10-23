@@ -1,5 +1,6 @@
 import { BufferAttribute, BufferGeometry } from "three"
 import type { FaceInfo } from "@/core/geometry/meshData"
+import type { SnapFeatures } from "@/core/geometry/snapFeatures"
 import type { AssetSlot } from "@/core/geometry/slots"
 import { isPlaceholderAssetId } from "@/core/scene/testRig"
 import type { AssetId, GeometryAsset } from "@/core/schema"
@@ -7,7 +8,7 @@ import { assetUrl } from "@/lib/tauri/files"
 import { HULL_NORMAL } from "../highlight/hullOutlineMaterial"
 import { installBvh } from "../picking/bvh"
 import { toGeometry } from "./assetDecode"
-import { decodeInWorker, edgesInWorker } from "./assetWorkerPool"
+import { decodeInWorker, edgesInWorker, snapsInWorker } from "./assetWorkerPool"
 
 export interface LoadedAsset {
   geometry: BufferGeometry
@@ -21,6 +22,8 @@ type Entry<T> = { state: "loading" } | { state: "ready"; value: T } | { state: "
 const entries = new Map<AssetId, Entry<LoadedAsset>>()
 /** Feature edges per asset, computed on first use (an edges display mode). */
 const edgeEntries = new Map<AssetId, Entry<BufferGeometry>>()
+/** Anchor snap features per asset, computed on first use (the Place Anchor tool). */
+const snapEntries = new Map<AssetId, Entry<SnapFeatures>>()
 const listeners = new Set<() => void>()
 const notify = () => listeners.forEach((l) => l())
 const ready = <T>(entry: Entry<T> | undefined) =>
@@ -86,6 +89,8 @@ export const assetCache = {
     }
     return undefined
   },
+  /** The asset's anchor snap features once computed (`requestSnaps`). */
+  snaps: (id: AssetId): SnapFeatures | undefined => ready(snapEntries.get(id)),
   /** The asset's feature edges once computed (`requestEdges`). */
   edges: (id: AssetId): BufferGeometry | undefined => ready(edgeEntries.get(id)),
   /** Whether computing the asset's feature edges failed (until `retain` forgets it). */
@@ -99,6 +104,7 @@ export const assetCache = {
       if (entry.state === "loading" || (entry.state === "ready" && ids.has(id))) continue
       if (entry.state === "ready") entry.value.geometry.dispose()
       entries.delete(id)
+      if (snapEntries.get(id)?.state !== "loading") snapEntries.delete(id)
       const edges = edgeEntries.get(id)
       if (edges?.state === "loading") continue // dropped when it arrives
       if (edges?.state === "ready") edges.value.dispose()
@@ -140,6 +146,33 @@ export const assetCache = {
       (error: unknown) => {
         edgeEntries.set(id, { state: "failed" })
         console.warn(`Edges of asset ${id.slice(0, 12)}… not computed:`, error)
+      }
+    )
+  },
+  /** Computes the anchor snap features of a loaded asset once, in the asset worker. */
+  requestSnaps: (id: AssetId): void => {
+    const asset = ready(entries.get(id))
+    if (!asset || snapEntries.has(id)) return
+    snapEntries.set(id, { state: "loading" })
+    const position = asset.geometry.getAttribute("position")
+    const index = asset.geometry.getIndex()
+    if (!(position.array instanceof Float32Array) || !(index?.array instanceof Uint32Array)) {
+      snapEntries.set(id, { state: "failed" })
+      return
+    }
+    snapsInWorker(position.array, index.array, asset.faces).then(
+      (value) => {
+        if (ready(entries.get(id)) !== asset) {
+          snapEntries.delete(id) // released (and maybe loaded again) meanwhile
+          assetCache.requestSnaps(id)
+          return
+        }
+        snapEntries.set(id, { state: "ready", value })
+        notify()
+      },
+      (error: unknown) => {
+        snapEntries.set(id, { state: "failed" })
+        console.warn(`Snap features of asset ${id.slice(0, 12)}… not computed:`, error)
       }
     )
   },

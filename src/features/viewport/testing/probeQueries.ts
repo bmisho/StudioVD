@@ -31,7 +31,12 @@ export function projectPart(state: RootState, id: string): ClientPoint | null {
   if (!object) return null
   object.updateWorldMatrix(true, true)
   state.camera.updateMatrixWorld()
-  return clientOf(state, box.setFromObject(object).getCenter(v))
+  // The part's own mesh (its first child): not its overlays, such as screen-sized anchor glyphs.
+  const mesh = object.children.find((c): c is Mesh => (c as Mesh).isMesh === true)
+  if (!mesh) return null
+  if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox()
+  box.copy(mesh.geometry.boundingBox ?? box.makeEmpty()).applyMatrix4(mesh.matrixWorld)
+  return clientOf(state, box.getCenter(v))
 }
 
 export function pickAt(state: RootState, root: Object3D | null, x: number, y: number) {

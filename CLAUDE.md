@@ -201,6 +201,13 @@ Further rules:
   are pure and pixel-based. Glyphs are overlays in CSS px (`features/assembly/glyphs.ts` scales
   them every frame and picks anchors by screen distance): children of the part's group, never
   raycast, left out of bounds (`visiblePartsBox` skips overlays), thumbnails and exports.
+  Overlays drawn over parts use `transparent: true` materials (three draws opaque, then
+  transmissive, then transparent; only the last list honours their renderOrder after parts).
+  No R3F `createPortal` for things that come and go: a portal keeps a root-store
+  subscription after it unmounts. The preview is rendered by each `PartView`.
+- R3F requests a frame when objects are added or changed, **not when they are removed**: a
+  component whose objects can go away (unmount, conditional children) calls
+  `renderer/useRedrawOnRemoval.ts`, or the demand frameloop keeps drawing them.
 - Material previews render with the 3D view's own renderer into its canvas (no second
   WebGL context) and are read in the same task; never render previews to a render target
   (r186 skips tone mapping and the output colour space there).
@@ -308,6 +315,9 @@ Testing notes:
 - Vite's dev dependency scan does not follow `new Worker(...)`; workers are listed in
   `optimizeDeps.entries` (`src/workers/*.worker.ts`). Without that, the first import
   re-optimizes and reloads every open page, which breaks parallel E2E runs.
+- `src/test/demandRoot.tsx` mounts R3F components in jsdom on a stand-in renderer with the
+  demand frameloop and counts the frames they request (and root-store subscriptions held):
+  the way to test that a change reaches the screen without WebGL.
 - The dev probe (`window.__STUDIOVD_VIEWPORT__`) reads real pixels (`pixelAt`,
   `highlightPixels`) and how parts are drawn (`partLook`: materials per slot, edges, faces
   shown). CI renders with SwiftShader: assert pixel relations with tolerances, not images.

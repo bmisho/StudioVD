@@ -70,7 +70,7 @@ export function anchorAt(clientX: number, clientY: number): AnchorId | null {
   for (const { object, anchor } of glyphs) {
     if (!anchor || !isShown(object)) continue
     ndc.copy(object.getWorldPosition(world)).project(state.camera)
-    if (ndc.z > 1) continue // behind the camera
+    if (ndc.z < -1 || ndc.z > 1) continue // clipped (before the near plane, past the far one)
     const x = rect.left + ((ndc.x + 1) / 2) * rect.width
     const y = rect.top + ((1 - ndc.y) / 2) * rect.height
     const d = Math.hypot(x - clientX, y - clientY)

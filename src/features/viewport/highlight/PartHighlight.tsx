@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef } from "react"
 import type { BufferGeometry, Camera, Material, Scene, WebGLRenderer } from "three"
 import { noRaycast } from "../picking/pickTarget"
+import { useRedrawOnRemoval } from "../renderer/useRedrawOnRemoval"
 import { highlightMaterials, OUTLINE_ORDER, SILHOUETTE_ORDER } from "./highlightMaterials"
 import { ensureHullNormals } from "./hullGeometry"
 import { syncOutlineUniforms } from "./hullOutlineMaterial"
@@ -19,6 +20,7 @@ export function PartHighlight({
 }) {
   const outlineGeometry = useMemo(() => ensureHullNormals(geometry), [geometry])
   const lit = state !== "none"
+  useRedrawOnRemoval(state) // hover out, deselect: the tint and outline go
   // Read at draw time: no re-render when the bit is handed out (before the first frame).
   const bit = useRef(1)
   useLayoutEffect(() => {

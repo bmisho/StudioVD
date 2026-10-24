@@ -2,6 +2,7 @@ import { useMemo, type Ref } from "react"
 import { Matrix4, Quaternion, Vector3, type Group } from "three"
 import type { AnchorKind, Frame } from "@/core/schema"
 import { noRaycast } from "@/features/viewport/picking/pickTarget"
+import { useRedrawOnRemoval } from "@/features/viewport/renderer/useRedrawOnRemoval"
 import { OVERLAY } from "@/features/viewport/thumbnail/overlay"
 import { GLYPH_ORDER, glyphParts } from "./glyphParts"
 
@@ -39,6 +40,7 @@ export function AnchorGlyph({
   const g = p.geometry
   const main = ghost ? p.mainGhost : p.main
   const quaternion = useMemo(() => frameQuaternion(frame), [frame])
+  useRedrawOnRemoval(kind) // the plate or axis of the old kind goes
   const mesh = { raycast: noRaycast, renderOrder: GLYPH_ORDER, userData: OVERLAY }
   return (
     <group position={frame.originMm} quaternion={quaternion} userData={OVERLAY}>

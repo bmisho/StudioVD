@@ -1,36 +1,30 @@
-import { createPortal } from "@react-three/fiber"
-import { useCallback, useEffect, useSyncExternalStore } from "react"
+import { useCallback, useSyncExternalStore } from "react"
 import type { Group } from "three"
-import { partObject, subscribePartObjects } from "@/features/viewport/parts/partObjects"
+import type { PartId } from "@/core/schema"
 import { OVERLAY } from "@/features/viewport/thumbnail/overlay"
-import { useSessionStore } from "@/store/session/sessionStore"
 import { AnchorGlyph } from "./AnchorGlyph"
 import { anchorPreview } from "./anchorPreview"
 import { registerGlyph } from "./glyphs"
 import { SnapFeatureLine } from "./SnapFeatureLine"
 
 /**
- * The anchor Place Anchor would place (PLAN 7.2): a see-through glyph and the edge or circle
- * it snapped to, inside the hovered part's group (so it is part-local, like the anchor).
+ * The anchor Place Anchor would place on this part (PLAN 7.2): a see-through glyph and the
+ * edge or circle it snapped to. A child of the part's group, as its anchors are (part-local);
+ * rendered by every part view rather than portalled into the hovered one, since an R3F
+ * portal keeps a subscription to the root store after it unmounts.
  */
-export function AnchorPreview() {
-  const placing = useSessionStore((s) => s.activeTool === "anchor")
-  const preview = useSyncExternalStore(anchorPreview.subscribe, anchorPreview.get)
-  const object = useSyncExternalStore(subscribePartObjects, () =>
-    preview ? (partObject(preview.partId) ?? null) : null
-  )
-  // Leaving the tool (Escape, another tool, test mode) drops what it was showing.
-  useEffect(() => {
-    if (!placing) anchorPreview.set(null)
-  }, [placing])
+export function AnchorPreview({ partId }: { partId: PartId }) {
+  const preview = useSyncExternalStore(anchorPreview.subscribe, () => {
+    const p = anchorPreview.get()
+    return p?.partId === partId ? p : null
+  })
   const register = useCallback((g: Group | null) => (g ? registerGlyph(g, null) : undefined), [])
-  if (!placing || !preview || !object) return null
+  if (!preview) return null
   const { candidate } = preview
-  return createPortal(
+  return (
     <group userData={OVERLAY}>
       <AnchorGlyph frame={candidate.frame} kind={candidate.kind} ghost ref={register} />
       {candidate.feature && <SnapFeatureLine feature={candidate.feature} />}
-    </group>,
-    object
+    </group>
   )
 }

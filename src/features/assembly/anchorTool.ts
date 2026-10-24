@@ -39,7 +39,8 @@ export function placeAnchor({ partId, candidate }: AnchorPreview): void {
  */
 export function clickAnchor(e: ThreeEvent<MouseEvent>, state: RootState): void {
   const n = e.nativeEvent
-  if (n.type !== "click" || n.button !== 0 || e.delta > CLICK_SLOP_PX) return
+  // A double click's second click would place the same anchor again.
+  if (n.type !== "click" || n.button !== 0 || n.detail > 1 || e.delta > CLICK_SLOP_PX) return
   const preview = candidateFromHit(e, cursorOf(e), state)
   if (preview) placeAnchor(preview)
 }

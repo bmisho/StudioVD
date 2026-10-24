@@ -33,10 +33,13 @@ export interface GlyphParts {
   plate: MeshBasicMaterial
 }
 
+// Transparent even when opaque: three draws opaque, then transmissive (glass, which samples
+// what was drawn), then transparent objects, so only in that last list does GLYPH_ORDER put
+// glyphs after every part, tint and grid, and out of the glass's view.
 const overlay = (color: Color, opacity = 1) =>
   new MeshBasicMaterial({
     color,
-    transparent: opacity < 1,
+    transparent: true,
     opacity,
     depthTest: false,
     depthWrite: false,

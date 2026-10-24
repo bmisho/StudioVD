@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo } from "react"
 import type { Group } from "three"
 import type { GeometryAsset, Part } from "@/core/schema"
 import { useSessionStore, type SelectionItem } from "@/store/session/sessionStore"
+import { AnchorPreview } from "@/features/assembly/AnchorPreview"
 import { PartAnchors } from "@/features/assembly/PartAnchors"
 import { PartHighlight, type HighlightState } from "../highlight/PartHighlight"
 import { viewportHover } from "../picking/hoverStore"
@@ -58,6 +59,7 @@ export const PartView = memo(function PartView({ part, asset, selected }: PartVi
       {edges && <lineSegments geometry={edges} material={edgeLineMaterial()} raycast={noRaycast} />}
       <PartHighlight geometry={geometry} state={state} />
       <PartAnchors partId={part.id} partSelected={selected} />
+      <AnchorPreview partId={part.id} />
     </group>
   )
 })

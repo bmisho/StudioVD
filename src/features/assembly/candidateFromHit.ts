@@ -16,7 +16,7 @@ const tuple = (p: Vector3): Vec3 => [p.x, p.y, p.z]
 /**
  * The anchor the cursor would place on the part under it (PLAN 7.2, 7.3), from the raycast
  * hit: part-local point, triangle and normal, the part's faces and (once the asset worker
- * has them) its snap features. Null when the hit is not on a part.
+ * has them) its snap features. Null when the hit is not on a part, or on one still loading.
  */
 export function candidateFromHit(
   hit: Intersection,
@@ -31,12 +31,19 @@ export function candidateFromHit(
   const object = partObject(item.id)
   if (!part || !asset || !object) return null
   const loaded = assetCache.getFor(asset)
-  if (loaded) assetCache.requestSnaps(asset.id)
+  // Until its mesh is in, a part is drawn as its bounding box: nothing there to anchor to.
+  if (!loaded) return null
+  assetCache.requestSnaps(asset.id)
 
   object.updateWorldMatrix(true, false)
   toLocal.copy(object.matrixWorld).invert()
   const point = tuple(v.copy(hit.point).applyMatrix4(toLocal))
-  const camera = tuple(state.camera.getWorldPosition(v).applyMatrix4(toLocal))
+  const camera = state.camera
+  // An orthographic view looks the same way everywhere: back along the camera's axis.
+  const toViewer =
+    "isOrthographicCamera" in camera && camera.isOrthographicCamera
+      ? tuple(camera.getWorldDirection(v).negate().transformDirection(toLocal))
+      : normalize(sub(tuple(camera.getWorldPosition(v).applyMatrix4(toLocal)), point))
   const rect = state.gl.domElement.getBoundingClientRect()
   const toScreen = (p: Vec3) => {
     v.set(...p)
@@ -50,11 +57,11 @@ export function candidateFromHit(
   const normal = hit.face?.normal
   const candidate = snapCandidate({
     point,
-    normal: normal ? [normal.x, normal.y, normal.z] : normalize(sub(camera, point)),
+    normal: normal ? [normal.x, normal.y, normal.z] : toViewer,
     triangle: hit.faceIndex ?? -1,
-    toViewer: normalize(sub(camera, point)),
-    faces: loaded?.faces ?? [],
-    features: (loaded && assetCache.snaps(asset.id)) ?? null,
+    toViewer,
+    faces: loaded.faces,
+    features: assetCache.snaps(asset.id) ?? null,
     toScreen,
     cursor,
   })

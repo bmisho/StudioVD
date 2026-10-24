@@ -59,4 +59,22 @@ describe("anchor glyphs", () => {
     hiddenPart.visible = true
     expect(anchorAt(262, 250)).toBe(b) // 1 mm right of a is ~10.7 px at this distance
   })
+
+  it("never pick an anchor that is clipped: behind an orthographic camera, before the near plane", () => {
+    const ortho = new OrthographicCamera(-50, 50, 50, -50, 1, 1000)
+    ortho.position.set(0, 0, 100)
+    ortho.updateProjectionMatrix()
+    const get = view(ortho)
+    cleanups.push(attachGlyphView(() => get))
+    const behind = "behind" as AnchorId
+    glyphAt(0, 0, 150, behind) // 50 mm behind the camera, on its axis
+    expect(anchorAt(250, 250)).toBeNull()
+
+    const persp = new PerspectiveCamera(50, 1, 1, 1000)
+    persp.position.set(0, 0, 100)
+    const viewP = view(persp)
+    cleanups.push(attachGlyphView(() => viewP))
+    glyphAt(0, 0, 99.5, "close" as AnchorId) // 0.5 mm in front: nearer than the near plane
+    expect(anchorAt(250, 250)).toBeNull()
+  })
 })

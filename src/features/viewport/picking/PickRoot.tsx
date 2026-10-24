@@ -1,5 +1,5 @@
 import { useThree, type ThreeEvent } from "@react-three/fiber"
-import type { ReactNode, Ref } from "react"
+import { useEffect, type ReactNode, type Ref } from "react"
 import type { Group } from "three"
 import { hoverTargetForMove, selectionChangeForClick } from "@/core/scene/pickPolicy"
 import { anchorPreview } from "@/features/assembly/anchorPreview"
@@ -37,6 +37,10 @@ export function PickRoot(props: PickRootProps) {
   const testMode = useSessionStore((s) => s.testMode)
   const placing = useSessionStore((s) => s.activeTool === "anchor")
   const get = useThree((s) => s.get)
+  // Leaving Place Anchor (Escape, another tool, test mode) drops what it was showing.
+  useEffect(() => {
+    if (!placing) anchorPreview.set(null)
+  }, [placing])
   // Test mode: parts move under a still cursor, so the hover is also refreshed periodically.
   useHoverRefresh(testMode ? { periodicMs: 100 } : {})
 

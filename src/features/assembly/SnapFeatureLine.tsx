@@ -3,6 +3,7 @@ import { BufferGeometry, Color, Float32BufferAttribute, Line, LineBasicMaterial 
 import type { AnchorCandidate } from "@/core/assembly/snapCandidates"
 import { add, cross, normalize, scale } from "@/core/math/vec3"
 import { noRaycast } from "@/features/viewport/picking/pickTarget"
+import { useRedrawOnRemoval } from "@/features/viewport/renderer/useRedrawOnRemoval"
 import { readSceneTokens } from "@/features/viewport/theme/sceneTokens"
 import { OVERLAY } from "@/features/viewport/thumbnail/overlay"
 import { GLYPH_ORDER } from "./glyphParts"
@@ -13,6 +14,7 @@ let material: LineBasicMaterial | null = null
 const lineMaterial = () =>
   (material ??= new LineBasicMaterial({
     color: new Color(readSceneTokens().highlight),
+    transparent: true, // drawn in the last pass, after every part (see glyphParts)
     depthTest: false,
     depthWrite: false,
     toneMapped: false,
@@ -44,5 +46,6 @@ export function SnapFeatureLine({ feature }: { feature: Feature }) {
     return l
   }, [feature])
   useEffect(() => () => line.geometry.dispose(), [line])
+  useRedrawOnRemoval()
   return <primitive object={line} />
 }

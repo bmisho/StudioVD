@@ -1,6 +1,6 @@
 import type { FaceInfo } from "@/core/geometry/meshData"
 import type { SnapArc, SnapFeatures, SnapLine } from "@/core/geometry/snapFeatures"
-import { add, dot, normalize, scale, sub } from "@/core/math/vec3"
+import { add, dot, length, normalize, scale, sub } from "@/core/math/vec3"
 import type { AnchorSource, Frame, Vec3 } from "@/core/schema"
 import { anchorFrame, diameterLabel } from "./anchorFrames"
 import { faceOfTriangle, nearFace, nearestOnArc } from "./snapLookup"
@@ -90,7 +90,10 @@ function pickCandidate(q: SnapQuery): AnchorCandidate {
   const threshold = q.thresholdPx ?? SNAP_THRESHOLD_PX
   const face = faceOfTriangle(q.faces, q.triangle)
   const info = face >= 0 ? q.faces[face] : undefined
-  const normal = info?.kind === "plane" && info.normal ? info.normal : normalize(q.normal)
+  // Face vectors come from the asset file (untrusted): used as directions only once unit.
+  const unit = (v: Vec3 | undefined) => (v && length(v) > 0 ? normalize(v) : undefined)
+  const normal = (info?.kind === "plane" ? unit(info.normal) : undefined) ?? normalize(q.normal)
+  const axis = info?.kind === "cylinder" ? unit(info.axis) : undefined
   const px = (p: Vec3) => {
     const s = q.toScreen(p)
     return Math.hypot(s.x - q.cursor.x, s.y - q.cursor.y)
@@ -147,13 +150,13 @@ function pickCandidate(q: SnapQuery): AnchorCandidate {
   }
   if (info?.kind === "plane" && info.point && px(info.point) <= threshold)
     return planar(info.point, normal, face, "Face centre")
-  if (info?.kind === "cylinder" && info.axis && info.point && info.radiusMm !== undefined) {
-    const foot = add(info.point, scale(info.axis, dot(sub(q.point, info.point), info.axis)))
+  if (info?.kind === "cylinder" && axis && info.point && info.radiusMm !== undefined) {
+    const foot = add(info.point, scale(axis, dot(sub(q.point, info.point), axis)))
     const name = roundName(q.features, [face], info.radiusMm)
     return {
       snap: "axis",
       kind: "axial",
-      frame: anchorFrame(foot, facing(info.axis, q.toViewer)),
+      frame: anchorFrame(foot, facing(axis, q.toViewer)),
       source: sourceOf(face),
       name,
       hint: `${name} axis`,

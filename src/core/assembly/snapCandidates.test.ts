@@ -4,7 +4,7 @@ import type { FaceInfo } from "@/core/geometry/meshData"
 import { snapFeatures, type SnapArc, type SnapFeatures } from "@/core/geometry/snapFeatures"
 import { boxMesh } from "@/core/geometry/testing/shapes"
 import type { Vec3 } from "@/core/schema"
-import { normalize, signedAngle, sub } from "@/core/math/vec3"
+import { normalize, scale, signedAngle, sub } from "@/core/math/vec3"
 import { faceOfTriangle, snapCandidate, type SnapQuery } from "./snapCandidates"
 
 // A 10 x 20 x 30 mm box seen from +z, orthographic, 10 px per mm, its centre at (100, 100).
@@ -221,6 +221,31 @@ describe("anchor snap candidates on arcs", () => {
     const dense: SnapFeatures = { ...boxFeatures, corners: [], edges: [], dense: true }
     const c = snapCandidate({ ...onFront([4.6, 9.6, 15]), features: dense })
     expect(c).toMatchObject({ snap: "face", hint: "Face (too many edges to snap to)" })
+  })
+})
+
+describe("anchor snap candidates on untrusted face data", () => {
+  it("uses a face's stored normal and axis as directions only (a file may scale them)", () => {
+    const scaled = boxFaces.map((f) => (f.normal ? { ...f, normal: scale(f.normal, 3) } : f))
+    // A hit a hair off the plane, as a raycast gives: projected back onto the face itself.
+    const c = snapCandidate({ ...onFront([2, 4, 15.1]), faces: scaled })
+    expect(c.snap).toBe("face")
+    expect(c.frame.originMm[2]).toBeCloseTo(15, 9)
+    const wall: FaceInfo[] = [
+      { first: 0, last: 0, kind: "cylinder", axis: [0, 5, 0], point: [5, 0, 0], radiusMm: 4 },
+    ]
+    const toScreen = (p: Vec3) => ({ x: 100 + 10 * p[0], y: 100 - 10 * p[1] })
+    const a = snapCandidate({
+      point: [5, 2, 4],
+      normal: [0, 0, 1],
+      triangle: 0,
+      toViewer: [0, 0, 1],
+      faces: wall,
+      features: null,
+      toScreen,
+      cursor: toScreen([5, 2, 4]),
+    })
+    expect(a).toMatchObject({ snap: "axis", frame: { originMm: [5, 2, 0], z: [0, 1, 0] } })
   })
 })
 

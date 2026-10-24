@@ -19,10 +19,12 @@ interface PartViewProps {
   asset: GeometryAsset
   /** Directly selected or below a selected group (computed once by PartsLayer). */
   selected: boolean
+  /** The ids of its anchors that get glyphs, joined (planned for all parts by PartsLayer). */
+  glyphs: string
 }
 
 /** One part at its design pose. Re-renders only when its own props or hover flag change. */
-export const PartView = memo(function PartView({ part, asset, selected }: PartViewProps) {
+export const PartView = memo(function PartView({ part, asset, selected, glyphs }: PartViewProps) {
   const item = useMemo<SelectionItem>(() => ({ kind: "part", id: part.id }), [part.id])
   const hovered = useIsHovered(item)
   const mode = useSessionStore((s) => s.displayMode)
@@ -58,7 +60,7 @@ export const PartView = memo(function PartView({ part, asset, selected }: PartVi
       />
       {edges && <lineSegments geometry={edges} material={edgeLineMaterial()} raycast={noRaycast} />}
       <PartHighlight geometry={geometry} state={state} />
-      <PartAnchors partId={part.id} partSelected={selected} />
+      <PartAnchors ids={glyphs} />
       <AnchorPreview partId={part.id} />
     </group>
   )

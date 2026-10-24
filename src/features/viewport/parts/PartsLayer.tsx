@@ -1,5 +1,6 @@
 import { useMemo } from "react"
 import { partsInSelection } from "@/core/scene/partsInSelection"
+import { useAnchorGlyphs } from "@/features/assembly/useAnchorGlyphs"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { PickRoot } from "../picking/PickRoot"
@@ -21,17 +22,30 @@ export function PartsLayer() {
     [parts, groups, selection]
   )
 
+  // Hidden parts are not mounted: three raycasts invisible objects (Raycaster ignores
+  // `visible`), so mounting them would make them pickable.
+  const mounted = useMemo(
+    () =>
+      Object.values(parts).flatMap((part) => {
+        const asset = Object.hasOwn(assets, part.assetId) ? assets[part.assetId] : undefined
+        return asset && part.visible && (!shown || shown.has(part.id)) ? [{ part, asset }] : []
+      }),
+    [parts, assets, shown]
+  )
+  const mountedIds = useMemo(() => mounted.map(({ part }) => part.id), [mounted])
+  const glyphs = useAnchorGlyphs(mountedIds, highlighted)
+
   return (
     <PickRoot ref={partsRoot}>
-      {Object.values(parts).map((part) => {
-        const asset = Object.hasOwn(assets, part.assetId) ? assets[part.assetId] : undefined
-        // Hidden parts are not mounted: three raycasts invisible objects (Raycaster ignores
-        // `visible`), so mounting them would make them pickable.
-        if (!asset || !part.visible || (shown && !shown.has(part.id))) return null
-        return (
-          <PartView key={part.id} part={part} asset={asset} selected={highlighted.has(part.id)} />
-        )
-      })}
+      {mounted.map(({ part, asset }) => (
+        <PartView
+          key={part.id}
+          part={part}
+          asset={asset}
+          selected={highlighted.has(part.id)}
+          glyphs={glyphs.get(part.id) ?? ""}
+        />
+      ))}
     </PickRoot>
   )
 }

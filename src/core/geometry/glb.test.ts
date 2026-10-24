@@ -69,6 +69,28 @@ describe("GLB reader limits", () => {
     expect(() => decodeGlb(encodeGlb(asset))).toThrow(/face range/)
   })
 
+  it("rejects face ranges that overlap or are out of order (our writer stores them sorted)", () => {
+    const asset = boxAsset() // 12 triangles
+    for (const faces of [
+      [
+        { first: 0, last: 11, kind: "cylinder" as const },
+        { first: 0, last: 11, kind: "cylinder" as const }, // the whole mesh twice
+      ],
+      [
+        { first: 6, last: 11, kind: "other" as const },
+        { first: 0, last: 5, kind: "other" as const },
+      ],
+    ]) {
+      asset.faces = faces
+      expect(() => decodeGlb(encodeGlb(asset))).toThrow(/face ranges overlap or are out of order/)
+    }
+    asset.faces = [
+      { first: 0, last: 5, kind: "other" },
+      { first: 6, last: 11, kind: "other" },
+    ]
+    expect(decodeGlb(encodeGlb(asset)).faces).toHaveLength(2)
+  })
+
   it("rejects an index past the last vertex", () => {
     const asset = boxAsset()
     expect(() =>

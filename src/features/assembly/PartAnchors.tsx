@@ -1,7 +1,7 @@
-import { useCallback } from "react"
+import { useCallback, useMemo } from "react"
 import type { Group } from "three"
 import { useShallow } from "zustand/react/shallow"
-import type { Anchor, PartId } from "@/core/schema"
+import type { Anchor, AnchorId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { AnchorGlyph } from "./AnchorGlyph"
@@ -16,24 +16,24 @@ function PlacedGlyph({ anchor, selected }: { anchor: Anchor; selected: boolean }
 }
 
 /**
- * A part's anchors as glyphs (PLAN 7.4), children of the part's group so they follow it (test
- * mode too). Shown while the part, its group or one of its anchors is selected, and for every
- * part while a tool that works with anchors (Place Anchor, Mate) is active.
+ * A part's anchor glyphs (PLAN 7.4), children of the part's group so they follow it (test
+ * mode too). Which anchors, if any, is decided for all parts at once (`useAnchorGlyphs`):
+ * `ids` is this part's share, joined.
  */
-export function PartAnchors({ partId, partSelected }: { partId: PartId; partSelected: boolean }) {
+export function PartAnchors({ ids }: { ids: string }) {
+  const list = useMemo(() => (ids ? (ids.split(",") as AnchorId[]) : []), [ids])
   const anchors = useDocumentStore(
-    useShallow((s) => Object.values(s.doc.anchors).filter((a) => a.partId === partId))
+    useShallow((s) =>
+      list.flatMap((id) => {
+        const anchor = Object.hasOwn(s.doc.anchors, id) ? s.doc.anchors[id] : undefined
+        return anchor ? [anchor] : []
+      })
+    )
   )
   const selectedAnchor = useSessionStore((s) => {
     const only = s.selection.length === 1 ? s.selection[0] : undefined
     return only?.kind === "anchor" ? only.id : null
   })
-  const shown = useSessionStore(
-    (s) =>
-      s.activeTool !== "select" ||
-      s.selection.some((i) => i.kind === "anchor" && anchors.some((a) => a.id === i.id))
-  )
-  if (anchors.length === 0 || !(shown || partSelected)) return null
   return anchors.map((a) => (
     <PlacedGlyph key={a.id} anchor={a} selected={a.id === selectedAnchor} />
   ))

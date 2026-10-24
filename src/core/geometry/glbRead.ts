@@ -165,7 +165,12 @@ export function decodeGlb(bytes: Uint8Array): AssetGeometry {
 
   const faces: FaceInfo[] = mesh.extras?.[EXTRAS_KEY].faces ?? []
   const triangles = indexArray.length / 3
+  // Sorted and disjoint, as our writer stores them: lookups bisect them, and per-face passes
+  // over overlapping ranges (each the whole mesh) would cost faces × triangles.
+  let previous = -1
   for (const f of faces) {
+    if (f.first <= previous) throw new Error("face ranges overlap or are out of order")
+    previous = f.last
     if (f.last >= triangles) throw new Error("face range out of bounds")
     if (slotAt(slots, f.first) !== slotAt(slots, f.last)) throw new Error("a face spans two slots")
   }

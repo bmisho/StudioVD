@@ -201,6 +201,9 @@ Further rules:
   are pure and pixel-based. Glyphs are overlays in CSS px (`features/assembly/glyphs.ts` scales
   them every frame and picks anchors by screen distance): children of the part's group, never
   raycast, left out of bounds (`visiblePartsBox` skips overlays), thumbnails and exports.
+  `PartsLayer` plans which anchors get glyphs for all parts at once (`core/assembly/glyphPlan.ts`,
+  at most `MAX_GLYPHS`); per-part anchor lookups go through `anchorIndex.ts`, never a filter
+  over every anchor per part (parts × anchors on every change).
   Overlays drawn over parts use `transparent: true` materials (three draws opaque, then
   transmissive, then transparent; only the last list honours their renderOrder after parts).
   No R3F `createPortal` for things that come and go: a portal keeps a root-store

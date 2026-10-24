@@ -842,7 +842,8 @@ Exit criteria
   edit, delete; anchors follow their part. As built: a dot, a z arrow and a red x (planar adds a
   square, axial its axis and a ring), in CSS px scaled each frame, drawn over the parts as
   children of the part's group (test mode too); shown for selected parts or anchors and for
-  every part while Place Anchor is on; a click within 8 px of an origin selects the anchor.
+  every part while Place Anchor is on, at most 500 at once (selected anchors first, then a
+  share of every part's); a click within 8 px of an origin selects the anchor.
   Inspector: name, kind, interface tag, origin X/Y/Z (part mm), direction with Flip, source,
   Delete; the part inspector lists its anchors and starts Place Anchor
 - [x] 7.5 Tests: classification and circle-fit on synthetic meshes (plane, full/partial cylinder,

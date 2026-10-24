@@ -144,6 +144,11 @@ export const assetCache = {
         notify()
       },
       (error: unknown) => {
+        if (ready(entries.get(id)) !== asset) {
+          edgeEntries.delete(id) // released meanwhile: a later load asks again
+          assetCache.requestEdges(id)
+          return
+        }
         edgeEntries.set(id, { state: "failed" })
         console.warn(`Edges of asset ${id.slice(0, 12)}… not computed:`, error)
       }
@@ -171,6 +176,11 @@ export const assetCache = {
         notify()
       },
       (error: unknown) => {
+        if (ready(entries.get(id)) !== asset) {
+          snapEntries.delete(id) // released meanwhile: a later load asks again
+          assetCache.requestSnaps(id)
+          return
+        }
         snapEntries.set(id, { state: "failed" })
         console.warn(`Snap features of asset ${id.slice(0, 12)}… not computed:`, error)
       }

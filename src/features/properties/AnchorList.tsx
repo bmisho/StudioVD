@@ -1,6 +1,7 @@
 import { useId } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { Button } from "@/components/ui/button"
+import { anchorsOf } from "@/core/assembly/anchorIndex"
 import { anchorLabel, kindLabel } from "@/core/assembly/anchorNames"
 import type { PartId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
@@ -13,9 +14,7 @@ import { FOCUSABLE_HEADING, anchorListId, focusAnchorInspector } from "./inspect
  */
 export function AnchorList({ partId }: { partId: PartId }) {
   const hintId = useId()
-  const anchors = useDocumentStore(
-    useShallow((s) => Object.values(s.doc.anchors).filter((a) => a.partId === partId))
-  )
+  const anchors = useDocumentStore(useShallow((s) => anchorsOf(s.doc.anchors, partId)))
   const select = useSessionStore((s) => s.select)
   const setTool = useSessionStore((s) => s.setTool)
   const testMode = useSessionStore((s) => s.testMode)

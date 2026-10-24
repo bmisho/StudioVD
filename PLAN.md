@@ -829,12 +829,15 @@ Exit criteria
 - [x] 7.3 Snap modes: face (hit point or face centre), axis (cylinder from face classification),
   vertex, edge midpoint, circle centre (hole edge); pixel-based snap thresholds. As built: per
   asset, once, in the asset worker, the feature edges with the faces on each side are joined
-  into chains that end at corners (1 or 3+ edges, or a turn over 60°) and where the faces
-  beside them change; a chain is a line (midpoint), a circle or arc (centre, axis, radius) or
-  neither. On the face under the cursor, within 12 px: corner, else edge midpoint, else circle
-  centre (cursor near the rim or the centre), else face centre; otherwise the cylinder's axis
-  at the cursor's depth, the plane, or a point on the surface. A hole's axis points out of its
-  mouth; cylinders are told apart as holes and shafts ("Hole Ø8", "Shaft Ø6")
+  into chains that end at corners (1 or 3+ edges, or a turn over 61°: a hexagon stays a
+  circle) and where the faces beside them change; a chain is a line (midpoint), a circle or arc
+  (centre, axis, radius, its ends and sweep; it must fit within 1e-3 of the chain's own size,
+  so a spline is neither) or neither. On the face under the cursor, within 12 px: corner, else
+  edge midpoint, else circle centre (cursor near the arc itself or its centre; arcs under 45°
+  offer none), else face centre; otherwise the cylinder's axis at the cursor's depth, the plane,
+  or a point on the surface. A hole's axis points out of the planar face at its mouth;
+  cylinders are told apart as holes and shafts over the whole face ("Hole Ø8", "Shaft Ø6").
+  Meshes over 50k feature segments (scans) get no edge snaps, and the hint says so
 - [x] 7.4 Anchor glyphs (screen-constant size triads), list in properties, rename, numeric offset
   edit, delete; anchors follow their part. As built: a dot, a z arrow and a red x (planar adds a
   square, axial its axis and a ring), in CSS px scaled each frame, drawn over the parts as

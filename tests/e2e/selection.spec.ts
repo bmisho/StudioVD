@@ -12,7 +12,11 @@ import {
 // PLAN 3.6: hover and click selection in the 3D view, synced with the scene tree.
 test.use({ contextOptions: { reducedMotion: "reduce" } })
 
-const row = (page: Page, name: string) => page.getByRole("treeitem", { name })
+/** A tree row by its name, not another row that mentions it (a mate: "Revolute: Base – Leaf"). */
+const row = (page: Page, name: string) =>
+  page.getByRole("treeitem", {
+    name: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( \\(|$)`),
+  })
 
 /** A point on the canvas showing only grid: top-left, away from the parts and gizmos. */
 async function emptySpot(page: Page) {

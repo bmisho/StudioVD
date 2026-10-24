@@ -1,52 +1,20 @@
-import { useId, useMemo } from "react"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
+import { useMemo } from "react"
 import type { PartId } from "@/core/schema"
 import { PartMaterialSection } from "@/features/materials/PartMaterialSection"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { AnchorList } from "./AnchorList"
 import { NameField } from "./NameField"
+import { PartMotion } from "./PartMotion"
+import { PropertyToggle } from "./PropertyToggle"
 import { PropertyField } from "./PropertyField"
 
 const mm = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 })
 const whole = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 })
 const triple = (v: readonly number[]) => v.map((x) => mm.format(x)).join(", ")
 
-function Toggle({
-  label,
-  hint,
-  checked,
-  onChange,
-}: {
-  label: string
-  hint: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-}) {
-  const id = useId()
-  return (
-    <div className="flex items-center justify-between gap-2" title={hint}>
-      <Label htmlFor={id} className="text-xs">
-        {label}
-      </Label>
-      <Switch
-        id={id}
-        size="sm"
-        checked={checked}
-        onCheckedChange={onChange}
-        aria-describedby={`${id}-hint`}
-      />
-      {/* The tooltip is mouse-only; screen readers get the same hint here. */}
-      <span id={`${id}-hint`} className="sr-only">
-        {hint}
-      </span>
-    </div>
-  )
-}
-
 /**
- * Part inspector (PLAN 4.7, 6.3, 7.4): name, visibility, grounding, material, anchors,
- * placement, geometry.
+ * Part inspector (PLAN 4.7, 6.3, 7.4, 8.4): name, visibility, grounding, material, anchors,
+ * how it can move, placement, geometry.
  */
 export function PartProperties({ id }: { id: PartId }) {
   const part = useDocumentStore((s) => s.doc.parts[id])
@@ -63,13 +31,13 @@ export function PartProperties({ id }: { id: PartId }) {
       <h3 className="text-xs font-semibold">Part</h3>
       <NameField id={`part-name-${id}`} name={part.name} rename={(n) => renamePart(id, n)} />
       <div className="mt-2 flex flex-col gap-2">
-        <Toggle
+        <PropertyToggle
           label="Visible"
           hint="Hidden parts are not drawn, picked or simulated."
           checked={part.visible}
           onChange={(v) => setVisible([id], v)}
         />
-        <Toggle
+        <PropertyToggle
           label="Grounded"
           hint="Grounded parts stay fixed in test mode. The gizmo still moves them."
           checked={part.grounded}
@@ -82,6 +50,7 @@ export function PartProperties({ id }: { id: PartId }) {
       <div className="mt-3">
         <AnchorList partId={id} />
       </div>
+      <PartMotion id={id} />
       <h4 className="mt-3 text-xs font-semibold">Placement</h4>
       <PropertyField label="Position (mm)" value={triple(part.pose.positionMm)} />
       {asset && size && (

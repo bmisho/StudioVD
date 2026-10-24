@@ -4,6 +4,7 @@ import { useCommands } from "@/app/commands/commandsContext"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { buildSceneTree } from "@/core/scene/sceneTree"
+import { useAssemblyGraph } from "@/features/assembly/useAssemblyGraph"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { SceneTree } from "./SceneTree"
@@ -12,7 +13,13 @@ export function SceneGraphPanel() {
   const registry = useCommands()
   const groups = useDocumentStore((s) => s.doc.groups)
   const parts = useDocumentStore((s) => s.doc.parts)
-  const tree = useMemo(() => buildSceneTree({ groups, parts }), [groups, parts])
+  const anchors = useDocumentStore((s) => s.doc.anchors)
+  const mates = useDocumentStore((s) => s.doc.mates)
+  const graph = useAssemblyGraph()
+  const tree = useMemo(
+    () => buildSceneTree({ groups, parts, anchors, mates }, graph),
+    [groups, parts, anchors, mates, graph]
+  )
   // Edit › Delete's own rule (any selected part, group or anchor), re-read when the
   // selection changes.
   const canDelete = useSessionStore(() => registry.isEnabled("edit.delete"))

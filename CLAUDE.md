@@ -208,6 +208,10 @@ Further rules:
   transmissive, then transparent; only the last list honours their renderOrder after parts).
   No R3F `createPortal` for things that come and go: a portal keeps a root-store
   subscription after it unmounts. The preview is rendered by each `PartView`.
+- Mates (Phase 8): parts move only through `core/assembly/mateSnap.ts` (`planSnap`: the side
+  not fixed to the ground, with everything mated to it); the assembly graph (groups, DOF,
+  issues) is computed once per document change via `features/assembly/useAssemblyGraph.ts`,
+  never per component; the Mate tool's picks are session state (`mateDraft`).
 - R3F requests a frame when objects are added or changed, **not when they are removed**: a
   component whose objects can go away (unmount, conditional children) calls
   `renderer/useRedrawOnRemoval.ts`, or the demand frameloop keeps drawing them.

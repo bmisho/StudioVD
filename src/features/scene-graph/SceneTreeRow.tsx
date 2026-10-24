@@ -1,6 +1,36 @@
-import { Box, ChevronDown, ChevronRight, Eye, EyeOff, Folder, Pin } from "lucide-react"
+import {
+  Ban,
+  Box,
+  ChevronDown,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Folder,
+  Link2,
+  Lock,
+  MoveVertical,
+  Orbit,
+  Pin,
+  RotateCw,
+  TriangleAlert,
+} from "lucide-react"
+import { ISSUE_TEXT } from "@/core/assembly/mateNames"
+import type { SceneTreeNode } from "@/core/scene/sceneTree"
 import type { VisibleRow } from "@/core/scene/treeNav"
 import { cn } from "@/lib/utils"
+
+/** The row's icon: a folder, a part, the Mates folder, or a mate by its type. */
+function RowIcon({ node }: { node: SceneTreeNode }) {
+  const props = { className: "size-3.5 shrink-0", "aria-hidden": true } as const
+  if (node.kind === "group") return <Folder {...props} />
+  if (node.kind === "part") return <Box {...props} />
+  if (node.kind === "mates") return <Link2 {...props} />
+  if (node.type === "fixed") return <Lock {...props} />
+  if (node.type === "revolute") return <RotateCw {...props} />
+  if (node.type === "prismatic") return <MoveVertical {...props} />
+  return <Orbit {...props} />
+}
+const dofText = (dof: number | "floating") => (dof === "floating" ? "floating" : `${dof} DOF`)
 
 interface SceneTreeRowProps {
   row: VisibleRow
@@ -30,16 +60,22 @@ export function SceneTreeRow(props: SceneTreeRowProps) {
   const { node } = row
   const hidden = node.kind === "part" && node.hidden === true
   const grounded = node.kind === "part" && node.grounded === true
+  const issues = node.kind === "mate" ? node.issues : []
+  const suppressed = issues.includes("suppressed")
+  const warnings = issues.filter((i) => i !== "suppressed" && i !== "closesLoop")
+  const dimmed = (hidden || suppressed) && !selected
   const EyeIcon = hidden ? EyeOff : Eye
   const Chevron = row.expanded ? ChevronDown : ChevronRight
-  const Icon = node.kind === "group" ? Folder : Box
+  // Muted only on the plain row: on accent (4.15:1) and the hover tint (4.46:1) it fails AA.
+  const muted = !selected && "text-muted-foreground group-hover/row:text-accent-foreground"
 
   return (
     <li
       ref={rowRef}
       role="treeitem"
       tabIndex={tabStop ? 0 : -1}
-      aria-selected={selected}
+      // The Mates folder only opens and closes: not selectable.
+      aria-selected={node.kind === "mates" ? undefined : selected}
       aria-level={row.level}
       aria-posinset={row.posInSet}
       aria-setsize={row.setSize}
@@ -67,20 +103,32 @@ export function SceneTreeRow(props: SceneTreeRowProps) {
       >
         <Chevron className="size-3.5" />
       </span>
-      <Icon className="size-3.5 shrink-0" aria-hidden />
-      <span
-        className={cn(
-          "ml-1 flex-1 truncate",
-          // Muted only on the plain row: on accent (4.15:1) and the hover tint (4.46:1) it
-          // fails AA, so selected and hovered rows use their normal text colour.
-          hidden && !selected && "text-muted-foreground group-hover/row:text-accent-foreground"
-        )}
-        title={node.name}
-      >
+      <RowIcon node={node} />
+      <span className={cn("ml-1 flex-1 truncate", dimmed && muted)} title={node.name}>
         {node.name}
         {hidden && <span className="sr-only"> (hidden)</span>}
         {grounded && <span className="sr-only"> (grounded)</span>}
+        {node.kind === "part" && node.dof !== undefined && (
+          <span className="sr-only"> ({dofText(node.dof)})</span>
+        )}
+        {issues.map((i) => (
+          <span key={i} className="sr-only">
+            {" "}
+            {ISSUE_TEXT[i]}
+          </span>
+        ))}
       </span>
+      {node.kind === "part" && node.dof !== undefined && (
+        <span aria-hidden className={cn("shrink-0 px-1 text-xs tabular-nums", muted)}>
+          {dofText(node.dof)}
+        </span>
+      )}
+      {suppressed && <Ban className="size-3 shrink-0" aria-hidden />}
+      {warnings.length > 0 && (
+        <span title={warnings.map((w) => ISSUE_TEXT[w]).join(" ")} className="shrink-0">
+          <TriangleAlert className="size-3.5 text-warning" aria-hidden />
+        </span>
+      )}
       {grounded && <Pin className="size-3 shrink-0" aria-hidden />}
       {node.kind === "part" && (
         // Mouse-only like the chevron; shown on hover, and always while the part is hidden.

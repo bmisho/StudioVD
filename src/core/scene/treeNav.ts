@@ -17,7 +17,7 @@ export function visibleRows(tree: SceneTreeNode[], collapsed: ReadonlySet<string
   const rows: VisibleRow[] = []
   const walk = (nodes: SceneTreeNode[], level: number, parentId: string | null) => {
     nodes.forEach((node, i) => {
-      const children = node.kind === "group" ? node.children : []
+      const children = "children" in node ? node.children : []
       const expanded = children.length > 0 && !collapsed.has(node.id)
       rows.push({
         node,

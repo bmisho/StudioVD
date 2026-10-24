@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it } from "vitest"
-import type { GroupId, PartId } from "@/core/schema"
-import type { SceneTreeNode } from "@/core/scene/sceneTree"
+import type { GroupId, MateId, PartId } from "@/core/schema"
+import { MATES_FOLDER_ID, type SceneTreeNode } from "@/core/scene/sceneTree"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { resetStores } from "@/test/resetStores"
 import { SceneTree } from "./SceneTree"
@@ -97,5 +97,23 @@ describe("SceneTree", () => {
     render(<SceneTree tree={tree} />)
     expect(item("bolt")).toHaveAttribute("tabindex", "0")
     expect(item("arm")).toHaveAttribute("tabindex", "-1")
+  })
+
+  it("opens and closes the Mates folder (it selects nothing); a mate row selects the mate", () => {
+    const mates: SceneTreeNode = {
+      kind: "mates",
+      id: MATES_FOLDER_ID,
+      name: "Mates",
+      children: [
+        { kind: "mate", id: "m1" as MateId, name: "Revolute: A – B", type: "revolute", issues: [] },
+      ],
+    }
+    render(<SceneTree tree={[p("bolt"), mates]} />)
+    expect(item("Mates")).not.toHaveAttribute("aria-selected")
+    fireEvent.click(item("Revolute: A – B"))
+    expect(useSessionStore.getState().selection).toEqual([{ kind: "mate", id: "m1" }])
+    fireEvent.click(item("Mates"))
+    expect(screen.queryByRole("treeitem", { name: "Revolute: A – B" })).toBeNull()
+    expect(useSessionStore.getState().selection).toEqual([{ kind: "mate", id: "m1" }])
   })
 })

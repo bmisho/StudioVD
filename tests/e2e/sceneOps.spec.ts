@@ -6,7 +6,11 @@ import { insertTestRig, partPose, project, projectPart, waitForViewport } from "
 test.use({ contextOptions: { reducedMotion: "reduce" } })
 
 const tree = (page: Page) => page.getByRole("tree", { name: "Scene graph" })
-const row = (page: Page, name: string) => tree(page).getByRole("treeitem", { name })
+/** A tree row by its name, not another row that mentions it (a mate: "Revolute: Base – Leaf"). */
+const row = (page: Page, name: string) =>
+  tree(page).getByRole("treeitem", {
+    name: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( \\(|$)`),
+  })
 const parts = (page: Page) => page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.parts() ?? [])
 const gizmoAxis = (page: Page) =>
   page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.gizmoAxis() ?? null)

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 import type { AssetId, GroupId, Part, PartId } from "@/core/schema"
-import { buildSceneTree } from "./sceneTree"
+import { assemblyGraph } from "@/core/assembly/assemblyGraph"
+import { buildSceneTree, MATES_FOLDER_ID } from "./sceneTree"
+import { createTestRig } from "./testRig"
 
 const gid = (s: string) => s as GroupId
 const pid = (s: string) => s as PartId
@@ -60,5 +62,28 @@ describe("buildSceneTree with hostile ids", () => {
   it("does not treat prototype keys as existing parents", () => {
     const tree = buildSceneTree({ groups: {}, parts: { [pid("p1")]: part("p1", "constructor") } })
     expect(tree.map((n) => n.id)).toEqual(["p1"])
+  })
+
+  it("ends with a Mates folder: each mate by type and parts, with its issues; mated parts' DOF", () => {
+    const rig = createTestRig()
+    const doc = {
+      groups: {},
+      parts: Object.fromEntries(rig.parts.map((p) => [p.id, p])),
+      anchors: Object.fromEntries(rig.anchors.map((a) => [a.id, a])),
+      mates: Object.fromEntries(rig.mates.map((m) => [m.id, m])),
+    }
+    const tree = buildSceneTree(doc, assemblyGraph(doc))
+    const [base, leaf, mates] = tree
+    // The grounded base shows its pin, not "0 DOF"; the leaf turns on its hinge.
+    expect([base, leaf].map((n) => n?.kind === "part" && n.dof)).toEqual([undefined, 1])
+    expect(mates).toMatchObject({ kind: "mates", id: MATES_FOLDER_ID, name: "Mates" })
+    const [hinge] = mates?.kind === "mates" ? mates.children : []
+    expect(hinge).toMatchObject({
+      kind: "mate",
+      type: "revolute",
+      name: "Revolute: Base – Leaf",
+      issues: [],
+    })
+    expect(buildSceneTree({ groups: {}, parts: doc.parts })).toHaveLength(2) // no mates: no folder
   })
 })

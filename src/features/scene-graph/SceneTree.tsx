@@ -16,8 +16,13 @@ const TREE_KEYS: ReadonlySet<string> = new Set<TreeKey>([
 ])
 const isTreeKey = (key: string): key is TreeKey => TREE_KEYS.has(key)
 
-const itemOf = (node: SceneTreeNode): SelectionItem =>
-  node.kind === "group" ? { kind: "group", id: node.id } : { kind: "part", id: node.id }
+/** What selecting a row selects; the Mates folder selects nothing (it opens and closes). */
+function itemOf(node: SceneTreeNode): SelectionItem | null {
+  if (node.kind === "group") return { kind: "group", id: node.id }
+  if (node.kind === "part") return { kind: "part", id: node.id }
+  if (node.kind === "mate") return { kind: "mate", id: node.id }
+  return null
+}
 const keyOf = (item: { kind: string; id: string }) => `${item.kind}:${item.id}`
 
 /**
@@ -59,10 +64,12 @@ export function SceneTree({ tree }: { tree: SceneTreeNode[] }) {
   const onSelect = useCallback(
     (row: VisibleRow, additive: boolean) => {
       setActiveId(row.node.id)
-      if (additive) toggleSelected(itemOf(row.node))
-      else select([itemOf(row.node)])
+      const item = itemOf(row.node)
+      if (!item) toggleExpanded(row.node.id)
+      else if (additive) toggleSelected(item)
+      else select([item])
     },
-    [select, toggleSelected]
+    [select, toggleSelected, toggleExpanded]
   )
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -83,7 +90,8 @@ export function SceneTree({ tree }: { tree: SceneTreeNode[] }) {
       setActiveId(move.id)
       rowEls.current.get(move.id)?.focus()
       const target = rows.find((r) => r.node.id === move.id)
-      if (target && !e.ctrlKey) select([itemOf(target.node)])
+      const item = target && itemOf(target.node)
+      if (item && !e.ctrlKey) select([item])
     }
   }
 

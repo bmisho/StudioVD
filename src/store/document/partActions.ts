@@ -8,11 +8,12 @@ import {
   newId,
   PoseSchema,
   type GroupId,
+  type MateId,
   type PartId,
   type Pose,
   type SceneDocument,
 } from "@/core/schema"
-import { removeAnchors, removeGroups, removeParts } from "./deletion"
+import { removeAnchors, removeGroups, removeMates, removeParts } from "./deletion"
 
 export interface PartActions {
   /** Renames a part; names the schema would reject are ignored (like `renameGroup`). */
@@ -29,7 +30,8 @@ export interface PartActions {
   deleteItems: (
     parts: readonly PartId[],
     groups: readonly GroupId[],
-    anchors?: readonly AnchorId[]
+    anchors?: readonly AnchorId[],
+    mates?: readonly MateId[]
   ) => void
   /**
    * Moves the selected parts and groups (outermost ones) into a new group under their shared
@@ -73,11 +75,12 @@ export function partActions(set: Set): PartActions {
 
     deleteParts: (ids) => set((s) => removeParts(s.doc, ids)),
 
-    deleteItems: (parts, groups, anchors = []) =>
+    deleteItems: (parts, groups, anchors = [], mates = []) =>
       set((s) => {
         removeParts(s.doc, parts)
         removeGroups(s.doc, groups)
         removeAnchors(s.doc, anchors)
+        removeMates(s.doc, mates)
       }),
 
     groupItems: (items, name) => {

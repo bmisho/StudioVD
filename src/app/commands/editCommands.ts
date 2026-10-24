@@ -1,4 +1,4 @@
-import { SCENE_LIMITS, type AnchorId, type GroupId, type PartId } from "@/core/schema"
+import { SCENE_LIMITS, type AnchorId, type GroupId, type MateId, type PartId } from "@/core/schema"
 import type { Command, CommandDeps } from "./types"
 
 function selectedGroupIds(deps: CommandDeps): GroupId[] {
@@ -17,6 +17,12 @@ function selectedAnchorIds(deps: CommandDeps): AnchorId[] {
   return deps.session
     .getState()
     .selection.flatMap((item) => (item.kind === "anchor" ? [item.id] : []))
+}
+
+function selectedMateIds(deps: CommandDeps): MateId[] {
+  return deps.session
+    .getState()
+    .selection.flatMap((item) => (item.kind === "mate" ? [item.id] : []))
 }
 
 /** The parts the given anchors are on, each once, in selection order. */
@@ -61,20 +67,22 @@ export function editCommands(deps: CommandDeps): Command[] {
       shortcuts: ["Delete"],
       // Parts go with their anchors and mates; a deleted group's children move up a level;
       // anchors go with their mates, and then their parts are shown (the inspector's Delete
-      // anchor does the same).
+      // anchor does the same); mates go with their couplings.
       run: () => {
         const parts = selectedDirectPartIds(deps)
         const groups = selectedGroupIds(deps)
         const anchors = selectedAnchorIds(deps)
-        if (parts.length + groups.length + anchors.length === 0) return
+        const mates = selectedMateIds(deps)
+        if (parts.length + groups.length + anchors.length + mates.length === 0) return
         const owners = parts.length + groups.length === 0 ? anchorParts(deps, anchors) : []
-        document.getState().deleteItems(parts, groups, anchors)
+        document.getState().deleteItems(parts, groups, anchors, mates)
         session.getState().select(owners.map((id) => ({ kind: "part", id })))
       },
       isEnabled: () =>
         selectedDirectPartIds(deps).length +
           selectedGroupIds(deps).length +
-          selectedAnchorIds(deps).length >
+          selectedAnchorIds(deps).length +
+          selectedMateIds(deps).length >
         0,
     },
     {

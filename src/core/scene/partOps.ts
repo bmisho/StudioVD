@@ -53,20 +53,31 @@ export function anchorDeletion(doc: Doc, ids: readonly AnchorId[]) {
   return { anchors, ...anchorDependents(doc, anchors, new Set()) }
 }
 
+/** Everything that goes with these mates: the couplings on them and bindings naming them. */
+export function mateDeletion(doc: Doc, ids: readonly MateId[]) {
+  const mates = [...new Set(ids.filter((id) => Object.hasOwn(doc.mates, id)))]
+  return { mates, ...mateDependents(doc, mates, new Set()) }
+}
+
 /** Mates on the anchors, couplings on those mates, bindings naming any of them (or `alsoGone`). */
 function anchorDependents(doc: Doc, ids: readonly AnchorId[], alsoGone: ReadonlySet<string>) {
   const anchors = new Set(ids)
   const mates = Object.values(doc.mates)
     .filter((m) => anchors.has(m.anchorA) || anchors.has(m.anchorB))
     .map((m) => m.id)
-  const gone = new Set<string>([...alsoGone, ...anchors, ...mates])
+  return { mates, ...mateDependents(doc, mates, new Set([...alsoGone, ...anchors])) }
+}
+
+/** Couplings on the mates, and bindings naming any of them (or `alsoGone`). */
+function mateDependents(doc: Doc, mates: readonly MateId[], alsoGone: ReadonlySet<string>) {
+  const gone = new Set<string>([...alsoGone, ...mates])
   const couplings = Object.values(doc.couplings)
     .filter((c) => gone.has(c.mateA) || gone.has(c.mateB))
     .map((c) => c.id)
   const bindings = Object.values(doc.bindings)
     .filter((b) => gone.has(b.from.ref) || gone.has(b.to.ref))
     .map((b) => b.id)
-  return { mates, couplings, bindings }
+  return { couplings, bindings }
 }
 
 const parentOf = (doc: Pick<Doc, "parts" | "groups">, item: SelectionRef): GroupId | null => {

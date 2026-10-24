@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { createTestRig } from "@/core/scene/testRig"
+import type { MateId } from "@/core/schema"
 import { setupRegistry } from "./registryTestSetup"
 
 function withRig() {
@@ -68,6 +69,19 @@ describe("part commands", () => {
       { kind: "part", id: t.base },
       { kind: "part", id: t.leaf },
     ])
+  })
+})
+
+describe("delete mates", () => {
+  it("Delete on a selected mate removes it, leaving its parts and anchors", () => {
+    const t = withRig()
+    const [hinge] = Object.keys(t.document.getState().doc.mates) as MateId[]
+    if (!hinge) throw new Error("rig has no hinge")
+    t.session.getState().select([{ kind: "mate", id: hinge }])
+    expect(t.registry.isEnabled("edit.delete")).toBe(true)
+    t.registry.run("edit.delete")
+    const doc = t.document.getState().doc
+    expect([Object.keys(doc.mates).length, Object.keys(doc.anchors).length]).toEqual([0, 2])
   })
 })
 

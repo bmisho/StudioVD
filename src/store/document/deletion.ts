@@ -1,6 +1,6 @@
 import type { Draft } from "immer"
-import { anchorDeletion, partDeletion } from "@/core/scene/partOps"
-import type { AnchorId, GroupId, PartId, SceneDocument } from "@/core/schema"
+import { anchorDeletion, mateDeletion, partDeletion } from "@/core/scene/partOps"
+import type { AnchorId, GroupId, MateId, PartId, SceneDocument } from "@/core/schema"
 
 // Deletion steps on an immer draft, so one store action can combine them in ONE undo entry.
 
@@ -19,6 +19,14 @@ export function removeParts(doc: Draft<SceneDocument>, ids: readonly PartId[]): 
 export function removeAnchors(doc: Draft<SceneDocument>, ids: readonly AnchorId[]): void {
   const gone = anchorDeletion(doc, ids)
   for (const id of gone.anchors) delete doc.anchors[id]
+  for (const id of gone.mates) delete doc.mates[id]
+  for (const id of gone.couplings) delete doc.couplings[id]
+  for (const id of gone.bindings) delete doc.bindings[id]
+}
+
+/** Removes mates with the couplings on them and the bindings that name them (PLAN 8.5). */
+export function removeMates(doc: Draft<SceneDocument>, ids: readonly MateId[]): void {
+  const gone = mateDeletion(doc, ids)
   for (const id of gone.mates) delete doc.mates[id]
   for (const id of gone.couplings) delete doc.couplings[id]
   for (const id of gone.bindings) delete doc.bindings[id]

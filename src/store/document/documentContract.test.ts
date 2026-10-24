@@ -54,6 +54,31 @@ describe("document store contract", () => {
     s().updateAnchor(anchor, { name: "Front face", interface: "M3-hole", kind: "axial" })
     s().flipAnchor(anchor)
     roundTrips("anchors")
+    s().setPartsGrounded([leaf], false)
+    const onLeaf = s().addAnchor({
+      partId: leaf,
+      kind: "axial",
+      frame: { originMm: [3, -4, 5], z: [0, 1, 0], x: [1, 0, 0] },
+      source: { kind: "manual" },
+    })
+    if (!onLeaf) throw new Error("anchor not added")
+    const added = s().addMate({
+      anchorA: anchor,
+      anchorB: onLeaf,
+      type: "revolute",
+      flip: true,
+      angleOffsetRad: -Math.PI / 2,
+    })
+    if (!added.ok) throw new Error(`mate not added: ${added.reason}`)
+    roundTrips("mate (leaf snapped onto the base)")
+    s().updateMate(added.id, { flip: false, angleOffsetRad: -0, limits: { min: -1, max: 1 } })
+    s().updateMate(added.id, { type: "fixed", contactsEnabled: true, suppressed: true })
+    s().updateMate(added.id, { suppressed: false, limits: null })
+    s().setPartPose(leaf, { positionMm: [9, 9, 9], quaternion: [0, 0.6, 0, 0.8] })
+    s().resnapMate(added.id)
+    roundTrips("mate edits")
+    s().deleteMates([added.id])
+    roundTrips("delete mate")
     s().deleteAnchors([rig.anchors[0]?.id ?? anchor])
     roundTrips("delete anchor with its mate")
     s().deleteGroups([inner])

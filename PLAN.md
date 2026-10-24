@@ -227,8 +227,9 @@ $\tfrac12\left(1\pm\tfrac{\sin\alpha}{\alpha}\right)$ for the first two. Axis po
 radius: least-squares (Kåsa) circle fit of the face points projected onto the plane ⟂ axis.
 
 **Snapping.** $M_A, M_B$ = part world matrices; $F_A, F_B$ = anchor frames in part-local
-coordinates; $R_{\text{flip}}$ = 180° about the anchor's local $x$ (face-to-face); $R_z(\varphi)$ =
-user angle offset. Part B (and its free sub-assembly) moves to:
+coordinates; $R_{\text{flip}}$ = 180° about the anchor's local $x$ when the mate's `flip` is set
+(z opposed: face to face), else the identity (z aligned, as the Phase 3 test rig's hinge has
+it); $R_z(\varphi)$ = user angle offset. Part B (and its free sub-assembly) moves to:
 
 $$M_B = M_A\,F_A\,R_{\text{flip}}\,R_z(\varphi)\,F_B^{-1}$$
 
@@ -852,7 +853,7 @@ Exit criteria
   cylinders) is checked through the real import (faces, corners, edges, rims, hole sense) and in
   E2E (rim → axial "Hole Ø8" out of the top face, undo/redo, face and corner snaps, picking and
   deleting an anchor)
-- [ ] ⛔ 7.6 **User approval**
+- [x] ⛔ 7.6 **User approval** (given 2026-10-24)
 
 ## Phase 8: Mates & snapping
 

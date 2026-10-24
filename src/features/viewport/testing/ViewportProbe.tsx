@@ -4,6 +4,9 @@ import { Color, SRGBColorSpace, Vector3 } from "three"
 import type { RGB8 } from "@/core/math/colorGradient"
 import { visibleHeightMm } from "@/core/math/gridLevels"
 import { anchorPreview } from "@/features/assembly/anchorPreview"
+import { anchorWorld } from "@/core/assembly/mateSnap"
+import { rotate } from "@/core/math/vec3"
+import type { AnchorId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { viewSpecOf } from "../camera/useCameraFrame"
 import { redrawNow } from "../renderer/redrawNow"
@@ -96,6 +99,22 @@ export function ViewportProbe() {
           kind: a.kind,
           name: a.name ?? null,
           frame: a.frame,
+        })),
+      anchorWorld: (id) => {
+        const { anchors, parts } = useDocumentStore.getState().doc
+        const a = Object.hasOwn(anchors, id) ? anchors[id as AnchorId] : undefined
+        const part = a && Object.hasOwn(parts, a.partId) ? parts[a.partId] : undefined
+        if (!a || !part) return null
+        const world = anchorWorld(part, a)
+        return { originMm: world.t, z: rotate(world.q, [0, 0, 1]) }
+      },
+      mates: () =>
+        Object.values(useDocumentStore.getState().doc.mates).map((m) => ({
+          id: m.id,
+          type: m.type,
+          anchorA: m.anchorA,
+          anchorB: m.anchorB,
+          flip: m.flip,
         })),
       anchorPreview: () => {
         const p = anchorPreview.get()

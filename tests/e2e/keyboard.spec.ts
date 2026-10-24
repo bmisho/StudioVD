@@ -55,11 +55,11 @@ test.describe("keyboard and focus", () => {
     await page.keyboard.press("ArrowRight")
     const mate = toolbar.getByRole("button", { name: "Mate" })
     await expect(mate).toBeFocused()
-    await expect(mate).toHaveAttribute("aria-disabled", "true")
-    const tip = page.getByRole("tooltip").filter({ hasText: "Mate: available in Phase 8" })
+    const tip = page.getByRole("tooltip").filter({ hasText: "Mate" })
     await expect(tip).toHaveCount(1)
-    await page.keyboard.press("Enter") // disabled: nothing happens
-    await expect(anchor).toHaveAttribute("aria-pressed", "true")
+    await page.keyboard.press("Enter") // one tool at a time
+    await expect(mate).toHaveAttribute("aria-pressed", "true")
+    await expect(anchor).toHaveAttribute("aria-pressed", "false")
 
     await page.keyboard.press("Tab") // leaves the toolbar in one step
     const inToolbar = await toolbar.evaluate((el) => el.contains(document.activeElement))

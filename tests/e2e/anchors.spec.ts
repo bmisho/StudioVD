@@ -1,46 +1,17 @@
 import type { Page } from "@playwright/test"
-import { expect, fixtureFile, queueImportPick, test } from "./fixtures"
-import { project, waitForViewport } from "./viewportHelpers"
+import { anchors, hover, importFixture } from "./assemblyHelpers"
+import { expect, test } from "./fixtures"
+import { project } from "./viewportHelpers"
 
 // PLAN 7.5: anchors on a real STEP part. plate-hole.step: a 40 x 8 x 30 mm plate lying flat
 // (y up, its top at world y = 8) with a Ø8 mm through hole centred at x = 5, z = 0. Its asset
 // is centred on its box, so part coordinates are world coordinates minus (0, 4, 0).
 test.use({ contextOptions: { reducedMotion: "reduce" } })
 
-const anchors = (page: Page) => page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.anchors() ?? [])
-const preview = (page: Page) =>
-  page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.anchorPreview() ?? null)
 /** Each component within `mm` (snaps are exact; a hit on a face is where the cursor is). */
 const close = (v: number[] | undefined, w: number[], mm = 1e-3) =>
   w.forEach((x, i) => expect(Math.abs((v?.[i] ?? Infinity) - x)).toBeLessThan(mm))
-
-async function importPlate(page: Page) {
-  await waitForViewport(page)
-  await queueImportPick(page, [fixtureFile("plate-hole.step")])
-  await page.keyboard.press("Control+i")
-  const dialog = page.getByRole("dialog", { name: "Import" })
-  await dialog.getByRole("button", { name: "Import" }).click()
-  await expect(dialog).toBeHidden({ timeout: 30_000 })
-  const [plate] = await page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.parts() ?? [])
-  const id = plate?.id ?? ""
-  await expect
-    .poll(() => page.evaluate((i) => window.__STUDIOVD_VIEWPORT__?.partMesh(i)?.loaded, id))
-    .toBe(true)
-  return id
-}
-
-/**
- * Hovers a world point and waits for the preview. Nudges once, so a move is seen, unless
- * `once`: then a single move, which is also what asks for the part's snap features, so the
- * snap can only show up once they arrive with the cursor standing still.
- */
-async function hover(page: Page, world: [number, number, number], snap: string, once = false) {
-  const p = await project(page, world)
-  if (!once) await page.mouse.move(p.x - 1, p.y)
-  await page.mouse.move(p.x, p.y)
-  await expect.poll(async () => (await preview(page))?.snap).toBe(snap)
-  return p
-}
+const importPlate = (page: Page) => importFixture(page, "plate-hole.step")
 
 test.describe("anchors", () => {
   test.describe.configure({ timeout: 60_000 })

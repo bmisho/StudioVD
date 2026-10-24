@@ -10,18 +10,19 @@ import { runImport } from "./runImport"
 // PLAN 7.5: what anchor snapping finds on a real STEP part (tools/fixtures/makePlateStep.mjs):
 // a 40 x 8 x 30 mm plate lying flat (y up) with a Ø8 mm through hole centred at x = 5, z = 0.
 
-async function plate() {
-  const b = readFileSync(new URL("../../../tests/fixtures/plate-hole.step", import.meta.url))
+async function imported(fileName: string) {
+  const b = readFileSync(new URL(`../../../tests/fixtures/${fileName}`, import.meta.url))
   const bytes = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)
-  const job = { fileName: "plate-hole.step", format: "step" as const, bytes }
+  const job = { fileName, format: "step" as const, bytes }
   const { parts } = await runImport(
     { ...job, options: DEFAULT_IMPORT_OPTIONS },
     { occt: () => occtInit() }
   )
   const glb = parts[0]?.asset.glb
   if (!glb) throw new Error("not imported")
-  return decodeGlb(glb)
+  return { ...decodeGlb(glb), offsetMm: parts[0]?.asset.offsetMm }
 }
+const plate = () => imported("plate-hole.step")
 
 describe("snap features of the plate with a hole", () => {
   it("classifies the B-rep faces: six planes and the bore as two half cylinders", async () => {
@@ -57,5 +58,23 @@ describe("snap features of the plate with a hole", () => {
     expect(rims.map((r) => Math.round(r.centre[1])).sort()).toEqual([-4, -4, 4, 4])
     const bore = faces.flatMap((f, i) => (f.kind === "cylinder" ? [i] : []))
     expect(bore.map((i) => cylinderSense[i])).toEqual([-1, -1]) // a hole, not a shaft
+  }, 30_000)
+})
+
+// PLAN 8.6: the pin that fits the plate's hole (tools/fixtures/makePinStep.mjs), Ø8 x 20 mm,
+// standing upright on y = 0..20 at x = 40, z = 0.
+describe("snap features of the pin", () => {
+  it("is two caps and a shaft (two half cylinders), with a rim at each end", async () => {
+    const { mesh, faces, offsetMm } = await imported("pin.step")
+    expect(offsetMm?.map((v) => Math.round(v))).toEqual([40, 10, 0])
+    expect(faces.filter((f) => f.kind === "plane")).toHaveLength(2)
+    const shaft = faces.flatMap((f, i) => (f.kind === "cylinder" ? [i] : []))
+    expect(shaft).toHaveLength(2)
+    const { corners, edges, cylinderSense } = snapFeatures(mesh, faces)
+    expect(shaft.map((i) => cylinderSense[i])).toEqual([1, 1]) // a shaft, not a hole
+    expect(corners).toHaveLength(0)
+    const rims = edges.filter((e): e is SnapArc => e.kind === "arc")
+    expect(rims.map((r) => Math.round(r.centre[1])).sort()).toEqual([-10, -10, 10, 10])
+    for (const rim of rims) expect(rim.radius).toBeCloseTo(4, 3)
   }, 30_000)
 })

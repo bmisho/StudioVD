@@ -30,3 +30,7 @@ export const MM_PER_UNIT: Readonly<Record<LengthUnit, number>> = {
 }
 
 export const toMm = (value: number, unit: LengthUnit): number => value * MM_PER_UNIT[unit]
+
+/** Angles: degrees in the UI, radians in the document. */
+export const degToRad = (deg: number): number => (deg * Math.PI) / 180
+export const radToDeg = (rad: number): number => (rad * 180) / Math.PI

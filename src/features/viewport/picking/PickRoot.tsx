@@ -5,6 +5,8 @@ import { hoverTargetForMove, selectionChangeForClick } from "@/core/scene/pickPo
 import { anchorPreview } from "@/features/assembly/anchorPreview"
 import { clickAnchor, previewAnchor } from "@/features/assembly/anchorTool"
 import { anchorAt } from "@/features/assembly/glyphs"
+import { pickMateAnchor } from "@/features/assembly/mateTool"
+import { isPlainClick } from "@/core/scene/pickPolicy"
 import {
   useSessionStore,
   type SelectionItem,
@@ -37,6 +39,7 @@ export function PickRoot(props: PickRootProps) {
   const { partGrab } = useViewport()
   const testMode = useSessionStore((s) => s.testMode)
   const placing = useSessionStore((s) => s.activeTool === "anchor")
+  const mating = useSessionStore((s) => s.activeTool === "mate")
   const get = useThree((s) => s.get)
   // Leaving Place Anchor (Escape, another tool, test mode) drops what it was showing.
   useEffect(() => {
@@ -64,6 +67,11 @@ export function PickRoot(props: PickRootProps) {
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
     if (placing) return clickAnchor(e, get())
+    if (mating) {
+      const n = e.nativeEvent
+      if (isPlainClick(n, e.delta)) pickMateAnchor(n.clientX, n.clientY)
+      return
+    }
     if (gizmoState.ownsClick()) return // the click belongs to a gizmo handle
     const n = e.nativeEvent
     // An anchor glyph drawn over the part wins (glyphs are picked by screen distance).

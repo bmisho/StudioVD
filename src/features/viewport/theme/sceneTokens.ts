@@ -5,6 +5,8 @@ export const SCENE_TOKEN_VARS = {
   viewportTop: "--viewport-top",
   viewportBottom: "--viewport-bottom",
   highlight: "--highlight-3d",
+  /** Anchors the Mate tool suggests (their interface tags fit the first pick). */
+  suggest: "--success",
   edge: "--edge-3d",
   gridMinor: "--grid-minor",
   gridMajor: "--grid-major",

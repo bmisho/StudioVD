@@ -6,12 +6,15 @@ import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { AnchorProperties } from "./AnchorProperties"
 import { GroupProperties } from "./GroupProperties"
+import { NewMateProperties } from "./NewMateProperties"
 import { PartProperties } from "./PartProperties"
 import { ProjectProperties } from "./ProjectProperties"
 import { useFocusRescue } from "./useFocusRescue"
 
 export function PropertiesPanel() {
   const selection = useSessionStore((s) => s.selection)
+  // The Mate tool's second pick shows the new mate's options instead of the selection.
+  const newMate = useSessionStore((s) => s.activeTool === "mate" && !!s.mateDraft?.anchorB)
   const single = selection.length === 1 ? selection[0] : undefined
   const parts = useDocumentStore((s) => s.doc.parts)
   const groups = useDocumentStore((s) => s.doc.groups)
@@ -25,7 +28,8 @@ export function PropertiesPanel() {
   const materials = partIds.length > 0 && <PartMaterialSection partIds={partIds} />
 
   let content
-  if (selection.length === 0) content = <ProjectProperties />
+  if (newMate) content = <NewMateProperties />
+  else if (selection.length === 0) content = <ProjectProperties />
   else if (single?.kind === "group")
     content = (
       <div className="flex flex-col gap-3">

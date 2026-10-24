@@ -105,10 +105,12 @@ export function editCommands(deps: CommandDeps): Command[] {
       id: "edit.clearSelection",
       label: "Clear Selection",
       shortcuts: ["Escape"],
-      // A tool (Place Anchor) ends first, keeping what it made selected; then the selection.
+      // The Mate tool's picks go first, then a tool ends (keeping what it made selected),
+      // then the selection.
       run: () => {
         const s = session.getState()
-        if (s.activeTool !== "select") s.setTool("select")
+        if (s.mateDraft) s.setMateDraft(null)
+        else if (s.activeTool !== "select") s.setTool("select")
         else s.clearSelection()
       },
     },

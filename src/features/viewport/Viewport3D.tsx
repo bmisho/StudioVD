@@ -5,6 +5,8 @@ import { useSessionStore } from "@/store/session/sessionStore"
 import { CameraRigController } from "./camera/CameraRigController"
 import { AnchorToolHint } from "@/features/assembly/AnchorToolHint"
 import { GlyphScaler } from "@/features/assembly/GlyphScaler"
+import { MatePreview } from "@/features/assembly/MatePreview"
+import { MateToolHint } from "@/features/assembly/MateToolHint"
 import { PartTransformGizmo } from "./gizmos/PartTransformGizmo"
 import { createCameraRig } from "./camera/createCameraRig"
 import { MaterialSync } from "./materials/MaterialSync"
@@ -66,6 +68,7 @@ export function Viewport3D() {
           <MaterialSync />
           <PartsLayer />
           <PartTransformGizmo />
+          <MatePreview />
           <GlyphScaler />
           {testMode && (
             <Suspense fallback={null}>
@@ -77,6 +80,7 @@ export function Viewport3D() {
       </Canvas>
       <ViewportStatusOverlay />
       <AnchorToolHint />
+      <MateToolHint />
     </div>
   )
 }

@@ -80,6 +80,10 @@ export interface ViewportProbeApi {
     name: string | null
     frame: { originMm: number[]; z: number[]; x: number[] }
   }[]
+  /** An anchor's origin and z in world coordinates (at its part's design pose), or null. */
+  anchorWorld(id: string): { originMm: number[]; z: number[] } | null
+  /** The document's mates. */
+  mates(): { id: string; type: string; anchorA: string; anchorB: string; flip: boolean }[]
   /** What Place Anchor would place under the cursor now, or null. */
   anchorPreview(): { partId: string; snap: string; kind: string; name: string } | null
   /** The transform gizmo handle under the pointer ("X", "XY", …), or null. */

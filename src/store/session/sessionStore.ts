@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { AnchorId, GroupId, MateId, NodeId, PartId } from "@/core/schema"
+import type { AnchorId, GroupId, MateId, MateType, NodeId, PartId } from "@/core/schema"
 
 // Session state (CLAUDE.md §4, kind 2): not persisted, not undoable.
 
@@ -23,9 +23,20 @@ export type SelectionItem =
   | { kind: "mate"; id: MateId }
   | { kind: "node"; id: NodeId }
 
+/** The Mate tool's picks so far (PLAN 8.2): anchor A, then B with the new mate's options. */
+export interface MateDraft {
+  anchorA: AnchorId
+  anchorB: AnchorId | null
+  type: MateType
+  flip: boolean
+  angleOffsetRad: number
+}
+
 export interface SessionState {
   selection: SelectionItem[]
   activeTool: Tool
+  /** While the Mate tool is on: what it has picked. Cleared when the tool ends. */
+  mateDraft: MateDraft | null
   projection: Projection
   splitOrientation: SplitOrientation
   maximizedPane: Pane | null
@@ -49,6 +60,7 @@ export interface SessionState {
   toggleSelected: (item: SelectionItem) => void
   clearSelection: () => void
   setTool: (tool: Tool) => void
+  setMateDraft: (draft: MateDraft | null) => void
   toggleProjection: () => void
   toggleSplitOrientation: () => void
   /** Maximizes `pane`, or restores the split if it is already maximized. */
@@ -73,6 +85,7 @@ export interface SessionState {
 export const initialSessionState = {
   selection: [],
   activeTool: "select",
+  mateDraft: null,
   projection: "perspective",
   splitOrientation: "horizontal",
   maximizedPane: null,
@@ -103,7 +116,9 @@ export function createSessionStore() {
         }
       }),
     clearSelection: () => set({ selection: [] }),
-    setTool: (tool) => set({ activeTool: tool }),
+    setTool: (tool) =>
+      set((s) => ({ activeTool: tool, mateDraft: tool === "mate" ? s.mateDraft : null })),
+    setMateDraft: (mateDraft) => set({ mateDraft }),
     toggleProjection: () =>
       set((s) => ({
         projection: s.projection === "perspective" ? "orthographic" : "perspective",
@@ -120,9 +135,17 @@ export function createSessionStore() {
       set(side === "left" ? { leftPanelOpen: open } : { rightPanelOpen: open }),
     // Tools edit the design pose: entering test mode ends them.
     toggleTestMode: () =>
-      set((s) => ({ testMode: !s.testMode, activeTool: s.testMode ? s.activeTool : "select" })),
+      set((s) =>
+        s.testMode ? { testMode: false } : { testMode: true, activeTool: "select", mateDraft: null }
+      ),
     resetForDocument: () =>
-      set({ selection: [], isolated: null, testMode: false, activeTool: "select" }),
+      set({
+        selection: [],
+        isolated: null,
+        testMode: false,
+        activeTool: "select",
+        mateDraft: null,
+      }),
     restartTestMode: () => set((s) => (s.testMode ? { testRun: s.testRun + 1 } : {})),
     openDialog: (dialog) => set({ dialog }),
     closeDialog: () => set({ dialog: null }),

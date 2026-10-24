@@ -1,8 +1,5 @@
 import type { Command, CommandDeps } from "./types"
 
-/** Not built yet: visible but disabled, with the phase that delivers it. */
-const later = (phase: number) => ({ isEnabled: () => false, availableInPhase: phase })
-
 export function viewCommands({
   session,
   viewport,
@@ -70,7 +67,14 @@ export function viewCommands({
       isEnabled: () => !s().testMode,
       disabledReason: "leave test mode first",
     },
-    { id: "tool.mate", label: "Mate", run: () => s().setTool("mate"), ...later(8) },
+    {
+      id: "tool.mate",
+      label: "Mate",
+      run: () => s().setTool("mate"),
+      // Mates snap parts at their design pose, not while test mode moves them.
+      isEnabled: () => !s().testMode,
+      disabledReason: "leave test mode first",
+    },
     { id: "help.about", label: "About StudioVD", run: () => openDialog("about") },
   ]
 }

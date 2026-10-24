@@ -1,5 +1,6 @@
-import { selectionChangeForClick } from "@/core/scene/pickPolicy"
+import { isPlainClick, selectionChangeForClick } from "@/core/scene/pickPolicy"
 import { anchorAt } from "@/features/assembly/glyphs"
+import { pickMateAnchor } from "@/features/assembly/mateTool"
 import type { SelectionItem, SessionStore } from "@/store/session/sessionStore"
 import { gizmoState } from "../gizmos/gizmoState"
 import { applySelectionChange } from "./applySelectionChange"
@@ -12,7 +13,13 @@ import { applySelectionChange } from "./applySelectionChange"
 export function createViewportMissHandler(session: SessionStore) {
   return (event: MouseEvent) => {
     if (gizmoState.ownsClick()) return // a click on a gizmo handle is not a click on empty space
-    if (session.getState().activeTool === "anchor") return // Place Anchor: off a part, nothing
+    const tool = session.getState().activeTool
+    if (tool === "anchor") return // Place Anchor: off a part, nothing
+    if (tool === "mate") {
+      // The Mate tool picks anchors over empty space too (a glyph sticks out past its part).
+      if (isPlainClick(event, 0)) pickMateAnchor(event.clientX, event.clientY)
+      return
+    }
     // A glyph can stick out past its part: a click near an anchor's origin selects it.
     const anchor = anchorAt(event.clientX, event.clientY)
     applySelectionChange(

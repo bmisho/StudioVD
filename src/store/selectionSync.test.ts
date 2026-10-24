@@ -42,6 +42,34 @@ describe("selection pruning with inserted entities", () => {
   })
 })
 
+describe("Mate tool picks", () => {
+  it("are dropped when an undo takes one of their anchors away", () => {
+    const document = createDocumentStore()
+    const session = createSessionStore()
+    const history = createHistory(document)
+    const stop = connectSelectionPruning(document, session)
+    const rig = createTestRig()
+    document.getState().insertEntities(rig)
+    const [a, b] = rig.anchors
+    if (!a || !b) throw new Error("rig incomplete")
+    const draft = {
+      anchorA: a.id,
+      anchorB: b.id,
+      type: "revolute",
+      flip: false,
+      angleOffsetRad: 0,
+    } as const
+    session.getState().setTool("mate")
+    session.getState().setMateDraft(draft)
+    document.getState().renamePart(rig.parts[0]?.id ?? a.partId, "Renamed")
+    expect(session.getState().mateDraft).toEqual(draft) // its anchors are still there
+    history.undo()
+    history.undo() // the insert: the anchors go
+    expect(session.getState().mateDraft).toBeNull()
+    stop()
+  })
+})
+
 describe("isolation pruning", () => {
   it("drops deleted parts from the isolated set and ends isolation when none are left", () => {
     const document = createDocumentStore()

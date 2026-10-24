@@ -1,6 +1,6 @@
 import type { RootState, ThreeEvent } from "@react-three/fiber"
 import { uniqueAnchorName } from "@/core/assembly/anchorNames"
-import { CLICK_SLOP_PX } from "@/core/scene/pickPolicy"
+import { isPlainClick } from "@/core/scene/pickPolicy"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { anchorPreview, type AnchorPreview } from "./anchorPreview"
@@ -38,9 +38,8 @@ export function placeAnchor({ partId, candidate }: AnchorPreview): void {
  * cursor, recomputed at the click (the last preview may be a frame old). The tool stays on.
  */
 export function clickAnchor(e: ThreeEvent<MouseEvent>, state: RootState): void {
-  const n = e.nativeEvent
-  // A double click's second click would place the same anchor again.
-  if (n.type !== "click" || n.button !== 0 || n.detail > 1 || e.delta > CLICK_SLOP_PX) return
+  // Not a drag, and not a double click's second click (it would place the same anchor again).
+  if (!isPlainClick(e.nativeEvent, e.delta)) return
   const preview = candidateFromHit(e, cursorOf(e), state)
   if (preview) placeAnchor(preview)
 }

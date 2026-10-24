@@ -7,6 +7,17 @@ import type { SelectionRef } from "@/core/scene/selection"
  */
 export const CLICK_SLOP_PX = 2
 
+/**
+ * A plain primary click, as the tools take it: not a drag (moved at most CLICK_SLOP_PX), not
+ * another button, and not the second click of a double click (that would act twice).
+ */
+export function isPlainClick(
+  e: { type: string; button: number; detail?: number },
+  movedPx: number
+): boolean {
+  return e.type === "click" && e.button === 0 && movedPx <= CLICK_SLOP_PX && (e.detail ?? 1) <= 1
+}
+
 export interface ViewportClick<T extends SelectionRef> {
   /** DOM event type. R3F also reports right-click (`contextmenu`) and `dblclick` as misses. */
   type: string

@@ -21,31 +21,34 @@ function frameQuaternion(frame: Frame): Quaternion {
  * One anchor's triad (PLAN 7.4): a dot at the origin, z as an arrow and x as a short red
  * line; a planar anchor adds a square in its plane, an axial one its axis through the dot and
  * a ring around it. Drawn in CSS px: GlyphScaler scales the group registered through `ref`.
- * `ghost`: the see-through Place Anchor preview. `selected`: a third larger.
+ * `ghost`: the see-through Place Anchor preview. `selected`: a third larger. `suggested`: in
+ * the suggestion colour (the Mate tool's anchors that fit its first pick), a fifth larger.
  */
 export function AnchorGlyph({
   frame,
   kind,
   ghost = false,
   selected = false,
+  suggested = false,
   ref,
 }: {
   frame: Frame
   kind: AnchorKind
   ghost?: boolean
   selected?: boolean
+  suggested?: boolean
   ref?: Ref<Group>
 }) {
   const p = glyphParts()
   const g = p.geometry
-  const main = ghost ? p.mainGhost : p.main
+  const main = ghost ? p.mainGhost : suggested && !selected ? p.suggest : p.main
   const quaternion = useMemo(() => frameQuaternion(frame), [frame])
   useRedrawOnRemoval(kind) // the plate or axis of the old kind goes
   const mesh = { raycast: noRaycast, renderOrder: GLYPH_ORDER, userData: OVERLAY }
   return (
     <group position={frame.originMm} quaternion={quaternion} userData={OVERLAY}>
       <group ref={ref}>
-        <group scale={selected ? 1.35 : 1}>
+        <group scale={selected ? 1.35 : suggested ? 1.2 : 1}>
           <mesh geometry={g.dot} material={main} {...mesh} />
           <mesh geometry={g.shaft} material={main} rotation={HALF_TURN_X} {...mesh} />
           <mesh geometry={g.head} material={main} rotation={HALF_TURN_X} {...mesh} />

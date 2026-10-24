@@ -7,6 +7,7 @@ All files here are CC0-1.0, written for StudioVD's tests (no third-party geometr
 | `cube.step` | `tools/fixtures/makeCubeStep.mjs` | 10 mm cube as a faceted B-rep, AP214 |
 | `cube-colours.step` | `tools/fixtures/makeCubeStep.mjs` | The same cube: grey body, +x and -z faces red, +y blue (STYLED_ITEMs) |
 | `plate-hole.step` | `tools/fixtures/makePlateStep.mjs` | 40 × 8 × 30 mm plate lying flat (y up) with a Ø8 mm through hole at x = 5; advanced B-rep, the bore as two half cylinders |
+| `pin.step` | `tools/fixtures/makePinStep.mjs` | Ø8 × 20 mm pin standing on y = 0..20 at x = 40, z = 0 (fits the plate's hole); advanced B-rep, the side as two half cylinders |
 | `checker.png` | `tools/fixtures/makeCheckerPng.mjs` | 64 px checkerboard (8 px squares) for texture maps |
 | `bracket.stl` | `tools/fixtures/makeBracketStl.mjs` | L-bracket, 6500 mm³, binary STL |
 | `sample.glb` | `tools/fixtures/makeSampleGlb.mjs` | Two parts under an "Assembly" node, metres |

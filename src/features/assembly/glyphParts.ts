@@ -31,6 +31,8 @@ export interface GlyphParts {
   mainGhost: MeshBasicMaterial
   x: MeshBasicMaterial
   plate: MeshBasicMaterial
+  /** The main colour of anchors the Mate tool suggests. */
+  suggest: MeshBasicMaterial
 }
 
 // Transparent even when opaque: three draws opaque, then transmissive (glass, which samples
@@ -73,6 +75,7 @@ export function glyphParts(): GlyphParts {
     mainGhost: overlay(highlight, 0.6),
     x: overlay(new Color(tokens.axisX)),
     plate: overlay(highlight, 0.25),
+    suggest: overlay(new Color(tokens.suggest)),
   }
   return parts
 }

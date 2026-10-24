@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { buildShortcutMap } from "@/app/shortcuts/useGlobalShortcuts"
 import type { Result } from "@/lib/tauri/result"
-import type { GroupId } from "@/core/schema"
+import type { AnchorId, GroupId } from "@/core/schema"
 import { notImplemented, setupRegistry as setup } from "./registryTestSetup"
 
 describe("command registry", () => {
@@ -73,12 +73,20 @@ describe("command registry", () => {
     expect(Object.keys(document.getState().doc.groups)).toHaveLength(1)
   })
 
-  it("keeps not-yet-built commands visibly disabled, with their phase", () => {
+  it("Mate: on outside test mode; Escape drops its picks, then ends it", () => {
     const { registry, session } = setup()
-    expect(registry.isEnabled("tool.mate")).toBe(false)
-    expect(registry.get("tool.mate").availableInPhase).toBe(8)
-    expect(registry.run("tool.mate")).toBe(false)
+    expect(registry.run("tool.mate")).toBe(true)
+    const anchorA = "a" as AnchorId
+    session
+      .getState()
+      .setMateDraft({ anchorA, anchorB: null, type: "revolute", flip: false, angleOffsetRad: 0 })
+    registry.run("edit.clearSelection")
+    expect([session.getState().activeTool, session.getState().mateDraft]).toEqual(["mate", null])
+    registry.run("edit.clearSelection")
     expect(session.getState().activeTool).toBe("select")
+    session.getState().toggleTestMode()
+    expect(registry.isEnabled("tool.mate")).toBe(false)
+    expect(registry.get("tool.mate").disabledReason).toBe("leave test mode first")
   })
 
   it("Place Anchor: on outside test mode; Escape ends it before it clears the selection", () => {

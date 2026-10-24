@@ -29,10 +29,14 @@ async function importPlate(page: Page) {
   return id
 }
 
-/** Hovers a world point (nudging once, so a move is seen) and waits for the preview. */
-async function hover(page: Page, world: [number, number, number], snap: string) {
+/**
+ * Hovers a world point and waits for the preview. Nudges once, so a move is seen, unless
+ * `once`: then a single move, which is also what asks for the part's snap features, so the
+ * snap can only show up once they arrive with the cursor standing still.
+ */
+async function hover(page: Page, world: [number, number, number], snap: string, once = false) {
   const p = await project(page, world)
-  await page.mouse.move(p.x - 1, p.y)
+  if (!once) await page.mouse.move(p.x - 1, p.y)
   await page.mouse.move(p.x, p.y)
   await expect.poll(async () => (await preview(page))?.snap).toBe(snap)
   return p
@@ -50,7 +54,9 @@ test.describe("anchors", () => {
     const hint = page.getByRole("status").filter({ hasText: "Place Anchor" })
     await expect(hint).toBeVisible()
 
-    const rim = await hover(page, [9.5, 8, 0], "circle") // on the top face, just off the rim
+    // On the top face just off the rim, the first move over the part: the circle snap must
+    // appear when its snap features arrive from the worker, without another move.
+    const rim = await hover(page, [9.5, 8, 0], "circle", true)
     await expect(hint).toContainText("Hole Ø8 centre")
     await page.mouse.click(rim.x, rim.y)
     await expect.poll(async () => (await anchors(page)).length).toBe(1)

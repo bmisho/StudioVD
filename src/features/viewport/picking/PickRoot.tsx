@@ -11,6 +11,7 @@ import {
   type SessionStore,
 } from "@/store/session/sessionStore"
 import { useViewport } from "../ViewportContext"
+import { assetCache } from "../parts/assetCache"
 import { gizmoState } from "../gizmos/gizmoState"
 import { applySelectionChange } from "./applySelectionChange"
 import { viewportHover, type HoverStore } from "./hoverStore"
@@ -41,8 +42,9 @@ export function PickRoot(props: PickRootProps) {
   useEffect(() => {
     if (!placing) anchorPreview.set(null)
   }, [placing])
-  // Test mode: parts move under a still cursor, so the hover is also refreshed periodically.
-  useHoverRefresh(testMode ? { periodicMs: 100 } : {})
+  // Test mode: parts move under a still cursor, so the hover is also refreshed periodically;
+  // and when an asset's mesh or snap features arrive (Place Anchor's snap appears unmoved).
+  useHoverRefresh({ refreshOn: assetCache.subscribe, ...(testMode ? { periodicMs: 100 } : {}) })
 
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation() // nearest hit only

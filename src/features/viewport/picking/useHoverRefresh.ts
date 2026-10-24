@@ -7,13 +7,16 @@ import { periodicRefreshDue } from "@/core/scene/pickPolicy"
  * R3F raycasts only on DOM pointer events. When the camera moves under a still cursor
  * (wheel zoom-to-cursor, fit-all, view cube, ortho toggle) the hover would go stale, so after
  * any rendered frame in which the camera changed, replay the last pointer event
- * (`events.update()`). Guarded by "pointer inside the canvas": `update()` replays the last
+ * (`events.update()`); also after `refreshOn` fires (an asset's mesh or its snap features
+ * arrived, so what lies under the cursor, or what it snaps to, changed). Guarded by "pointer inside the canvas": `update()` replays the last
  * event R3F saw, so after the pointer left it would resurrect a hover (probe B).
  * Costs nothing at idle: demand frameloop renders no frames, so this never runs.
  */
-export function useHoverRefresh(options: { periodicMs?: number } = {}): void {
+export function useHoverRefresh(
+  options: { periodicMs?: number; refreshOn?: (listener: () => void) => () => void } = {}
+): void {
   // Test mode: parts move under a still cursor too, so also refresh every `periodicMs`.
-  const { periodicMs } = options
+  const { periodicMs, refreshOn } = options
   const lastPeriodic = useRef(0)
   // EventManager<any>: narrow before use.
   const connected: unknown = useThree((s) => s.events).connected
@@ -28,6 +31,14 @@ export function useHoverRefresh(options: { periodicMs?: number } = {}): void {
     forced.current = true
     invalidate()
   }, [periodicMs, invalidate])
+  useEffect(
+    () =>
+      refreshOn?.(() => {
+        forced.current = true
+        invalidate()
+      }),
+    [refreshOn, invalidate]
+  )
 
   useEffect(() => {
     if (!(connected instanceof HTMLElement)) return

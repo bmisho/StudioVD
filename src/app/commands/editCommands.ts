@@ -1,4 +1,6 @@
+import { ADD_REFUSAL_TEXT, REFUSAL_TEXT } from "@/core/assembly/mateNames"
 import { SCENE_LIMITS, type AnchorId, type GroupId, type MateId, type PartId } from "@/core/schema"
+import { applyMateDraft } from "@/features/assembly/mateTool"
 import type { Command, CommandDeps } from "./types"
 
 function selectedGroupIds(deps: CommandDeps): GroupId[] {
@@ -100,6 +102,28 @@ export function editCommands(deps: CommandDeps): Command[] {
           deps.reportError({ kind: "invalidInput", message }, "New Group")
         }
       },
+    },
+    {
+      id: "tool.mateApply",
+      label: "Apply Mate",
+      shortcuts: ["Ctrl+Enter"],
+      allowInTextInput: true, // while typing its angle
+      // What the New Mate panel's Apply does, also with the Properties panel collapsed.
+      run: () => {
+        const result = applyMateDraft(document, session)
+        if (!result || result.ok) return
+        const { reason } = result
+        const message =
+          reason === "full" || reason === "invalid"
+            ? ADD_REFUSAL_TEXT[reason]
+            : REFUSAL_TEXT[reason]
+        deps.reportError({ kind: "invalidInput", message }, "Apply Mate")
+      },
+      isEnabled: () => {
+        const s = session.getState()
+        return s.activeTool === "mate" && !!s.mateDraft?.anchorB
+      },
+      disabledReason: "pick two anchors with the Mate tool first",
     },
     {
       id: "edit.clearSelection",

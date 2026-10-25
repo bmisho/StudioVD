@@ -54,8 +54,15 @@ export async function demandRoot(scene: ReactNode) {
   return {
     store,
     subscriptions: () => live,
-    /** Frames requested while `change` runs and React commits it. */
+    /**
+     * Frames requested while `change` runs and React commits it: explicit `invalidate()`
+     * calls (removals) and R3F's own on added or changed objects, which it makes only when
+     * no frame is pending (`internal.frames === 0`). No render loop runs here to bring that
+     * count down, so it is reset first.
+     */
     framesRequested: async (change: () => void) => {
+      const state = store?.getState()
+      if (state) state.internal.frames = 0
       const before = invalidate.mock.calls.length
       act(() => change())
       await settle()

@@ -1,12 +1,15 @@
 import { useThree, type ThreeEvent } from "@react-three/fiber"
 import { useEffect, type ReactNode, type Ref } from "react"
 import type { Group } from "three"
-import { hoverTargetForMove, selectionChangeForClick } from "@/core/scene/pickPolicy"
+import {
+  hoverTargetForMove,
+  isPrimaryClick,
+  selectionChangeForClick,
+} from "@/core/scene/pickPolicy"
 import { anchorPreview } from "@/features/assembly/anchorPreview"
 import { clickAnchor, previewAnchor } from "@/features/assembly/anchorTool"
 import { anchorAt } from "@/features/assembly/glyphs"
 import { pickMateAnchor } from "@/features/assembly/mateTool"
-import { isPlainClick } from "@/core/scene/pickPolicy"
 import {
   useSessionStore,
   type SelectionItem,
@@ -51,7 +54,8 @@ export function PickRoot(props: PickRootProps) {
 
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation() // nearest hit only
-    hover.set(hoverTargetForMove(e.nativeEvent.buttons, pickRefOf(e.object)))
+    // The Mate tool picks anchors, not parts: no part lights up under the cursor.
+    hover.set(mating ? null : hoverTargetForMove(e.nativeEvent.buttons, pickRefOf(e.object)))
     if (placing) previewAnchor(e, get())
   }
   // R3F passes the NEW hits (priority, then distance order). If the top one is another part,
@@ -69,7 +73,7 @@ export function PickRoot(props: PickRootProps) {
     if (placing) return clickAnchor(e, get())
     if (mating) {
       const n = e.nativeEvent
-      if (isPlainClick(n, e.delta)) pickMateAnchor(n.clientX, n.clientY)
+      if (isPrimaryClick(n, e.delta)) pickMateAnchor(n.clientX, n.clientY)
       return
     }
     if (gizmoState.ownsClick()) return // the click belongs to a gizmo handle

@@ -60,15 +60,22 @@ export function scaleGlyphs(state: RootState): void {
   }
 }
 
-/** The anchor whose glyph origin is nearest a client point, within ANCHOR_PICK_PX, or null. */
-export function anchorAt(clientX: number, clientY: number): AnchorId | null {
+/**
+ * The anchor whose glyph origin is nearest a client point, within ANCHOR_PICK_PX, or null;
+ * only anchors `accept` takes, when given (glyphs drawn on top of each other: a pin in its hole).
+ */
+export function anchorAt(
+  clientX: number,
+  clientY: number,
+  accept?: (id: AnchorId) => boolean
+): AnchorId | null {
   const state = view?.()
   if (!state) return null
   const rect = state.gl.domElement.getBoundingClientRect()
   let best: AnchorId | null = null
   let bestD = ANCHOR_PICK_PX
   for (const { object, anchor } of glyphs) {
-    if (!anchor || !isShown(object)) continue
+    if (!anchor || !isShown(object) || (accept && !accept(anchor))) continue
     ndc.copy(object.getWorldPosition(world)).project(state.camera)
     if (ndc.z < -1 || ndc.z > 1) continue // clipped (before the near plane, past the far one)
     const x = rect.left + ((ndc.x + 1) / 2) * rect.width

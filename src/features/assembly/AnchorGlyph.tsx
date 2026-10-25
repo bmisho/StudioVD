@@ -22,7 +22,8 @@ function frameQuaternion(frame: Frame): Quaternion {
  * line; a planar anchor adds a square in its plane, an axial one its axis through the dot and
  * a ring around it. Drawn in CSS px: GlyphScaler scales the group registered through `ref`.
  * `ghost`: the see-through Place Anchor preview. `selected`: a third larger. `suggested`: in
- * the suggestion colour (the Mate tool's anchors that fit its first pick), a fifth larger.
+ * the suggestion colour, x direction included (the Mate tool's anchors that fit its first
+ * pick), a fifth larger.
  */
 export function AnchorGlyph({
   frame,
@@ -52,7 +53,13 @@ export function AnchorGlyph({
           <mesh geometry={g.dot} material={main} {...mesh} />
           <mesh geometry={g.shaft} material={main} rotation={HALF_TURN_X} {...mesh} />
           <mesh geometry={g.head} material={main} rotation={HALF_TURN_X} {...mesh} />
-          <mesh geometry={g.xShaft} material={p.x} rotation={QUARTER_TURN_Z} {...mesh} />
+          {/* A suggestion's x is green too: green beside the red x would read as an XY triad. */}
+          <mesh
+            geometry={g.xShaft}
+            material={main === p.suggest ? main : p.x}
+            rotation={QUARTER_TURN_Z}
+            {...mesh}
+          />
           {kind === "planar" && <mesh geometry={g.plate} material={p.plate} {...mesh} />}
           {kind === "axial" && (
             <>

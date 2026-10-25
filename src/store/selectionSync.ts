@@ -16,9 +16,12 @@ export function connectSelectionPruning(document: DocumentStore, session: Sessio
     const { selection, select, mateDraft, setMateDraft } = session.getState()
     const pruned = pruneSelection(state.doc, selection)
     if (pruned !== selection) select(pruned)
-    // The Mate tool's picks go too when an undo takes their anchors away.
-    const has = (id: string | null) => id === null || Object.hasOwn(state.doc.anchors, id)
-    if (mateDraft && !(has(mateDraft.anchorA) && has(mateDraft.anchorB))) setMateDraft(null)
+    // The Mate tool's picks go too when an undo takes their anchors away (only the second
+    // when the first's is still there).
+    const has = (id: string | null) => id !== null && Object.hasOwn(state.doc.anchors, id)
+    if (mateDraft && !has(mateDraft.anchorA)) setMateDraft(null)
+    else if (mateDraft?.anchorB && !has(mateDraft.anchorB))
+      setMateDraft({ ...mateDraft, anchorB: null })
     const { isolated } = session.getState()
     if (!isolated) return
     const kept = isolated.filter((id) => Object.hasOwn(state.doc.parts, id))

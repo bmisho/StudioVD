@@ -68,6 +68,37 @@ describe("Mate tool picks", () => {
     expect(session.getState().mateDraft).toBeNull()
     stop()
   })
+
+  it("keeps the first pick when an undo takes only the second's anchor (tool review)", () => {
+    const document = createDocumentStore()
+    const session = createSessionStore()
+    const history = createHistory(document)
+    const stop = connectSelectionPruning(document, session)
+    const rig = createTestRig()
+    document.getState().insertEntities({ ...rig, mates: [] })
+    const [a] = rig.anchors
+    const leaf = rig.parts[1]
+    if (!a || !leaf) throw new Error("rig incomplete")
+    const b = document.getState().addAnchor({
+      partId: leaf.id,
+      kind: "axial",
+      frame: { originMm: [0, 0, 0], z: [0, 0, 1], x: [1, 0, 0] },
+      source: { kind: "manual" },
+    })
+    if (!b) throw new Error("anchor not added")
+    session.getState().setTool("mate")
+    const draft = {
+      anchorA: a.id,
+      anchorB: b,
+      type: "fixed",
+      flip: true,
+      angleOffsetRad: 0,
+    } as const
+    session.getState().setMateDraft(draft)
+    history.undo() // the new anchor goes
+    expect(session.getState().mateDraft).toEqual({ ...draft, anchorB: null })
+    stop()
+  })
 })
 
 describe("isolation pruning", () => {

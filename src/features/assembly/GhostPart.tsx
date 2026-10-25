@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useSyncExternalStore } from "react"
-import { BoxGeometry, Color, MeshBasicMaterial } from "three"
+import { useEffect, useSyncExternalStore } from "react"
+import { Color, MeshBasicMaterial } from "three"
 import type { PartId, Pose } from "@/core/schema"
+import { assetBoxGeometry } from "@/features/viewport/parts/assetBoxGeometry"
 import { assetCache } from "@/features/viewport/parts/assetCache"
 import { noRaycast } from "@/features/viewport/picking/pickTarget"
 import { useRedrawOnRemoval } from "@/features/viewport/renderer/useRedrawOnRemoval"
@@ -34,15 +35,13 @@ export function GhostPart({ partId, pose }: { partId: PartId; pose: Pose }) {
   const loaded = useSyncExternalStore(assetCache.subscribe, () =>
     asset ? assetCache.getFor(asset) : undefined
   )
-  const box = useMemo(() => {
-    if (!asset) return null
-    const { min, max } = asset.bboxMm
-    const geometry = new BoxGeometry(max[0] - min[0], max[1] - min[1], max[2] - min[2])
-    return geometry.translate((min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2)
+  // Asked here too (the cache loads each asset once): not left to the part's own view.
+  useEffect(() => {
+    if (asset) assetCache.request(asset.id)
   }, [asset])
-  useEffect(() => () => box?.dispose(), [box])
   useRedrawOnRemoval()
-  const geometry = loaded?.geometry ?? box
+  // The shared box (cached per asset, like the part's own) until the mesh is in.
+  const geometry = loaded?.geometry ?? (asset ? assetBoxGeometry(asset) : null)
   if (!geometry) return null
   return (
     <mesh

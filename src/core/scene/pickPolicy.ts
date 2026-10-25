@@ -18,6 +18,15 @@ export function isPlainClick(
   return e.type === "click" && e.button === 0 && movedPx <= CLICK_SLOP_PX && (e.detail ?? 1) <= 1
 }
 
+/**
+ * A primary click that is not a drag, the second of a double click included: for the Mate
+ * tool, where picking the same anchor again changes nothing, and two anchors a few pixels
+ * apart are often clicked in quick succession.
+ */
+export function isPrimaryClick(e: { type: string; button: number }, movedPx: number): boolean {
+  return e.type === "click" && e.button === 0 && movedPx <= CLICK_SLOP_PX
+}
+
 export interface ViewportClick<T extends SelectionRef> {
   /** DOM event type. R3F also reports right-click (`contextmenu`) and `dblclick` as misses. */
   type: string

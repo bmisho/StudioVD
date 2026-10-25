@@ -57,6 +57,13 @@ export function mateSides(doc: Doc, partA: PartId, partB: PartId, except?: MateI
   return { connected, a, b }
 }
 
-/** Whether the part is grounded or fixed-mated (through fixed mates) to a grounded part. */
-export const weldedToGround = (doc: Doc, part: PartId, except?: MateId): boolean =>
-  reach(doc, mateAdjacency(doc, except, true), part).grounded
+/**
+ * Whether the part is grounded or fixed-mated (through fixed mates) to a grounded part.
+ * `fixed`: the fixed mates' adjacency, when the caller asks for several parts.
+ */
+export const weldedToGround = (
+  doc: Doc,
+  part: PartId,
+  except?: MateId,
+  fixed = mateAdjacency(doc, except, true)
+): boolean => reach(doc, fixed, part).grounded

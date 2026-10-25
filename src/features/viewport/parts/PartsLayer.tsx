@@ -1,4 +1,5 @@
 import { useMemo } from "react"
+import { partShown } from "@/core/scene/partShown"
 import { partsInSelection } from "@/core/scene/partsInSelection"
 import { useAnchorGlyphs } from "@/features/assembly/useAnchorGlyphs"
 import { useDocumentStore } from "@/store/document/documentStore"
@@ -28,7 +29,7 @@ export function PartsLayer() {
     () =>
       Object.values(parts).flatMap((part) => {
         const asset = Object.hasOwn(assets, part.assetId) ? assets[part.assetId] : undefined
-        return asset && part.visible && (!shown || shown.has(part.id)) ? [{ part, asset }] : []
+        return asset && partShown(part, shown) ? [{ part, asset }] : []
       }),
     [parts, assets, shown]
   )

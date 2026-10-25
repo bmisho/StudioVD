@@ -42,6 +42,7 @@ export type CommandId =
   | "tool.select"
   | "tool.anchor"
   | "tool.mate"
+  | "tool.mateApply"
   | "test.toggle"
   | "test.reset"
   | "dev.insertTestRig"

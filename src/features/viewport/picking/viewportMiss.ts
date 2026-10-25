@@ -1,4 +1,4 @@
-import { isPlainClick, selectionChangeForClick } from "@/core/scene/pickPolicy"
+import { isPrimaryClick, selectionChangeForClick } from "@/core/scene/pickPolicy"
 import { anchorAt } from "@/features/assembly/glyphs"
 import { pickMateAnchor } from "@/features/assembly/mateTool"
 import type { SelectionItem, SessionStore } from "@/store/session/sessionStore"
@@ -17,7 +17,7 @@ export function createViewportMissHandler(session: SessionStore) {
     if (tool === "anchor") return // Place Anchor: off a part, nothing
     if (tool === "mate") {
       // The Mate tool picks anchors over empty space too (a glyph sticks out past its part).
-      if (isPlainClick(event, 0)) pickMateAnchor(event.clientX, event.clientY)
+      if (isPrimaryClick(event, 0)) pickMateAnchor(event.clientX, event.clientY)
       return
     }
     // A glyph can stick out past its part: a click near an anchor's origin selects it.

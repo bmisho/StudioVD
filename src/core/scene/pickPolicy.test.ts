@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 import {
   hoverTargetForMove,
+  isPlainClick,
+  isPrimaryClick,
   periodicRefreshDue,
   selectionChangeForClick,
   type ViewportClick,
@@ -69,5 +71,16 @@ describe("periodicRefreshDue", () => {
   it("does not stall when the clock restarts (frameloop switch resets R3F's clock)", () => {
     // Two minutes of design-mode orbiting, then test mode restarts the clock at 0.
     expect(periodicRefreshDue(16, 120_000, 100)).toBe(true)
+  })
+})
+
+describe("plain and primary clicks", () => {
+  it("drop drags and other buttons; only a plain click drops a double click's second", () => {
+    const at = (detail: number, button = 0) => ({ type: "click", button, detail })
+    expect([isPlainClick(at(1), 2), isPrimaryClick(at(1), 2)]).toEqual([true, true])
+    expect([isPlainClick(at(2), 0), isPrimaryClick(at(2), 0)]).toEqual([false, true])
+    expect([isPlainClick(at(1), 3), isPrimaryClick(at(1), 3)]).toEqual([false, false])
+    expect(isPrimaryClick(at(1, 1), 0)).toBe(false)
+    expect(isPrimaryClick({ type: "dblclick", button: 0 }, 0)).toBe(false)
   })
 })

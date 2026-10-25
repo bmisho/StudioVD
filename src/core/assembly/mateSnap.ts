@@ -10,7 +10,7 @@ import type {
   SceneDocument,
 } from "@/core/schema"
 import { compose, fromFrame, fromPose, invert, toPose, type Rigid } from "@/core/math/rigid"
-import { mateSides, weldedToGround } from "./mateSides"
+import { mateAdjacency, mateSides, weldedToGround } from "./mateSides"
 
 /** What a mate needs to place its parts (PLAN §2 Snapping). */
 export interface MateGeometry {
@@ -74,7 +74,8 @@ export function planSnap(doc: Doc, m: MateGeometry, except?: MateId): SnapPlan {
   const partB = b && lookup(doc.parts, b.partId)
   if (!a || !b || !partA || !partB) return { ok: false, reason: "missing" }
   if (partA.id === partB.id) return { ok: false, reason: "samePart" }
-  if (weldedToGround(doc, partA.id, except) && weldedToGround(doc, partB.id, except))
+  const fixed = mateAdjacency(doc, except, true)
+  if (weldedToGround(doc, partA.id, except, fixed) && weldedToGround(doc, partB.id, except, fixed))
     return { ok: false, reason: "grounded" }
   const sides = mateSides(doc, partA.id, partB.id, except)
   if (sides.connected || (sides.a.grounded && sides.b.grounded))

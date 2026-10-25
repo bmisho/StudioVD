@@ -6,7 +6,7 @@ import { createTestRig } from "@/core/scene/testRig"
 import type { Anchor, AnchorId, PartId } from "@/core/schema"
 import { glyphParts } from "@/features/assembly/glyphParts"
 import { useDocumentStore } from "@/store/document/documentStore"
-import { useSessionStore } from "@/store/session/sessionStore"
+import { useSessionStore, type MateDraft } from "@/store/session/sessionStore"
 import { demandRoot, settle } from "@/test/demandRoot"
 import { resetStores } from "@/test/resetStores"
 import { ViewportContext } from "../ViewportContext"
@@ -85,5 +85,23 @@ describe("PartsLayer anchor glyphs", () => {
     })
     await r.framesRequested(() => useDocumentStore.setState({ doc: { ...doc, anchors } }))
     expect(reads).toBe(1)
+  })
+
+  it("requests a frame when the Mate tool's pick draws a glyph larger, and back (tool review)", async () => {
+    const { r } = await mount(0)
+    act(() => useSessionStore.getState().setTool("mate")) // every part shows its anchors
+    await settle()
+    const [hinge] = Object.keys(useDocumentStore.getState().doc.anchors) as AnchorId[]
+    if (!hinge) throw new Error("rig incomplete")
+    const pick: MateDraft = {
+      anchorA: hinge,
+      anchorB: null,
+      type: "revolute",
+      flip: false,
+      angleOffsetRad: 0,
+    }
+    const set = (d: typeof pick | null) => useSessionStore.getState().setMateDraft(d)
+    expect(await r.framesRequested(() => set(pick))).toBeGreaterThan(0)
+    expect(await r.framesRequested(() => set(null))).toBeGreaterThan(0)
   })
 })

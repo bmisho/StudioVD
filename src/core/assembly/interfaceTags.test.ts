@@ -16,5 +16,7 @@ describe("interface tags", () => {
     expect(tagsFit("shaft-8mm", undefined)).toBe(false)
     expect(tagsFit("", "")).toBe(false)
     expect(tagsFit("bolt-hole", "bolt-hole-2")).toBe(false) // both roles in one tag: none
+    expect(tagsFit("shaft-8mm", "shaft-8mm")).toBe(false) // two shafts, though the tags are equal
+    expect(tagsFit("M3-screw", "m3 screw")).toBe(false)
   })
 })

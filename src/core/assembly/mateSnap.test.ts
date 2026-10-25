@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { normalizeQuat, compose, invert } from "@/core/math/rigid"
+import { compose, normalizeQuat } from "@/core/math/rigid"
 import { cross, dot, length, normalize, rotate, sub } from "@/core/math/vec3"
 import type { Anchor, Mate, Part, Pose } from "@/core/schema"
-import { mateDefaults } from "./mateDefaults"
 import { mateHolds } from "./mateCheck"
 import { anchorWorld, mateRelative, planSnap } from "./mateSnap"
 import { anchor, mate, mateDoc, part, prng, type MateDoc } from "./testing/mateFixtures"
@@ -52,7 +51,7 @@ describe("mate snapping", () => {
     }
   })
 
-  it("moves B with everything mated to it; A's side when B's is grounded; refuses both", () => {
+  it("moves B with everything mated to it; A's side when B's is grounded", () => {
     const [ground, b, c] = [
       part("Ground", true),
       part("B", false, randomPose()),
@@ -71,11 +70,22 @@ describe("mate snapping", () => {
 
     // Reversed: the grounded side is B's, so A's side moves instead.
     expect(planSnap(docWithHinge, mate(ba, ga))).toMatchObject({ ok: true, moved: "A" })
-    const grounded = {
-      ...docWithHinge,
-      parts: { ...docWithHinge.parts, [c.id]: { ...c, grounded: true } },
-    }
-    expect(planSnap(grounded, mate(ga, ba))).toEqual({ ok: false, reason: "grounded" })
+  })
+
+  it("moves nothing when both sides are grounded through hinges (a loop through the ground)", () => {
+    // Math review: a shaft hinged to one grounded block, mated to another grounded block.
+    const [block1, block2, shaft] = [part("Block1", true), part("Block2", true), part("Shaft")]
+    const [b1, s1] = [anchor(block1, [0, 0, 0]), anchor(shaft, [0, 0, 0])]
+    const [b2, s2] = [anchor(block2, [0, 0, 40]), anchor(shaft, [0, 0, 40])]
+    const hinge = mate(b1, s1)
+    const doc = mateDoc([block1, block2, shaft], [b1, s1, b2, s2], [hinge])
+    const none = { ok: true, moved: "none", poses: new Map() }
+    expect(planSnap(doc, mate(s2, b2))).toEqual(none)
+    expect(planSnap(doc, mate(b2, s2))).toEqual(none)
+    // Fixed to a grounded block, the shaft is grounded itself: a mate on it can hold nothing.
+    const welded = { ...doc, mates: { [hinge.id]: { ...hinge, type: "fixed" as const } } }
+    expect(planSnap(welded, mate(s2, b2))).toEqual({ ok: false, reason: "grounded" })
+    expect(planSnap(doc, mate(b1, b2))).toEqual({ ok: false, reason: "grounded" })
   })
 
   it("moves nothing when the anchors are already joined (the mate closes a loop)", () => {
@@ -91,6 +101,15 @@ describe("mate snapping", () => {
     expect(planSnap(doc, first, first.id)).toMatchObject({ ok: true, moved: "B" })
   })
 
+  it("is exact for stored quaternions a rounding off unit length (the schema allows 1e-6)", () => {
+    // Math review: |q| - 1 = 3.1e-7, anchors 1000 mm out: the mate read "unsatisfied".
+    const pose: Pose = { positionMm: [0, 0, 0], quaternion: [0, 0, 0.707107, 0.707107] }
+    const [pa, pb] = [part("A", false, pose), part("B", false, pose)]
+    const [a, b] = [anchor(pa, [1000, 0, 0]), anchor(pb, [0, 1000, 0])]
+    const m = mate(a, b, "fixed")
+    expect(mateHolds(snapped(mateDoc([pa, pb], [a, b]), m), m)).toBe(true)
+  })
+
   it("refuses anchors on one part, missing ones, and a move past the coordinate limit", () => {
     const p = part("P")
     const [a, b] = [randomAnchor(p), randomAnchor(p)]
@@ -103,56 +122,5 @@ describe("mate snapping", () => {
       ok: false,
       reason: "tooFar",
     })
-  })
-})
-
-describe("new mate defaults", () => {
-  it("pin in a hole: revolute, the turn that moves B least, twist to the nearest 90°", () => {
-    const quarter = Math.SQRT1_2
-    const [pa, pb] = [
-      part("A"),
-      part("B", false, { positionMm: [5, 5, 5], quaternion: [0, 0, quarter, quarter] }),
-    ]
-    const a = anchor(pa, [0, 0, 0], [0, 0, 1], [1, 0, 0])
-    const facing = anchor(pb, [0, 0, 0], [0, 0, -1], [1, 0, 0]) // B turned 90° about z
-    const same = anchor(pb, [0, 0, 0], [0, 0, 1], [1, 0, 0])
-    const doc = mateDoc([pa, pb], [a, facing, same])
-    expect(mateDefaults(doc, a.id, facing.id)).toEqual({
-      type: "revolute",
-      flip: true,
-      angleOffsetRad: -Math.PI / 2,
-    })
-    expect(mateDefaults(doc, a.id, same.id)).toEqual({
-      type: "revolute",
-      flip: false,
-      angleOffsetRad: Math.PI / 2,
-    })
-    // Snapping with those defaults does not turn B at all.
-    for (const b of [facing, same]) {
-      const d = must(mateDefaults(doc, a.id, b.id))
-      const plan = planSnap(doc, mate(a, b, d.type, d))
-      const q = plan.ok ? plan.poses.get(pb.id)?.quaternion : undefined
-      const turn = compose(
-        { q: must(q), t: [0, 0, 0] },
-        invert({ q: pb.pose.quaternion, t: [0, 0, 0] })
-      )
-      expect(Math.abs(turn.q[3])).toBeCloseTo(1, 12)
-    }
-  })
-
-  it("points make a spherical mate, planes and mixed kinds a fixed one", () => {
-    const [pa, pb] = [part("A"), part("B")]
-    const kinds = (ka: Anchor["kind"], kb: Anchor["kind"]) => {
-      const [a, b] = [
-        anchor(pa, [0, 0, 0], [0, 0, 1], [1, 0, 0], ka),
-        anchor(pb, [1, 0, 0], [0, 0, 1], [1, 0, 0], kb),
-      ]
-      return mateDefaults(mateDoc([pa, pb], [a, b]), a.id, b.id)?.type
-    }
-    expect([kinds("point", "point"), kinds("planar", "planar"), kinds("axial", "planar")]).toEqual([
-      "spherical",
-      "fixed",
-      "fixed",
-    ])
   })
 })

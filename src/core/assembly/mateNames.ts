@@ -18,7 +18,7 @@ export const REFUSAL_TEXT: Record<SnapRefusal, string> = {
   missing: "One of the anchors is gone.",
   samePart: "Both anchors are on one part: pick an anchor on another part.",
   grounded:
-    "Both parts are fixed to the ground (directly or through other mates): unground one first.",
+    "Both parts are fixed to the ground (grounded, or fixed-mated to a grounded part): unground one first.",
   tooFar: "Snapping would move a part more than 100 km from the origin.",
 }
 

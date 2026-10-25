@@ -8,8 +8,11 @@ export interface MateSide {
 
 type Doc = Pick<SceneDocument, "parts" | "anchors" | "mates">
 
-/** Parts joined by mates in effect (not suppressed, both anchors present), `except` left out. */
-export function mateAdjacency(doc: Doc, except?: MateId): Map<PartId, PartId[]> {
+/**
+ * Parts joined by mates in effect (not suppressed, both anchors present), `except` left out;
+ * `fixedOnly`: by fixed mates alone (parts that move as one body).
+ */
+export function mateAdjacency(doc: Doc, except?: MateId, fixedOnly = false): Map<PartId, PartId[]> {
   const next = new Map<PartId, PartId[]>()
   const link = (from: PartId, to: PartId) => {
     const list = next.get(from)
@@ -17,7 +20,7 @@ export function mateAdjacency(doc: Doc, except?: MateId): Map<PartId, PartId[]> 
     else next.set(from, [to])
   }
   for (const mate of Object.values(doc.mates)) {
-    if (mate.suppressed || mate.id === except) continue
+    if (mate.suppressed || mate.id === except || (fixedOnly && mate.type !== "fixed")) continue
     const a = Object.hasOwn(doc.anchors, mate.anchorA) ? doc.anchors[mate.anchorA] : undefined
     const b = Object.hasOwn(doc.anchors, mate.anchorB) ? doc.anchors[mate.anchorB] : undefined
     if (!a || !b || a.partId === b.partId) continue
@@ -53,3 +56,7 @@ export function mateSides(doc: Doc, partA: PartId, partB: PartId, except?: MateI
   const b = connected ? a : reach(doc, adjacency, partB)
   return { connected, a, b }
 }
+
+/** Whether the part is grounded or fixed-mated (through fixed mates) to a grounded part. */
+export const weldedToGround = (doc: Doc, part: PartId, except?: MateId): boolean =>
+  reach(doc, mateAdjacency(doc, except, true), part).grounded

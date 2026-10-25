@@ -10,15 +10,16 @@ const words = (tag: string) =>
     .filter(Boolean)
 
 /**
- * Whether two anchors' interface tags fit (PLAN 8.2 suggestions): equal tags (`rail-2020`
- * and `rail-2020`), or one that goes in and one it goes into with the rest equal, in order
+ * Whether two anchors' interface tags fit (PLAN 8.2 suggestions): equal tags naming no role
+ * (`rail-2020` and `rail-2020`), or one that goes in and one it goes into with the rest equal, in order
  * (`shaft-8mm` and `bore-8mm`, `M3-screw` and `M3-hole`). Case, spaces and `_` versus `-`
  * do not matter; sizes must match exactly (`8mm` is not `8`). An empty tag fits nothing.
  */
 export function tagsFit(a: string | undefined, b: string | undefined): boolean {
   const [wa, wb] = [words(a ?? ""), words(b ?? "")]
   if (wa.length === 0 || wb.length === 0) return false
-  if (wa.join("-") === wb.join("-")) return true
+  // Equal tags fit when they name no role: two rails, but not two shafts.
+  if (wa.join("-") === wb.join("-")) return !wa.some((w) => MALE.has(w) || FEMALE.has(w))
   const role = (w: string[]) => {
     const male = w.findIndex((x) => MALE.has(x))
     const female = w.findIndex((x) => FEMALE.has(x))

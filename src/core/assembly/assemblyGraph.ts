@@ -1,6 +1,6 @@
 import type { AnchorId, Mate, MateId, PartId, SceneDocument } from "@/core/schema"
 import { mateHolds } from "./mateCheck"
-import { groupDofs, mechanismDof, type Joint } from "./mobility"
+import { mobility, type Joint } from "./mobility"
 import { unionFind } from "./unionFind"
 
 /** Something to tell the user about a mate (PLAN 8.4); none when it simply holds. */
@@ -16,8 +16,8 @@ export interface RigidGroup {
   parts: PartId[]
   grounded: boolean
   mechanism: number
-  /** Degrees of freedom relative to the ground: 0 grounded, its mechanism's with loops, the
-   *  sum along its mates to the ground otherwise; null when its mechanism floats. */
+  /** Degrees of freedom relative to the ground, how it can move (at most 6): 0 grounded; null
+   *  when its mechanism floats or has loops among too many groups to rank. */
   dof: number | null
 }
 
@@ -131,7 +131,6 @@ export function assemblyGraph(doc: Doc): AssemblyGraph {
     mech?.joints.push(joint)
     if (mech && joint.loop) mech.loops++
   }
-  for (const mech of mechanisms) mech.dof = mechanismDof(doc, mech, groups)
-  groupDofs(groups, mechanisms)
+  for (const mech of mechanisms) mobility(doc, mech, groups)
   return { groupOf, groups, mechanisms, issues }
 }

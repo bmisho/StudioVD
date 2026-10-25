@@ -1,7 +1,7 @@
 import { MAX_COORDINATE_MM } from "@/core/schema"
 import type { Anchor, AnchorId, MateId, Part, PartId, Pose, SceneDocument } from "@/core/schema"
 import { compose, fromFrame, fromPose, invert, toPose, type Rigid } from "@/core/math/rigid"
-import { mateSides } from "./mateSides"
+import { mateSides, weldedToGround } from "./mateSides"
 
 /** What a mate needs to place its parts (PLAN §2 Snapping). */
 export interface MateGeometry {
@@ -34,13 +34,14 @@ export const mateRelative = (m: Pick<MateGeometry, "flip" | "angleOffsetRad">): 
 export type SnapRefusal =
   | "missing" // an anchor or part is not in the document
   | "samePart" // both anchors on one part
-  | "grounded" // both sides are fixed to the ground (directly or through other mates)
+  | "grounded" // both parts are fixed to the ground (grounded, or by fixed mates): it holds nothing
   | "tooFar" // the moved parts would leave the ±1e8 mm the schema allows
 
 export type SnapPlan =
   | {
       ok: true
-      /** Which side moves: B's (the usual), A's (B's side is grounded), or none (a loop). */
+      /** Which side moves: B's (the usual), A's (B's side is grounded), or none (a loop:
+       *  its parts are joined through other mates, or each side to the ground). */
       moved: "A" | "B" | "none"
       poses: Map<PartId, Pose>
     }
@@ -52,9 +53,10 @@ const lookup = <K extends string, V>(record: Readonly<Record<K, V>>, key: K): V 
 /**
  * How to snap the mate (PLAN 8.3): the side not fixed to the ground moves, with everything
  * mated to it (its free sub-assembly), so B's anchor lands on A's:
- * $M_B F_B = M_A F_A R_{flip} R_z(\varphi)$. B's side moves when it can, else A's; both sides
- * on the ground refuse. When the anchors are already connected through other mates (`except`
- * left out) nothing moves: the mate closes a loop, which the assembly graph reports.
+ * $M_B F_B = M_A F_A R_{flip} R_z(\varphi)$. B's side moves when it can, else A's. Both parts
+ * fixed to the ground refuse (the graph's `bothGrounded`). When the anchors are already joined
+ * through other mates (`except` left out), or each side to the ground, nothing moves: the
+ * mate closes a loop (all grounds count as one), which the assembly graph reports.
  */
 export function planSnap(doc: Doc, m: MateGeometry, except?: MateId): SnapPlan {
   const a = lookup(doc.anchors, m.anchorA)
@@ -63,8 +65,11 @@ export function planSnap(doc: Doc, m: MateGeometry, except?: MateId): SnapPlan {
   const partB = b && lookup(doc.parts, b.partId)
   if (!a || !b || !partA || !partB) return { ok: false, reason: "missing" }
   if (partA.id === partB.id) return { ok: false, reason: "samePart" }
+  if (weldedToGround(doc, partA.id, except) && weldedToGround(doc, partB.id, except))
+    return { ok: false, reason: "grounded" }
   const sides = mateSides(doc, partA.id, partB.id, except)
-  if (sides.connected) return { ok: true, moved: "none", poses: new Map() }
+  if (sides.connected || (sides.a.grounded && sides.b.grounded))
+    return { ok: true, moved: "none", poses: new Map() }
 
   const worldA = anchorWorld(partA, a)
   const worldB = anchorWorld(partB, b)
@@ -74,10 +79,10 @@ export function planSnap(doc: Doc, m: MateGeometry, except?: MateId): SnapPlan {
   if (!sides.b.grounded) {
     move = compose(compose(worldA, relative), invert(worldB))
     moved = "B"
-  } else if (!sides.a.grounded) {
+  } else {
     move = compose(compose(worldB, invert(relative)), invert(worldA))
     moved = "A"
-  } else return { ok: false, reason: "grounded" }
+  }
 
   const poses = new Map<PartId, Pose>()
   for (const id of moved === "B" ? sides.b.parts : sides.a.parts) {

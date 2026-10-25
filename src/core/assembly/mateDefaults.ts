@@ -1,14 +1,18 @@
 import type { AnchorId, MateType, SceneDocument } from "@/core/schema"
-import { dot, quatConjugate, rotate } from "@/core/math/vec3"
-import { anchorWorld } from "./mateSnap"
+import { compose, invert } from "@/core/math/rigid"
+import { anchorWorld, mateRelative } from "./mateSnap"
 
 const QUARTER = Math.PI / 2
+/** Directions and quarter twists, in the order a tie picks them: face to face, then 0°. */
+const OPTIONS = [true, false].flatMap((flip) =>
+  [0, QUARTER, -QUARTER, Math.PI].map((angleOffsetRad) => ({ flip, angleOffsetRad }))
+)
 
 /**
  * What a new mate between two anchors starts as (PLAN 8.2), so snapping turns the moved part
  * as little as possible: axial with axial a revolute (a pin in a hole), point with point a
- * spherical, anything else fixed; z opposed (face to face) unless B's anchor already points
- * A's way; and B's current twist about A's z, to the nearest 90°.
+ * spherical, anything else fixed; and of the two directions (z opposed, face to face, or
+ * aligned) and four quarter twists, the one whose snap turns the parts least.
  */
 export function mateDefaults(
   doc: Pick<SceneDocument, "parts" | "anchors">,
@@ -27,13 +31,14 @@ export function mateDefaults(
         ? "spherical"
         : "fixed"
   const worldA = anchorWorld(partA, a)
-  const worldB = anchorWorld(partB, b)
-  const zA = rotate(worldA.q, [0, 0, 1])
-  const flip = dot(zA, rotate(worldB.q, [0, 0, 1])) <= 0
-  // B's x in A's frame; the mated x is (cos φ, ±sin φ, 0), minus when turned over.
-  const x = rotate(quatConjugate(worldA.q), rotate(worldB.q, [1, 0, 0]))
-  const raw = Math.hypot(x[0], x[1]) < 1e-9 ? 0 : Math.atan2(flip ? -x[1] : x[1], x[0])
-  let angle = Math.round(raw / QUARTER) * QUARTER
-  if (angle <= -Math.PI) angle += 2 * Math.PI
-  return { type, flip, angleOffsetRad: angle + 0 }
+  const toB = invert(anchorWorld(partB, b))
+  // The snap turns B's side by A·R·B⁻¹ (A's side by its inverse: the same angle); the larger
+  // its quaternion's |w| = |cos(θ/2)|, the smaller the turn θ.
+  let best = OPTIONS[0] ?? { flip: true, angleOffsetRad: 0 }
+  let bestW = -1
+  for (const option of OPTIONS) {
+    const w = Math.abs(compose(compose(worldA, mateRelative(option)), toB).q[3])
+    if (w > bestW + 1e-12) [best, bestW] = [option, w]
+  }
+  return { type, ...best }
 }

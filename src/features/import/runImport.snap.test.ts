@@ -2,9 +2,13 @@
 import { readFileSync } from "node:fs"
 import occtInit from "occt-import-js"
 import { describe, expect, it } from "vitest"
+import { anchorFrame } from "@/core/assembly/anchorFrames"
+import { assemblyGraph } from "@/core/assembly/assemblyGraph"
+import { anchor, mate, mateDoc, part } from "@/core/assembly/testing/mateFixtures"
 import { decodeGlb } from "@/core/geometry/glbRead"
 import { snapFeatures, type SnapArc } from "@/core/geometry/snapFeatures"
 import { DEFAULT_IMPORT_OPTIONS } from "@/core/import/importOptions"
+import type { Quat } from "@/core/schema"
 import { runImport } from "./runImport"
 
 // PLAN 7.5: what anchor snapping finds on a real STEP part (tools/fixtures/makePlateStep.mjs):
@@ -76,5 +80,32 @@ describe("snap features of the pin", () => {
     const rims = edges.filter((e): e is SnapArc => e.kind === "arc")
     expect(rims.map((r) => Math.round(r.centre[1])).sort()).toEqual([-10, -10, 10, 10])
     for (const rim of rims) expect(rim.radius).toBeCloseTo(4, 3)
+  }, 30_000)
+})
+
+// Math review: two hinges on the bore's two rims, as imported (their centres ~2e-7 mm apart
+// off the axis), leave a shaft in the bore 1 DOF, not 0.
+describe("a shaft hinged on both rims of the plate's bore", () => {
+  it("turns: 1 DOF", async () => {
+    const { mesh, faces, offsetMm } = await imported("plate-hole.step")
+    const rims = snapFeatures(mesh, faces).edges.filter((e): e is SnapArc => e.kind === "arc")
+    const [top, bottom] = [rims.find((r) => r.centre[1] > 0), rims.find((r) => r.centre[1] < 0)]
+    if (!top || !bottom || !offsetMm) throw new Error("no rims")
+    const pose = { positionMm: offsetMm, quaternion: [0, 0, 0, 1] as Quat }
+    const [plate, shaft] = [part("Plate", true, pose), part("Shaft", false, pose)]
+    const hinges = [top, bottom].map((rim) => {
+      const frame = anchorFrame(rim.centre, rim.axis)
+      const [a, b] = [plate, shaft].map((p) => anchor(p, frame.originMm, frame.z, frame.x))
+      if (!a || !b) throw new Error("no anchors")
+      return { anchors: [a, b], mate: mate(a, b) }
+    })
+    const doc = mateDoc(
+      [plate, shaft],
+      hinges.flatMap((h) => h.anchors),
+      hinges.map((h) => h.mate)
+    )
+    const graph = assemblyGraph(doc)
+    expect([...graph.issues.values()].flat().sort()).toEqual(["closesLoop"])
+    expect(graph.groups[graph.groupOf.get(shaft.id) ?? -1]?.dof).toBe(1)
   }, 30_000)
 })

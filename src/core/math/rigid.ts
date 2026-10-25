@@ -28,7 +28,12 @@ export function invert(a: Rigid): Rigid {
 
 export const applyPoint = (a: Rigid, p: Vec3): Vec3 => add(rotate(a.q, p), a.t)
 
-export const fromPose = (pose: Pose): Rigid => ({ q: pose.quaternion, t: pose.positionMm })
+/** A part pose as a transform; its quaternion made unit length (the schema allows |q| - 1
+ *  up to 1e-6, which turns a point 1 m out by ~0.3 µm, past the mate tolerance). */
+export const fromPose = (pose: Pose): Rigid => ({
+  q: normalizeQuat(pose.quaternion),
+  t: pose.positionMm,
+})
 
 /**
  * As a part pose: the quaternion with w ≥ 0 (q and -q are the same rotation; one sign keeps

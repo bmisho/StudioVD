@@ -98,3 +98,41 @@ describe("mate actions", () => {
     expect(store.getState().doc.mates).toEqual({})
   })
 })
+
+describe("mate limits (UI review)", () => {
+  it("are dropped with a new type, in the same entry: radians are not millimetres", () => {
+    const { store, a, b } = setup()
+    const add = store.getState().addMate({
+      anchorA: a,
+      anchorB: b,
+      type: "revolute",
+      flip: false,
+      angleOffsetRad: 0,
+      limits: { min: -Math.PI / 2, max: Math.PI / 2 },
+    })
+    if (!add.ok) throw new Error(add.reason)
+    store.temporal.getState().clear()
+    store.getState().updateMate(add.id, { type: "prismatic" })
+    expect(store.getState().doc.mates[add.id]?.limits).toBeUndefined()
+    expect(entries(store)).toBe(1)
+    store.temporal.getState().undo()
+    expect(store.getState().doc.mates[add.id]?.limits).toEqual({
+      min: -Math.PI / 2,
+      max: Math.PI / 2,
+    })
+  })
+
+  it("are added without -0 (it reads back as 0: scene.json is the contract)", () => {
+    const { store, a, b } = setup()
+    const add = store.getState().addMate({
+      anchorA: a,
+      anchorB: b,
+      type: "revolute",
+      flip: false,
+      angleOffsetRad: 0,
+      limits: { min: -0, max: 1 },
+    })
+    if (!add.ok) throw new Error(add.reason)
+    expect(Object.is(store.getState().doc.mates[add.id]?.limits?.min, 0)).toBe(true)
+  })
+})

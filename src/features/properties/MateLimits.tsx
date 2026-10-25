@@ -1,5 +1,6 @@
-import { useId } from "react"
+import { useId, useRef } from "react"
 import { Label } from "@/components/ui/label"
+import { withLimit, type MateLimitRange } from "@/core/assembly/mateLimits"
 import type { Mate } from "@/core/schema"
 import { degToRad, radToDeg } from "@/core/units"
 import { NumberField } from "@/features/materials/controls/NumberField"
@@ -8,7 +9,8 @@ import { PropertyToggle } from "./PropertyToggle"
 /**
  * How far a revolute mate may turn (degrees; radians in the document) or a prismatic one
  * slide (mm), from where it was snapped (PLAN 8.1); test mode keeps to them (Phase 10).
- * Other types have no limits. A min past the max moves the max along.
+ * Other types have no limits. A min past the max moves the max along, from the limits as they
+ * were when the field took focus: values typed on the way move the other end only meanwhile.
  */
 export function MateLimits({
   mate,
@@ -18,6 +20,7 @@ export function MateLimits({
   onChange: (limits: { min: number; max: number } | null) => void
 }) {
   const id = useId()
+  const atFocus = useRef<MateLimitRange | null>(null)
   if (mate.type !== "revolute" && mate.type !== "prismatic") return null
   const turns = mate.type === "revolute"
   const [toUi, fromUi] = turns ? [radToDeg, degToRad] : [(v: number) => v, (v: number) => v]
@@ -36,7 +39,12 @@ export function MateLimits({
         }
       />
       {limits && (
-        <div role="group" aria-labelledby={`${id}-label`} className="grid grid-cols-2 gap-1.5">
+        <div
+          role="group"
+          aria-labelledby={`${id}-label`}
+          className="grid grid-cols-2 gap-1.5"
+          onFocus={() => (atFocus.current = limits)}
+        >
           <Label id={`${id}-label`} className="sr-only">
             Limits ({unit})
           </Label>
@@ -47,11 +55,7 @@ export function MateLimits({
               aria-label={`${end === "min" ? "Minimum" : "Maximum"} (${unit})`}
               value={Number(toUi(limits[end]).toFixed(6))}
               clamp={clamp}
-              onChange={(v) => {
-                const next = { ...limits, [end]: fromUi(v) }
-                if (next.min > next.max) next[end === "min" ? "max" : "min"] = next[end]
-                onChange(next)
-              }}
+              onChange={(v) => onChange(withLimit(atFocus.current ?? limits, end, fromUi(v)))}
             />
           ))}
         </div>

@@ -1,10 +1,17 @@
 import { useCallback, useMemo, useRef, useState } from "react"
-import type { SceneTreeNode } from "@/core/scene/sceneTree"
-import { treeMove, visibleRows, type TreeKey, type VisibleRow } from "@/core/scene/treeNav"
+import { MATES_FOLDER_ID, type SceneTreeNode } from "@/core/scene/sceneTree"
+import {
+  foldersHolding,
+  treeMove,
+  visibleRows,
+  type TreeKey,
+  type VisibleRow,
+} from "@/core/scene/treeNav"
 import type { PartId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore, type SelectionItem } from "@/store/session/sessionStore"
 import { SceneTreeRow } from "./SceneTreeRow"
+import { useRowFocusRescue } from "./useRowFocusRescue"
 
 const TREE_KEYS: ReadonlySet<string> = new Set<TreeKey>([
   "ArrowDown",
@@ -24,6 +31,8 @@ function itemOf(node: SceneTreeNode): SelectionItem | null {
   return null
 }
 const keyOf = (item: { kind: string; id: string }) => `${item.kind}:${item.id}`
+/** Past this many mates the Mates folder closes (once): its rows would dwarf the parts'. */
+const LARGE_FOLDER = 500
 
 /**
  * WAI-ARIA multi-select tree with a roving tabindex. Selection follows focus (like a file
@@ -39,6 +48,28 @@ export function SceneTree({ tree }: { tree: SceneTreeNode[] }) {
   const toggleSelected = useSessionStore((s) => s.toggleSelected)
   const selectedKeys = useMemo(() => new Set(selection.map(keyOf)), [selection])
   const rowEls = useRef(new Map<string, HTMLElement>())
+  const list = useRef<HTMLUListElement>(null)
+  useRowFocusRescue(list, rows, rowEls)
+  const registerRow = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) rowEls.current.set(id, el)
+    else rowEls.current.delete(id)
+  }, [])
+
+  // Adjusted while rendering (React's pattern for state that follows props): a new selection
+  // opens the folders holding it, and a Mates folder that grows large closes once.
+  const [shown, setShown] = useState(selection)
+  if (selection !== shown) {
+    setShown(selection)
+    const open = foldersHolding(tree, new Set(selection.map((s) => s.id)))
+    if ([...open].some((id) => collapsed.has(id)))
+      setCollapsed((prev) => new Set([...prev].filter((id) => !open.has(id))))
+  }
+  const large = tree.some((n) => n.kind === "mates" && n.children.length > LARGE_FOLDER)
+  const [wasLarge, setWasLarge] = useState(false)
+  if (large !== wasLarge) {
+    setWasLarge(large)
+    if (large) setCollapsed((prev) => new Set(prev).add(MATES_FOLDER_ID))
+  }
   const toggleVisible = useCallback((id: string) => {
     const { doc, setPartsVisible } = useDocumentStore.getState()
     const part = doc.parts[id as PartId]
@@ -100,6 +131,7 @@ export function SceneTree({ tree }: { tree: SceneTreeNode[] }) {
       role="tree"
       aria-label="Scene graph"
       aria-multiselectable
+      ref={list}
       className="p-1"
       onKeyDown={onKeyDown}
     >
@@ -113,10 +145,7 @@ export function SceneTree({ tree }: { tree: SceneTreeNode[] }) {
           onToggleExpanded={toggleExpanded}
           onToggleVisible={toggleVisible}
           onFocusRow={setActiveId}
-          rowRef={(el) => {
-            if (el) rowEls.current.set(row.node.id, el)
-            else rowEls.current.delete(row.node.id)
-          }}
+          registerRow={registerRow}
         />
       ))}
     </ul>

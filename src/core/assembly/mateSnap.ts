@@ -1,5 +1,14 @@
 import { MAX_COORDINATE_MM } from "@/core/schema"
-import type { Anchor, AnchorId, MateId, Part, PartId, Pose, SceneDocument } from "@/core/schema"
+import type {
+  Anchor,
+  AnchorId,
+  Mate,
+  MateId,
+  Part,
+  PartId,
+  Pose,
+  SceneDocument,
+} from "@/core/schema"
 import { compose, fromFrame, fromPose, invert, toPose, type Rigid } from "@/core/math/rigid"
 import { mateSides, weldedToGround } from "./mateSides"
 
@@ -94,4 +103,14 @@ export function planSnap(doc: Doc, m: MateGeometry, except?: MateId): SnapPlan {
     poses.set(id, pose)
   }
   return { ok: true, moved, poses }
+}
+
+/**
+ * What Snap again would do for a mate (its own pull left out): move parts, nothing (other
+ * mates hold its parts: a loop, which snapping cannot close), or why it cannot.
+ */
+export function resnapEffect(doc: Doc, mate: Mate): "moves" | "loop" | SnapRefusal {
+  const plan = planSnap(doc, mate, mate.id)
+  if (!plan.ok) return plan.reason
+  return plan.moved === "none" ? "loop" : "moves"
 }

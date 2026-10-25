@@ -61,4 +61,27 @@ describe("PropertiesPanel keeps keyboard focus", () => {
     await nextFrame()
     expect(heading("Anchors")).toHaveFocus()
   })
+
+  it("when Cancel drops the Mate tool's picks and the New Mate panel goes (UI review)", () => {
+    const rig = createTestRig()
+    useDocumentStore.getState().insertEntities({ ...rig, mates: [] })
+    const [a, b] = rig.anchors
+    if (!a || !b) throw new Error("rig incomplete")
+    act(() => {
+      useSessionStore.getState().setTool("mate")
+      useSessionStore.getState().setMateDraft({
+        anchorA: a.id,
+        anchorB: b.id,
+        type: "revolute",
+        flip: false,
+        angleOffsetRad: 0,
+      })
+    })
+    const { container } = render(<PropertiesPanel />)
+    const cancel = screen.getByRole("button", { name: "Cancel" })
+    act(() => cancel.focus())
+    fireEvent.click(cancel)
+    expect(screen.queryByRole("heading", { name: "New Mate" })).toBeNull()
+    expectFocusIn(container)
+  })
 })

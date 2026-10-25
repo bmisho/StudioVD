@@ -14,7 +14,8 @@ import {
   RotateCw,
   TriangleAlert,
 } from "lucide-react"
-import { ISSUE_TEXT } from "@/core/assembly/mateNames"
+import { memo } from "react"
+import { ISSUE_TEXT, WARNING_ISSUES } from "@/core/assembly/mateNames"
 import type { SceneTreeNode } from "@/core/scene/sceneTree"
 import type { VisibleRow } from "@/core/scene/treeNav"
 import { cn } from "@/lib/utils"
@@ -42,11 +43,14 @@ interface SceneTreeRowProps {
   /** Parts only: the row's eye button (mouse; the keyboard uses H). */
   onToggleVisible: (id: string) => void
   onFocusRow: (id: string) => void
-  rowRef: (el: HTMLElement | null) => void
+  registerRow: (id: string, el: HTMLElement | null) => void
 }
 
-/** One flat treeitem; nesting is conveyed by aria-level/posinset/setsize, not DOM structure. */
-export function SceneTreeRow(props: SceneTreeRowProps) {
+/**
+ * One flat treeitem; nesting is conveyed by aria-level/posinset/setsize, not DOM structure.
+ * Memoised: with stable callbacks, a selection change re-renders only the rows it changes.
+ */
+export const SceneTreeRow = memo(function SceneTreeRow(props: SceneTreeRowProps) {
   const {
     row,
     selected,
@@ -55,14 +59,14 @@ export function SceneTreeRow(props: SceneTreeRowProps) {
     onToggleExpanded,
     onToggleVisible,
     onFocusRow,
-    rowRef,
+    registerRow,
   } = props
   const { node } = row
   const hidden = node.kind === "part" && node.hidden === true
   const grounded = node.kind === "part" && node.grounded === true
   const issues = node.kind === "mate" ? node.issues : []
   const suppressed = issues.includes("suppressed")
-  const warnings = issues.filter((i) => i !== "suppressed" && i !== "closesLoop")
+  const warnings = issues.filter((i) => WARNING_ISSUES.has(i))
   const dimmed = (hidden || suppressed) && !selected
   const EyeIcon = hidden ? EyeOff : Eye
   const Chevron = row.expanded ? ChevronDown : ChevronRight
@@ -71,7 +75,7 @@ export function SceneTreeRow(props: SceneTreeRowProps) {
 
   return (
     <li
-      ref={rowRef}
+      ref={(el) => registerRow(node.id, el)}
       role="treeitem"
       tabIndex={tabStop ? 0 : -1}
       // The Mates folder only opens and closes: not selectable.
@@ -149,4 +153,4 @@ export function SceneTreeRow(props: SceneTreeRowProps) {
       )}
     </li>
   )
-}
+})

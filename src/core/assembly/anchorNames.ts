@@ -1,4 +1,4 @@
-import type { Anchor } from "@/core/schema"
+import type { Anchor, AnchorId, SceneDocument } from "@/core/schema"
 
 const KIND_LABEL = { point: "Point", planar: "Planar", axial: "Axial" } as const
 
@@ -14,4 +14,11 @@ export function uniqueAnchorName(base: string, taken: Iterable<string>): string 
   const names = new Set(taken)
   if (!names.has(base)) return base
   for (let n = 2; ; n++) if (!names.has(`${base} ${n}`)) return `${base} ${n}`
+}
+
+/** "Hinge on Base": an anchor and its part, for mates and the Mate tool; "?" when gone. */
+export function anchorOnPart(doc: Pick<SceneDocument, "parts" | "anchors">, id: AnchorId): string {
+  const a = Object.hasOwn(doc.anchors, id) ? doc.anchors[id] : undefined
+  const part = a && Object.hasOwn(doc.parts, a.partId) ? doc.parts[a.partId] : undefined
+  return a ? `${anchorLabel(a)} on ${part?.name ?? "a part"}` : "?"
 }

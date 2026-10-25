@@ -46,8 +46,8 @@ export interface MateActions {
    */
   addMate: (mate: NewMate) => AddMateResult
   /**
-   * Changes a mate. A new type, direction or angle, or turning it back on, snaps it again in
-   * the same undo entry; when it cannot (both sides grounded) the change is kept and the
+   * Changes a mate. A new type drops its limits (their unit changes, or it takes none). A new
+   * type, direction or angle, or turning it back on, snaps it again in the same undo entry; when it cannot (both sides grounded) the change is kept and the
    * reason returned, else null. A result the schema would refuse, or no change, is ignored.
    */
   updateMate: (id: MateId, patch: MatePatch) => SnapRefusal | null
@@ -90,7 +90,9 @@ export function mateActions(set: Set, get: Get): MateActions {
         anchorB: input.anchorB,
         flip: input.flip,
         angleOffsetRad: plain(input.angleOffsetRad),
-        ...(input.limits ? { limits: input.limits } : {}),
+        ...(input.limits
+          ? { limits: { min: plain(input.limits.min), max: plain(input.limits.max) } }
+          : {}),
         contactsEnabled: input.contactsEnabled ?? false,
         suppressed: false,
       })
@@ -106,7 +108,11 @@ export function mateActions(set: Set, get: Get): MateActions {
       const current = mateOf(id)
       if (!current) return null
       const next: Mate = { ...current }
-      if (patch.type !== undefined) next.type = patch.type
+      // Only revolute (radians) and prismatic (mm) mates take limits: a new type keeps none.
+      if (patch.type !== undefined && patch.type !== current.type) {
+        next.type = patch.type
+        delete next.limits
+      }
       if (patch.flip !== undefined) next.flip = patch.flip
       if (patch.angleOffsetRad !== undefined) next.angleOffsetRad = plain(patch.angleOffsetRad)
       if (patch.contactsEnabled !== undefined) next.contactsEnabled = patch.contactsEnabled

@@ -7,14 +7,17 @@ import { formatValue, parseDecimal } from "./numberText"
 /**
  * A typed number as a gesture (like NameField): values apply live while typing, and the whole
  * edit becomes ONE undo entry on Enter/blur (Escape restores the value it had on focus).
- * CLAUDE.md §4. Text that is not a number is flagged and applies nothing; once the field
- * loses focus it shows the stored value again. The parent unmounts it when the entity goes.
+ * CLAUDE.md §4. Ending on the value it had on focus cancels the gesture too, so side effects
+ * of the values typed on the way (a part snapped there and back, 1e-14 mm off) leave nothing.
+ * Text that is not a number is flagged and applies nothing; once the field loses focus it
+ * shows the stored value again. The parent unmounts it when the entity goes.
  */
 export function NumberField({
   id,
   value,
   clamp,
   onChange,
+  onCancel,
   className,
   "aria-label": ariaLabel,
   "aria-describedby": describedBy,
@@ -24,6 +27,8 @@ export function NumberField({
   /** The value a typed number applies as (clamped to the bounds); null applies nothing. */
   clamp: (typed: number) => number | null
   onChange: (value: number) => void
+  /** Escape, after the document is restored: for values the document does not hold. */
+  onCancel?: () => void
   className?: string
   "aria-label"?: string
   "aria-describedby"?: string
@@ -31,12 +36,14 @@ export function NumberField({
   // Raw text while editing; null otherwise, so undo/redo and other views show through.
   const [draft, setDraft] = useState<string | null>(null)
   const gesture = useRef<GestureToken | null>(null)
+  const atFocus = useRef(value)
 
   // Only our own gesture is ever ended (token ownership), also when unmounted mid-edit.
   useEffect(() => () => documentHistory.endGesture(gesture.current), [])
 
   const finish = () => {
-    documentHistory.endGesture(gesture.current)
+    if (value === atFocus.current) documentHistory.cancelGesture(gesture.current)
+    else documentHistory.endGesture(gesture.current)
     gesture.current = null
     setDraft(null)
   }
@@ -55,6 +62,7 @@ export function NumberField({
       value={draft ?? formatValue(value)}
       onFocus={() => {
         gesture.current = documentHistory.beginGesture()
+        atFocus.current = value
         setDraft(formatValue(value))
       }}
       onChange={(e) => {
@@ -69,6 +77,7 @@ export function NumberField({
         if (e.key === "Escape") {
           documentHistory.cancelGesture(gesture.current)
           gesture.current = null
+          onCancel?.()
           e.currentTarget.blur()
         }
       }}

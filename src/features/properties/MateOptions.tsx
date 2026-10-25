@@ -1,4 +1,4 @@
-import { useId } from "react"
+import { useId, useRef } from "react"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -24,7 +24,8 @@ const clampDeg = (typed: number) =>
 /**
  * A mate's type, direction and angle (PLAN 8.1), for the Mate tool's new mate and the mate
  * inspector. Direction: B's anchor z along A's (aligned) or against it (opposed, face to
- * face). Angle: B's twist about A's z, in degrees (radians in the document).
+ * face). Angle: B's twist about A's z, in degrees (radians in the document); Escape puts back
+ * the angle it had on focus, also where it is not in the document (the Mate tool's picks).
  */
 export function MateOptions({
   value,
@@ -34,6 +35,7 @@ export function MateOptions({
   onChange: (patch: Partial<MateOptionValues>) => void
 }) {
   const id = useId()
+  const angleAtFocus = useRef(value.angleOffsetRad)
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={`${id}-type`} className="text-xs text-muted-foreground">
@@ -79,12 +81,15 @@ export function MateOptions({
       <Label htmlFor={`${id}-angle`} className="mt-1 text-xs text-muted-foreground">
         Angle (°, about the axis)
       </Label>
-      <NumberField
-        id={`${id}-angle`}
-        value={Number(radToDeg(value.angleOffsetRad).toFixed(6))}
-        clamp={clampDeg}
-        onChange={(deg) => onChange({ angleOffsetRad: degToRad(deg) })}
-      />
+      <div onFocus={() => (angleAtFocus.current = value.angleOffsetRad)}>
+        <NumberField
+          id={`${id}-angle`}
+          value={Number(radToDeg(value.angleOffsetRad).toFixed(6))}
+          clamp={clampDeg}
+          onChange={(deg) => onChange({ angleOffsetRad: degToRad(deg) })}
+          onCancel={() => onChange({ angleOffsetRad: angleAtFocus.current })}
+        />
+      </div>
     </div>
   )
 }

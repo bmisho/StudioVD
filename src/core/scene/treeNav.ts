@@ -35,6 +35,19 @@ export function visibleRows(tree: SceneTreeNode[], collapsed: ReadonlySet<string
   return rows
 }
 
+/** The folders holding any of `ids`, at any depth: what to open so they show. */
+export function foldersHolding(tree: SceneTreeNode[], ids: ReadonlySet<string>): Set<string> {
+  const out = new Set<string>()
+  const walk = (nodes: SceneTreeNode[], path: readonly string[]) => {
+    for (const node of nodes) {
+      if (ids.has(node.id)) for (const id of path) out.add(id)
+      if ("children" in node) walk(node.children, [...path, node.id])
+    }
+  }
+  walk(tree, [])
+  return out
+}
+
 export type TreeKey = "ArrowDown" | "ArrowUp" | "ArrowRight" | "ArrowLeft" | "Home" | "End"
 
 export type TreeMove =

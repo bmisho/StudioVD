@@ -10,17 +10,16 @@ import { MateProperties } from "./MateProperties"
 import { NewMateProperties } from "./NewMateProperties"
 import { PartProperties } from "./PartProperties"
 import { ProjectProperties } from "./ProjectProperties"
-import { useFocusRescue } from "./useFocusRescue"
+import { showsNewMate, useFocusRescue } from "./useFocusRescue"
 
 export function PropertiesPanel() {
   const selection = useSessionStore((s) => s.selection)
-  // The Mate tool's second pick shows the new mate's options instead of the selection.
-  const newMate = useSessionStore((s) => s.activeTool === "mate" && !!s.mateDraft?.anchorB)
+  const newMate = useSessionStore(showsNewMate)
   const single = selection.length === 1 ? selection[0] : undefined
   const parts = useDocumentStore((s) => s.doc.parts)
   const groups = useDocumentStore((s) => s.doc.groups)
   const body = useRef<HTMLDivElement>(null)
-  useFocusRescue(body, selection)
+  useFocusRescue(body)
   // A group or several items: assign a material to every part in them (PLAN 6.4).
   const partIds = useMemo(
     () => (single?.kind === "part" ? [] : [...partsInSelection({ parts, groups }, selection)]),

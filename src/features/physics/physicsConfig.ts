@@ -19,6 +19,12 @@ export const LENGTH_UNIT = 10
 export const PREDICTION_DISTANCE = 0.5
 export const CONTACT_NATURAL_FREQUENCY = 120
 export const SOLVER_ITERATIONS = 4
+/**
+ * Fixed steps a frame may run at most (4: real time down to 30 fps). Past that, test mode
+ * runs slower than real time instead of owing more steps every frame (react-three-rapier
+ * would catch up to 0.5 s, 60 steps, per frame: a world at 10 ms a step froze the window).
+ */
+export const MAX_STEPS_PER_FRAME = 4
 
 /** The same settings for a world created outside <Physics> (headless tests). */
 export function configureWorld(world: World): void {

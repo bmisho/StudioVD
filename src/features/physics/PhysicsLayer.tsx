@@ -12,6 +12,7 @@ import {
 } from "./physicsConfig"
 import { runIdOf, stableModel } from "./physicsRun"
 import { PhysicsScene } from "./PhysicsScene"
+import { PhysicsStepper } from "./PhysicsStepper"
 
 /**
  * Test mode's physics (PLAN 3.7, 3.10). Mounted only while test mode is on, so design mode
@@ -45,7 +46,10 @@ export function PhysicsLayer() {
         numSolverIterations={SOLVER_ITERATIONS}
         colliders={false}
         interpolate={false}
+        // PhysicsStepper steps it: a bounded number of steps a frame.
+        paused
       >
+        <PhysicsStepper />
         <PhysicsScene model={model} />
       </Physics>
     </Suspense>

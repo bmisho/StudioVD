@@ -166,8 +166,10 @@ Further rules:
   rotation goes on its collider and the visual pose is body ∘ design rotation. Rapier's
   revolute `JointData` uses one local axis for both bodies, so rotated bodies would jump.
 - Joints: **multibody** for the spanning tree (exact hinges), impulse joints only to close
-  loops (`core/physics/jointTree.ts`). Rapier ignores body damping on multibody links, so
-  damping is applied as forces before every step.
+  loops and past `MAX_MULTIBODY_LINKS` (16) links per multibody (`core/physics/jointTree.ts`:
+  one of ~135 trapped Rapier's WASM). Rapier ignores body damping on multibody links, so
+  damping is applied as forces before every step. `<Physics>` is paused: `PhysicsStepper`
+  steps it, at most `MAX_STEPS_PER_FRAME` a frame, and leaves test mode if a step throws.
 
 ## 6. Rendering & performance rules
 
@@ -323,8 +325,9 @@ Testing notes:
   `optimizeDeps.entries` (`src/workers/*.worker.ts`). Without that, the first import
   re-optimizes and reloads every open page, which breaks parallel E2E runs.
 - `src/test/demandRoot.tsx` mounts R3F components in jsdom on a stand-in renderer with the
-  demand frameloop and counts the frames they request (and root-store subscriptions held):
-  the way to test that a change reaches the screen without WebGL.
+  demand frameloop and counts the frames they request (R3F's own on added or changed objects,
+  and explicit invalidations) and root-store subscriptions held: the way to test that a change
+  reaches the screen without WebGL.
 - The dev probe (`window.__STUDIOVD_VIEWPORT__`) reads real pixels (`pixelAt`,
   `highlightPixels`) and how parts are drawn (`partLook`: materials per slot, edges, faces
   shown). CI renders with SwiftShader: assert pixel relations with tolerances, not images.

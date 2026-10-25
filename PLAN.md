@@ -867,32 +867,47 @@ Exit criteria
   suggests compatible anchors by interface tag. As built: glyphs on every part while the tool
   is on; a click picks the anchor under it (on a part or over empty space) and never changes
   the selection. Defaults: axial with axial revolute, point with point spherical, else fixed;
-  the direction and twist (to 90°) that turn the moved part least. New Mate inspector (type,
-  direction, angle in °, what moves or why not), the moved parts drawn see-through where they
-  go; Apply selects the new mate, the tool stays on; Escape drops the picks, then ends the
-  tool. Suggestions: anchors whose tags fit the first pick (equal, or `shaft-8mm` / `bore-8mm`,
-  `M3-screw` / `M3-hole`) drawn larger in the success colour
+  of both directions and the four quarter twists, the one whose snap turns the parts least.
+  Where two anchors are drawn on one spot, B is taken from another part than A's; clicking A or
+  B again keeps their options. New Mate inspector (type, direction, angle in °, what moves or
+  why not, a full project), the moved parts drawn see-through where they go (shown parts only,
+  at most 200); Apply (or Ctrl+Enter) selects the new mate, the tool stays on; Escape drops the
+  picks, then ends the tool. Suggestions: anchors on shown parts whose tags fit the first pick
+  (equal tags naming no role, or `shaft-8mm` / `bore-8mm`, `M3-screw` / `M3-hole`; two shafts
+  do not), found by an index lookup, drawn larger in the success colour (their x too)
 - [x] 8.3 Snap math (§2); moves the side not connected to ground; error if both sides grounded.
   As built: exact to ~1e-12 mm; the side not fixed to the ground moves with everything mated to
-  it, B's when it can, else A's; both grounded is refused; anchors already joined through other
-  mates move nothing (the mate closes a loop)
+  it, B's when it can, else A's; refused only when both parts are fixed to the ground (grounded
+  or fixed-mated to a grounded part: the graph's "both grounded"); anchors already joined
+  through other mates, or both sides grounded elsewhere, move nothing (the mate closes a loop,
+  through the ground counted as one)
 - [x] 8.4 Assembly graph: union-find rigid groups (fixed mates), DOF per group, closed-loop
   detection (allowed, warned), conflict detection. As built: mechanisms over the other mates
   (all grounds as one); issues per mate: suppressed, both grounded, redundant, closes a loop,
-  not satisfied at the design pose; DOF per mechanism and per group, counted for trees and from
-  the rank of the joints' velocity constraints with loops (a planar four-bar: 1 DOF, where
-  Grübler's count says -2); computed once per document change
+  not satisfied at the design pose; DOF per mechanism, counted for trees and from the rank of
+  the joints' velocity constraints with loops (a planar four-bar: 1 DOF, where Grübler's count
+  says -2): JᵀJ summed per joint, pivoted Cholesky, zero at ten times the mate tolerances (an
+  imported bore's rims ~1e-7 mm apart still turn), ~0.4 s at 20,000 mates on 60 groups. A
+  group's own DOF is how it can move, at most 6 (null space share with loops; span of the joint
+  freedoms on its path in trees); recomputed only when poses, grounding, anchor frames or mates
+  change (not on a rename)
 - [x] 8.5 Mates folder in scene graph; edit/suppress/delete; DOF badge; highlight mated anchors.
   As built: the folder ends the tree ("Revolute: Plate – Pin", type icons, a warning with the
   issue, suppressed dimmed); the mate inspector: its anchors (links), type, direction, angle,
   limits (° or mm), contacts, suppressed, mechanism DOF, issues, Snap again, Delete; a DOF badge
   on mated parts ("1 DOF", "floating"; grounded parts keep their pin) and a Motion line in the
-  part inspector; a selected mate shows its two anchors, drawn selected
+  part inspector; a selected mate shows its two anchors, drawn selected. Snap again only when
+  snapping can move the parts (a loop says why instead); a new type drops the limits; the
+  schema keeps angles and revolute limits within a turn, mm limits within the coordinates.
+  Review hardening: a Rapier multibody holds at most 16 links (one of ~135 trapped the WASM),
+  test mode runs at most 4 steps a frame and leaves with a message if a step fails
 - [x] 8.6 Tests: anchors coincide after snap (< 1e-9 mm), axes aligned/opposed, group/DOF
   computation, conflict cases. As built: random poses and frames, side choice, refusals,
   defaults; hinge, chain, fixed, floating, four-bar, double and crossing hinges; issues; store
-  actions; `tests/fixtures/pin.step` (a Ø8 pin) checked through the real import; E2E: the Mate
-  tool puts the pin into the plate's hole (revolute, exact, tree, DOF, type change, undo)
+  actions; `tests/fixtures/pin.step` (a Ø8 pin) checked through the real import, and a shaft
+  hinged on both rims of the plate's bore (1 DOF); per-part DOF, cost at the caps, a hub with
+  150 hinged parts stepped headless; E2E: the Mate tool puts the pin into the plate's hole
+  (revolute, exact, tree, DOF, type change, undo)
 - [ ] ⛔ 8.7 **User approval**
 
 ## Phase 9: Component library I (local library + generators)

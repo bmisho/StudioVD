@@ -111,6 +111,26 @@ describe("scene.json v1 schema", () => {
     expect(MateSchema.safeParse(mate).success).toBe(false)
   })
 
+  it("bounds a mate's angle to a turn either way and its limits to their unit (security review)", () => {
+    const base = {
+      id: newId<MateId>(),
+      type: "revolute",
+      anchorA: newId<AnchorId>(),
+      anchorB: newId<AnchorId>(),
+      flip: false,
+      angleOffsetRad: 0,
+      contactsEnabled: false,
+      suppressed: false,
+    }
+    const ok = (m: object) => MateSchema.safeParse({ ...base, ...m }).success
+    expect(ok({ angleOffsetRad: 2 * Math.PI })).toBe(true) // what the inspector's 360° stores
+    expect(ok({ angleOffsetRad: 1e300 })).toBe(false) // showed as ∞°
+    expect(ok({ limits: { min: -2 * Math.PI, max: 2 * Math.PI } })).toBe(true)
+    expect(ok({ limits: { min: -7, max: 0 } })).toBe(false) // radians past a turn
+    expect(ok({ type: "prismatic", limits: { min: -1e6, max: 1e6 } })).toBe(true) // mm
+    expect(ok({ type: "prismatic", limits: { min: 0, max: 1e300 } })).toBe(false) // f32: ∞
+  })
+
   it("never throws on garbage input", () => {
     for (const input of [null, 42, "scene", [], { format: "studiovd" }]) {
       expect(parseDocument(input).ok).toBe(false)

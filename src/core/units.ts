@@ -33,4 +33,5 @@ export const toMm = (value: number, unit: LengthUnit): number => value * MM_PER_
 
 /** Angles: degrees in the UI, radians in the document. */
 export const degToRad = (deg: number): number => (deg * Math.PI) / 180
-export const radToDeg = (rad: number): number => (rad * 180) / Math.PI
+// Divided first: rad * 180 overflows to Infinity past ~1e306 rad.
+export const radToDeg = (rad: number): number => rad * (180 / Math.PI)

@@ -931,13 +931,24 @@ Exit criteria
 - [ ] 9.2 Rust `library` module (local part): store layout (§4.5), content-addressed blobs,
   staging + atomic install, `installed.json` (rebuildable from disk), single-writer lock, GC;
   Install-from-file for `.stvdpack` (unsigned packs show an "Unverified" badge after confirmation)
-- [ ] 9.3 Generators v1 in a Web Worker (pure TS in `src/core/generators/<id>/v<major>.ts`, zod
+- [x] 9.3 Generators v1 in a Web Worker (pure TS in `src/core/generators/<id>/v<major>.ts`, zod
   params, analytic anchors with interface tags, mass, default material): deep-groove bearing
   (outer + inner ring + revolute), ISO 4762 screw, ISO 4032 nut, ISO 7089 washer, set screw,
   shaft/tube/standoff, spur gear (involute; profile shift for z < 17), GT2 pulley, T8 lead
   screw + nut, compression/extension spring, 2020/2040 extrusion + corner bracket, pin
   header/socket, 18650/AA cell, enclosure box, primitives. Dimension tables are ours, written
-  from the standards and cross-checked against bd_warehouse (Apache-2.0)
+  from the standards and cross-checked against bd_warehouse (Apache-2.0). As built: 23
+  generators by id@MAJOR (`registry.ts`), pure and deterministic; bodies are meshed face by
+  face (revolve, walls between outlines, planar caps, tube sweeps), one face per natural
+  surface, every body closed, its analytic volume within 2 % of the mesh's (a datasheet mass
+  where one exists: cells). Output goes through the import pipeline (`prepareAsset`) and
+  becomes a `component.json` naming generator, MAJOR and parameters, parts at their assets'
+  offsets (`prepareGenerated`), run in `generator.worker.ts`. Also: socket/button/hex heads
+  (ISO 4762/7380-1/4017) M2-M12, bearings 623-6005 (2RS or ZZ), D-flat shafts, 21700/AAA,
+  4040, enclosure lid with a lip. Threads are plain cylinders (the lead screw has rings, not
+  a helix); spur gears follow the ISO 53 rack, pointed tips shortened to a 0.25 m land.
+  Values for later phases: pitch diameters, lead, spring rate, cell voltage. Golden file
+  `src/core/generators/testing/golden.json`: keys exact, geometry within 1e-6
 - [ ] 9.4 Library tab: sources (Installed, My components, Generators; Online catalog disabled
   until Phase 14; Schematic primitives from Phase 11), search in a worker, virtualized cards,
   badges (Official / User / Unverified / Needs newer StudioVD), "Licence & source" popover

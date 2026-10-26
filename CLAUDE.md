@@ -214,6 +214,11 @@ Further rules:
   not fixed to the ground, with everything mated to it); the assembly graph (groups, DOF,
   issues) is computed once per document change via `features/assembly/useAssemblyGraph.ts`,
   never per component; the Mate tool's picks are session state (`mateDraft`).
+- Generators (Phase 9): parts are built face by face (`core/generators/mesh`: one face per
+  natural surface, own vertices per face, faces weld by bit-identical positions), every body
+  closed, Y the axis of revolved parts; planar anchors face out of their face, axial anchors
+  point out of the face something enters. Output goes through `prepareAsset` like imports.
+  Never `Math.random` or time in a generator: same parameters, same geometry.
 - R3F requests a frame when objects are added or changed, **not when they are removed**: a
   component whose objects can go away (unmount, conditional children) calls
   `renderer/useRedrawOnRemoval.ts`, or the demand frameloop keeps drawing them.

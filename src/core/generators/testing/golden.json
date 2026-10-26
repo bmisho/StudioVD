@@ -1,0 +1,1777 @@
+{
+  "primitive.box@1": {
+    "defaults": {
+      "anchors": ["bottom", "top", "centre"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 12,
+          "faces": 6,
+          "volumeMm3": 8000,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-10, -10, -10, 10, 10, 10]
+        }
+      }
+    },
+    "cube20": {
+      "anchors": ["bottom", "top", "centre"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 12,
+          "faces": 6,
+          "volumeMm3": 8000,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-10, -10, -10, 10, 10, 10]
+        }
+      }
+    },
+    "plate": {
+      "anchors": ["bottom", "top", "centre"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 12,
+          "faces": 6,
+          "volumeMm3": 30000,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-50, -2.5, -30, 50, 2.5, 30]
+        }
+      }
+    }
+  },
+  "primitive.cylinder@1": {
+    "defaults": {
+      "anchors": ["bottom", "axis", "top"],
+      "mates": [],
+      "bodies": {
+        "cylinder": {
+          "triangles": 256,
+          "faces": 3,
+          "volumeMm3": 6273.097,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-10, -10, -10, 10, 10, 10]
+        }
+      }
+    },
+    "disc": {
+      "anchors": ["bottom", "axis", "top"],
+      "mates": [],
+      "bodies": {
+        "cylinder": {
+          "triangles": 288,
+          "faces": 3,
+          "volumeMm3": 6275.21356,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-20, -2.5, -20, 20, 2.5, 20]
+        }
+      }
+    }
+  },
+  "primitive.sphere@1": {
+    "defaults": {
+      "anchors": ["centre"],
+      "mates": [],
+      "bodies": {
+        "sphere": {
+          "triangles": 3968,
+          "faces": 1,
+          "volumeMm3": 4171.99576,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-10, -10, -10, 10, 10, 10]
+        }
+      }
+    },
+    "ball10": {
+      "anchors": ["centre"],
+      "mates": [],
+      "bodies": {
+        "sphere": {
+          "triangles": 2208,
+          "faces": 1,
+          "volumeMm3": 519.871426,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-5, -5, -5, 5, 5, 5]
+        }
+      }
+    }
+  },
+  "primitive.cone@1": {
+    "defaults": {
+      "anchors": ["bottom", "axis"],
+      "mates": [],
+      "bodies": {
+        "cone": {
+          "triangles": 128,
+          "faces": 2,
+          "volumeMm3": 2091.03233,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-10, -10, -10, 10, 10, 10]
+        }
+      }
+    },
+    "frustum": {
+      "anchors": ["bottom", "axis", "top"],
+      "mates": [],
+      "bodies": {
+        "cone": {
+          "triangles": 288,
+          "faces": 3,
+          "volumeMm3": 8236.21783,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-15, -10, -15, 15, 10, 15]
+        }
+      }
+    }
+  },
+  "fastener.screw@1": {
+    "defaults": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 406,
+          "faces": 14,
+          "volumeMm3": 132.075961,
+          "offsetMm": [0, 6.5, 0],
+          "bboxMm": [-2.75, -6.5, -2.75, 2.75, 6.5, 2.75]
+        }
+      }
+    },
+    "capM2": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 406,
+          "faces": 14,
+          "volumeMm3": 44.8310252,
+          "offsetMm": [0, 5, 0],
+          "bboxMm": [-1.89999998, -5, -1.89999998, 1.89999998, 5, 1.89999998]
+        }
+      }
+    },
+    "capM2_5": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 406,
+          "faces": 14,
+          "volumeMm3": 78.4037814,
+          "offsetMm": [0, 5.75, 0],
+          "bboxMm": [-2.25, -5.75, -2.25, 2.25, 5.75, 2.25]
+        }
+      }
+    },
+    "capM3": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 406,
+          "faces": 14,
+          "volumeMm3": 132.075961,
+          "offsetMm": [0, 6.5, 0],
+          "bboxMm": [-2.75, -6.5, -2.75, 2.75, 6.5, 2.75]
+        }
+      }
+    },
+    "capM4": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 406,
+          "faces": 14,
+          "volumeMm3": 282.639497,
+          "offsetMm": [0, 8, 0],
+          "bboxMm": [-3.5, -8, -3.5, 3.5, 8, 3.5]
+        }
+      }
+    },
+    "capM5": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 406,
+          "faces": 14,
+          "volumeMm3": 512.616849,
+          "offsetMm": [0, 9.5, 0],
+          "bboxMm": [-4.25, -9.5, -4.25, 4.25, 9.5, 4.25]
+        }
+      }
+    },
+    "capM6": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 406,
+          "faces": 14,
+          "volumeMm3": 839.035257,
+          "offsetMm": [0, 11, 0],
+          "bboxMm": [-5, -11, -5, 5, 11, 5]
+        }
+      }
+    },
+    "capM8": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 550,
+          "faces": 14,
+          "volumeMm3": 1906.02569,
+          "offsetMm": [0, 14, 0],
+          "bboxMm": [-6.5, -14, -6.5, 6.5, 14, 6.5]
+        }
+      }
+    },
+    "buttonM3": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 790,
+          "faces": 13,
+          "volumeMm3": 72.8115933,
+          "offsetMm": [0, 4.60151482, 0],
+          "bboxMm": [-2.8499999, -4.60151482, -2.8499999, 2.8499999, 4.60151482, 2.8499999]
+        }
+      }
+    },
+    "buttonM5": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 790,
+          "faces": 13,
+          "volumeMm3": 319.141849,
+          "offsetMm": [0, 7.07767153, 0],
+          "bboxMm": [-4.75, -7.07767153, -4.75, 4.75, 7.07767153, 4.75]
+        }
+      }
+    },
+    "hexM6": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 214,
+          "faces": 11,
+          "volumeMm3": 899.946445,
+          "offsetMm": [0, 12, 0],
+          "bboxMm": [-5.77350283, -12, -5, 5.77350283, 12, 5]
+        }
+      }
+    },
+    "hexM12": {
+      "anchors": ["seat", "tip", "head"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 382,
+          "faces": 11,
+          "volumeMm3": 6568.05193,
+          "offsetMm": [0, 23.75, 0],
+          "bboxMm": [-10.3923044, -23.75, -9, 10.3923044, 23.75, 9]
+        }
+      }
+    }
+  },
+  "fastener.nut@1": {
+    "defaults": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 152,
+          "faces": 9,
+          "volumeMm3": 46.0176423,
+          "offsetMm": [0, 1.20000005, 0],
+          "bboxMm": [-3.17542648, -1.20000005, -2.75, 3.17542648, 1.20000005, 2.75]
+        }
+      }
+    },
+    "M2": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 152,
+          "faces": 9,
+          "volumeMm3": 17.1759381,
+          "offsetMm": [0, 0.800000012, 0],
+          "bboxMm": [-2.30940104, -0.800000012, -2, 2.30940104, 0.800000012, 2]
+        }
+      }
+    },
+    "M2_5": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 152,
+          "faces": 9,
+          "volumeMm3": 33.5467551,
+          "offsetMm": [0, 1, 0],
+          "bboxMm": [-2.88675141, -1, -2.5, 2.88675141, 1, 2.5]
+        }
+      }
+    },
+    "M3": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 152,
+          "faces": 9,
+          "volumeMm3": 46.0176423,
+          "offsetMm": [0, 1.20000005, 0],
+          "bboxMm": [-3.17542648, -1.20000005, -2.75, 3.17542648, 1.20000005, 2.75]
+        }
+      }
+    },
+    "M4": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 152,
+          "faces": 9,
+          "volumeMm3": 95.8382898,
+          "offsetMm": [0, 1.60000002, 0],
+          "bboxMm": [-4.04145193, -1.60000002, -3.5, 4.04145193, 1.60000002, 3.5]
+        }
+      }
+    },
+    "M5": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 152,
+          "faces": 9,
+          "volumeMm3": 168.807978,
+          "offsetMm": [0, 2.3499999, 0],
+          "bboxMm": [-4.61880207, -2.3499999, -4, 4.61880207, 2.3499999, 4]
+        }
+      }
+    },
+    "M6": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 152,
+          "faces": 9,
+          "volumeMm3": 304.249576,
+          "offsetMm": [0, 2.5999999, 0],
+          "bboxMm": [-5.77350283, -2.5999999, -5, 5.77350283, 2.5999999, 5]
+        }
+      }
+    },
+    "M8": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 200,
+          "faces": 9,
+          "volumeMm3": 654.591647,
+          "offsetMm": [0, 3.4000001, 0],
+          "bboxMm": [-7.50555372, -3.4000001, -6.5, 7.50555372, 3.4000001, 6.5]
+        }
+      }
+    },
+    "M10": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 232,
+          "faces": 9,
+          "volumeMm3": 1204.17068,
+          "offsetMm": [0, 4.19999981, 0],
+          "bboxMm": [-9.23760414, -4.19999981, -8, 9.23760414, 4.19999981, 8]
+        }
+      }
+    },
+    "M12": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 264,
+          "faces": 9,
+          "volumeMm3": 1811.17603,
+          "offsetMm": [0, 5.4000001, 0],
+          "bboxMm": [-10.3923044, -5.4000001, -9, 10.3923044, 5.4000001, 9]
+        }
+      }
+    }
+  },
+  "fastener.washer@1": {
+    "defaults": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "washer": {
+          "triangles": 256,
+          "faces": 4,
+          "volumeMm3": 15.1234022,
+          "offsetMm": [0, 0.25, 0],
+          "bboxMm": [-3.5, -0.25, -3.5, 3.5, 0.25, 3.5]
+        }
+      }
+    },
+    "M2": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "washer": {
+          "triangles": 256,
+          "faces": 4,
+          "volumeMm3": 4.71962519,
+          "offsetMm": [0, 0.150000006, 0],
+          "bboxMm": [-2.5, -0.150000006, -2.5, 2.5, 0.150000006, 2.5]
+        }
+      }
+    },
+    "M2_5": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "washer": {
+          "triangles": 256,
+          "faces": 4,
+          "volumeMm3": 11.2020864,
+          "offsetMm": [0, 0.25, 0],
+          "bboxMm": [-3, -0.25, -3, 3, 0.25, 3]
+        }
+      }
+    },
+    "M3": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "washer": {
+          "triangles": 256,
+          "faces": 4,
+          "volumeMm3": 15.1234022,
+          "offsetMm": [0, 0.25, 0],
+          "bboxMm": [-3.5, -0.25, -3.5, 3.5, 0.25, 3.5]
+        }
+      }
+    },
+    "M4": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "washer": {
+          "triangles": 256,
+          "faces": 4,
+          "volumeMm3": 39.024307,
+          "offsetMm": [0, 0.400000006, 0],
+          "bboxMm": [-4.5, -0.400000006, -4.5, 4.5, 0.400000006, 4.5]
+        }
+      }
+    },
+    "M5": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "washer": {
+          "triangles": 256,
+          "faces": 4,
+          "volumeMm3": 56.1157802,
+          "offsetMm": [0, 0.5, 0],
+          "bboxMm": [-5, -0.5, -5, 5, 0.5, 5]
+        }
+      }
+    },
+    "M6": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "washer": {
+          "triangles": 320,
+          "faces": 4,
+          "volumeMm3": 128.952056,
+          "offsetMm": [0, 0.800000012, 0],
+          "bboxMm": [-6, -0.800000012, -6, 6, 0.800000012, 6]
+        }
+      }
+    },
+    "M8": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "washer": {
+          "triangles": 416,
+          "faces": 4,
+          "volumeMm3": 232.464152,
+          "offsetMm": [0, 0.800000012, 0],
+          "bboxMm": [-8, -0.800000012, -8, 8, 0.800000012, 8]
+        }
+      }
+    },
+    "M10": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "washer": {
+          "triangles": 512,
+          "faces": 4,
+          "volumeMm3": 454.407467,
+          "offsetMm": [0, 1, 0],
+          "bboxMm": [-10, -1, -10, 10, 1, 10]
+        }
+      }
+    },
+    "M12": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "washer": {
+          "triangles": 576,
+          "faces": 4,
+          "volumeMm3": 798.128703,
+          "offsetMm": [0, 1.25, 0],
+          "bboxMm": [-12, -1.25, -12, 12, 1.25, 12]
+        }
+      }
+    }
+  },
+  "fastener.setScrew@1": {
+    "defaults": {
+      "anchors": ["point", "socket"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 342,
+          "faces": 13,
+          "volumeMm3": 22.8254576,
+          "offsetMm": [0, 2, 0],
+          "bboxMm": [-1.5, -2, -1.5, 1.5, 2, 1.5]
+        }
+      }
+    },
+    "m3x3": {
+      "anchors": ["point", "socket"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 342,
+          "faces": 13,
+          "volumeMm3": 15.802206,
+          "offsetMm": [0, 1.5, 0],
+          "bboxMm": [-1.5, -1.5, -1.5, 1.5, 1.5, 1.5]
+        }
+      }
+    },
+    "m4x4": {
+      "anchors": ["point", "socket"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 342,
+          "faces": 13,
+          "volumeMm3": 38.1498993,
+          "offsetMm": [0, 2, 0],
+          "bboxMm": [-2, -2, -2, 2, 2, 2]
+        }
+      }
+    },
+    "m5x5": {
+      "anchors": ["point", "socket"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 278,
+          "faces": 12,
+          "volumeMm3": 74.00781,
+          "offsetMm": [0, 2.5, 0],
+          "bboxMm": [-2.5, -2.5, -2.5, 2.5, 2.5, 2.5]
+        }
+      }
+    }
+  },
+  "fastener.standoff@1": {
+    "defaults": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "standoff": {
+          "triangles": 342,
+          "faces": 13,
+          "volumeMm3": 250.397326,
+          "offsetMm": [0, 2, 0],
+          "bboxMm": [-3.17542648, -8, -2.75, 3.17542648, 8, 2.75]
+        }
+      }
+    },
+    "m3ff10": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "standoff": {
+          "triangles": 152,
+          "faces": 9,
+          "volumeMm3": 191.740169,
+          "offsetMm": [0, 5, 0],
+          "bboxMm": [-3.17542648, -5, -2.75, 3.17542648, 5, 2.75]
+        }
+      }
+    },
+    "m3mf10": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "standoff": {
+          "triangles": 342,
+          "faces": 13,
+          "volumeMm3": 250.397326,
+          "offsetMm": [0, 2, 0],
+          "bboxMm": [-3.17542648, -8, -2.75, 3.17542648, 8, 2.75]
+        }
+      }
+    },
+    "m25mf6": {
+      "anchors": ["bottom", "top"],
+      "mates": [],
+      "bodies": {
+        "standoff": {
+          "triangles": 342,
+          "faces": 13,
+          "volumeMm3": 128.23306,
+          "offsetMm": [0, 0.5, 0],
+          "bboxMm": [-2.88675141, -5.5, -2.5, 2.88675141, 5.5, 2.5]
+        }
+      }
+    }
+  },
+  "bearing.deepGroove@1": {
+    "defaults": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 2016,
+          "faces": 14,
+          "volumeMm3": 1088.71035,
+          "offsetMm": [0, 3.5, 0],
+          "bboxMm": [-11, -3.5, -11, 11, 3.5, 11]
+        },
+        "inner": {
+          "triangles": 864,
+          "faces": 6,
+          "volumeMm3": 444.875916,
+          "offsetMm": [0, 3.5, 0],
+          "bboxMm": [-6.03000021, -3.5, -6.03000021, 6.03000021, 3.5, 6.03000021]
+        }
+      }
+    },
+    "b623": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 896,
+          "faces": 14,
+          "volumeMm3": 145.750734,
+          "offsetMm": [0, 2, 0],
+          "bboxMm": [-5, -2, -5, 5, 2, 5]
+        },
+        "inner": {
+          "triangles": 384,
+          "faces": 6,
+          "volumeMm3": 50.6646471,
+          "offsetMm": [0, 2, 0],
+          "bboxMm": [-2.5150001, -2, -2.5150001, 2.5150001, 2, 2.5150001]
+        }
+      }
+    },
+    "b624": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 1232,
+          "faces": 14,
+          "volumeMm3": 304.88652,
+          "offsetMm": [0, 2.5, 0],
+          "bboxMm": [-6.5, -2.5, -6.5, 6.5, 2.5, 6.5]
+        },
+        "inner": {
+          "triangles": 528,
+          "faces": 6,
+          "volumeMm3": 107.859766,
+          "offsetMm": [0, 2.5, 0],
+          "bboxMm": [-3.30500007, -2.5, -3.30500007, 3.30500007, 2.5, 3.30500007]
+        }
+      }
+    },
+    "b625": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 1456,
+          "faces": 14,
+          "volumeMm3": 458.720818,
+          "offsetMm": [0, 2.5, 0],
+          "bboxMm": [-8, -2.5, -8, 8, 2.5, 8]
+        },
+        "inner": {
+          "triangles": 624,
+          "faces": 6,
+          "volumeMm3": 163.363988,
+          "offsetMm": [0, 2.5, 0],
+          "bboxMm": [-4.09499979, -2.5, -4.09499979, 4.09499979, 2.5, 4.09499979]
+        }
+      }
+    },
+    "b626": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 1680,
+          "faces": 14,
+          "volumeMm3": 754.064538,
+          "offsetMm": [0, 3, 0],
+          "bboxMm": [-9.5, -3, -9.5, 9.5, 3, 9.5]
+        },
+        "inner": {
+          "triangles": 720,
+          "faces": 6,
+          "volumeMm3": 277.903619,
+          "offsetMm": [0, 3, 0],
+          "bboxMm": [-4.88500023, -3, -4.88500023, 4.88500023, 3, 4.88500023]
+        }
+      }
+    },
+    "b608": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 2016,
+          "faces": 14,
+          "volumeMm3": 1088.71035,
+          "offsetMm": [0, 3.5, 0],
+          "bboxMm": [-11, -3.5, -11, 11, 3.5, 11]
+        },
+        "inner": {
+          "triangles": 864,
+          "faces": 6,
+          "volumeMm3": 444.875916,
+          "offsetMm": [0, 3.5, 0],
+          "bboxMm": [-6.03000021, -3.5, -6.03000021, 6.03000021, 3.5, 6.03000021]
+        }
+      }
+    },
+    "b688": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 1456,
+          "faces": 14,
+          "volumeMm3": 348.156569,
+          "offsetMm": [0, 2.5, 0],
+          "bboxMm": [-8, -2.5, -8, 8, 2.5, 8]
+        },
+        "inner": {
+          "triangles": 624,
+          "faces": 6,
+          "volumeMm3": 164.187831,
+          "offsetMm": [0, 2.5, 0],
+          "bboxMm": [-5.15999985, -2.5, -5.15999985, 5.15999985, 2.5, 5.15999985]
+        }
+      }
+    },
+    "b6000": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 2016,
+          "faces": 14,
+          "volumeMm3": 1663.42801,
+          "offsetMm": [0, 4, 0],
+          "bboxMm": [-13, -4, -13, 13, 4, 13]
+        },
+        "inner": {
+          "triangles": 864,
+          "faces": 6,
+          "volumeMm3": 714.562316,
+          "offsetMm": [0, 4, 0],
+          "bboxMm": [-7.32000017, -4, -7.32000017, 7.32000017, 4, 7.32000017]
+        }
+      }
+    },
+    "b6001": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 2016,
+          "faces": 14,
+          "volumeMm3": 1810.33069,
+          "offsetMm": [0, 4, 0],
+          "bboxMm": [-14, -4, -14, 14, 4, 14]
+        },
+        "inner": {
+          "triangles": 864,
+          "faces": 6,
+          "volumeMm3": 830.465484,
+          "offsetMm": [0, 4, 0],
+          "bboxMm": [-8.31999969, -4, -8.31999969, 8.31999969, 4, 8.31999969]
+        }
+      }
+    },
+    "b6002": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 2016,
+          "faces": 14,
+          "volumeMm3": 2463.33827,
+          "offsetMm": [0, 4.5, 0],
+          "bboxMm": [-16, -4.5, -16, 16, 4.5, 16]
+        },
+        "inner": {
+          "triangles": 864,
+          "faces": 6,
+          "volumeMm3": 1211.408,
+          "offsetMm": [0, 4.5, 0],
+          "bboxMm": [-9.96500015, -4.5, -9.96500015, 9.96500015, 4.5, 9.96500015]
+        }
+      }
+    },
+    "b6003": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 2016,
+          "faces": 14,
+          "volumeMm3": 3147.15394,
+          "offsetMm": [0, 5, 0],
+          "bboxMm": [-17.5, -5, -17.5, 17.5, 5, 17.5]
+        },
+        "inner": {
+          "triangles": 864,
+          "faces": 6,
+          "volumeMm3": 1601.03605,
+          "offsetMm": [0, 5, 0],
+          "bboxMm": [-11.1099997, -5, -11.1099997, 11.1099997, 5, 11.1099997]
+        }
+      }
+    },
+    "b6004": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 2016,
+          "faces": 14,
+          "volumeMm3": 5402.55022,
+          "offsetMm": [0, 6, 0],
+          "bboxMm": [-21, -6, -21, 21, 6, 21]
+        },
+        "inner": {
+          "triangles": 864,
+          "faces": 6,
+          "volumeMm3": 2762.25219,
+          "offsetMm": [0, 6, 0],
+          "bboxMm": [-13.1899996, -6, -13.1899996, 13.1899996, 6, 13.1899996]
+        }
+      }
+    },
+    "b6005": {
+      "anchors": ["outerAxis", "innerAxis", "bore", "boreBack", "seat", "face"],
+      "mates": ["spin"],
+      "bodies": {
+        "outer": {
+          "triangles": 2016,
+          "faces": 14,
+          "volumeMm3": 6118.86637,
+          "offsetMm": [0, 6, 0],
+          "bboxMm": [-23.5, -6, -23.5, 23.5, 6, 23.5]
+        },
+        "inner": {
+          "triangles": 864,
+          "faces": 6,
+          "volumeMm3": 3357.14245,
+          "offsetMm": [0, 6, 0],
+          "bboxMm": [-15.6899996, -6, -15.6899996, 15.6899996, 6, 15.6899996]
+        }
+      }
+    }
+  },
+  "stock.shaft@1": {
+    "defaults": {
+      "anchors": ["start", "end", "middle"],
+      "mates": [],
+      "bodies": {
+        "shaft": {
+          "triangles": 256,
+          "faces": 5,
+          "volumeMm3": 4988.32929,
+          "offsetMm": [0, 50, 0],
+          "bboxMm": [-4, -50, -4, 4, 50, 4]
+        }
+      }
+    },
+    "rod8": {
+      "anchors": ["start", "end", "middle"],
+      "mates": [],
+      "bodies": {
+        "shaft": {
+          "triangles": 256,
+          "faces": 5,
+          "volumeMm3": 14976.9534,
+          "offsetMm": [0, 150, 0],
+          "bboxMm": [-4, -150, -4, 4, 150, 4]
+        }
+      }
+    },
+    "shaft5d": {
+      "anchors": ["start", "end", "middle"],
+      "mates": [],
+      "bodies": {
+        "shaft": {
+          "triangles": 100,
+          "faces": 4,
+          "volumeMm3": 370.18704,
+          "offsetMm": [-0.243764758, 10, 0],
+          "bboxMm": [-2.24376488, -10, -2.49353337, 2.24376488, 10, 2.49353337]
+        }
+      }
+    }
+  },
+  "stock.tube@1": {
+    "defaults": {
+      "anchors": ["start", "end", "middle", "boreStart", "boreEnd"],
+      "mates": [],
+      "bodies": {
+        "tube": {
+          "triangles": 256,
+          "faces": 4,
+          "volumeMm3": 2809.30083,
+          "offsetMm": [0, 50, 0],
+          "bboxMm": [-5, -50, -5, 5, 50, 5]
+        }
+      }
+    },
+    "spacer": {
+      "anchors": ["start", "end", "middle", "boreStart", "boreEnd"],
+      "mates": [],
+      "bodies": {
+        "tube": {
+          "triangles": 256,
+          "faces": 4,
+          "volumeMm3": 152.170442,
+          "offsetMm": [0, 2.5, 0],
+          "bboxMm": [-4, -2.5, -4, 4, 2.5, 4]
+        }
+      }
+    },
+    "copper15": {
+      "anchors": ["start", "end", "middle", "boreStart", "boreEnd"],
+      "mates": [],
+      "bodies": {
+        "tube": {
+          "triangles": 384,
+          "faces": 4,
+          "volumeMm3": 8771.35986,
+          "offsetMm": [0, 100, 0],
+          "bboxMm": [-7.5, -100, -7.5, 7.5, 100, 7.5]
+        }
+      }
+    }
+  },
+  "gear.spur@1": {
+    "defaults": {
+      "anchors": ["axis", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "gear": {
+          "triangles": 2256,
+          "faces": 83,
+          "volumeMm3": 1720.64297,
+          "offsetMm": [0, 3, 0],
+          "bboxMm": [-10.9993906, -3, -10.9993906, 10.9993906, 3, 10.9993906]
+        }
+      }
+    },
+    "m1z12": {
+      "anchors": ["axis", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "gear": {
+          "triangles": 1408,
+          "faces": 51,
+          "volumeMm3": 641.129729,
+          "offsetMm": [0, 3, 0],
+          "bboxMm": [-7.29374933, -3, -7.29374933, 7.29374933, 3, 7.29374933]
+        }
+      }
+    },
+    "m1z20": {
+      "anchors": ["axis", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "gear": {
+          "triangles": 2256,
+          "faces": 83,
+          "volumeMm3": 1720.64297,
+          "offsetMm": [0, 3, 0],
+          "bboxMm": [-10.9993906, -3, -10.9993906, 10.9993906, 3, 10.9993906]
+        }
+      }
+    },
+    "m1z40": {
+      "anchors": ["axis", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "gear": {
+          "triangles": 4416,
+          "faces": 165,
+          "volumeMm3": 7923.12239,
+          "offsetMm": [0, 5.5, 0],
+          "bboxMm": [-20.9996166, -5.5, -20.9996166, 20.9996166, 5.5, 20.9996166]
+        }
+      }
+    },
+    "m05z30": {
+      "anchors": ["axis", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "gear": {
+          "triangles": 3160,
+          "faces": 123,
+          "volumeMm3": 501.668984,
+          "offsetMm": [0, 1.5, 0],
+          "bboxMm": [-7.99976397, -1.5, -7.97333097, 7.99976397, 1.5, 7.97333097]
+        }
+      }
+    },
+    "m2z8": {
+      "anchors": ["axis", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "gear": {
+          "triangles": 1056,
+          "faces": 35,
+          "volumeMm3": 1309.90915,
+          "offsetMm": [0, 3, 0],
+          "bboxMm": [-10.8605118, -3, -10.8605118, 10.8605118, 3, 10.8605118]
+        }
+      }
+    }
+  },
+  "pulley.gt2@1": {
+    "defaults": {
+      "anchors": ["belt", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "pulley": {
+          "triangles": 1776,
+          "faces": 49,
+          "volumeMm3": 1558.9797,
+          "offsetMm": [0, 8, 0],
+          "bboxMm": [-7.61219788, -8, -7.61219788, 7.61219788, 8, 7.61219788]
+        }
+      }
+    },
+    "z16b5": {
+      "anchors": ["belt", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "pulley": {
+          "triangles": 1440,
+          "faces": 41,
+          "volumeMm3": 919.402985,
+          "offsetMm": [0, 8, 0],
+          "bboxMm": [-6.33895826, -8, -6.33895826, 6.33895826, 8, 6.33895826]
+        }
+      }
+    },
+    "z20b5": {
+      "anchors": ["belt", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "pulley": {
+          "triangles": 1776,
+          "faces": 49,
+          "volumeMm3": 1558.9797,
+          "offsetMm": [0, 8, 0],
+          "bboxMm": [-7.61219788, -8, -7.61219788, 7.61219788, 8, 7.61219788]
+        }
+      }
+    },
+    "z20b8": {
+      "anchors": ["belt", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "pulley": {
+          "triangles": 1776,
+          "faces": 49,
+          "volumeMm3": 1070.28965,
+          "offsetMm": [0, 8, 0],
+          "bboxMm": [-7.61219788, -8, -7.61219788, 7.61219788, 8, 7.61219788]
+        }
+      }
+    },
+    "z36b8": {
+      "anchors": ["belt", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "pulley": {
+          "triangles": 2944,
+          "faces": 81,
+          "volumeMm3": 4192.33203,
+          "offsetMm": [0, 8, 0],
+          "bboxMm": [-12.7051563, -8, -12.7051563, 12.7051563, 8, 12.7051563]
+        }
+      }
+    },
+    "z60b8": {
+      "anchors": ["belt", "bore", "boreBack", "face"],
+      "mates": [],
+      "bodies": {
+        "pulley": {
+          "triangles": 3616,
+          "faces": 125,
+          "volumeMm3": 8205.62121,
+          "offsetMm": [0, 7, 0],
+          "bboxMm": [-18.8355656, -7, -18.8355656, 18.8355656, 7, 18.8355656]
+        }
+      }
+    }
+  },
+  "motion.leadScrew@1": {
+    "defaults": {
+      "anchors": ["start", "end", "middle"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 28800,
+          "faces": 601,
+          "volumeMm3": 11894.9548,
+          "offsetMm": [0, 150, 0],
+          "bboxMm": [-4, -150, -4, 4, 150, 4]
+        }
+      }
+    },
+    "t8x8l300": {
+      "anchors": ["start", "end", "middle"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 28800,
+          "faces": 601,
+          "volumeMm3": 11894.9548,
+          "offsetMm": [0, 150, 0],
+          "bboxMm": [-4, -150, -4, 4, 150, 4]
+        }
+      }
+    },
+    "t8x2l200": {
+      "anchors": ["start", "end", "middle"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 19200,
+          "faces": 401,
+          "volumeMm3": 7934.71256,
+          "offsetMm": [0, 100, 0],
+          "bboxMm": [-4, -100, -4, 4, 100, 4]
+        }
+      }
+    },
+    "t8x8l100": {
+      "anchors": ["start", "end", "middle"],
+      "mates": [],
+      "bodies": {
+        "screw": {
+          "triangles": 256,
+          "faces": 5,
+          "volumeMm3": 4988.32929,
+          "offsetMm": [0, 50, 0],
+          "bboxMm": [-4, -50, -4, 4, 50, 4]
+        }
+      }
+    }
+  },
+  "motion.leadScrewNut@1": {
+    "defaults": {
+      "anchors": ["thread", "flange", "hole1", "hole2", "hole3", "hole4"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 1136,
+          "faces": 10,
+          "volumeMm3": 1382.99566,
+          "offsetMm": [0, 7.5, 0],
+          "bboxMm": [-11, -7.5, -11, 11, 7.5, 11]
+        }
+      }
+    },
+    "t8x8": {
+      "anchors": ["thread", "flange", "hole1", "hole2", "hole3", "hole4"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 1136,
+          "faces": 10,
+          "volumeMm3": 1382.99566,
+          "offsetMm": [0, 7.5, 0],
+          "bboxMm": [-11, -7.5, -11, 11, 7.5, 11]
+        }
+      }
+    },
+    "t8x2": {
+      "anchors": ["thread", "flange", "hole1", "hole2", "hole3", "hole4"],
+      "mates": [],
+      "bodies": {
+        "nut": {
+          "triangles": 1136,
+          "faces": 10,
+          "volumeMm3": 1382.99566,
+          "offsetMm": [0, 7.5, 0],
+          "bboxMm": [-11, -7.5, -11, 11, 7.5, 11]
+        }
+      }
+    }
+  },
+  "spring.compression@1": {
+    "defaults": {
+      "anchors": ["bottom", "axis", "top"],
+      "mates": [],
+      "bodies": {
+        "spring": {
+          "triangles": 5780,
+          "faces": 3,
+          "volumeMm3": 220.826047,
+          "offsetMm": [-0.000128030777, 14.9984464, 0.0000631809235],
+          "bboxMm": [-5.01153469, -15.0097551, -5.01159954, 5.01153469, 15.0097551, 5.01159954]
+        }
+      }
+    },
+    "small": {
+      "anchors": ["bottom", "axis", "top"],
+      "mates": [],
+      "bodies": {
+        "spring": {
+          "triangles": 5780,
+          "faces": 3,
+          "volumeMm3": 33.6727087,
+          "offsetMm": [0.0000659227371, 7.49999737, -0.0000139474869],
+          "bboxMm": [-3.00576448, -7.5057106, -3.00579071, 3.00576448, 7.5057106, 3.00579071]
+        }
+      }
+    },
+    "medium": {
+      "anchors": ["bottom", "axis", "top"],
+      "mates": [],
+      "bodies": {
+        "spring": {
+          "triangles": 5780,
+          "faces": 3,
+          "volumeMm3": 220.826047,
+          "offsetMm": [-0.000128030777, 14.9984464, 0.0000631809235],
+          "bboxMm": [-5.01153469, -15.0097551, -5.01159954, 5.01153469, 15.0097551, 5.01159954]
+        }
+      }
+    },
+    "open": {
+      "anchors": ["bottom", "axis", "top"],
+      "mates": [],
+      "bodies": {
+        "spring": {
+          "triangles": 3476,
+          "faces": 3,
+          "volumeMm3": 1064.55093,
+          "offsetMm": [0.00160455704, 24.9999825, 0.000131607056],
+          "bboxMm": [-10.0217133, -25.0131626, -10.0228395, 10.0217133, 25.0131626, 10.0228395]
+        }
+      }
+    }
+  },
+  "spring.extension@1": {
+    "defaults": {
+      "anchors": ["top", "bottom"],
+      "mates": [],
+      "bodies": {
+        "spring": {
+          "triangles": 13508,
+          "faces": 3,
+          "volumeMm3": 248.836937,
+          "offsetMm": [-0.0000011920929, 8.39975071, -9.53674316e-7],
+          "bboxMm": [-4.00932884, -16.8086853, -4.0093298, 4.00932884, 16.8086853, 4.0093298]
+        }
+      }
+    },
+    "small": {
+      "anchors": ["top", "bottom"],
+      "mates": [],
+      "bodies": {
+        "spring": {
+          "triangles": 10628,
+          "faces": 3,
+          "volumeMm3": 81.2514252,
+          "offsetMm": [-9.53674316e-7, 4.72283792, -5.96046448e-7],
+          "bboxMm": [-3.00699663, -11.0295391, -3.00699711, 3.00699663, 11.0295391, 3.00699711]
+        }
+      }
+    },
+    "large": {
+      "anchors": ["top", "bottom"],
+      "mates": [],
+      "bodies": {
+        "spring": {
+          "triangles": 16388,
+          "faces": 3,
+          "volumeMm3": 2159.71615,
+          "offsetMm": [-0.0000228881836, 19.6804686, -0.0000162124634],
+          "bboxMm": [-8.01745605, -36.4471703, -8.01747513, 8.01745605, 36.4471703, 8.01747513]
+        }
+      }
+    }
+  },
+  "frame.tslot@1": {
+    "defaults": {
+      "anchors": ["start", "end", "slot1", "slot2", "slot3", "slot4", "tapStart1", "tapEnd1"],
+      "mates": [],
+      "bodies": {
+        "bar": {
+          "triangles": 208,
+          "faces": 39,
+          "volumeMm3": 75017.6796,
+          "offsetMm": [0, 150, 0],
+          "bboxMm": [-10, -150, -10, 10, 150, 10]
+        }
+      }
+    },
+    "p2020l300": {
+      "anchors": ["start", "end", "slot1", "slot2", "slot3", "slot4", "tapStart1", "tapEnd1"],
+      "mates": [],
+      "bodies": {
+        "bar": {
+          "triangles": 208,
+          "faces": 39,
+          "volumeMm3": 75017.6796,
+          "offsetMm": [0, 150, 0],
+          "bboxMm": [-10, -150, -10, 10, 150, 10]
+        }
+      }
+    },
+    "p2020l500": {
+      "anchors": ["start", "end", "slot1", "slot2", "slot3", "slot4", "tapStart1", "tapEnd1"],
+      "mates": [],
+      "bodies": {
+        "bar": {
+          "triangles": 208,
+          "faces": 39,
+          "volumeMm3": 125029.466,
+          "offsetMm": [0, 250, 0],
+          "bboxMm": [-10, -250, -10, 10, 250, 10]
+        }
+      }
+    },
+    "p2040l300": {
+      "anchors": [
+        "start",
+        "end",
+        "slot1",
+        "slot2",
+        "slot3",
+        "slot4",
+        "slot5",
+        "slot6",
+        "tapStart1",
+        "tapEnd1",
+        "tapStart2",
+        "tapEnd2"
+      ],
+      "mates": [],
+      "bodies": {
+        "bar": {
+          "triangles": 340,
+          "faces": 56,
+          "volumeMm3": 170501.355,
+          "offsetMm": [0, 150, 0],
+          "bboxMm": [-20, -150, -10, 20, 150, 10]
+        }
+      }
+    },
+    "p4040l500": {
+      "anchors": [
+        "start",
+        "end",
+        "slot1",
+        "slot2",
+        "slot3",
+        "slot4",
+        "slot5",
+        "slot6",
+        "slot7",
+        "slot8",
+        "tapStart1",
+        "tapEnd1",
+        "tapStart2",
+        "tapEnd2",
+        "tapStart3",
+        "tapEnd3",
+        "tapStart4",
+        "tapEnd4"
+      ],
+      "mates": [],
+      "bodies": {
+        "bar": {
+          "triangles": 540,
+          "faces": 74,
+          "volumeMm3": 636557.84,
+          "offsetMm": [0, 250, 0],
+          "bboxMm": [-20, -250, -20, 20, 250, 20]
+        }
+      }
+    }
+  },
+  "frame.cornerBracket@1": {
+    "defaults": {
+      "anchors": ["faceA", "faceB", "holeA", "holeB"],
+      "mates": [],
+      "bodies": {
+        "bracket": {
+          "triangles": 224,
+          "faces": 11,
+          "volumeMm3": 2782.09738,
+          "offsetMm": [0, 10, 10],
+          "bboxMm": [-10, -10, -10, 10, 10, 10]
+        }
+      }
+    },
+    "b2020": {
+      "anchors": ["faceA", "faceB", "holeA", "holeB"],
+      "mates": [],
+      "bodies": {
+        "bracket": {
+          "triangles": 224,
+          "faces": 11,
+          "volumeMm3": 2782.09738,
+          "offsetMm": [0, 10, 10],
+          "bboxMm": [-10, -10, -10, 10, 10, 10]
+        }
+      }
+    },
+    "b4040": {
+      "anchors": ["faceA", "faceB", "holeA", "holeB"],
+      "mates": [],
+      "bodies": {
+        "bracket": {
+          "triangles": 224,
+          "faces": 11,
+          "volumeMm3": 14619.0097,
+          "offsetMm": [0, 20, 20],
+          "bboxMm": [-20, -20, -20, 20, 20, 20]
+        }
+      }
+    }
+  },
+  "connector.pinHeader@1": {
+    "defaults": {
+      "anchors": ["board", "pin1", "pin2", "pin3", "pin4", "pin5", "pin6", "pin7", "pin8"],
+      "mates": [],
+      "bodies": {
+        "strip": {
+          "triangles": 332,
+          "faces": 166,
+          "volumeMm3": 157.841625,
+          "offsetMm": [0, 2.75, 0],
+          "bboxMm": [-10.1599998, -5.75, -1.26999998, 10.1599998, 5.75, 1.26999998]
+        }
+      }
+    },
+    "h1x4": {
+      "anchors": ["board", "pin1", "pin2", "pin3", "pin4"],
+      "mates": [],
+      "bodies": {
+        "strip": {
+          "triangles": 172,
+          "faces": 86,
+          "volumeMm3": 78.920812,
+          "offsetMm": [0, 2.75, 0],
+          "bboxMm": [-5.07999992, -5.75, -1.26999998, 5.07999992, 5.75, 1.26999998]
+        }
+      }
+    },
+    "h1x8": {
+      "anchors": ["board", "pin1", "pin2", "pin3", "pin4", "pin5", "pin6", "pin7", "pin8"],
+      "mates": [],
+      "bodies": {
+        "strip": {
+          "triangles": 332,
+          "faces": 166,
+          "volumeMm3": 157.841625,
+          "offsetMm": [0, 2.75, 0],
+          "bboxMm": [-10.1599998, -5.75, -1.26999998, 10.1599998, 5.75, 1.26999998]
+        }
+      }
+    },
+    "h2x20": {
+      "anchors": [
+        "board",
+        "pin1",
+        "pin2",
+        "pin3",
+        "pin4",
+        "pin5",
+        "pin6",
+        "pin7",
+        "pin8",
+        "pin9",
+        "pin10",
+        "pin11",
+        "pin12",
+        "pin13",
+        "pin14",
+        "pin15",
+        "pin16",
+        "pin17",
+        "pin18",
+        "pin19",
+        "pin20",
+        "pin21",
+        "pin22",
+        "pin23",
+        "pin24",
+        "pin25",
+        "pin26",
+        "pin27",
+        "pin28",
+        "pin29",
+        "pin30",
+        "pin31",
+        "pin32",
+        "pin33",
+        "pin34",
+        "pin35",
+        "pin36",
+        "pin37",
+        "pin38",
+        "pin39",
+        "pin40"
+      ],
+      "mates": [],
+      "bodies": {
+        "strip": {
+          "triangles": 1612,
+          "faces": 806,
+          "volumeMm3": 789.20817,
+          "offsetMm": [0, 2.75, 0],
+          "bboxMm": [-25.3999996, -5.75, -2.53999996, 25.3999996, 5.75, 2.53999996]
+        }
+      }
+    },
+    "s1x8": {
+      "anchors": ["board", "pin1", "pin2", "pin3", "pin4", "pin5", "pin6", "pin7", "pin8"],
+      "mates": [],
+      "bodies": {
+        "strip": {
+          "triangles": 300,
+          "faces": 126,
+          "volumeMm3": 400.1984,
+          "offsetMm": [0, 2.75, 0],
+          "bboxMm": [-10.1599998, -5.75, -1.26999998, 10.1599998, 5.75, 1.26999998]
+        }
+      }
+    },
+    "s2x10": {
+      "anchors": [
+        "board",
+        "pin1",
+        "pin2",
+        "pin3",
+        "pin4",
+        "pin5",
+        "pin6",
+        "pin7",
+        "pin8",
+        "pin9",
+        "pin10",
+        "pin11",
+        "pin12",
+        "pin13",
+        "pin14",
+        "pin15",
+        "pin16",
+        "pin17",
+        "pin18",
+        "pin19",
+        "pin20"
+      ],
+      "mates": [],
+      "bodies": {
+        "strip": {
+          "triangles": 732,
+          "faces": 306,
+          "volumeMm3": 1000.49601,
+          "offsetMm": [0, 2.75, 0],
+          "bboxMm": [-12.6999998, -5.75, -2.53999996, 12.6999998, 5.75, 2.53999996]
+        }
+      }
+    }
+  },
+  "battery.cell@1": {
+    "defaults": {
+      "anchors": ["plus", "minus", "axis"],
+      "mates": [],
+      "bodies": {
+        "cell": {
+          "triangles": 720,
+          "faces": 7,
+          "volumeMm3": 17087.2091,
+          "offsetMm": [0, 32.5, 0],
+          "bboxMm": [-9.19999981, -32.5, -9.19999981, 9.19999981, 32.5, 9.19999981]
+        }
+      }
+    },
+    "c18650": {
+      "anchors": ["plus", "minus", "axis"],
+      "mates": [],
+      "bodies": {
+        "cell": {
+          "triangles": 720,
+          "faces": 7,
+          "volumeMm3": 17087.2091,
+          "offsetMm": [0, 32.5, 0],
+          "bboxMm": [-9.19999981, -32.5, -9.19999981, 9.19999981, 32.5, 9.19999981]
+        }
+      }
+    },
+    "c21700": {
+      "anchors": ["plus", "minus", "axis"],
+      "mates": [],
+      "bodies": {
+        "cell": {
+          "triangles": 816,
+          "faces": 7,
+          "volumeMm3": 24529.7358,
+          "offsetMm": [0, 35.0999985, 0],
+          "bboxMm": [-10.6000004, -35.0999985, -10.6000004, 10.6000004, 35.0999985, 10.6000004]
+        }
+      }
+    },
+    "cAA": {
+      "anchors": ["plus", "minus", "axis"],
+      "mates": [],
+      "bodies": {
+        "cell": {
+          "triangles": 576,
+          "faces": 7,
+          "volumeMm3": 8146.29912,
+          "offsetMm": [0, 25.25, 0],
+          "bboxMm": [-7.25, -25.25, -7.25, 7.25, 25.25, 7.25]
+        }
+      }
+    },
+    "cAAA": {
+      "anchors": ["plus", "minus", "axis"],
+      "mates": [],
+      "bodies": {
+        "cell": {
+          "triangles": 432,
+          "faces": 7,
+          "volumeMm3": 3760.2893,
+          "offsetMm": [0, 22.25, 0],
+          "bboxMm": [-5.25, -22.25, -5.25, 5.25, 22.25, 5.25]
+        }
+      }
+    }
+  },
+  "enclosure.box@1": {
+    "defaults": {
+      "anchors": ["bottom", "floor", "rim", "lidSeat", "lidTop"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 220,
+          "faces": 19,
+          "volumeMm3": 35275.644,
+          "offsetMm": [0, 20, 0],
+          "bboxMm": [-50, -20, -30, 50, 20, 30]
+        },
+        "lid": {
+          "triangles": 332,
+          "faces": 28,
+          "volumeMm3": 13035.0205,
+          "offsetMm": [0, 39.5, 0],
+          "bboxMm": [-50, -2.5, -30, 50, 2.5, 30]
+        }
+      }
+    },
+    "small": {
+      "anchors": ["bottom", "floor", "rim", "lidSeat", "lidTop"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 220,
+          "faces": 19,
+          "volumeMm3": 13451.3773,
+          "offsetMm": [0, 12.5, 0],
+          "bboxMm": [-30, -12.5, -20, 30, 12.5, 20]
+        },
+        "lid": {
+          "triangles": 236,
+          "faces": 24,
+          "volumeMm3": 5421.5475,
+          "offsetMm": [0, 24.5, 0],
+          "bboxMm": [-30, -2.5, -20, 30, 2.5, 20]
+        }
+      }
+    },
+    "medium": {
+      "anchors": ["bottom", "floor", "rim", "lidSeat", "lidTop"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 220,
+          "faces": 19,
+          "volumeMm3": 35275.644,
+          "offsetMm": [0, 20, 0],
+          "bboxMm": [-50, -20, -30, 50, 20, 30]
+        },
+        "lid": {
+          "triangles": 332,
+          "faces": 28,
+          "volumeMm3": 13035.0205,
+          "offsetMm": [0, 39.5, 0],
+          "bboxMm": [-50, -2.5, -30, 50, 2.5, 30]
+        }
+      }
+    },
+    "tray": {
+      "anchors": ["bottom", "floor", "rim"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 28,
+          "faces": 11,
+          "volumeMm3": 84528,
+          "offsetMm": [0, 15, 0],
+          "bboxMm": [-75, -15, -50, 75, 15, 50]
+        }
+      }
+    }
+  }
+}

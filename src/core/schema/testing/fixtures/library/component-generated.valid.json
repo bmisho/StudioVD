@@ -19,7 +19,7 @@
         "kind": "generated",
         "generator": "bearing.deepGroove",
         "generatorMajor": 1,
-        "params": { "boreMm": 8, "outerMm": 22, "widthMm": 7, "sealed": true },
+        "params": { "boreMm": 8, "outerMm": 22, "widthMm": 7, "seal": "2RS" },
         "output": "outerRing"
       },
       "transform": { "positionMm": [0, 0, 0], "quaternion": [0, 0, 0, 1] },
@@ -33,7 +33,7 @@
         "kind": "generated",
         "generator": "bearing.deepGroove",
         "generatorMajor": 1,
-        "params": { "boreMm": 8, "outerMm": 22, "widthMm": 7, "sealed": true },
+        "params": { "boreMm": 8, "outerMm": 22, "widthMm": 7, "seal": "2RS" },
         "output": "innerRing"
       },
       "transform": { "positionMm": [0, 0, 0], "quaternion": [0, 0, 0, 1] },
@@ -109,6 +109,6 @@
     "kind": "generator",
     "generator": "bearing.deepGroove",
     "generatorVersion": "1.0.0",
-    "params": { "boreMm": 8, "outerMm": 22, "widthMm": 7, "sealed": true }
+    "params": { "boreMm": 8, "outerMm": 22, "widthMm": 7, "seal": "2RS" }
   }
 }

@@ -45,6 +45,7 @@ export const SuggestedMateSchema = z
     label: plainText(80),
   })
   .strict()
+export type SuggestedMate = z.infer<typeof SuggestedMateSchema>
 
 export const PlacementSchema = z
   .object({

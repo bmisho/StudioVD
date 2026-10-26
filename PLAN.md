@@ -908,7 +908,7 @@ Exit criteria
   hinged on both rims of the plate's bore (1 DOF); per-part DOF, cost at the caps, a hub with
   150 hinged parts stepped headless; E2E: the Mate tool puts the pin into the plate's hole
   (revolute, exact, tree, DOF, type change, undo)
-- [ ] ⛔ 8.7 **User approval**
+- [x] ⛔ 8.7 **User approval** (given 2026-10-26)
 
 ## Phase 9: Component library I (local library + generators)
 

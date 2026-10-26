@@ -1,4 +1,4 @@
-import { materialMaps, type SceneDocument } from "@/core/schema"
+import { manifestLicenseTexts, materialMaps, type SceneDocument } from "@/core/schema"
 
 const keep = <K extends string, V>(record: Record<K, V>, used: ReadonlySet<string>) => {
   const kept = Object.fromEntries(Object.entries(record).filter(([id]) => used.has(id)))
@@ -11,9 +11,7 @@ const keep = <K extends string, V>(record: Record<K, V>, used: ReadonlySet<strin
  * bundle carries only what the project needs. Materials stay (user content, like groups).
  * Pure: the store keeps them, because undo can bring a deleted part back. Returns `doc`
  * itself when there is nothing to drop.
- *
- * Licence texts are named by asset licences and component manifests from Phase 9 on; until
- * then nothing names them (and schema v1 holds none).
+ * Licence texts are kept while an asset or definition kept names them.
  */
 export function collectGarbage(doc: SceneDocument): SceneDocument {
   const assets = new Set<string>(Object.values(doc.parts).map((p) => p.assetId))
@@ -21,7 +19,15 @@ export function collectGarbage(doc: SceneDocument): SceneDocument {
     Object.values(doc.materials).flatMap((m) => materialMaps(m).map(([, map]) => map.textureId))
   )
   const defs = new Set<string>(Object.values(doc.components).flatMap((c) => (c.def ? [c.def] : [])))
-  const texts = new Set<string>()
+  // Licence texts of the geometry kept and of the definitions kept.
+  const texts = new Set<string>([
+    ...Object.values(doc.assets).flatMap((a) =>
+      assets.has(a.id) && a.license?.licenseText ? [a.license.licenseText] : []
+    ),
+    ...Object.values(doc.componentDefs).flatMap((d) =>
+      defs.has(d.key) ? manifestLicenseTexts(d) : []
+    ),
+  ])
   const unused =
     Object.keys(doc.assets).some((id) => !assets.has(id)) ||
     Object.keys(doc.textures).some((id) => !textures.has(id)) ||

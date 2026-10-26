@@ -912,11 +912,22 @@ Exit criteria
 
 ## Phase 9: Component library I (local library + generators)
 
-- [ ] 9.1 zod schemas for `component.json`, `pack.json` and the catalog index (§4.3-4.4), with
+- [x] 9.1 zod schemas for `component.json`, `pack.json` and the catalog index (§4.3-4.4), with
   every validation rule from §4.7; valid/invalid fixture suite. Lifts the scene.json v1 gates
   on `componentDefs`, `components` and `licenseTexts`, adds the optional asset licence (https
   URLs only), `part.componentRef` and `component` anchor sources (§1.3), with their
-  integrity rules (`src/core/schema/integrity.ts`)
+  integrity rules (`src/core/schema/integrity.ts`). As built (`src/core/schema/component/`):
+  a manifest is read in two steps (`readManifest`): its `schemaVersion` and `requires.app`
+  first, so one made for a newer StudioVD lists as "Needs newer StudioVD" rather than broken,
+  then the strict schema; reserved namespaces only for the app's own or signed manifests.
+  Interface tags are strings as on scene anchors (`tagsFit` serves both); inline materials
+  use the Phase 6 material fields, maps naming pack textures; schematic blocks, bindings and
+  sim-model requirements stay out of the v1 manifest until Phases 11-13 (refused until then).
+  Packs list every file with its kind's size cap; names differing only by case are one file.
+  Fixtures in `src/core/schema/testing/fixtures/library/` (shared with the Rust tests).
+  Integrity: instances name an existing definition and their own group, everything they list
+  points back (parts by `componentRef`, anchors by source), unique designators, licence
+  texts present; save-time GC keeps the texts kept assets and definitions name
 - [ ] 9.2 Rust `library` module (local part): store layout (§4.5), content-addressed blobs,
   staging + atomic install, `installed.json` (rebuildable from disk), single-writer lock, GC;
   Install-from-file for `.stvdpack` (unsigned packs show an "Unverified" badge after confirmation)

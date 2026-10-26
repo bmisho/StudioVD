@@ -10,25 +10,50 @@ import {
   NodeIdSchema,
   PartIdSchema,
 } from "./ids"
+import { ComponentManifestSchema } from "./component/manifest"
+import { ComponentIdSchema, SemVerSchema } from "./component/text"
 import { LocalKeySchema, SpdxSchema } from "./primitives"
 
-// Library records inside a project (PLAN.md §1.3, §4.6). Present from schema v1 but gated
-// empty until Phase 9 (document.ts): an opened .stvd is untrusted (CLAUDE.md §9), so no
-// manifest gets in before its strict schema exists.
+// Library records inside a project (PLAN.md §1.3, §4.6): gated empty until Phase 9, now the
+// strict component.json schema holds them. An opened .stvd is untrusted (CLAUDE.md §9).
 
-/** Validated copy of a library component manifest, stored once per definition. */
+/** Where a component definition came from (provenance; nothing here is trusted). */
+export const ComponentOriginSchema = z.enum([
+  "official",
+  "user",
+  "sideloaded",
+  "generator",
+  "project",
+])
+
+/**
+ * A frozen copy of a component's manifest, stored once per definition: a project never needs
+ * the library to open, duplicate or credit what it holds. Keyed `<id>@<version>#<sha12>`.
+ */
 export const ComponentDefSnapshotSchema = z
   .object({
     key: ComponentDefKeySchema,
-    id: z.string().max(97),
-    version: z.string().max(64),
+    id: ComponentIdSchema,
+    version: SemVerSchema,
+    /** SHA-256 of the component.json bytes it was read from. */
     manifestSha256: z.string().regex(/^[0-9a-f]{64}$/),
-    origin: z.enum(["official", "user", "sideloaded", "project"]),
-    /** Placeholder: Phase 9 replaces this with the strict component.json schema. */
-    manifest: z.unknown(),
+    origin: ComponentOriginSchema,
+    manifest: ComponentManifestSchema,
   })
   .strict()
+  .superRefine((d, ctx) => {
+    const issue = (path: string, message: string) =>
+      ctx.addIssue({ code: "custom", path: [path], message })
+    if (d.manifest.identity.id !== d.id) issue("id", "is not the manifest's")
+    if (d.manifest.identity.version !== d.version) issue("version", "is not the manifest's")
+    if (d.key !== componentDefKey(d.id, d.version, d.manifestSha256))
+      issue("key", "must be <id>@<version>#<first 12 of manifestSha256>")
+  })
 export type ComponentDefSnapshot = z.infer<typeof ComponentDefSnapshotSchema>
+
+/** The natural key of a component definition. */
+export const componentDefKey = (id: string, version: string, manifestSha256: string) =>
+  `${id}@${version}#${manifestSha256.slice(0, 12)}`
 
 /** Which project entities an inserted component created, keyed by the manifest's local keys. */
 export const ComponentInstanceSchema = z

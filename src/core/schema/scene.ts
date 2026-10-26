@@ -1,13 +1,15 @@
 import { z } from "zod"
+import { AssetLicenseSchema } from "./component/license"
 import {
   AssetIdSchema,
+  ComponentInstanceIdSchema,
   GroupIdSchema,
   MaterialIdSchema,
   PartIdSchema,
   TextureIdSchema,
 } from "./ids"
 import { AssetSlotsSchema, MaterialSlotsSchema } from "./material"
-import { NameSchema, PoseSchema, Vec3MmSchema } from "./primitives"
+import { LocalKeySchema, NameSchema, PoseSchema, Vec3MmSchema } from "./primitives"
 
 /** Part-local bounds; `min` never exceeds `max` on any axis. */
 export const BoundsMmSchema = z
@@ -16,8 +18,8 @@ export const BoundsMmSchema = z
   .refine((b) => b.min.every((v, i) => v <= (b.max[i] ?? v)), "bbox min must not exceed max")
 
 /**
- * A normalized mesh, stored once per content address at `geometry/<id>.glb`. Licence
- * metadata (CLAUDE.md §12) arrives with library components in Phase 9, as an optional field.
+ * A normalized mesh, stored once per content address at `geometry/<id>.glb`. Library
+ * geometry carries its licence (CLAUDE.md §12, Phase 9); a user's own import has none.
  */
 export const GeometryAssetSchema = z
   .object({
@@ -30,6 +32,7 @@ export const GeometryAssetSchema = z
     watertight: z.boolean().optional(),
     /** Material slot names, when the GLB has two or more (one glTF primitive each). */
     slots: AssetSlotsSchema.optional(),
+    license: AssetLicenseSchema.optional(),
   })
   .strict()
   .refine((a) => a.path === `geometry/${a.id}.glb`, {
@@ -61,13 +64,19 @@ export const GroupSchema = z
   .strict()
 export type Group = z.infer<typeof GroupSchema>
 
+/** An entity a component instance made, by the instance and the manifest's local key. */
+export const ComponentRefSchema = z
+  .object({ instance: ComponentInstanceIdSchema, key: LocalKeySchema })
+  .strict()
+export type ComponentRef = z.infer<typeof ComponentRefSchema>
+
 export const ColliderKindSchema = z.enum(["hull", "decomposed", "box", "trimesh", "none"])
 export type ColliderKind = z.infer<typeof ColliderKindSchema>
 
 /**
  * A placed instance of an asset. `materialId` is the part's material (appearance and density);
- * `materialSlots` overrides it on some of the asset's slots (appearance only). Later phases add
- * optional fields (Phase 9 the component reference), which needs no migration.
+ * `materialSlots` overrides it on some of the asset's slots (appearance only). Optional fields
+ * later phases add need no migration (Phase 9: `componentRef`).
  */
 export const PartSchema = z
   .object({
@@ -83,6 +92,8 @@ export const PartSchema = z
     massOverrideKg: z.number().positive().optional(),
     comOverrideMm: Vec3MmSchema.optional(),
     materialSlots: MaterialSlotsSchema.optional(),
+    /** The library component instance that made it, and its key in that manifest. */
+    componentRef: ComponentRefSchema.optional(),
   })
   .strict()
 export type Part = z.infer<typeof PartSchema>

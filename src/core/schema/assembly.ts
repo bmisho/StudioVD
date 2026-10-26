@@ -1,12 +1,28 @@
 import { z } from "zod"
-import { AnchorIdSchema, CouplingIdSchema, MateIdSchema, PartIdSchema } from "./ids"
-import { FrameSchema, MAX_COORDINATE_MM, NameSchema } from "./primitives"
+import {
+  AnchorIdSchema,
+  ComponentInstanceIdSchema,
+  CouplingIdSchema,
+  MateIdSchema,
+  PartIdSchema,
+} from "./ids"
+import { FrameSchema, LocalKeySchema, MAX_COORDINATE_MM, NameSchema } from "./primitives"
 
-/** Where an anchor came from. Phase 9 adds `component` (authoritative library frames). */
+/**
+ * Where an anchor came from. `component`: made by a library component instance, its frame
+ * authoritative (the manifest's), under that manifest's local key.
+ */
 export const AnchorSourceSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("face"), faceIndex: z.number().int().nonnegative() }).strict(),
   z.object({ kind: z.literal("vertex"), vertexIndex: z.number().int().nonnegative() }).strict(),
   z.object({ kind: z.literal("manual") }).strict(),
+  z
+    .object({
+      kind: z.literal("component"),
+      instance: ComponentInstanceIdSchema,
+      key: LocalKeySchema,
+    })
+    .strict(),
 ])
 export type AnchorSource = z.infer<typeof AnchorSourceSchema>
 export type AnchorKind = z.infer<typeof AnchorSchema>["kind"]
@@ -33,6 +49,22 @@ export type MateType = z.infer<typeof MateTypeSchema>
 const TURN_RAD = 2 * Math.PI
 const LimitSchema = z.number().min(-MAX_COORDINATE_MM).max(MAX_COORDINATE_MM)
 
+/** A mate's twist about A's z: within a turn either way. */
+export const MateAngleSchema = z.number().min(-TURN_RAD).max(TURN_RAD)
+/** Revolute: radians, within a turn. Prismatic: millimetres, within the coordinates. */
+export const MateLimitsSchema = z
+  .object({ min: LimitSchema, max: LimitSchema })
+  .strict()
+  .refine((l) => l.min <= l.max, "limits.min must not exceed limits.max")
+/** Revolute limits stay within a turn either way (mm limits are bounded by their schema). */
+export const revoluteLimitsHold = (m: {
+  type: string
+  limits?: { min: number; max: number } | undefined
+}): boolean =>
+  m.type !== "revolute" ||
+  !m.limits ||
+  (Math.abs(m.limits.min) <= TURN_RAD && Math.abs(m.limits.max) <= TURN_RAD)
+
 export const MateSchema = z
   .object({
     id: MateIdSchema,
@@ -40,13 +72,8 @@ export const MateSchema = z
     anchorA: AnchorIdSchema,
     anchorB: AnchorIdSchema,
     flip: z.boolean(),
-    angleOffsetRad: z.number().min(-TURN_RAD).max(TURN_RAD),
-    /** Revolute: radians, within a turn. Prismatic: millimetres, within the coordinates. */
-    limits: z
-      .object({ min: LimitSchema, max: LimitSchema })
-      .strict()
-      .refine((l) => l.min <= l.max, "limits.min must not exceed limits.max")
-      .optional(),
+    angleOffsetRad: MateAngleSchema,
+    limits: MateLimitsSchema.optional(),
     contactsEnabled: z.boolean(),
     suppressed: z.boolean(),
   })
@@ -55,13 +82,10 @@ export const MateSchema = z
     message: "a mate needs two different anchors",
     path: ["anchorB"],
   })
-  .refine(
-    (m) =>
-      m.type !== "revolute" ||
-      !m.limits ||
-      (Math.abs(m.limits.min) <= TURN_RAD && Math.abs(m.limits.max) <= TURN_RAD),
-    { message: "revolute limits stay within a turn either way", path: ["limits"] }
-  )
+  .refine(revoluteLimitsHold, {
+    message: "revolute limits stay within a turn either way",
+    path: ["limits"],
+  })
 export type Mate = z.infer<typeof MateSchema>
 
 /** Kinematic coupling between two mates (PLAN.md Phase 10.5). */

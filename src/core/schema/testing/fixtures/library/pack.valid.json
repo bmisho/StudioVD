@@ -1,0 +1,21 @@
+{
+  "format": "studiovd-pack",
+  "schemaVersion": 1,
+  "createdBy": "studiovd-pack-builder 1.0.0",
+  "createdAt": "2026-10-26T09:00:00Z",
+  "components": [
+    {
+      "id": "acme/knob-15mm",
+      "version": "2.1.0-beta.1",
+      "manifestPath": "components/acme/knob-15mm/2.1.0-beta.1/component.json",
+      "manifestSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
+  ],
+  "files": [
+    { "path": "components/acme/knob-15mm/2.1.0-beta.1/component.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "bytes": 3100 },
+    { "path": "components/acme/knob-15mm/2.1.0-beta.1/thumbnail.png", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "bytes": 18000 },
+    { "path": "geometry/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.glb", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bytes": 20480 },
+    { "path": "textures/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png", "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bytes": 40000 },
+    { "path": "licenses/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.txt", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "bytes": 19000 }
+  ]
+}

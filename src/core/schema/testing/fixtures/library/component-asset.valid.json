@@ -1,0 +1,95 @@
+{
+  "format": "studiovd-component",
+  "schemaVersion": 1,
+  "identity": {
+    "id": "acme/knob-15mm",
+    "version": "2.1.0-beta.1",
+    "name": "Knob 15 mm",
+    "description": "A knurled knob for 6 mm D shafts.\nPush fit.",
+    "category": ["mechanical", "knobs"],
+    "tags": ["knob", "d-shaft"],
+    "vendor": "Acme",
+    "mpn": "KN-15",
+    "datasheetUrl": "https://example.com/kn-15.pdf",
+    "requires": { "app": ">=0.1.0 <2.0.0" }
+  },
+  "parts": {
+    "body": {
+      "name": "Knob",
+      "geometry": {
+        "kind": "asset",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "path": "geometry/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.glb",
+        "bytes": 20480,
+        "triangles": 1200,
+        "bboxMm": { "min": [-7.5, -7.5, -6], "max": [7.5, 7.5, 6] }
+      },
+      "transform": { "positionMm": [0, 0, 6], "quaternion": [0, 0, 0, 1] },
+      "material": "abs",
+      "materialSlots": [{ "slot": "Cap", "material": "chrome" }],
+      "mass": {
+        "kg": 0.004,
+        "comMm": [0, 0, 1.5],
+        "source": { "kind": "datasheet", "ref": "https://example.com/kn-15.pdf", "note": "Table 1", "confidence": "medium" }
+      },
+      "collider": "hull"
+    }
+  },
+  "rootPart": "body",
+  "materials": {
+    "abs": {
+      "kind": "inline",
+      "name": "Black ABS",
+      "color": "#1a1a1a",
+      "metalness": 0,
+      "roughness": 0.6,
+      "opacity": 1,
+      "transmission": 0,
+      "ior": 1.5,
+      "thicknessMm": 0,
+      "clearcoat": 0,
+      "clearcoatRoughness": 0,
+      "emissive": "#000000",
+      "emissiveIntensity": 0,
+      "densityKgM3": 1040,
+      "maps": { "baseColor": { "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "path": "textures/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png", "tileSizeMm": 10 } }
+    },
+    "chrome": { "kind": "builtin", "key": "std.stainless-304" }
+  },
+  "anchors": {
+    "shaft": {
+      "part": "body",
+      "name": "Shaft hole",
+      "kind": "axial",
+      "frame": { "originMm": [0, 0, -6], "z": [0, 0, -1], "x": [1, 0, 0] },
+      "interface": "bore-6mm"
+    }
+  },
+  "mates": {},
+  "suggestedMates": [],
+  "placement": { "groundIfFirst": true },
+  "thumbnails": [
+    { "path": "components/acme/knob-15mm/2.1.0-beta.1/thumbnail.png", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "widthPx": 256, "heightPx": 256 }
+  ],
+  "license": {
+    "geometry": {
+      "spdx": "CC-BY-4.0",
+      "creators": [{ "name": "Acme Ltd", "url": "https://example.com" }],
+      "copyright": "(c) 2026 Acme Ltd",
+      "sourceUrl": "https://example.com/models/kn-15",
+      "sourceRevision": "r12",
+      "modifications": "STEP tessellated to GLB, recentred, Y-up",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseText": { "path": "licenses/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.txt", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" },
+      "attributionRequired": true,
+      "redistributable": true
+    },
+    "data": {
+      "spdx": "CC0-1.0",
+      "creators": [],
+      "attributionRequired": false,
+      "redistributable": true
+    }
+  },
+  "authoring": { "kind": "pipeline", "tool": "studiovd-pack-builder", "toolVersion": "1.0.0", "builtAt": "2026-10-26T09:00:00Z" }
+}

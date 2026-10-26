@@ -1,0 +1,114 @@
+{
+  "format": "studiovd-component",
+  "schemaVersion": 1,
+  "identity": {
+    "id": "gen/bearing-608-2rs",
+    "version": "1.0.0",
+    "name": "Ball bearing 608-2RS",
+    "summary": "Deep-groove ball bearing, 8 x 22 x 7 mm, sealed both sides",
+    "category": ["mechanical", "bearings"],
+    "tags": ["bearing", "608", "skate"],
+    "family": "bearing-608",
+    "designatorPrefix": "BRG",
+    "requires": { "app": ">=0.1.0", "generators": { "bearing.deepGroove": 1 } }
+  },
+  "parts": {
+    "outer": {
+      "name": "Outer ring",
+      "geometry": {
+        "kind": "generated",
+        "generator": "bearing.deepGroove",
+        "generatorMajor": 1,
+        "params": { "boreMm": 8, "outerMm": 22, "widthMm": 7, "sealed": true },
+        "output": "outerRing"
+      },
+      "transform": { "positionMm": [0, 0, 0], "quaternion": [0, 0, 0, 1] },
+      "material": "steel",
+      "collider": "decomposed",
+      "role": "body"
+    },
+    "inner": {
+      "name": "Inner ring",
+      "geometry": {
+        "kind": "generated",
+        "generator": "bearing.deepGroove",
+        "generatorMajor": 1,
+        "params": { "boreMm": 8, "outerMm": 22, "widthMm": 7, "sealed": true },
+        "output": "innerRing"
+      },
+      "transform": { "positionMm": [0, 0, 0], "quaternion": [0, 0, 0, 1] },
+      "material": "steel",
+      "collider": "decomposed",
+      "role": "moving"
+    }
+  },
+  "rootPart": "outer",
+  "materials": { "steel": { "kind": "builtin", "key": "std.steel" } },
+  "anchors": {
+    "outerAxis": {
+      "part": "outer",
+      "name": "Outer axis",
+      "kind": "axial",
+      "frame": { "originMm": [0, 0, 0], "z": [0, 0, 1], "x": [1, 0, 0] },
+      "interface": "boss-22mm",
+      "role": "mount"
+    },
+    "innerAxis": {
+      "part": "inner",
+      "name": "Inner axis",
+      "kind": "axial",
+      "frame": { "originMm": [0, 0, 0], "z": [0, 0, 1], "x": [1, 0, 0] }
+    },
+    "bore": {
+      "part": "inner",
+      "name": "Bore",
+      "kind": "axial",
+      "frame": { "originMm": [0, 0, 3.5], "z": [0, 0, 1], "x": [1, 0, 0] },
+      "interface": "bore-8mm",
+      "role": "mate"
+    },
+    "face": {
+      "part": "outer",
+      "name": "Face",
+      "kind": "planar",
+      "frame": { "originMm": [0, 0, -3.5], "z": [0, 0, -1], "x": [1, 0, 0] },
+      "role": "placement"
+    }
+  },
+  "mates": {
+    "spin": {
+      "name": "Rings turn",
+      "type": "revolute",
+      "anchorA": "outerAxis",
+      "anchorB": "innerAxis",
+      "flip": false,
+      "angleOffsetRad": 0,
+      "contactsEnabled": false
+    }
+  },
+  "suggestedMates": [
+    { "anchor": "bore", "mateType": "revolute", "flip": false, "label": "On an 8 mm shaft" }
+  ],
+  "placement": { "placementAnchor": "face", "groundIfFirst": false },
+  "thumbnails": [],
+  "license": {
+    "geometry": {
+      "spdx": "CC0-1.0",
+      "creators": [{ "name": "StudioVD" }],
+      "attributionRequired": false,
+      "redistributable": true
+    },
+    "data": {
+      "spdx": "CC0-1.0",
+      "creators": [{ "name": "StudioVD" }],
+      "attributionRequired": false,
+      "redistributable": true
+    }
+  },
+  "authoring": {
+    "kind": "generator",
+    "generator": "bearing.deepGroove",
+    "generatorVersion": "1.0.0",
+    "params": { "boreMm": 8, "outerMm": 22, "widthMm": 7, "sealed": true }
+  }
+}

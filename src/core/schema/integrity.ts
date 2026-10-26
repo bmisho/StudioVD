@@ -1,5 +1,6 @@
 import { COLLECTION_CAPS, SCENE_LIMITS, SCHEMATIC_CAPS } from "./caps"
 import type { SceneDocument } from "./document"
+import { checkComponentRefs } from "./componentIntegrity"
 import { checkMaterialRefs } from "./materialIntegrity"
 import type { DocumentProblem } from "./scanJson"
 
@@ -47,7 +48,8 @@ const REFERENCES = (doc: SceneDocument) =>
 /**
  * Cross-entity rules zod cannot express (PLAN 5.1), run on every opened scene.json before it
  * reaches the store, and before every save: record keys equal ids, minted ids are unique
- * across kinds, references resolve (material maps and slots included), group parents form no
+ * across kinds, references resolve (material maps and slots, component instances included),
+ * group parents form no
  * cycle, collections stay within their caps. Returns at most `maxProblems` problems; empty means the document is sound.
  */
 export function checkIntegrity(doc: SceneDocument, maxProblems = 50): DocumentProblem[] {
@@ -100,6 +102,7 @@ export function checkIntegrity(doc: SceneDocument, maxProblems = 50): DocumentPr
     if (a && b && a.partId === b.partId) report(`mates.${key}`, "both anchors are on one part")
   }
   checkMaterialRefs(doc, report)
+  checkComponentRefs(doc, report)
 
   for (const key of groupsTooDeep(doc.groups, SCENE_LIMITS.maxGroupDepth))
     report(`groups.${key}.parentId`, "group parents form a cycle or nest too deeply")

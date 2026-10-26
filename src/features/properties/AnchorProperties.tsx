@@ -16,6 +16,7 @@ const SOURCE: Record<AnchorSource["kind"], string> = {
   face: "Snapped to a face of the part",
   vertex: "Snapped to a corner of the part",
   manual: "Placed by hand",
+  component: "Part of a library component",
 }
 
 /**

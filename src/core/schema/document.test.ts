@@ -65,7 +65,7 @@ describe("scene.json v1 schema", () => {
     expect(parseDocument(doc).ok).toBe(false)
   })
 
-  it("rejects library components until Phase 9 defines the manifest schema", () => {
+  it("rejects a component definition whose manifest is not a component.json", () => {
     const key = "std/m3@1.0.0#0123456789ab"
     const def = { key, id: "std/m3", version: "1.0.0", manifestSha256: "a".repeat(64) }
     const doc = {

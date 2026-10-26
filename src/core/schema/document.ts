@@ -61,17 +61,9 @@ export const SceneDocumentSchema = z
       })
       .strict(),
     bindings: emptyUntil(z.record(BindingIdSchema, BindingSchema), 13, "Bindings"),
-    componentDefs: emptyUntil(
-      z.record(ComponentDefKeySchema, ComponentDefSnapshotSchema),
-      9,
-      "Library components"
-    ),
-    components: emptyUntil(
-      z.record(ComponentInstanceIdSchema, ComponentInstanceSchema),
-      9,
-      "Library components"
-    ),
-    licenseTexts: emptyUntil(z.record(Sha256Schema, LicenseTextSchema), 9, "Licence texts"),
+    componentDefs: z.record(ComponentDefKeySchema, ComponentDefSnapshotSchema),
+    components: z.record(ComponentInstanceIdSchema, ComponentInstanceSchema),
+    licenseTexts: z.record(Sha256Schema, LicenseTextSchema),
     simulation: z
       .object({
         /** m/s², world frame (Y-up). Used by the solver only; Rapier gravity is always zero. */

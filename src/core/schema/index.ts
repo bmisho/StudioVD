@@ -1,5 +1,7 @@
 export * from "./assembly"
 export * from "./caps"
+export * from "./component"
+export * from "./componentIntegrity"
 export * from "./document"
 export * from "./ids"
 export * from "./integrity"

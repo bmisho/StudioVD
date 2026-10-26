@@ -7,4 +7,4 @@ pub mod stvd;
 pub mod writer;
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

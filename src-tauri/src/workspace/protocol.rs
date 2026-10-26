@@ -22,30 +22,67 @@ fn kind(ext: &str) -> Option<(&'static str, u64, &'static str)> {
     }
 }
 
+/// A request path such as `/<64 hex>.glb` → its id, extension and kind.
+fn parse(uri_path: &str) -> Option<(&str, &str, (&'static str, u64, &'static str))> {
+    let name = uri_path.strip_prefix('/').unwrap_or(uri_path);
+    name.split_once('.')
+        .filter(|(id, _)| is_asset_id(id))
+        .and_then(|(id, ext)| kind(ext).map(|k| (id, ext, k)))
+}
+
+/// The first of `folders` (under `root`) holding `<id>.<ext>`, read within `cap`.
+fn serve(
+    root: Option<&Path>,
+    folders: &[&str],
+    id: &str,
+    ext: &str,
+    cap: u64,
+    mime: &'static str,
+) -> (StatusCode, &'static str, Vec<u8>) {
+    let Some(root) = root else {
+        return (StatusCode::SERVICE_UNAVAILABLE, mime, Vec::new());
+    };
+    let found = folders
+        .iter()
+        .map(|folder| root.join(folder).join(format!("{id}.{ext}")))
+        .find(|path| path.is_file());
+    let Some(path) = found else {
+        return (StatusCode::NOT_FOUND, mime, Vec::new());
+    };
+    match read_capped(&path, cap) {
+        Ok(bytes) => (StatusCode::OK, mime, bytes),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, mime, Vec::new()),
+    }
+}
+
 /// Status, content type and body for a request path such as `/<64 hex>.glb`.
 pub fn asset_reply(
     bundle_dir: Option<&Path>,
     uri_path: &str,
 ) -> (StatusCode, &'static str, Vec<u8>) {
-    let name = uri_path.strip_prefix('/').unwrap_or(uri_path);
-    let parsed = name
-        .split_once('.')
-        .filter(|(id, _)| is_asset_id(id))
-        .and_then(|(id, ext)| kind(ext).map(|k| (id, ext, k)));
-    let Some((id, ext, (folder, cap, mime))) = parsed else {
+    let Some((id, ext, (folder, cap, mime))) = parse(uri_path) else {
         return (StatusCode::BAD_REQUEST, "text/plain", Vec::new());
     };
-    let Some(dir) = bundle_dir else {
-        return (StatusCode::SERVICE_UNAVAILABLE, mime, Vec::new());
+    serve(bundle_dir, &[folder], id, ext, cap, mime)
+}
+
+/// The same for the component library's store (`/lib-<sha256>.glb|png|jpg`, the prefix
+/// stripped by the caller): geometry,
+/// texture and thumbnail blobs, read-only (insertion previews and Library cards). A PNG is
+/// a texture or a thumbnail: one content address, either folder.
+pub fn library_reply(
+    store_dir: Option<&Path>,
+    uri_path: &str,
+) -> (StatusCode, &'static str, Vec<u8>) {
+    let Some((id, ext, (folder, cap, mime))) = parse(uri_path) else {
+        return (StatusCode::BAD_REQUEST, "text/plain", Vec::new());
     };
-    let path = dir.join(folder).join(format!("{id}.{ext}"));
-    if !path.is_file() {
-        return (StatusCode::NOT_FOUND, mime, Vec::new());
-    }
-    match read_capped(&path, cap) {
-        Ok(bytes) => (StatusCode::OK, mime, bytes),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, mime, Vec::new()),
-    }
+    let folders: &[&str] = if ext == "png" {
+        &[folder, "thumbnails"]
+    } else {
+        &[folder]
+    };
+    serve(store_dir, folders, id, ext, cap, mime)
 }
 
 /// The HTTP response. Assets are not secret (the webview wrote them), so any origin may read
@@ -112,6 +149,26 @@ mod tests {
         );
         let response = asset_response(StatusCode::OK, "image/png", Vec::new());
         assert_eq!(response.headers()["access-control-allow-origin"], "*");
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn serves_library_blobs_thumbnails_included() {
+        let dir = std::env::temp_dir().join(format!("studiovd-proto-lib-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("thumbnails")).expect("dir");
+        let id = "c".repeat(64);
+        std::fs::write(dir.join("thumbnails").join(format!("{id}.png")), b"png").expect("thumb");
+        let ok = library_reply(Some(&dir), &format!("/{id}.png"));
+        assert_eq!(ok, (StatusCode::OK, "image/png", b"png".to_vec()));
+        assert_eq!(
+            library_reply(Some(&dir), &format!("/{id}.glb")).0,
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            library_reply(Some(&dir), "/../LOCK").0,
+            StatusCode::BAD_REQUEST
+        );
         let _ = std::fs::remove_dir_all(dir);
     }
 }

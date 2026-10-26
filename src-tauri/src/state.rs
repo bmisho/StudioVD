@@ -1,12 +1,14 @@
 //! Process-wide backend state: the open project and the files the user picked.
 
 use crate::error::{AppError, AppResult};
+use crate::library::install::Staged;
+use crate::library::Library;
 use crate::picked::PickedFiles;
 use crate::project::Project;
 use crate::workspace::sweep::{clean_stale, LEFTOVER_AGE, RECOVERABLE_AGE};
 use crate::workspace::Workspace;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 use tauri::{AppHandle, Manager, Runtime};
 
 pub struct AppState {
@@ -16,6 +18,10 @@ pub struct AppState {
     config: Option<PathBuf>,
     project: Mutex<Project>,
     picked: Mutex<PickedFiles>,
+    /// `<app local data>/library` (PLAN 4.5), opened at startup.
+    library: Option<Arc<Library>>,
+    /// A pack extracted for Install from file, waiting for the user's confirmation.
+    staged: Mutex<Option<Staged>>,
 }
 
 impl AppState {
@@ -37,8 +43,16 @@ impl AppState {
             let (base, keep) = (base.clone(), ws.root().to_path_buf());
             std::thread::spawn(move || clean_stale(&base, &keep, LEFTOVER_AGE, RECOVERABLE_AGE));
         }
+        let library = app.path().app_local_data_dir().ok().and_then(|dir| {
+            Library::open(&dir.join("library"))
+                .inspect_err(|e| eprintln!("StudioVD: no component library ({e})."))
+                .ok()
+                .map(Arc::new)
+        });
         Self {
             workspaces,
+            library,
+            staged: Mutex::new(None),
             config: app.path().app_config_dir().ok(),
             project: Mutex::new(Project {
                 workspace,
@@ -58,6 +72,23 @@ impl AppState {
         self.picked
             .lock()
             .map_err(|_| AppError::Io("The file list is unavailable.".into()))
+    }
+
+    pub fn library(&self) -> AppResult<Arc<Library>> {
+        self.library
+            .clone()
+            .ok_or_else(|| AppError::Io("The component library folder is unavailable.".into()))
+    }
+
+    pub fn staged(&self) -> AppResult<MutexGuard<'_, Option<Staged>>> {
+        self.staged
+            .lock()
+            .map_err(|_| AppError::Io("The install in progress is unavailable.".into()))
+    }
+
+    /// Where the `stvd` scheme serves library files from (`/lib-<sha256>.<ext>`).
+    pub fn library_store_dir(&self) -> Option<PathBuf> {
+        self.library.as_ref().map(|lib| lib.store_dir())
     }
 
     pub fn workspaces_dir(&self) -> AppResult<&Path> {

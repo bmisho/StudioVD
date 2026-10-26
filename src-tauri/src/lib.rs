@@ -2,6 +2,7 @@ mod bundle;
 mod commands;
 mod error;
 mod fsutil;
+mod library;
 mod picked;
 mod project;
 mod state;
@@ -58,7 +59,8 @@ pub fn run() {
                 commands::import::files_dropped(webview, paths);
             }
         })
-        // Workspace files for the webview (`stvd://localhost/<sha256>.glb|png|jpg`).
+        // Workspace and library files for the webview (`stvd://localhost/<sha256>.glb|png|jpg`,
+        // `stvd://localhost/lib-<sha256>.<ext>`).
         .register_asynchronous_uri_scheme_protocol(
             workspace::protocol::ASSET_SCHEME,
             |ctx, request, responder| {
@@ -66,9 +68,16 @@ pub fn run() {
                 let path = request.uri().path().to_owned();
                 tauri::async_runtime::spawn_blocking(move || {
                     let state = app.try_state::<state::AppState>();
-                    let dir = state.and_then(|s| s.bundle_dir());
-                    let (status, mime, body) =
-                        workspace::protocol::asset_reply(dir.as_deref(), &path);
+                    let (status, mime, body) = match path.strip_prefix("/lib-") {
+                        Some(rest) => {
+                            let store = state.and_then(|s| s.library_store_dir());
+                            workspace::protocol::library_reply(store.as_deref(), rest)
+                        }
+                        None => {
+                            let dir = state.and_then(|s| s.bundle_dir());
+                            workspace::protocol::asset_reply(dir.as_deref(), &path)
+                        }
+                    };
                     responder.respond(workspace::protocol::asset_response(status, mime, body));
                 });
             },
@@ -101,6 +110,12 @@ pub fn run() {
             commands::assets::write_asset,
             commands::export::pick_export_path,
             commands::export::write_export,
+            commands::library::library_list,
+            commands::library::library_pick_pack,
+            commands::library::library_install_commit,
+            commands::library::library_install_cancel,
+            commands::library::library_remove,
+            commands::library::library_copy_into_project,
         ])
         .build(tauri::generate_context!());
     match app {

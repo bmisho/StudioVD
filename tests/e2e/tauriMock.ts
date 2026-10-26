@@ -19,6 +19,7 @@ export function installTauriMockScript(): void {
   let nextTexture: { name: string; base64: string } | null = null
   const urls = new Map<string, string>()
   const exports = new Map<string, { name: string; bytes: Uint8Array }>()
+  const library: { id: unknown; version: unknown }[] = []
   const listeners = new Map<string, { eventId: number; handler: number }[]>()
   let nextPick: Picked[] = []
   let counter = 0
@@ -111,6 +112,17 @@ export function installTauriMockScript(): void {
       textures.set(id, { ext, bytes: bytes.slice() })
       return { id, ext, name: chosen.name, width: 0, height: 0 }
     },
+    // The component library (src/lib/tauri/library.ts): empty unless a test installs into it.
+    library_list: () => library,
+    library_pick_pack: () => null,
+    library_install_commit: () => fail("invalidInput", "Nothing is waiting to be installed."),
+    library_install_cancel: () => null,
+    library_remove: (args) => {
+      const at = library.findIndex((c) => c.id === args.id && c.version === args.version)
+      if (at >= 0) library.splice(at, 1)
+      return library
+    },
+    library_copy_into_project: () => 0,
     pick_export_path: (args) => {
       const token = `x${++counter}`
       const name = `${String(args.suggestedName)}.${String(args.format)}`

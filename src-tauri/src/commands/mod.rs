@@ -6,5 +6,6 @@ mod dialog;
 pub mod export;
 pub mod import;
 mod ipc;
+pub mod library;
 pub mod project;
 pub mod session;

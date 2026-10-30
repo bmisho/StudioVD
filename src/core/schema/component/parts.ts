@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { Sha256Schema } from "../ids"
-import { MaterialSchema, SlotNameSchema } from "../material"
+import { AssetSlotsSchema, MaterialSchema, SlotNameSchema } from "../material"
 import { LocalKeySchema, PoseSchema, Vec3MmSchema } from "../primitives"
 import { BoundsMmSchema, ColliderKindSchema } from "../scene"
 import {
@@ -27,6 +27,11 @@ export const GeometryRefSchema = z.discriminatedUnion("kind", [
       bytes: z.number().int().positive().max(MAX_COMPONENT_GLB_BYTES),
       triangles: z.number().int().nonnegative().max(5_000_000),
       bboxMm: BoundsMmSchema,
+      /** What the scene asset records (PLAN 4.6), copied as given: the GLB is re-read anyway. */
+      watertight: z.boolean().optional(),
+      volumeMm3: z.number().nonnegative().max(1e24).optional(),
+      centroidMm: Vec3MmSchema.optional(),
+      slots: AssetSlotsSchema.optional(),
     })
     .strict()
     .refine((g) => g.path === `geometry/${g.sha256}.glb`, "path must be geometry/<sha256>.glb"),

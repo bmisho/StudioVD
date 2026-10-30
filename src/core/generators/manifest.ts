@@ -53,7 +53,8 @@ export function generatedManifest(
   const offset = (body: string): Vec3 => offsets[body] ?? [0, 0, 0]
   const parts: Record<string, ComponentPart> = {}
   for (const [key, body] of Object.entries(out.bodies)) {
-    const slots = body.slots && body.slots.length > 1 ? body.slots : undefined
+    // Slot overrides only where a slot differs from the part's own material.
+    const slots = body.slots?.filter((s) => s.material !== body.material)
     parts[key] = {
       name: body.name,
       geometry: {
@@ -65,7 +66,9 @@ export function generatedManifest(
       },
       transform: { positionMm: offset(key), quaternion: [0, 0, 0, 1] },
       material: body.material,
-      ...(slots && { materialSlots: slots.map((s) => ({ slot: s.name, material: s.material })) }),
+      ...(slots?.length && {
+        materialSlots: slots.map((s) => ({ slot: s.name, material: s.material })),
+      }),
       ...(body.mass && { mass: body.mass }),
       collider: body.collider,
       ...(body.role && { role: body.role }),

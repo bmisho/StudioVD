@@ -1,5 +1,10 @@
 import { prepareAsset, type PreparedAsset, type SourceMesh } from "@/core/geometry/prepareAsset"
-import type { ComponentManifest, GeneratorParams, Vec3 } from "@/core/schema"
+import {
+  ComponentManifestSchema,
+  type ComponentManifest,
+  type GeneratorParams,
+  type Vec3,
+} from "@/core/schema"
 import { generatedManifest } from "./manifest"
 import type { AnyGenerator, GeneratedBody, GeneratorOutput } from "./types"
 
@@ -48,5 +53,10 @@ export async function prepareGenerated(
     assets[key] = prepared
     offsets[key] = prepared.offsetMm
   }
-  return { manifest: generatedManifest(gen, params, output, offsets), assets, output }
+  // Through JSON once, as a saved file would be: no -0 (cross products make them; JSON reads
+  // them back as 0, and scene.json must reopen unchanged), and the strict schema checked.
+  const manifest = ComponentManifestSchema.parse(
+    JSON.parse(JSON.stringify(generatedManifest(gen, params, output, offsets)))
+  )
+  return { manifest, assets, output }
 }

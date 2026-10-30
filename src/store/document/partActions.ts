@@ -77,7 +77,13 @@ export function partActions(set: Set): PartActions {
 
     deleteItems: (parts, groups, anchors = [], mates = []) =>
       set((s) => {
-        removeParts(s.doc, parts)
+        // A component's group goes with the whole component (its parts, anchors, mates).
+        const whole = groups.flatMap((g) =>
+          Object.values(s.doc.components)
+            .filter((c) => c.groupId === g)
+            .flatMap((c) => Object.values(c.parts))
+        )
+        removeParts(s.doc, [...parts, ...whole])
         removeGroups(s.doc, groups)
         removeAnchors(s.doc, anchors)
         removeMates(s.doc, mates)

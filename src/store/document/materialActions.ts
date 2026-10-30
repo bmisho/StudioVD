@@ -24,6 +24,7 @@ import {
 } from "@/core/schema"
 import { deepEqual } from "@/core/util/deepEqual"
 import type { Get, Set } from "./actionTypes"
+import { pruneComponents } from "./componentUpkeep"
 
 /** Values the editor changes; identity, provenance and maps have their own actions. */
 export type MaterialPatch = Partial<Omit<Material, "id" | "builtinKey" | "maps">>
@@ -165,6 +166,7 @@ export function materialActions(set: Set, get: Get): MaterialActions {
           else delete part.materialSlots
         }
         dropUnusedTextures(s.doc)
+        pruneComponents(s.doc)
       }),
 
     setSlotMaterial: (partId, slot, id) => {

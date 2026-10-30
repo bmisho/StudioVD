@@ -13,6 +13,7 @@ import {
 } from "@/core/schema"
 import { removeGroups } from "./deletion"
 import { anchorActions, type AnchorActions } from "./anchorActions"
+import { componentActions, type ComponentActions } from "./componentActions"
 import { mateActions, type MateActions } from "./mateActions"
 import { materialActions, type MaterialActions } from "./materialActions"
 import { partActions, type PartActions } from "./partActions"
@@ -20,7 +21,8 @@ import { partActions, type PartActions } from "./partActions"
 /** Maximum undo depth. Snapshots share structure (immer), so each costs only what changed. */
 export const HISTORY_LIMIT = 200
 
-export interface DocumentState extends PartActions, MaterialActions, AnchorActions, MateActions {
+export interface DocumentState
+  extends PartActions, MaterialActions, AnchorActions, MateActions, ComponentActions {
   /** The persisted, undoable document (CLAUDE.md §4, kind 1). */
   doc: SceneDocument
   /** Replaces the whole document (open, new). The caller decides whether to clear history. */
@@ -82,17 +84,27 @@ export function createDocumentStore(initial?: SceneDocument) {
         ...materialActions(set, get),
         ...anchorActions(set, get),
         ...mateActions(set, get),
+        ...componentActions(set, get),
 
         insertEntities: (batch) => {
           const problems = entityBatchProblems(get().doc, batch)
           if (problems.length > 0) throw new Error(`Invalid entity batch: ${problems.join("; ")}`)
           set((s) => {
+            const d = s.doc
             for (const a of batch.assets ?? [])
-              if (!Object.hasOwn(s.doc.assets, a.id)) s.doc.assets[a.id] = a
-            for (const g of batch.groups ?? []) s.doc.groups[g.id] = g
-            for (const p of batch.parts ?? []) s.doc.parts[p.id] = p
-            for (const a of batch.anchors ?? []) s.doc.anchors[a.id] = a
-            for (const m of batch.mates ?? []) s.doc.mates[m.id] = m
+              if (!Object.hasOwn(d.assets, a.id)) d.assets[a.id] = a
+            for (const t of batch.textures ?? [])
+              if (!Object.hasOwn(d.textures, t.id)) d.textures[t.id] = t
+            for (const m of batch.materials ?? []) d.materials[m.id] = m
+            for (const g of batch.groups ?? []) d.groups[g.id] = g
+            for (const p of batch.parts ?? []) d.parts[p.id] = p
+            for (const a of batch.anchors ?? []) d.anchors[a.id] = a
+            for (const m of batch.mates ?? []) d.mates[m.id] = m
+            for (const def of batch.componentDefs ?? [])
+              if (!Object.hasOwn(d.componentDefs, def.key)) d.componentDefs[def.key] = def
+            for (const c of batch.components ?? []) d.components[c.id] = c
+            for (const l of batch.licenseTexts ?? [])
+              if (!Object.hasOwn(d.licenseTexts, l.sha256)) d.licenseTexts[l.sha256] = l.text
           })
         },
       })),

@@ -25,6 +25,7 @@ export const ComponentOriginSchema = z.enum([
   "generator",
   "project",
 ])
+export type ComponentOrigin = z.infer<typeof ComponentOriginSchema>
 
 /**
  * A frozen copy of a component's manifest, stored once per definition: a project never needs
@@ -80,3 +81,4 @@ export const LicenseTextSchema = z
     spdx: SpdxSchema,
   })
   .strict()
+export type LicenseText = z.infer<typeof LicenseTextSchema>

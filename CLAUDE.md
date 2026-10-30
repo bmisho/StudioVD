@@ -219,6 +219,10 @@ Further rules:
   closed, Y the axis of revolved parts; planar anchors face out of their face, axial anchors
   point out of the face something enters. Output goes through `prepareAsset` like imports.
   Never `Math.random` or time in a generator: same parameters, same geometry.
+- Library (Phase 9): a component is inserted as ONE `insertEntities` batch from
+  `core/library/instantiate.ts`; deletions keep instances true (`componentUpkeep.ts`). The
+  insertion drag's state is a transient observable (`insertionPreview`), never Zustand; a
+  click picks a component as its group unless it is the one entered (`enteredComponent`).
 - R3F requests a frame when objects are added or changed, **not when they are removed**: a
   component whose objects can go away (unmount, conditional children) calls
   `renderer/useRedrawOnRemoval.ts`, or the demand frameloop keeps drawing them.

@@ -126,6 +126,19 @@ export function ViewportProbe() {
       dragReady: () => partGrab.current !== null,
       parts: () =>
         Object.values(useDocumentStore.getState().doc.parts).map(({ id, name }) => ({ id, name })),
+      components: () => {
+        const doc = useDocumentStore.getState().doc
+        return Object.values(doc.components).map((c) => ({
+          id: c.id,
+          designator: c.designator,
+          name: (c.def && doc.componentDefs[c.def]?.manifest.identity.name) ?? "",
+          parts: Object.keys(c.parts),
+          groupId: c.groupId,
+          positions: Object.fromEntries(
+            Object.entries(c.parts).map(([k, id]) => [k, doc.parts[id]?.pose.positionMm ?? []])
+          ),
+        }))
+      },
       camera: () => {
         const c = rig.controls
         const cam = c.camera

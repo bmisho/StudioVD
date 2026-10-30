@@ -6,10 +6,12 @@ import {
   isPrimaryClick,
   selectionChangeForClick,
 } from "@/core/scene/pickPolicy"
+import { componentOfPart, pickTarget } from "@/core/scene/componentPick"
 import { anchorPreview } from "@/features/assembly/anchorPreview"
 import { clickAnchor, previewAnchor } from "@/features/assembly/anchorTool"
 import { anchorAt } from "@/features/assembly/glyphs"
 import { pickMateAnchor } from "@/features/assembly/mateTool"
+import { useDocumentStore } from "@/store/document/documentStore"
 import {
   useSessionStore,
   type SelectionItem,
@@ -80,14 +82,30 @@ export function PickRoot(props: PickRootProps) {
     const n = e.nativeEvent
     // An anchor glyph drawn over the part wins (glyphs are picked by screen distance).
     const anchor = anchorAt(n.clientX, n.clientY)
-    const target: SelectionItem | null = anchor
-      ? { kind: "anchor", id: anchor }
-      : pickRefOf(e.object)
+    const raw: SelectionItem | null = anchor ? { kind: "anchor", id: anchor } : pickRefOf(e.object)
+    // A library component is picked whole, unless it is the one double-clicked into.
+    const doc = useDocumentStore.getState().doc
+    const owner = raw?.kind === "part" ? componentOfPart(doc, raw.id) : null
+    const state = session.getState()
+    if (state.enteredComponent && owner?.instance !== state.enteredComponent)
+      state.enterComponent(null)
+    const target = pickTarget(doc, raw, session.getState().enteredComponent)
     const additive = n.ctrlKey || n.metaKey // same rule as SceneTreeRow
     applySelectionChange(
       session,
       selectionChangeForClick({ type: n.type, button: n.button, delta: e.delta, additive, target })
     )
+  }
+  // Double-click enters a component: its parts are then picked one by one (PLAN 9.5).
+  const onDoubleClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation()
+    if (placing || mating || testMode) return
+    const raw = pickRefOf(e.object)
+    const owner =
+      raw?.kind === "part" ? componentOfPart(useDocumentStore.getState().doc, raw.id) : null
+    if (!raw || !owner) return
+    session.getState().enterComponent(owner.instance)
+    session.getState().select([raw])
   }
   // Test mode only: a primary press on a part starts a physics drag (PLAN 3.9).
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
@@ -105,6 +123,7 @@ export function PickRoot(props: PickRootProps) {
       onPointerMove={onPointerMove}
       onPointerOut={onPointerOut}
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
       onPointerDown={testMode ? onPointerDown : undefined}
     >
       {children}

@@ -5,6 +5,7 @@ import { PartMaterialSection } from "@/features/materials/PartMaterialSection"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { AnchorProperties } from "./AnchorProperties"
+import { ComponentSection } from "./ComponentSection"
 import { GroupProperties } from "./GroupProperties"
 import { MateProperties } from "./MateProperties"
 import { NewMateProperties } from "./NewMateProperties"
@@ -34,6 +35,7 @@ export function PropertiesPanel() {
     content = (
       <div className="flex flex-col gap-3">
         <GroupProperties key={single.id} id={single.id} />
+        <ComponentSection key={`component-${single.id}`} groupId={single.id} />
         {materials}
       </div>
     )

@@ -928,9 +928,14 @@ Exit criteria
   Integrity: instances name an existing definition and their own group, everything they list
   points back (parts by `componentRef`, anchors by source), unique designators, licence
   texts present; save-time GC keeps the texts kept assets and definitions name
-- [ ] 9.2 Rust `library` module (local part): store layout (§4.5), content-addressed blobs,
+- [x] 9.2 Rust `library` module (local part): store layout (§4.5), content-addressed blobs,
   staging + atomic install, `installed.json` (rebuildable from disk), single-writer lock, GC;
-  Install-from-file for `.stvdpack` (unsigned packs show an "Unverified" badge after confirmation)
+  Install-from-file for `.stvdpack` (unsigned packs show an "Unverified" badge after confirmation).
+  As built: Rust extracts through the zip guard and checks each file by kind and SHA-256; the
+  webview reads every component.json as untrusted input (reserved namespaces refused, each
+  matched against pack.json) and shows them in a confirmation dialog (Unverified notice); a
+  pack with an invalid component cannot be committed; library blobs are served as
+  `stvd://lib-<sha256>.<ext>`
 - [x] 9.3 Generators v1 in a Web Worker (pure TS in `src/core/generators/<id>/v<major>.ts`, zod
   params, analytic anchors with interface tags, mass, default material): deep-groove bearing
   (outer + inner ring + revolute), ISO 4762 screw, ISO 4032 nut, ISO 7089 washer, set screw,
@@ -949,13 +954,27 @@ Exit criteria
   a helix); spur gears follow the ISO 53 rack, pointed tips shortened to a 0.25 m land.
   Values for later phases: pitch diameters, lead, spring rate, cell voltage. Golden file
   `src/core/generators/testing/golden.json`: keys exact, geometry within 1e-6
-- [ ] 9.4 Library tab: sources (Installed, My components, Generators; Online catalog disabled
+- [x] 9.4 Library tab: sources (Installed, My components, Generators; Online catalog disabled
   until Phase 14; Schematic primitives from Phase 11), search in a worker, virtualized cards,
-  badges (Official / User / Unverified / Needs newer StudioVD), "Licence & source" popover
-- [ ] 9.5 Insertion (§4.6): pointer-event drag, transient ghost, snap-to-compatible-anchor,
+  badges (Official / User / Unverified / Needs newer StudioVD), "Licence & source" popover.
+  As built: one card per generator preset plus installed components; the list is a listbox
+  (one tab stop, active descendant, arrows, Enter inserts); search folds case, accents and ×,
+  needs every word, ranks names over tags; Enter in the search box inserts the top result for
+  exactly what is typed; the details strip under the list holds Licence & source (grants,
+  creators, and where every number comes from) and Insert
+- [x] 9.5 Insertion (§4.6): pointer-event drag, transient ghost, snap-to-compatible-anchor,
   surface and ground placement, R rotates / Alt skips snapping / Esc cancels, Rust copies the
   blobs, one undo entry, designators (`M2`, `LED3`), component selected as a group (double-click
-  enters it), Unlink, Edit parameters (generators; keeps keys so external mates survive)
+  enters it), Unlink, Edit parameters (generators; keeps keys so external mates survive).
+  As built: the drag prepares the component as it starts (generator worker, or Rust's copy;
+  GLBs written to the workspace), a DOM chip follows the cursor and a see-through ghost shows
+  the landing pose; a scene anchor within 24 px whose tag fits snaps (near ties go to the one
+  nearest the camera), else the surface under the cursor, else the ground; Enter, double-click
+  and Insert place it at the middle of the view. `instantiateComponent` builds one batch
+  (group named by designator, parts, anchors, internal mates, shared preset materials, the
+  frozen definition, the instance record). Deleting keeps instances true; deleting a
+  component's group deletes the component. Edit parameters regenerates in the worker and
+  keeps every shared key's id (user names, materials and deletions stay)
 - [ ] 9.6 Derived connector geometry (belt between pulleys, tube between fittings, spring
   between anchors): regenerated from its end anchors, visual only, no collider
 - [ ] 9.7 Save as component → user library (same format and validator; licences of library parts

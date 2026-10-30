@@ -1,6 +1,7 @@
 import type { Material } from "three"
 import type { Direction } from "@/core/math/standardViews"
-import type { PartId } from "@/core/schema"
+import type { PartId, Vec3 } from "@/core/schema"
+import type { PointerProbe } from "./picking/pointerProbe"
 
 /**
  * How commands reach the 3D view without depending on R3F. The canvas attaches an
@@ -21,6 +22,12 @@ export interface ViewportApi {
   captureThumbnail(): Promise<Uint8Array | null>
   /** The part drawn under a point of the page (client px), if any. */
   partAt(clientX: number, clientY: number): PartId | null
+  /** Surface and ground under a point of the page (PLAN 9.5); null off the 3D view. */
+  probe(clientX: number, clientY: number): PointerProbe | null
+  /** Client px and depth (-1 near .. 1 far) of a world point; null behind the camera. */
+  toClient(p: Vec3): { x: number; y: number; depth: number } | null
+  /** The 3D view's centre in client px; null without a view. */
+  centre(): { x: number; y: number } | null
   /**
    * Sphere previews of three.js materials, `tilePx` device px square, in order (PLAN 6.3).
    * Async: shaders compile first without blocking. Null when it cannot render now.
@@ -37,6 +44,9 @@ export interface ViewportImpl {
   setView(direction: Direction, animate: boolean): void
   captureThumbnail(): Promise<Uint8Array | null>
   partAt(clientX: number, clientY: number): PartId | null
+  probe(clientX: number, clientY: number): PointerProbe | null
+  toClient(p: Vec3): { x: number; y: number; depth: number } | null
+  centre(): { x: number; y: number } | null
   renderMaterialPreviews(
     materials: readonly Material[],
     tilePx: number
@@ -57,6 +67,9 @@ export function createViewportBridge(): ViewportApi & { attach(impl: ViewportImp
     setView: (direction) => current?.setView(direction, prefersMotion()),
     captureThumbnail: async () => (current ? current.captureThumbnail() : null),
     partAt: (x, y) => current?.partAt(x, y) ?? null,
+    probe: (x, y) => current?.probe(x, y) ?? null,
+    toClient: (p) => current?.toClient(p) ?? null,
+    centre: () => current?.centre() ?? null,
     renderMaterialPreviews: async (materials, tilePx) =>
       current ? current.renderMaterialPreviews(materials, tilePx) : null,
     attach(impl) {

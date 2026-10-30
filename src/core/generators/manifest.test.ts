@@ -62,17 +62,26 @@ describe.each(GENERATORS.map((g) => [g.id, g] as const))("%s manifest", (_, gen)
 })
 
 describe("the library fixture's generated bearing", () => {
-  it("names parameters the real generator takes", async () => {
+  it("names parameters and outputs the real generator has", async () => {
     const { libraryFixture } = await import("@/core/schema/testing/libraryFixtures")
     const fixture = libraryFixture("component-generated.valid.json") as {
       parts: Record<
         string,
-        { geometry: { generator: string; generatorMajor: number; params: Record<string, unknown> } }
+        {
+          geometry: {
+            generator: string
+            generatorMajor: number
+            params: Record<string, unknown>
+            output: string
+          }
+        }
       >
     }
     for (const part of Object.values(fixture.parts)) {
       const gen = findGenerator(part.geometry.generator, part.geometry.generatorMajor)
       expect(gen?.params.safeParse(part.geometry.params).success).toBe(true)
+      const bodies = gen?.generate(part.geometry.params as never).bodies ?? {}
+      expect(Object.keys(bodies)).toContain(part.geometry.output)
     }
   })
 })

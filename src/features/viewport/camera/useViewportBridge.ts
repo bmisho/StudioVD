@@ -2,6 +2,7 @@ import { useEffect, useRef, type RefObject } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Box3, type Group } from "three"
 import { partAtPoint } from "../picking/partAtPoint"
+import { probePointer, worldToClient } from "../picking/pointerProbe"
 import { captureThumbnail } from "../thumbnail/captureThumbnail"
 import { renderMaterialPreviews } from "../thumbnail/materialPreviews"
 import { viewportBridge } from "../viewportBridge"
@@ -42,6 +43,15 @@ export function useViewportBridge(rig: CameraRig, partsRoot: RefObject<Group | n
         document.elementFromPoint(x, y) === get().gl.domElement
           ? partAtPoint(get(), partsRoot.current, x, y)
           : null,
+      probe: (x, y) =>
+        document.elementFromPoint(x, y) === get().gl.domElement
+          ? probePointer(get(), partsRoot.current, x, y)
+          : null,
+      toClient: (p) => worldToClient(get(), p),
+      centre: () => {
+        const r = get().gl.domElement.getBoundingClientRect()
+        return r.width > 0 ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null
+      },
       renderMaterialPreviews: (materials, tilePx) =>
         renderMaterialPreviews(get(), materials, tilePx),
     })

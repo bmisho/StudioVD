@@ -6,6 +6,7 @@ import { CameraRigController } from "./camera/CameraRigController"
 import { AnchorToolHint } from "@/features/assembly/AnchorToolHint"
 import { GlyphScaler } from "@/features/assembly/GlyphScaler"
 import { MatePreview } from "@/features/assembly/MatePreview"
+import { InsertionGhost } from "@/features/library/InsertionGhost"
 import { MateToolHint } from "@/features/assembly/MateToolHint"
 import { PartTransformGizmo } from "./gizmos/PartTransformGizmo"
 import { createCameraRig } from "./camera/createCameraRig"
@@ -69,6 +70,7 @@ export function Viewport3D() {
           <PartsLayer />
           <PartTransformGizmo />
           <MatePreview />
+          <InsertionGhost />
           <GlyphScaler />
           {testMode && (
             <Suspense fallback={null}>

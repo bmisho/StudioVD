@@ -66,6 +66,16 @@ export interface ViewportProbeApi {
   dragReady(): boolean
   /** Document parts, in insertion order. */
   parts(): { id: string; name: string }[]
+  /** Library component instances (PLAN 9.5): designator, definition name, part keys. */
+  components(): {
+    id: string
+    designator: string
+    name: string
+    parts: string[]
+    groupId: string
+    /** Each part's position (mm), by key. */
+    positions: Record<string, number[]>
+  }[]
   /** A part's live pose (moves in test mode), or null if not shown. */
   partPose(id: string): PartPoseState | null
   /** What a part draws: its triangle count, and whether that is the loaded asset (not its box). */

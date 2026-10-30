@@ -1,5 +1,13 @@
 import { create } from "zustand"
-import type { AnchorId, GroupId, MateId, MateType, NodeId, PartId } from "@/core/schema"
+import type {
+  AnchorId,
+  ComponentInstanceId,
+  GroupId,
+  MateId,
+  MateType,
+  NodeId,
+  PartId,
+} from "@/core/schema"
 
 // Session state (CLAUDE.md §4, kind 2): not persisted, not undoable.
 
@@ -34,6 +42,8 @@ export interface MateDraft {
 
 export interface SessionState {
   selection: SelectionItem[]
+  /** The component double-clicked into: its parts are picked one by one (PLAN 9.5). */
+  enteredComponent: ComponentInstanceId | null
   activeTool: Tool
   /** While the Mate tool is on: what it has picked. Cleared when the tool ends. */
   mateDraft: MateDraft | null
@@ -56,6 +66,7 @@ export interface SessionState {
   displayMode: DisplayMode
 
   select: (items: SelectionItem[]) => void
+  enterComponent: (id: ComponentInstanceId | null) => void
   /** Ctrl+click / Ctrl+Space: adds the item to the selection or removes it. */
   toggleSelected: (item: SelectionItem) => void
   clearSelection: () => void
@@ -84,6 +95,7 @@ export interface SessionState {
 
 export const initialSessionState = {
   selection: [],
+  enteredComponent: null,
   activeTool: "select",
   mateDraft: null,
   projection: "perspective",
@@ -106,6 +118,7 @@ export function createSessionStore() {
     ...initialSessionState,
 
     select: (items) => set({ selection: items }),
+    enterComponent: (enteredComponent) => set({ enteredComponent }),
     toggleSelected: (item) =>
       set((s) => {
         const present = s.selection.some((i) => i.kind === item.kind && i.id === item.id)
@@ -141,6 +154,7 @@ export function createSessionStore() {
     resetForDocument: () =>
       set({
         selection: [],
+        enteredComponent: null,
         isolated: null,
         testMode: false,
         activeTool: "select",

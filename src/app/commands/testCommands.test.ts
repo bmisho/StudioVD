@@ -22,6 +22,9 @@ describe("test mode commands", () => {
       setView: vi.fn(),
       captureThumbnail: vi.fn(),
       partAt: vi.fn(() => null),
+      probe: vi.fn(() => null),
+      toClient: vi.fn(() => null),
+      centre: vi.fn(() => null),
       renderMaterialPreviews: vi.fn(() => Promise.resolve(null)),
     }
     viewport.attach(impl)

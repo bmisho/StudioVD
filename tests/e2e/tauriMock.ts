@@ -19,7 +19,16 @@ export function installTauriMockScript(): void {
   let nextTexture: { name: string; base64: string } | null = null
   const urls = new Map<string, string>()
   const exports = new Map<string, { name: string; bytes: Uint8Array }>()
-  const library: { id: unknown; version: unknown }[] = []
+  type Staged = {
+    token: string
+    components: { id: string; version: string; manifestSha256: string; manifest: string }[]
+    files: number
+    bytes: number
+    verified: boolean
+  }
+  const library: Record<string, unknown>[] = []
+  let nextPack: Staged | null = null
+  let staged: Staged | null = null
   const listeners = new Map<string, { eventId: number; handler: number }[]>()
   let nextPick: Picked[] = []
   let counter = 0
@@ -58,6 +67,17 @@ export function installTauriMockScript(): void {
       nextTexture = file
     },
     textureIds: () => [...textures.keys()],
+    /** The next Install from file picks a pack holding these component.json texts. */
+    queuePack: (manifests: { id: string; version: string; manifest: string }[]) => {
+      nextPack = {
+        token: `p${++counter}`,
+        components: manifests.map((m) => ({ ...m, manifestSha256: "0".repeat(64) })),
+        files: manifests.length,
+        bytes: manifests.reduce((n, m) => n + m.manifest.length, 0),
+        verified: false,
+      }
+    },
+    libraryIds: () => library.map((c) => `${String(c.id)}@${String(c.version)}`),
     exports: () =>
       [...exports.values()].map((e) => ({
         name: e.name,
@@ -113,14 +133,29 @@ export function installTauriMockScript(): void {
       return { id, ext, name: chosen.name, width: 0, height: 0 }
     },
     // The component library (src/lib/tauri/library.ts): empty unless a test installs into it.
-    library_list: () => library,
-    library_pick_pack: () => null,
-    library_install_commit: () => fail("invalidInput", "Nothing is waiting to be installed."),
-    library_install_cancel: () => null,
+    // Copies, as IPC deserializes a fresh array every time.
+    library_list: () => [...library],
+    library_pick_pack: () => {
+      staged = nextPack
+      nextPack = null
+      return staged
+    },
+    library_install_commit: (args) => {
+      if (!staged || staged.token !== args.token)
+        return fail("invalidInput", "Nothing is waiting to be installed.")
+      for (const c of staged.components)
+        library.push({ ...c, origin: "sideloaded", verified: false })
+      staged = null
+      return [...library]
+    },
+    library_install_cancel: () => {
+      staged = null
+      return null
+    },
     library_remove: (args) => {
       const at = library.findIndex((c) => c.id === args.id && c.version === args.version)
       if (at >= 0) library.splice(at, 1)
-      return library
+      return [...library]
     },
     library_copy_into_project: () => 0,
     pick_export_path: (args) => {
@@ -199,5 +234,7 @@ export interface E2EBackend {
   /** The next Choose Image picks this file (none queued: the dialog is cancelled). */
   queueTexture(file: { name: string; base64: string }): void
   textureIds(): string[]
+  queuePack(manifests: { id: string; version: string; manifest: string }[]): void
+  libraryIds(): string[]
   exports(): { name: string; size: number; head: number[] }[]
 }

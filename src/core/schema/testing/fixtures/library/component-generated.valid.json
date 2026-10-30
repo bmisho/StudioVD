@@ -20,7 +20,7 @@
         "generator": "bearing.deepGroove",
         "generatorMajor": 1,
         "params": { "boreMm": 8, "outerMm": 22, "widthMm": 7, "seal": "2RS" },
-        "output": "outerRing"
+        "output": "outer"
       },
       "transform": { "positionMm": [0, 0, 0], "quaternion": [0, 0, 0, 1] },
       "material": "steel",
@@ -34,7 +34,7 @@
         "generator": "bearing.deepGroove",
         "generatorMajor": 1,
         "params": { "boreMm": 8, "outerMm": 22, "widthMm": 7, "seal": "2RS" },
-        "output": "innerRing"
+        "output": "inner"
       },
       "transform": { "positionMm": [0, 0, 0], "quaternion": [0, 0, 0, 1] },
       "material": "steel",

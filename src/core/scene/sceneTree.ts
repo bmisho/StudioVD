@@ -1,9 +1,20 @@
 import type { AssemblyGraph, MateIssue } from "@/core/assembly/assemblyGraph"
 import { mateTypeLabel } from "@/core/assembly/mateNames"
-import type { AnchorId, GroupId, MateId, MateType, PartId, SceneDocument } from "@/core/schema"
+import type {
+  AnchorId,
+  ConnectorId,
+  ConnectorKind,
+  GroupId,
+  MateId,
+  MateType,
+  PartId,
+  SceneDocument,
+} from "@/core/schema"
 
 /** The id of the Mates folder row (never a minted id: those are UUIDs). */
 export const MATES_FOLDER_ID = "mates"
+/** The id of the Connectors folder row (PLAN 9.6). */
+export const CONNECTORS_FOLDER_ID = "connectors"
 
 export type SceneTreeNode =
   | { kind: "group"; id: GroupId; name: string; children: SceneTreeNode[] }
@@ -18,13 +29,20 @@ export type SceneTreeNode =
     }
   | { kind: "mates"; id: typeof MATES_FOLDER_ID; name: string; children: SceneTreeNode[] }
   | { kind: "mate"; id: MateId; name: string; type: MateType; issues: readonly MateIssue[] }
+  | {
+      kind: "connectors"
+      id: typeof CONNECTORS_FOLDER_ID
+      name: string
+      children: SceneTreeNode[]
+    }
+  | { kind: "connector"; id: ConnectorId; name: string; connector: ConnectorKind }
 
 type TreeSource = Pick<SceneDocument, "groups" | "parts"> &
-  Partial<Pick<SceneDocument, "anchors" | "mates">>
+  Partial<Pick<SceneDocument, "anchors" | "mates" | "connectors">>
 
 /**
  * Builds the scene-graph tree: groups first, then parts, each in document order, then a
- * Mates folder (PLAN 8.5) when there are mates, each named by its type and parts and marked
+ * Mates folder (PLAN 8.5) when there are mates, then a Connectors folder (PLAN 9.6), each named by its type and parts and marked
  * with its issues; parts in a mechanism carry their DOF (from `graph`).
  * Entities whose parent is missing are shown at the root rather than disappearing, and a
  * parent cycle (only possible in a corrupt file) is broken instead of recursing forever.
@@ -99,6 +117,19 @@ export function buildSceneTree(doc: TreeSource, graph?: AssemblyGraph): SceneTre
       })),
     })
   }
+  const connectors = Object.values(doc.connectors ?? {})
+  if (connectors.length > 0)
+    roots.push({
+      kind: "connectors",
+      id: CONNECTORS_FOLDER_ID,
+      name: "Connectors",
+      children: connectors.map((c) => ({
+        kind: "connector",
+        id: c.id,
+        name: c.name,
+        connector: c.kind,
+      })),
+    })
   return roots
 }
 

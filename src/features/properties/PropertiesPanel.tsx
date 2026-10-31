@@ -6,6 +6,8 @@ import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { AnchorProperties } from "./AnchorProperties"
 import { ComponentSection } from "./ComponentSection"
+import { ConnectAnchors } from "./ConnectAnchors"
+import { ConnectorProperties } from "./ConnectorProperties"
 import { GroupProperties } from "./GroupProperties"
 import { MateProperties } from "./MateProperties"
 import { NewMateProperties } from "./NewMateProperties"
@@ -42,13 +44,17 @@ export function PropertiesPanel() {
   else if (single?.kind === "part") content = <PartProperties key={single.id} id={single.id} />
   else if (single?.kind === "anchor") content = <AnchorProperties key={single.id} id={single.id} />
   else if (single?.kind === "mate") content = <MateProperties key={single.id} id={single.id} />
+  else if (single?.kind === "connector")
+    content = <ConnectorProperties key={single.id} id={single.id} />
   else {
     const n = selection.length
+    const anchorIds = selection.flatMap((s) => (s.kind === "anchor" ? [s.id] : []))
     content = (
       <div className="flex flex-col gap-3">
         <p className="text-xs text-muted-foreground">
           {n} {n === 1 ? "item" : "items"} selected
         </p>
+        {anchorIds.length === n && <ConnectAnchors anchors={anchorIds} />}
         {materials}
       </div>
     )

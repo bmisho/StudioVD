@@ -7,6 +7,7 @@ import { anchorPreview } from "@/features/assembly/anchorPreview"
 import { anchorWorld } from "@/core/assembly/mateSnap"
 import { rotate } from "@/core/math/vec3"
 import type { AnchorId } from "@/core/schema"
+import { connectorAnchors } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { viewSpecOf } from "../camera/useCameraFrame"
 import { redrawNow } from "../renderer/redrawNow"
@@ -126,6 +127,12 @@ export function ViewportProbe() {
       dragReady: () => partGrab.current !== null,
       parts: () =>
         Object.values(useDocumentStore.getState().doc.parts).map(({ id, name }) => ({ id, name })),
+      connectors: () =>
+        Object.values(useDocumentStore.getState().doc.connectors).map((c) => ({
+          id: c.id,
+          kind: c.kind,
+          ends: connectorAnchors(c),
+        })),
       components: () => {
         const doc = useDocumentStore.getState().doc
         return Object.values(doc.components).map((c) => ({

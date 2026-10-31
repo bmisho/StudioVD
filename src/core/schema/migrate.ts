@@ -9,7 +9,10 @@ export type Migration = (doc: JsonObject) => { doc: JsonObject; warnings?: strin
  * `MIGRATIONS[n]` turns format n into n+1 (PLAN 5.1). A released entry is never edited:
  * files in the wild depend on it. Each one comes with a frozen `vN` fixture test.
  */
-export const MIGRATIONS: Readonly<Record<number, Migration>> = {}
+export const MIGRATIONS: Readonly<Record<number, Migration>> = {
+  /** v1 → v2 (Phase 9.6): derived connectors (belts, tubes, springs) get their collection. */
+  1: (doc) => ({ doc: { ...doc, connectors: {} } }),
+}
 
 export type MigrateResult =
   | { ok: true; doc: JsonObject; fromVersion: number; warnings: string[] }

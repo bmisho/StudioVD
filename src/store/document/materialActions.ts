@@ -165,6 +165,8 @@ export function materialActions(set: Set, get: Get): MaterialActions {
           if (kept.length > 0) part.materialSlots = kept
           else delete part.materialSlots
         }
+        for (const c of Object.values(s.doc.connectors))
+          if (c.materialId === id) c.materialId = null
         dropUnusedTextures(s.doc)
         pruneComponents(s.doc)
       }),

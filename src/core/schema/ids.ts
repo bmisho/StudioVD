@@ -20,6 +20,7 @@ export const EdgeIdSchema = mintedId.brand<"EdgeId">()
 export const BlockDefIdSchema = mintedId.brand<"BlockDefId">()
 export const BindingIdSchema = mintedId.brand<"BindingId">()
 export const ComponentInstanceIdSchema = mintedId.brand<"ComponentInstanceId">()
+export const ConnectorIdSchema = mintedId.brand<"ConnectorId">()
 
 /** Lowercase hex SHA-256: the content address of every file in a project bundle. */
 export const Sha256Schema = z.string().regex(/^[0-9a-f]{64}$/, "must be a lowercase SHA-256")
@@ -47,6 +48,7 @@ export type EdgeId = z.infer<typeof EdgeIdSchema>
 export type BlockDefId = z.infer<typeof BlockDefIdSchema>
 export type BindingId = z.infer<typeof BindingIdSchema>
 export type ComponentInstanceId = z.infer<typeof ComponentInstanceIdSchema>
+export type ConnectorId = z.infer<typeof ConnectorIdSchema>
 export type AssetId = z.infer<typeof AssetIdSchema>
 export type ComponentDefKey = z.infer<typeof ComponentDefKeySchema>
 
@@ -63,6 +65,7 @@ export type MintedId =
   | BlockDefId
   | BindingId
   | ComponentInstanceId
+  | ConnectorId
 
 /** Mints a new opaque ID. The cast is the single place a plain string becomes a branded ID. */
 export function newId<T extends MintedId>(): T {

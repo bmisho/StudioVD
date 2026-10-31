@@ -223,6 +223,10 @@ Further rules:
   `core/library/instantiate.ts`; deletions keep instances true (`componentUpkeep.ts`). The
   insertion drag's state is a transient observable (`insertionPreview`), never Zustand; a
   click picks a component as its group unless it is the one entered (`enteredComponent`).
+- Connectors (Phase 9.6, scene.json v2): belts, tubes and springs are documents of their end
+  anchors only; their meshes are derived in the view (`core/connectors`, `ConnectorsLayer`)
+  from the anchors' world frames, rebuilt when the signature changes, never stored, never in
+  physics.
 - R3F requests a frame when objects are added or changed, **not when they are removed**: a
   component whose objects can go away (unmount, conditional children) calls
   `renderer/useRedrawOnRemoval.ts`, or the demand frameloop keeps drawing them.

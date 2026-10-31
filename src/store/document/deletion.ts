@@ -2,6 +2,7 @@ import type { Draft } from "immer"
 import { anchorDeletion, mateDeletion, partDeletion } from "@/core/scene/partOps"
 import type { AnchorId, GroupId, MateId, PartId, SceneDocument } from "@/core/schema"
 import { pruneComponents } from "./componentUpkeep"
+import { pruneConnectors } from "./connectorActions"
 
 // Deletion steps on an immer draft, so one store action can combine them in ONE undo entry.
 
@@ -14,6 +15,7 @@ export function removeParts(doc: Draft<SceneDocument>, ids: readonly PartId[]): 
   for (const id of gone.couplings) delete doc.couplings[id]
   for (const id of gone.bindings) delete doc.bindings[id]
   for (const id of gone.assets) delete doc.assets[id]
+  pruneConnectors(doc)
   pruneComponents(doc)
 }
 
@@ -24,6 +26,7 @@ export function removeAnchors(doc: Draft<SceneDocument>, ids: readonly AnchorId[
   for (const id of gone.mates) delete doc.mates[id]
   for (const id of gone.couplings) delete doc.couplings[id]
   for (const id of gone.bindings) delete doc.bindings[id]
+  pruneConnectors(doc)
   pruneComponents(doc)
 }
 

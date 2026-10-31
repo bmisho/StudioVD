@@ -6,6 +6,7 @@ import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { PickRoot } from "../picking/PickRoot"
 import { useViewport } from "@/features/viewport/ViewportContext"
+import { ConnectorsLayer } from "./ConnectorsLayer"
 import { PartView } from "./PartView"
 
 /** All visible document parts, inside the pick root. */
@@ -47,6 +48,7 @@ export function PartsLayer() {
           glyphs={glyphs.get(part.id) ?? ""}
         />
       ))}
+      <ConnectorsLayer />
     </PickRoot>
   )
 }

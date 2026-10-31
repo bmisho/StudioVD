@@ -23,11 +23,12 @@ const TREE_KEYS: ReadonlySet<string> = new Set<TreeKey>([
 ])
 const isTreeKey = (key: string): key is TreeKey => TREE_KEYS.has(key)
 
-/** What selecting a row selects; the Mates folder selects nothing (it opens and closes). */
+/** What selecting a row selects; the Mates and Connectors folders select nothing (they open). */
 function itemOf(node: SceneTreeNode): SelectionItem | null {
   if (node.kind === "group") return { kind: "group", id: node.id }
   if (node.kind === "part") return { kind: "part", id: node.id }
   if (node.kind === "mate") return { kind: "mate", id: node.id }
+  if (node.kind === "connector") return { kind: "connector", id: node.id }
   return null
 }
 const keyOf = (item: { kind: string; id: string }) => `${item.kind}:${item.id}`

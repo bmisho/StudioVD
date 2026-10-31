@@ -35,11 +35,11 @@ async function importSample(page: Page) {
   await expect(dialog).toBeHidden({ timeout: 15_000 }) // see import.spec.ts
 }
 
-/** An empty but valid scene.json named `name`. */
+/** An empty but valid scene.json (the current format, v2) named `name`. */
 const emptyScene = (name: string) =>
   JSON.stringify({
     format: "studiovd",
-    schemaVersion: 1,
+    schemaVersion: 2,
     appVersion: "0.1.0",
     units: { length: "mm" },
     project: { name },
@@ -53,6 +53,7 @@ const emptyScene = (name: string) =>
     componentDefs: {},
     components: {},
     licenseTexts: {},
+    connectors: {},
     simulation: { gravity: [0, -9.81, 0], maxIterations: 100, tolerance: 1e-9 },
   })
 

@@ -1,6 +1,7 @@
 import { COLLECTION_CAPS, SCENE_LIMITS, SCHEMATIC_CAPS } from "./caps"
 import type { SceneDocument } from "./document"
 import { checkComponentRefs } from "./componentIntegrity"
+import { connectorAnchors } from "./connector"
 import { checkMaterialRefs } from "./materialIntegrity"
 import type { DocumentProblem } from "./scanJson"
 
@@ -23,6 +24,7 @@ const mintedCollections = (doc: SceneDocument): [string, Collection][] => [
   ["schematic.blockDefs", doc.schematic.blockDefs],
   ["bindings", doc.bindings],
   ["components", doc.components],
+  ["connectors", doc.connectors],
 ]
 
 /**
@@ -103,6 +105,17 @@ export function checkIntegrity(doc: SceneDocument, maxProblems = 50): DocumentPr
   }
   checkMaterialRefs(doc, report)
   checkComponentRefs(doc, report)
+  for (const [key, c] of Object.entries(doc.connectors)) {
+    const ends = connectorAnchors(c)
+    ends.forEach((a, i) => {
+      if (!has(doc.anchors, a))
+        report(`connectors.${key}.ends.${i}`, "refers to something that is missing")
+    })
+    if (new Set(ends).size !== ends.length)
+      report(`connectors.${key}.ends`, "names an anchor twice")
+    if (c.materialId !== null && !has(doc.materials, c.materialId))
+      report(`connectors.${key}.materialId`, "refers to something that is missing")
+  }
 
   for (const key of groupsTooDeep(doc.groups, SCENE_LIMITS.maxGroupDepth))
     report(`groups.${key}.parentId`, "group parents form a cycle or nest too deeply")

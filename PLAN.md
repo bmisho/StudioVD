@@ -975,8 +975,16 @@ Exit criteria
   frozen definition, the instance record). Deleting keeps instances true; deleting a
   component's group deletes the component. Edit parameters regenerates in the worker and
   keeps every shared key's id (user names, materials and deletions stay)
-- [ ] 9.6 Derived connector geometry (belt between pulleys, tube between fittings, spring
-  between anchors): regenerated from its end anchors, visual only, no collider
+- [x] 9.6 Derived connector geometry (belt between pulleys, tube between fittings, spring
+  between anchors): regenerated from its end anchors, visual only, no collider. As built:
+  scene.json v2 (migration v1 → v2 adds `connectors`; the Phase 5 v1 fixture opens through
+  it); a connector names its end anchors (a belt also the radius it wraps each at: a GT2
+  pulley's pitch radius and belt width read from its generator parameters, a spur gear's
+  pitch radius) and is drawn live from their world frames (`core/connectors`: outer tangents
+  and arcs round the wheels, the textbook open-belt length; a Bézier tube leaving each
+  fitting along its anchor; a helix between two anchors). Select two or more anchors, then
+  Belt / Tube / Spring; Connectors folder in the tree, inspector for sizes and material;
+  deleting an end anchor (or its part) deletes the connector
 - [ ] 9.7 Save as component → user library (same format and validator; licences of library parts
   inside are inherited automatically); Export pack; harvest a component from an opened `.stvd`
 - [ ] 9.8 Credits: Project credits dialog, `licenses/` in the bundle, GLB export

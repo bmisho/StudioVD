@@ -15,10 +15,11 @@ export function SceneGraphPanel() {
   const parts = useDocumentStore((s) => s.doc.parts)
   const anchors = useDocumentStore((s) => s.doc.anchors)
   const mates = useDocumentStore((s) => s.doc.mates)
+  const connectors = useDocumentStore((s) => s.doc.connectors)
   const graph = useAssemblyGraph()
   const tree = useMemo(
-    () => buildSceneTree({ groups, parts, anchors, mates }, graph),
-    [groups, parts, anchors, mates, graph]
+    () => buildSceneTree({ groups, parts, anchors, mates, connectors }, graph),
+    [groups, parts, anchors, mates, connectors, graph]
   )
   // Edit › Delete's own rule (any selected part, group or anchor), re-read when the
   // selection changes.

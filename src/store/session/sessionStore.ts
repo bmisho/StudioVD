@@ -2,6 +2,7 @@ import { create } from "zustand"
 import type {
   AnchorId,
   ComponentInstanceId,
+  ConnectorId,
   GroupId,
   MateId,
   MateType,
@@ -30,6 +31,7 @@ export type SelectionItem =
   | { kind: "anchor"; id: AnchorId }
   | { kind: "mate"; id: MateId }
   | { kind: "node"; id: NodeId }
+  | { kind: "connector"; id: ConnectorId }
 
 /** The Mate tool's picks so far (PLAN 8.2): anchor A, then B with the new mate's options. */
 export interface MateDraft {

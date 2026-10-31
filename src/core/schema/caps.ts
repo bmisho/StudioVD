@@ -37,6 +37,7 @@ export const COLLECTION_CAPS: Readonly<Record<keyof Collections, number>> = {
   componentDefs: 1_000,
   components: 5_000,
   licenseTexts: 1_000,
+  connectors: 5_000,
 }
 
 export const SCHEMATIC_CAPS: Readonly<Record<keyof SceneDocument["schematic"], number>> = {

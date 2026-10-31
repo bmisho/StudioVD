@@ -12,6 +12,7 @@ import {
   Orbit,
   Pin,
   RotateCw,
+  Spline,
   TriangleAlert,
 } from "lucide-react"
 import { memo } from "react"
@@ -26,6 +27,7 @@ function RowIcon({ node }: { node: SceneTreeNode }) {
   if (node.kind === "group") return <Folder {...props} />
   if (node.kind === "part") return <Box {...props} />
   if (node.kind === "mates") return <Link2 {...props} />
+  if (node.kind === "connectors" || node.kind === "connector") return <Spline {...props} />
   if (node.type === "fixed") return <Lock {...props} />
   if (node.type === "revolute") return <RotateCw {...props} />
   if (node.type === "prismatic") return <MoveVertical {...props} />
@@ -79,7 +81,7 @@ export const SceneTreeRow = memo(function SceneTreeRow(props: SceneTreeRowProps)
       role="treeitem"
       tabIndex={tabStop ? 0 : -1}
       // The Mates folder only opens and closes: not selectable.
-      aria-selected={node.kind === "mates" ? undefined : selected}
+      aria-selected={node.kind === "mates" || node.kind === "connectors" ? undefined : selected}
       aria-level={row.level}
       aria-posinset={row.posInSet}
       aria-setsize={row.setSize}

@@ -4,6 +4,7 @@ import { commonParent, topLevelItems } from "@/core/scene/partOps"
 import type { SelectionRef } from "@/core/scene/selection"
 import {
   type AnchorId,
+  type ConnectorId,
   NameSchema,
   newId,
   PoseSchema,
@@ -31,7 +32,8 @@ export interface PartActions {
     parts: readonly PartId[],
     groups: readonly GroupId[],
     anchors?: readonly AnchorId[],
-    mates?: readonly MateId[]
+    mates?: readonly MateId[],
+    connectors?: readonly ConnectorId[]
   ) => void
   /**
    * Moves the selected parts and groups (outermost ones) into a new group under their shared
@@ -75,7 +77,7 @@ export function partActions(set: Set): PartActions {
 
     deleteParts: (ids) => set((s) => removeParts(s.doc, ids)),
 
-    deleteItems: (parts, groups, anchors = [], mates = []) =>
+    deleteItems: (parts, groups, anchors = [], mates = [], connectors = []) =>
       set((s) => {
         // A component's group goes with the whole component (its parts, anchors, mates).
         const whole = groups.flatMap((g) =>
@@ -87,6 +89,7 @@ export function partActions(set: Set): PartActions {
         removeGroups(s.doc, groups)
         removeAnchors(s.doc, anchors)
         removeMates(s.doc, mates)
+        for (const id of connectors) delete s.doc.connectors[id]
       }),
 
     groupItems: (items, name) => {

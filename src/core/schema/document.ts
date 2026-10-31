@@ -6,6 +6,7 @@ import {
   BindingIdSchema,
   BlockDefIdSchema,
   ComponentInstanceIdSchema,
+  ConnectorIdSchema,
   CouplingIdSchema,
   EdgeIdSchema,
   GroupIdSchema,
@@ -17,6 +18,7 @@ import {
   Sha256Schema,
   TextureIdSchema,
 } from "./ids"
+import { ConnectorSchema } from "./connector"
 import { emptyUntil } from "./gates"
 import { ComponentDefSnapshotSchema, ComponentInstanceSchema, LicenseTextSchema } from "./library"
 import { NameSchema, Vec3Schema } from "./primitives"
@@ -30,10 +32,10 @@ import { GeometryAssetSchema, GroupSchema, PartSchema, TextureSchema } from "./s
 import { MaterialSchema } from "./material"
 import { safeSegment } from "./shown"
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 /**
- * `scene.json` v1 (final since Phase 5: changing what a saved file means needs a migration,
+ * `scene.json` v2 (v1 final since Phase 5; v2 adds `connectors`. Changing what a saved file means needs a migration,
  * `migrate.ts`). Every entity collection is normalized as Record<Id, Entity> (CLAUDE.md §4).
  * Collections a later phase owns are gated empty until then (`emptyUntil`). Cross-entity
  * rules (keys, references, cycles, caps) live in `integrity.ts`.
@@ -64,6 +66,8 @@ export const SceneDocumentSchema = z
     componentDefs: z.record(ComponentDefKeySchema, ComponentDefSnapshotSchema),
     components: z.record(ComponentInstanceIdSchema, ComponentInstanceSchema),
     licenseTexts: z.record(Sha256Schema, LicenseTextSchema),
+    /** Belts, tubes and springs drawn between anchors (v2, PLAN 9.6). */
+    connectors: z.record(ConnectorIdSchema, ConnectorSchema),
     simulation: z
       .object({
         /** m/s², world frame (Y-up). Used by the solver only; Rapier gravity is always zero. */
@@ -98,6 +102,7 @@ export function createEmptyDocument(appVersion: string, name = "Untitled"): Scen
     componentDefs: {},
     components: {},
     licenseTexts: {},
+    connectors: {},
     simulation: { gravity: [0, -9.81, 0], maxIterations: 100, tolerance: 1e-9 },
   }
 }

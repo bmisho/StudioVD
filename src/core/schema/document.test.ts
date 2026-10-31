@@ -6,7 +6,7 @@ import { GeometryAssetSchema } from "./scene"
 
 const valid = (): SceneDocument => createEmptyDocument("0.1.0")
 
-describe("scene.json v1 schema", () => {
+describe("scene.json schema", () => {
   it("accepts a fresh empty document", () => {
     expect(parseDocument(valid()).ok).toBe(true)
   })
@@ -25,7 +25,8 @@ describe("scene.json v1 schema", () => {
   })
 
   it("rejects a different schema version", () => {
-    expect(parseDocument({ ...valid(), schemaVersion: 2 }).ok).toBe(false)
+    expect(parseDocument({ ...valid(), schemaVersion: 1 }).ok).toBe(false) // v1 opens via its migration
+    expect(parseDocument({ ...valid(), schemaVersion: 3 }).ok).toBe(false)
   })
 
   it("rejects non-finite numbers", () => {

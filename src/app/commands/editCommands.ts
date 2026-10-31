@@ -1,5 +1,12 @@
 import { ADD_REFUSAL_TEXT, REFUSAL_TEXT } from "@/core/assembly/mateNames"
-import { SCENE_LIMITS, type AnchorId, type GroupId, type MateId, type PartId } from "@/core/schema"
+import {
+  SCENE_LIMITS,
+  type AnchorId,
+  type ConnectorId,
+  type GroupId,
+  type MateId,
+  type PartId,
+} from "@/core/schema"
 import { applyMateDraft } from "@/features/assembly/mateTool"
 import type { Command, CommandDeps } from "./types"
 
@@ -25,6 +32,12 @@ function selectedMateIds(deps: CommandDeps): MateId[] {
   return deps.session
     .getState()
     .selection.flatMap((item) => (item.kind === "mate" ? [item.id] : []))
+}
+
+function selectedConnectorIds(deps: CommandDeps): ConnectorId[] {
+  return deps.session
+    .getState()
+    .selection.flatMap((item) => (item.kind === "connector" ? [item.id] : []))
 }
 
 /** The parts the given anchors are on, each once, in selection order. */
@@ -75,16 +88,19 @@ export function editCommands(deps: CommandDeps): Command[] {
         const groups = selectedGroupIds(deps)
         const anchors = selectedAnchorIds(deps)
         const mates = selectedMateIds(deps)
-        if (parts.length + groups.length + anchors.length + mates.length === 0) return
+        const connectors = selectedConnectorIds(deps)
+        const total = parts.length + groups.length + anchors.length + mates.length
+        if (total + connectors.length === 0) return
         const owners = parts.length + groups.length === 0 ? anchorParts(deps, anchors) : []
-        document.getState().deleteItems(parts, groups, anchors, mates)
+        document.getState().deleteItems(parts, groups, anchors, mates, connectors)
         session.getState().select(owners.map((id) => ({ kind: "part", id })))
       },
       isEnabled: () =>
         selectedDirectPartIds(deps).length +
           selectedGroupIds(deps).length +
           selectedAnchorIds(deps).length +
-          selectedMateIds(deps).length >
+          selectedMateIds(deps).length +
+          selectedConnectorIds(deps).length >
         0,
     },
     {

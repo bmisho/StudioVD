@@ -54,8 +54,11 @@ export const ComponentPartSchema = z
     geometry: GeometryRefSchema,
     /** Its pose in the component frame: rigid only, never scaled (CLAUDE.md §5). */
     transform: PoseSchema,
-    /** The part's material, a key into the manifest's materials. */
-    material: LocalKeySchema,
+    /**
+     * The part's material, a key into the manifest's materials. Absent: the GLB's own colours
+     * (an imported model saved as a component keeps its look).
+     */
+    material: LocalKeySchema.optional(),
     /** Slot overrides, as on scene parts (Phase 6). */
     materialSlots: z
       .array(z.object({ slot: SlotNameSchema, material: LocalKeySchema }).strict())

@@ -1,15 +1,19 @@
-//! The local component library (PLAN 4.5, 9.2): list, Install from file (stage, then commit
-//! once the webview has validated every manifest and the user confirmed), remove, and copy
-//! a component's files into the project for insertion. Commands take ids, never paths.
+//! The local component library (PLAN 4.5, 9.2, 9.7): list, Install from file (stage, then
+//! commit once the webview has validated every manifest and the user confirmed), remove, copy
+//! a component's files into the project for insertion, save one from the project (Save as
+//! component, Add to my library) and Export pack. Commands take ids, never paths.
 
+use super::dialog::{clean_stem, with_extension};
 use super::ipc::{blocking, into_path};
 use crate::error::{AppError, AppResult};
 use crate::library::commit::{cancel, commit};
+use crate::library::export::{export_pack, ExportSummary};
+use crate::library::from_project::{add_from_project, geometry_sizes};
 use crate::library::install::{stage_pack, StagedSummary};
 use crate::library::installed::{self, InstalledComponent, Origin};
-use crate::library::{copy::copy_into_project, gc, packfile, Library};
+use crate::library::{copy::copy_into_project, gc, packfile, publisher, Library};
 use crate::state::AppState;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::{AppHandle, Manager, Runtime, Window};
 use tauri_plugin_dialog::DialogExt;
@@ -56,6 +60,19 @@ fn entries(lib: &Library, components: Vec<InstalledComponent>) -> Vec<LibraryEnt
 
 fn library<R: Runtime>(app: &AppHandle<R>) -> AppResult<std::sync::Arc<Library>> {
     app.state::<AppState>().library()
+}
+
+fn now_secs() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+}
+
+fn bundle_dir<R: Runtime>(app: &AppHandle<R>) -> AppResult<std::path::PathBuf> {
+    app.state::<AppState>()
+        .bundle_dir()
+        .ok_or_else(|| AppError::Io("The project workspace could not be created.".into()))
 }
 
 #[tauri::command]
@@ -108,11 +125,7 @@ pub async fn library_install_commit<R: Runtime>(
         let staged = state.staged()?.take_if(|s| s.token == token);
         let staged = staged
             .ok_or_else(|| AppError::InvalidInput("Nothing is waiting to be installed.".into()))?;
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_secs())
-            .unwrap_or(0);
-        Ok(entries(&lib, commit(&lib, staged, now)?))
+        Ok(entries(&lib, commit(&lib, staged, now_secs())?))
     })
     .await
 }
@@ -172,10 +185,76 @@ pub async fn library_copy_into_project<R: Runtime>(
             .into_iter()
             .find(|c| c.id == id && c.version == version)
             .ok_or_else(|| AppError::InvalidInput(format!("{id} {version} is not installed.")))?;
-        let bundle = state
-            .bundle_dir()
-            .ok_or_else(|| AppError::Io("The project workspace could not be created.".into()))?;
-        copy_into_project(&lib, &record, &bundle)
+        copy_into_project(&lib, &record, &bundle_dir(&app)?)
+    })
+    .await
+}
+
+/// This installation's namespace for the user's own components (`u-` + six characters).
+#[tauri::command]
+pub async fn library_user_namespace<R: Runtime>(app: AppHandle<R>) -> AppResult<String> {
+    blocking(move || publisher::namespace(&*library(&app)?)).await
+}
+
+/// Save as component: the sizes of the project's GLBs the manifest will name.
+#[tauri::command]
+pub async fn library_project_geometry_sizes<R: Runtime>(
+    app: AppHandle<R>,
+    files: Vec<String>,
+) -> AppResult<Vec<u64>> {
+    blocking(move || geometry_sizes(&bundle_dir(&app)?, &files)).await
+}
+
+/// Save as component and Add to my library: a component.json the webview built and validated,
+/// with the project files it names. Returns the whole library.
+#[tauri::command]
+pub async fn library_add_from_project<R: Runtime>(
+    app: AppHandle<R>,
+    manifest: String,
+) -> AppResult<Vec<LibraryEntry>> {
+    blocking(move || {
+        let lib = library(&app)?;
+        let all = add_from_project(&lib, &bundle_dir(&app)?, &manifest, now_secs())?;
+        Ok(entries(&lib, all))
+    })
+    .await
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ComponentKey {
+    id: String,
+    version: String,
+}
+
+/// Library › Export pack…: a save dialog in Rust, then the pack. `None` when cancelled.
+#[tauri::command]
+pub async fn library_export_pack<R: Runtime>(
+    window: Window<R>,
+    app: AppHandle<R>,
+    components: Vec<ComponentKey>,
+    suggested_name: String,
+) -> AppResult<Option<ExportSummary>> {
+    for c in &components {
+        check_ref(&c.id, &c.version)?;
+    }
+    let Some(file) = window
+        .dialog()
+        .file()
+        .set_parent(&window)
+        .set_title("Export components as a pack")
+        .set_file_name(format!("{}.stvdpack", clean_stem(&suggested_name)))
+        .add_filter("StudioVD packs", &["stvdpack", "STVDPACK"])
+        .blocking_save_file()
+    else {
+        return Ok(None);
+    };
+    let path = with_extension(into_path(file)?, "stvdpack")?;
+    let version = app.package_info().version.to_string();
+    blocking(move || {
+        let lib = library(&app)?;
+        let refs: Vec<(String, String)> =
+            components.into_iter().map(|c| (c.id, c.version)).collect();
+        export_pack(&lib, &refs, &path, now_secs(), &version).map(Some)
     })
     .await
 }

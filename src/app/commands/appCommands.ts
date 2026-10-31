@@ -1,5 +1,6 @@
 import { toast } from "sonner"
 import { exportScene } from "@/features/export/exportService"
+import { userComponents } from "@/features/library/libraryService"
 import { chooseImportFiles } from "@/features/import/importService"
 import { projectController } from "@/features/project/projectService"
 import { viewportBridge } from "@/features/viewport/viewportBridge"
@@ -9,6 +10,7 @@ import { closeMainWindow } from "@/lib/tauri/window"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { documentHistory } from "@/store/document/history"
 import { usePreferencesStore } from "@/store/preferences/preferencesStore"
+import { useLibraryStore } from "@/store/session/libraryStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { connectSelectionPruning } from "@/store/selectionSync"
 import { forgetDialogReturnFocus, rememberDialogReturnFocus } from "../dialogs/focusReturn"
@@ -59,6 +61,12 @@ export const appCommands = createCommandRegistry({
     },
     writeAsset,
     exportScene,
+    saveAsComponent: async (parts) => {
+      rememberDialogReturnFocus()
+      await userComponents.open(parts)
+      if (useLibraryStore.getState().save.phase === "idle") forgetDialogReturnFocus()
+      return ok(undefined)
+    },
     closeWindow: closeMainWindow,
   },
   reportError,

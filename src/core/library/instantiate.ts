@@ -84,7 +84,7 @@ export function instantiateComponent(
       assetId: asset.id,
       parentId: group,
       pose: toPose(compose(frame, fromPose(p.transform))),
-      materialId: materials.ids[p.material] ?? null,
+      materialId: p.material === undefined ? null : (materials.ids[p.material] ?? null),
       grounded: ground && key === manifest.rootPart,
       visible: true,
       collider: p.collider,

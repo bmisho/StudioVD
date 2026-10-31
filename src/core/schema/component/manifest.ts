@@ -54,7 +54,8 @@ export const ComponentManifestSchema = z
     if (!has(m.parts, m.rootPart)) issue(["rootPart"], "is not one of the parts")
     const generators = m.identity.requires.generators ?? {}
     for (const [key, part] of Object.entries(m.parts)) {
-      if (!has(m.materials, part.material)) issue(["parts", key, "material"], "is not a material")
+      if (part.material !== undefined && !has(m.materials, part.material))
+        issue(["parts", key, "material"], "is not a material")
       part.materialSlots?.forEach((s, i) => {
         if (!has(m.materials, s.material))
           issue(["parts", key, "materialSlots", i, "material"], "is not a material")

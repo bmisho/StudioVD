@@ -985,8 +985,27 @@ Exit criteria
   fitting along its anchor; a helix between two anchors). Select two or more anchors, then
   Belt / Tube / Spring; Connectors folder in the tree, inspector for sizes and material;
   deleting an end anchor (or its part) deletes the connector
-- [ ] 9.7 Save as component → user library (same format and validator; licences of library parts
-  inside are inherited automatically); Export pack; harvest a component from an opened `.stvd`
+- [x] 9.7 Save as component → user library (same format and validator; licences of library parts
+  inside are inherited automatically); Export pack; harvest a component from an opened `.stvd`.
+  As built: Edit › Save as Component… (1-64 parts) builds the component.json in the webview
+  (`core/library/userComponent`: parts in the root part's frame, the first grounded or first
+  selected; GLBs by content address with their sizes from Rust; every anchor; mates with both
+  anchors inside; unchanged presets by key, other materials written out; keys an instance gave
+  its entities kept, so re-saving keeps mates' keys) and validates it with the download schema;
+  Rust (`library/from_project.rs`) checks every file it names as a pack's (content address,
+  kind, GLB rules, sizes) and records it. Ids are `<namespace>/<slug>`, the namespace made once
+  per installation (`u-` + six base32 characters, `library/publisher.json`); a saved version
+  never changes (other content under it is refused, the dialog suggests MAJOR/MINOR/PATCH from
+  the key diff). Licence: All rights reserved (mine), CC0 or CC BY 4.0, joined with an `AND`
+  to every inherited grant (`license.inherited` now holds each one in full, so attribution
+  survives a component of components; the user cannot drop them). A part's `material` may be
+  absent (the GLB's own colours). Not saved, and said so: mates to other parts, suppressed
+  mates, belts/tubes/springs; no thumbnail yet. Add to my library on a component's inspector
+  (not generators; reserved namespaces refused) stores its frozen definition (unverified unless
+  in the user's namespace). Export pack (Library details) writes a deterministic unsigned
+  `.stvdpack` that Install from file reads; a licence that forbids passing it on is refused
+  unless it is the user's own. Also fixed: installing a pack returned only its own components,
+  which replaced the listed library until a refresh
 - [ ] 9.8 Credits: Project credits dialog, `licenses/` in the bundle, GLB export
   `asset.copyright` + `extras`, STL `.credits.txt` sidecar
 - [ ] 9.9 Tests: generator golden tests (geometry within tolerance, anchor keys stable, analytic

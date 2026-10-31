@@ -158,6 +158,38 @@ export function installTauriMockScript(): void {
       return [...library]
     },
     library_copy_into_project: () => 0,
+    library_user_namespace: () => "u-e2etst",
+    library_project_geometry_sizes: (args) => {
+      const names = args.files as string[]
+      const sizes = names.map((n) => assets.get(n.slice(9, 73))?.byteLength)
+      return sizes.every((n) => n !== undefined)
+        ? sizes
+        : fail("invalidInput", "The project no longer holds a file.")
+    },
+    // Save as component / Add to my library: the manifest as Rust would record it.
+    library_add_from_project: async (args) => {
+      const text = String(args.manifest)
+      const parsed = JSON.parse(text) as { identity: { id: string; version: string } }
+      const { id, version } = parsed.identity
+      const sha = hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)))
+      const existing = library.find((c) => c.id === id && c.version === version)
+      if (existing && existing.manifestSha256 !== sha)
+        return fail(
+          "invalidInput",
+          `${id} ${version} is already in your library with other content.`
+        )
+      if (!existing) {
+        const origin = id.startsWith("u-e2etst/") ? "user" : "sideloaded"
+        library.push({ id, version, manifestSha256: sha, origin, verified: false, manifest: text })
+      }
+      return [...library]
+    },
+    library_export_pack: (args) => {
+      const list = args.components as { id: string; version: string }[]
+      const name = `${String(args.suggestedName)}.stvdpack`
+      exports.set(`x${++counter}`, { name, bytes: new TextEncoder().encode(JSON.stringify(list)) })
+      return { components: list.length, files: list.length, bytes: 0 }
+    },
     pick_export_path: (args) => {
       const token = `x${++counter}`
       const name = `${String(args.suggestedName)}.${String(args.format)}`

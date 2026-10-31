@@ -15,6 +15,7 @@ fn bad<T>(reason: impl Into<String>) -> AppResult<T> {
 
 /// Moves a confirmed pack into the store (one writer, blobs skipped when already there) and
 /// records its components. A version already installed with other content is refused.
+/// Returns everything installed now (the webview replaces its list with it).
 pub fn commit(lib: &Library, staged: Staged, now: u64) -> AppResult<Vec<InstalledComponent>> {
     let lock = lib.lock()?;
     let result = commit_locked(lib, &staged, now);
@@ -49,7 +50,6 @@ fn commit_locked(lib: &Library, staged: &Staged, now: u64) -> AppResult<Vec<Inst
         .iter()
         .map(|f| (f.path.as_str(), f.sha256.as_str()))
         .collect();
-    let mut added = Vec::new();
     for c in &staged.pack.components {
         let dir = lib.component_dir(&c.id, &c.version);
         fs::create_dir_all(&dir)?;
@@ -71,11 +71,10 @@ fn commit_locked(lib: &Library, staged: &Staged, now: u64) -> AppResult<Vec<Inst
         };
         installed::write_record(lib, &record)?;
         all.retain(|i| !(i.id == record.id && i.version == record.version));
-        all.push(record.clone());
-        added.push(record);
+        all.push(record);
     }
     installed::save(lib, &mut all)?;
-    Ok(added)
+    Ok(all)
 }
 
 /// The user declined: the staged files go.

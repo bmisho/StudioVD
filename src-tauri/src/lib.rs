@@ -116,6 +116,10 @@ pub fn run() {
             commands::library::library_install_cancel,
             commands::library::library_remove,
             commands::library::library_copy_into_project,
+            commands::library::library_user_namespace,
+            commands::library::library_project_geometry_sizes,
+            commands::library::library_add_from_project,
+            commands::library::library_export_pack,
         ])
         .build(tauri::generate_context!());
     match app {

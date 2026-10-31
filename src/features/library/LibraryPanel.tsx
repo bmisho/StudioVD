@@ -29,7 +29,7 @@ const EMPTY: Record<LibraryFilter, string> = {
   all: "No component matches.",
   generators: "No generator matches.",
   installed: "Nothing installed matches. Install a pack from a file with the button above.",
-  user: "No saved component matches. Save one from a project (Phase 9.7).",
+  user: "No saved component matches. Select parts, then Edit › Save as Component….",
 }
 
 /** The Library tab (PLAN 9.4): sources, search, cards; drag a card into the 3D view. */

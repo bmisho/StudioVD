@@ -3,6 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { ImportDialog } from "@/features/import/ImportDialog"
 import { DragGhost } from "@/features/library/DragGhost"
 import { InstallPackDialog } from "@/features/library/InstallPackDialog"
+import { SaveComponentDialog } from "@/features/library/SaveComponentDialog"
 import { useFileDrop } from "@/features/import/useFileDrop"
 import { RecoveryDialog } from "@/features/project/RecoveryDialog"
 import { UnsavedChangesDialog } from "@/features/project/UnsavedChangesDialog"
@@ -35,6 +36,7 @@ export function App() {
       <AboutDialog />
       <ImportDialog />
       <InstallPackDialog />
+      <SaveComponentDialog />
       <DragGhost />
       <UnsavedChangesDialog />
       <RecoveryDialog />

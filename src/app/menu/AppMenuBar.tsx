@@ -55,6 +55,7 @@ export function AppMenuBar() {
           <CommandMenuItem id="edit.newGroup" />
           <CommandMenuItem id="edit.delete" />
           <CommandMenuItem id="part.toggleGrounded" />
+          <CommandMenuItem id="library.saveAsComponent" />
           <MenubarSeparator />
           <CommandRadioGroup ids={["transform.translate", "transform.rotate"]} />
           <CommandMenuItem id="edit.clearSelection" />

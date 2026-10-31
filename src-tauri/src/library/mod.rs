@@ -5,6 +5,7 @@
 //! ```text
 //! LOCK                      held while anything writes here (one writer at a time)
 //! installed.json            index of installed components (rebuilt from components/ if lost)
+//! publisher.json            this installation's namespace for the user's own components
 //! store/<kind>/<sha256>.<ext>   content-addressed blobs: geometry, textures, licenses, thumbnails
 //! components/<ns>/<slug>/<version>/component.json   the manifest, byte for byte
 //! components/<ns>/<slug>/<version>/install.json     origin and the blobs it uses
@@ -14,11 +15,14 @@
 
 pub mod commit;
 pub mod copy;
+pub mod export;
+pub mod from_project;
 pub mod gc;
 pub mod glb;
 pub mod install;
 pub mod installed;
 pub mod packfile;
+pub mod publisher;
 mod verify;
 
 use crate::error::AppResult;
@@ -61,6 +65,14 @@ impl Library {
         }
         fs::create_dir_all(staging)?;
         Ok(lib)
+    }
+
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+
+    pub fn publisher_path(&self) -> PathBuf {
+        self.root.join("publisher.json")
     }
 
     pub fn store_dir(&self) -> PathBuf {

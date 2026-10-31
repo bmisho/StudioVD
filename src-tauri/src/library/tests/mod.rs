@@ -1,6 +1,7 @@
 //! Library tests (PLAN 9.2, 9.9): Install from file end to end; `refusals` has every way a
 //! pack is refused before anything reaches the store.
 
+mod project;
 mod refusals;
 
 use super::commit::commit;
@@ -148,4 +149,19 @@ fn installs_copies_into_a_project_and_uninstalls() {
             .count();
         assert_eq!(left, 0, "{folder}");
     }
+}
+
+#[test]
+fn a_second_pack_keeps_the_first_in_the_list() {
+    let (lib, dir) = setup("two-packs");
+    for id in ["acme/knob", "acme/dial"] {
+        let (staged, _) =
+            stage_pack(&lib, &write(&dir, Pack::new(id).zip(&[], None))).expect("staged");
+        commit(&lib, staged, 1).expect("installed");
+    }
+    let (staged, _) =
+        stage_pack(&lib, &write(&dir, Pack::new("acme/lever").zip(&[], None))).expect("staged");
+    let all = commit(&lib, staged, 2).expect("installed");
+    let ids: Vec<&str> = all.iter().map(|c| c.id.as_str()).collect();
+    assert_eq!(ids, ["acme/dial", "acme/knob", "acme/lever"]);
 }

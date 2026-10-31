@@ -93,7 +93,7 @@ export function regenerateInstance(
       assetId: asset.id,
       parentId: c.groupId,
       pose,
-      materialId: keyed(c.materials, p.material) ?? null,
+      materialId: p.material === undefined ? null : (keyed(c.materials, p.material) ?? null),
       grounded: false,
       visible: true,
       collider: p.collider,

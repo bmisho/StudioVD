@@ -46,6 +46,33 @@ export const removeComponent = (id: string, version: string): Promise<Result<Lib
 export const copyComponentIntoProject = (id: string, version: string): Promise<Result<number>> =>
   call<number>("library_copy_into_project", { id, version })
 
+/** This installation's namespace for the user's own components (`u-` + six characters). */
+export const userNamespace = (): Promise<Result<string>> => call<string>("library_user_namespace")
+
+/** Save as component: the byte sizes of project GLBs (`geometry/<sha256>.glb`). */
+export const projectGeometrySizes = (files: string[]): Promise<Result<number[]>> =>
+  call<number[]>("library_project_geometry_sizes", { files })
+
+/**
+ * Save as component and Add to my library: a component.json built (and validated) here, its
+ * files taken from the project. Returns the whole library.
+ */
+export const addFromProject = (manifest: string): Promise<Result<LibraryEntry[]>> =>
+  call<LibraryEntry[]>("library_add_from_project", { manifest })
+
+export interface ExportSummary {
+  components: number
+  files: number
+  bytes: number
+}
+
+/** Export pack…: a save dialog in Rust, then the pack. Null when cancelled. */
+export const exportPack = (
+  components: { id: string; version: string }[],
+  suggestedName: string
+): Promise<Result<ExportSummary | null>> =>
+  call<ExportSummary | null>("library_export_pack", { components, suggestedName })
+
 /** URL of a library blob (geometry, texture, thumbnail) through the `stvd` scheme. */
 export const libraryFileUrl = (sha256: string, ext: "glb" | "png" | "jpg"): string =>
   convertFileSrc(`lib-${sha256}.${ext}`, "stvd")

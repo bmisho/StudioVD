@@ -52,12 +52,24 @@ export const ComponentLicenseSchema = z
     data: LicenseGrantSchema,
     /** Defaults to the geometry's. */
     thumbnail: LicenseGrantSchema.optional(),
-    /** Library components this one was built from (Save as component keeps them). */
+    /**
+     * What this one was built from (Save as component keeps it, and the user cannot drop it):
+     * each library component's geometry grant, or a part's own licence when it names no
+     * component. Credits list every entry, so attribution survives a component of components.
+     */
     inherited: z
       .array(
         z
-          .object({ component: ComponentIdSchema, version: SemVerSchema, geometry: SpdxSchema })
+          .object({
+            component: ComponentIdSchema.optional(),
+            version: SemVerSchema.optional(),
+            grant: LicenseGrantSchema,
+          })
           .strict()
+          .refine(
+            (i) => (i.component === undefined) === (i.version === undefined),
+            "a component and its version go together"
+          )
       )
       .max(256)
       .optional(),

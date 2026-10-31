@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button"
 import type { GroupId } from "@/core/schema"
+import { userComponents } from "@/features/library/libraryService"
 import { editParameters, generatorOf } from "@/features/library/parameterService"
 import { useDocumentStore } from "@/store/document/documentStore"
+import { useLibraryStore } from "@/store/session/libraryStore"
 import { GeneratorParamsForm } from "./GeneratorParamsForm"
 
 const ORIGINS = {
@@ -21,6 +23,13 @@ export function ComponentSection({ groupId }: { groupId: GroupId }) {
     instance?.def ? s.doc.componentDefs[instance.def] : undefined
   )
   const unlink = useDocumentStore((s) => s.unlinkComponent)
+  // Add to my library (PLAN 9.7): a library component this project holds that is not installed.
+  const harvestable = useLibraryStore(
+    (s) =>
+      def !== undefined &&
+      def.origin !== "generator" &&
+      !s.installed.some((r) => r.id === def.id && r.version === def.version)
+  )
   if (!instance) return null
   const id = instance.id
   const made = def ? generatorOf(id) : null
@@ -50,6 +59,21 @@ export function ComponentSection({ groupId }: { groupId: GroupId }) {
             onApply={(p) => editParameters(id, p)}
           />
         </>
+      )}
+      {harvestable && (
+        <div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => void userComponents.harvest(id)}
+          >
+            Add to my library
+          </Button>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Your library lacks this component; this project holds a copy of it.
+          </p>
+        </div>
       )}
       <div>
         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => unlink(id)}>

@@ -153,7 +153,16 @@ export function installedItems(
         manifestSha256: r.manifestSha256,
         text: r.manifest,
       },
-      licence: [line("Geometry", geometry), line("Data", data)],
+      licence: [
+        line("Geometry", geometry),
+        line("Data", data),
+        ...(m.license.inherited ?? []).map((i) =>
+          line(
+            i.component ? `Built from ${i.component} ${i.version ?? ""}`.trim() : "Built from",
+            i.grant
+          )
+        ),
+      ],
     }
   })
 }

@@ -1,4 +1,5 @@
 import { editCommands } from "./editCommands"
+import { libraryCommands } from "./libraryCommands"
 import { partCommands } from "./partCommands"
 import { fileCommands } from "./fileCommands"
 import { testCommands } from "./testCommands"
@@ -27,6 +28,7 @@ export function createCommandRegistry(deps: CommandDeps): CommandRegistry {
     ...fileCommands(deps),
     ...editCommands(deps),
     ...partCommands(deps),
+    ...libraryCommands(deps),
     ...viewCommands(deps),
     ...viewOrientationCommands(deps),
     ...displayModeCommands(deps),

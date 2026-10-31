@@ -18,7 +18,7 @@ use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
 const MIB: u64 = 1024 * 1024;
-const PACK_LIMITS: Limits = Limits {
+pub(super) const PACK_LIMITS: Limits = Limits {
     max_archive_bytes: 512 * MIB,
     max_entries: 20_001,
     max_total_bytes: 2048 * MIB,
@@ -26,8 +26,16 @@ const PACK_LIMITS: Limits = Limits {
     ratio_floor_bytes: 64 * MIB,
     max_name_len: 200,
 };
+/// The size cap of each entry a pack may hold (None: no pack holds it).
+pub(super) fn pack_entry_rule(name: &str) -> Option<u64> {
+    match name {
+        "pack.json" => Some(MAX_PACK_JSON_BYTES),
+        _ => file_kind(name).map(|(_, cap)| cap),
+    }
+}
+
 /// Namespaces only signed catalogs may install (PLAN 4.7).
-const RESERVED: [&str; 4] = ["official", "gen", "builtin", "studiovd"];
+pub(super) const RESERVED: [&str; 4] = ["official", "gen", "builtin", "studiovd"];
 
 /// A pack extracted and checked, waiting for the user's confirmation.
 pub struct Staged {
@@ -89,12 +97,8 @@ fn hash_file(path: &Path) -> AppResult<String> {
 pub fn stage_pack(lib: &Library, archive: &Path) -> AppResult<(Staged, StagedSummary)> {
     let token = token(archive);
     let dir = lib.staging_dir().join(&token);
-    let rule = |name: &str| match name {
-        "pack.json" => Some(MAX_PACK_JSON_BYTES),
-        _ => file_kind(name).map(|(_, cap)| cap),
-    };
     let reader = BufReader::new(fs::File::open(archive)?);
-    let extracted = extract_zip(reader, &dir, &PACK_LIMITS, rule)?;
+    let extracted = extract_zip(reader, &dir, &PACK_LIMITS, pack_entry_rule)?;
     let checked = (|| {
         let pack = parse_pack_manifest(&fs::read(dir.join("pack.json"))?)?;
         let listed: HashMap<&str, (&str, u64)> = pack

@@ -1,6 +1,7 @@
 import type { StandardView } from "@/core/math/standardViews"
 import type { NavigationPresetId } from "@/core/navigation/mousePresets"
 import type { ViewportApi } from "@/features/viewport/viewportBridge"
+import type { PartId } from "@/core/schema"
 import type { AppError, Result } from "@/lib/tauri/result"
 import type { History } from "@/store/document/history"
 import type { DocumentStore } from "@/store/document/documentStore"
@@ -22,6 +23,7 @@ export type CommandId =
   | "edit.delete"
   | "edit.newGroup"
   | "edit.clearSelection"
+  | "library.saveAsComponent"
   | "view.fitAll"
   | "view.toggleProjection"
   | "view.toggleSplit"
@@ -79,6 +81,8 @@ export interface Backend {
   /** Stores a normalized asset in the workspace (the test rig's boxes). */
   writeAsset: (id: string, bytes: Uint8Array) => Promise<Result<boolean>>
   exportScene: (format: "glb" | "stl") => Promise<Result<void>>
+  /** Opens Save as component for these parts (PLAN 9.7). */
+  saveAsComponent: (parts: readonly PartId[]) => Promise<Result<void>>
   closeWindow: () => Promise<Result<void>>
 }
 

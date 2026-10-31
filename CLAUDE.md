@@ -223,6 +223,9 @@ Further rules:
   `core/library/instantiate.ts`; deletions keep instances true (`componentUpkeep.ts`). The
   insertion drag's state is a transient observable (`insertionPreview`), never Zustand; a
   click picks a component as its group unless it is the one entered (`enteredComponent`).
+  Save as component (9.7) builds the manifest in `core/library/userComponent` and validates it
+  with the download schema; Rust only checks and stores the files it names. Inherited licences
+  travel in full in `license.inherited` and can never be dropped.
 - Connectors (Phase 9.6, scene.json v2): belts, tubes and springs are documents of their end
   anchors only; their meshes are derived in the view (`core/connectors`, `ConnectorsLayer`)
   from the anchors' world frames, rebuilt when the signature changes, never stored, never in

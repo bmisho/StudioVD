@@ -44,9 +44,15 @@ describe("a hub with 150 hinged parts", () => {
     configureWorld(world)
     buildPhysicsScene(RAPIER, world, physicsModelFromDocument(hubDocument(150)))
     world.step()
-    const start = performance.now()
-    for (let i = 0; i < 20; i++) world.step()
-    expect((performance.now() - start) / 20).toBeLessThan(8) // ~3 ms here, 1/120 s budget
+    // The best of five 4-step batches: the unit suite runs files in parallel, and a mean over
+    // all steps measured the other workers too (CI: 8.3 and 9.3 ms against ~3 ms alone). The
+    // failure this guards (one 100+ link multibody: 64 ms a step) fails every batch.
+    const batches = Array.from({ length: 5 }, () => {
+      const start = performance.now()
+      for (let i = 0; i < 4; i++) world.step()
+      return (performance.now() - start) / 4
+    })
+    expect(Math.min(...batches)).toBeLessThan(8) // ~3 ms here, 1/120 s budget
     world.free()
   }, 60_000)
 })

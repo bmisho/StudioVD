@@ -8,6 +8,10 @@ const viewport = { width: 1440, height: 900 }
 // CI runners have no GPU. Chromium's implicit software-WebGL fallback is deprecated, so opt
 // in to SwiftShader explicitly: WebGL2 then behaves the same on every machine.
 const chromiumArgs = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
+// A sandbox whose preinstalled Chromium is not the build this Playwright downloads points at
+// its own binary (E2E_CHROMIUM_PATH=/opt/pw-browsers/chromium); CI installs the pinned build.
+const executablePath = process.env.E2E_CHROMIUM_PATH
+const launchOptions = { args: chromiumArgs, ...(executablePath && { executablePath }) }
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -30,7 +34,7 @@ export default defineConfig({
       ? [
           {
             name: "chromium",
-            use: { ...devices["Desktop Chrome"], viewport, launchOptions: { args: chromiumArgs } },
+            use: { ...devices["Desktop Chrome"], viewport, launchOptions },
           },
         ]
       : []),

@@ -124,6 +124,7 @@ export function AppMenuBar() {
         <MenubarContent>
           <CommandMenuItem id="dev.insertTestRig" />
           <MenubarSeparator />
+          <CommandMenuItem id="help.credits" />
           <CommandMenuItem id="help.about" />
         </MenubarContent>
       </MenubarMenu>

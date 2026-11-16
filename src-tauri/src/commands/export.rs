@@ -7,6 +7,7 @@ use crate::error::{AppError, AppResult};
 use crate::fsutil::write_atomic;
 use crate::picked::{PickedFile, MAX_IMPORT_BYTES};
 use crate::state::AppState;
+use std::path::{Path, PathBuf};
 use tauri::ipc::Request;
 use tauri::{Runtime, State, Window};
 use tauri_plugin_dialog::DialogExt;
@@ -57,6 +58,48 @@ pub async fn write_export(state: State<'_, AppState>, request: Request<'_>) -> A
     write_atomic(&path, bytes)
 }
 
+/// Largest credits sidecar (plain text).
+const MAX_CREDITS_BYTES: usize = 1024 * 1024;
+
+/// `part.stl` → `part.credits.txt`, beside the export. Only an STL has a sidecar: a GLB
+/// carries its credits inside (`asset.copyright`, `asset.extras`).
+fn credits_path(target: &Path) -> AppResult<PathBuf> {
+    let is_stl = target
+        .extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("stl"));
+    match target.file_stem().filter(|_| is_stl) {
+        Some(stem) => {
+            let mut name = stem.to_os_string();
+            name.push(".credits.txt");
+            Ok(target.with_file_name(name))
+        }
+        None => Err(AppError::InvalidInput(
+            "Only an STL export has a credits file.".into(),
+        )),
+    }
+}
+
+/// The credits of an STL export (PLAN 9.8): text written beside the file the user chose,
+/// named after it. The webview names no path: the export's own write token gives it.
+#[tauri::command]
+pub async fn write_export_credits(
+    state: State<'_, AppState>,
+    request: Request<'_>,
+) -> AppResult<String> {
+    let target = state
+        .picked()?
+        .target(header(&request, "x-export-token")?)?;
+    let bytes = raw_body(&request)?;
+    if bytes.len() > MAX_CREDITS_BYTES || std::str::from_utf8(bytes).is_err() {
+        return Err(AppError::InvalidInput(
+            "The credits are not text, or are too large.".into(),
+        ));
+    }
+    let path = credits_path(&target)?;
+    write_atomic(&path, bytes)?;
+    Ok(crate::picked::file_name(&path))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -65,5 +108,13 @@ mod tests {
     fn formats() {
         assert_eq!(export_extension("glb").expect("glb"), "glb");
         assert_eq!(export_extension("obj").unwrap_err().kind(), "invalidInput");
+    }
+
+    #[test]
+    fn credits_sit_beside_an_stl_only() {
+        let path = credits_path(Path::new("/out/My part.v2.STL")).expect("stl");
+        assert_eq!(path, Path::new("/out/My part.v2.credits.txt"));
+        assert!(credits_path(Path::new("/out/a.glb")).is_err());
+        assert!(credits_path(Path::new("/out/stl")).is_err());
     }
 }

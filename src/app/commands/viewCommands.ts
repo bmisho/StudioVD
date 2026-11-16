@@ -75,6 +75,7 @@ export function viewCommands({
       isEnabled: () => !s().testMode,
       disabledReason: "leave test mode first",
     },
+    { id: "help.credits", label: "Project Credits…", run: () => openDialog("credits") },
     { id: "help.about", label: "About StudioVD", run: () => openDialog("about") },
   ]
 }

@@ -15,6 +15,7 @@ export function installProjectMockScript(): void {
     fail: (kind: string, message: string) => Promise<never>
     assets: Map<string, Uint8Array>
     textures: Map<string, { ext: string; bytes: Uint8Array }>
+    licenses: Set<string>
   }
   const disk = new Map<string, { scene: Uint8Array; thumbnail: number }>()
   const targets = new Map<string, string>()
@@ -37,6 +38,7 @@ export function installProjectMockScript(): void {
     const files = [
       ...[...mock.assets.keys()].map((id) => `geometry/${id}.glb`),
       ...[...mock.textures].map(([id, t]) => `textures/${id}.${t.ext}`),
+      ...mock.licenses,
     ]
     const sameFile = !next.recovered && next.name !== null && next.name === current
     return { fileName: next.name, files, recovered: next.recovered, sameFile }

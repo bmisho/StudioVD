@@ -110,6 +110,7 @@ pub fn run() {
             commands::assets::write_asset,
             commands::export::pick_export_path,
             commands::export::write_export,
+            commands::export::write_export_credits,
             commands::library::library_list,
             commands::library::library_pick_pack,
             commands::library::library_install_commit,

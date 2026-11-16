@@ -1,4 +1,10 @@
-import { readManifest, type ComponentManifest, type SceneDocument } from "@/core/schema"
+import {
+  compareVersions,
+  parseVersion,
+  readManifest,
+  type ComponentManifest,
+  type SceneDocument,
+} from "@/core/schema"
 import type { InstalledRecord } from "../items"
 import { buildUserComponent, type UserComponentForm } from "./build"
 import { slugFor } from "./keys"
@@ -21,7 +27,14 @@ export function savedVersions(
   appVersion: string
 ): { versions: string[]; latest: ComponentManifest | undefined } {
   const mine = installed.filter((r) => r.id === id)
-  const last = mine.at(-1)
+  // The highest by SemVer (1.10.0 after 1.9.0), not the last in the library's text order.
+  const last = mine
+    .flatMap((r) => {
+      const version = parseVersion(r.version)
+      return version ? [{ r, version }] : []
+    })
+    .sort((a, b) => compareVersions(a.version, b.version))
+    .at(-1)?.r
   const read = last && readManifest(new TextEncoder().encode(last.manifest), appVersion, false)
   return { versions: mine.map((r) => r.version), latest: read?.ok ? read.manifest : undefined }
 }
@@ -66,7 +79,7 @@ export function saveDefaults(
     glbBytes: new Map(plan.parts.map((p) => [p.assetId, 1])),
   })
   if ("manifest" in draft) form.version = suggestVersion(versions, latest, draft.manifest)
-  const inherited = inheritedLicences(doc, plan.parts).map(
+  const inherited = inheritedLicences(doc, plan.parts, namespace).map(
     (i) => i.component ?? i.grant.creators[0]?.name ?? i.grant.spdx
   )
   return { form, taken: versions, inherited: [...new Set(inherited)] }

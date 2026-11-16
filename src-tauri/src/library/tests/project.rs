@@ -130,6 +130,8 @@ fn refuses_what_a_pack_would_refuse() {
     assert!(add(&manifest(&p, &id, "1.0.0", p.bytes + 1)).contains("size recorded"));
     assert!(add(&manifest(&p, &id, "1.0.0", p.bytes).replace("[]", "[{}]")).contains("thumbnails"));
     assert!(add("not json").contains("not JSON"));
+    let device = manifest(&p, &format!("{ns}/con"), "1.0.0", p.bytes);
+    assert!(add(&device).contains("folder name"));
 
     let missing = manifest(&p, &id, "1.0.0", p.bytes)
         .replace(&p.licence, &format!("licenses/{}.txt", "a".repeat(64)));

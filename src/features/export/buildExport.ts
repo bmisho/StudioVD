@@ -96,11 +96,31 @@ function sceneOf(
   return { scene, dispose: () => disposables.forEach((d) => d.dispose()) }
 }
 
-/** Binary glTF in metres (glTF 2.0 units), one named node per part. */
-export async function exportGlb(items: readonly ExportItem[]): Promise<Uint8Array> {
+/** What a GLB credits (PLAN 9.8): `asset.copyright` and structured `asset.extras`. */
+export interface GlbCredits {
+  copyright: string
+  extras: Record<string, unknown>
+}
+
+/** Binary glTF in metres (glTF 2.0 units), one named node per part, with its credits. */
+export async function exportGlb(
+  items: readonly ExportItem[],
+  credits: GlbCredits | null = null
+): Promise<Uint8Array> {
   const { scene, dispose } = sceneOf(items, 1 / MM_PER_UNIT.m)
   try {
-    const result = await new GLTFExporter().parseAsync(scene, { binary: true })
+    const exporter = new GLTFExporter()
+    if (credits)
+      exporter.register((writer) => ({
+        afterParse: () => {
+          const json = (writer as unknown as { json: { asset: Record<string, unknown> } }).json
+          json.asset.extras = credits.extras
+        },
+      }))
+    const result = await exporter.parseAsync(scene, {
+      binary: true,
+      ...(credits && { copyright: credits.copyright }),
+    })
     if (!(result instanceof ArrayBuffer)) throw new Error("The glTF exporter returned JSON.")
     return new Uint8Array(result)
   } finally {

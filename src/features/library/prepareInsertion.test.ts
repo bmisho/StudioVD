@@ -71,6 +71,29 @@ describe("prepareInsertion", () => {
     ])
   })
 
+  it("records the licence texts a component inherited from library parts", async () => {
+    const { b } = backend()
+    const text = manifestText("component-asset.valid.json")
+    const manifest = ComponentManifestSchema.parse(JSON.parse(text))
+    const sha = "d".repeat(64)
+    const grant = {
+      ...manifest.license.geometry,
+      licenseText: { path: `licenses/${sha}.txt`, sha256: sha },
+    }
+    manifest.license.inherited = [{ grant }]
+    const ref = {
+      kind: "installed" as const,
+      id: manifest.identity.id,
+      version: manifest.identity.version,
+      origin: "user" as const,
+      manifest,
+      manifestSha256: "0".repeat(64),
+      text,
+    }
+    const ready = await prepareInsertion(ref, b, () => ({}))
+    expect(ready.licenseTexts.map((l) => l.sha256)).toContain(sha)
+  })
+
   it("makes the generated parts of an installed component with their generator, once", async () => {
     const { b, written } = backend()
     const generate = vi.spyOn(b, "generate")

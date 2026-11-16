@@ -65,6 +65,15 @@ export const pickExportPath = (
 export const writeExport = (token: string, bytes: Uint8Array): Promise<Result<void>> =>
   call<void>("write_export", bytes, { headers: { "x-export-token": token } })
 
+/**
+ * The credits of an STL export (PLAN 9.8): written beside the exported file as
+ * `<name>.credits.txt`. Rust derives the path from the export's token; returns the file name.
+ */
+export const writeExportCredits = (token: string, text: string): Promise<Result<string>> =>
+  call<string>("write_export_credits", new TextEncoder().encode(text), {
+    headers: { "x-export-token": token },
+  })
+
 /** Files dropped on the window (Rust registers them and emits `import-drop`). */
 export async function onFilesDropped(handler: (dropped: ChosenFiles) => void): Promise<UnlistenFn> {
   if (!isTauri()) return () => undefined

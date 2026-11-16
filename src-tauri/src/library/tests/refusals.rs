@@ -74,3 +74,46 @@ fn reads_the_shared_pack_fixture() {
         .replace("geometry/aaaa", "geometry/bbbb");
     assert!(parse_pack_manifest(renamed.as_bytes()).is_err()); // not named by its hash
 }
+
+/// PLAN 9.9: the zip guard's refusals hold on the pack path too, and leave nothing staged.
+#[test]
+fn refuses_symlinks_bombs_and_device_names() {
+    let pack = Pack::new("acme/knob");
+    let link = RawEntry {
+        external_attributes: 0o120_777 << 16,
+        ..entry(&format!("licenses/{}.txt", "9".repeat(64)), b"/etc/passwd")
+    };
+    assert!(!refusal(&pack, &[link], None).is_empty(), "a symlink");
+
+    // Two GLB-sized runs of zeros: each within its own cap, together a 1000:1 expansion.
+    let zeros = vec![0u8; 40 << 20];
+    let bombs: Vec<RawEntry> = ["1", "2"]
+        .iter()
+        .map(|n| RawEntry {
+            deflate: true,
+            ..entry(&format!("geometry/{}.glb", n.repeat(64)), &zeros)
+        })
+        .collect();
+    let why = refusal(&pack, &bombs, None);
+    assert!(why.contains("expands too much"), "{why}");
+    // One file larger than its kind allows, however small it is in the archive.
+    let fat = RawEntry {
+        deflate: true,
+        ..entry(
+            &format!("licenses/{}.txt", "3".repeat(64)),
+            &zeros[..2 << 20],
+        )
+    };
+    assert!(
+        !refusal(&pack, &[fat], None).is_empty(),
+        "an oversized text"
+    );
+
+    // A Windows device name as a folder: refused on every platform.
+    let device = entry("components/acme/con/1.0.0/component.json", b"{}");
+    let why = refusal(&pack, &[device], None);
+    assert!(
+        why.contains("forbidden") || why.contains("reserved"),
+        "{why}"
+    );
+}

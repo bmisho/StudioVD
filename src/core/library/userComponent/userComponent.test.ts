@@ -155,4 +155,34 @@ describe("Save as component", () => {
       { grant: manifest.license.geometry },
     ])
   })
+
+  it("re-saving the user's own component does not inherit its previous version", async () => {
+    const manifest = ComponentManifestSchema.parse(fixture)
+    const ref = manifest.parts.body?.geometry
+    if (ref?.kind !== "asset") throw new Error("fixture")
+    // The user's earlier save: all rights reserved, itself built from the knob (CC BY).
+    const mine = structuredClone(manifest)
+    mine.identity.id = "u-abcdef/my-knob" as typeof mine.identity.id
+    mine.license.geometry = { ...mine.license.geometry, spdx: "LicenseRef-StudioVD-UserPrivate" }
+    mine.license.geometry.redistributable = false
+    mine.license.inherited = [
+      { component: manifest.identity.id, version: "2.0.0", grant: manifest.license.geometry },
+    ]
+    const def = await definitionOf(mine, "user")
+    const placed = instantiateComponent(createEmptyDocument("0.1.0"), {
+      def,
+      assets: { body: assetFromManifest(ref, mine.license.geometry) },
+      pose: at(0, 0, 0),
+    })
+    const doc = mergeBatch(createEmptyDocument("0.1.0"), placed.batch)
+    const out = build(doc, Object.keys(doc.parts) as PartId[], { ...FORM, licence: "cc0" })
+    // Only what came from others travels; the new choice (CC0) is not held back by the old.
+    expect(out.manifest.license.inherited).toEqual([
+      { component: "acme/knob-15mm", version: "2.0.0", grant: manifest.license.geometry },
+    ])
+    expect(out.manifest.license.geometry).toMatchObject({
+      spdx: "CC0-1.0 AND CC-BY-4.0",
+      redistributable: true,
+    })
+  })
 })

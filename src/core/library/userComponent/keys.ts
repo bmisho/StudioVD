@@ -28,10 +28,16 @@ export function localKey(name: string, taken: Set<string>, fallback: string): st
   return key
 }
 
-/** A component slug for `name`: lowercase words joined by `-`, at most 64 ("component" if none). */
+/** DOS device names: Windows opens the device, so they never become folder names. */
+const DEVICE = /^(con|prn|aux|nul|com\d|lpt\d)$/
+
+/**
+ * A component slug for `name`: lowercase words joined by `-`, at most 64 ("component" if
+ * none). It becomes a folder in the library and in packs, so a device name gets a suffix.
+ */
 export function slugFor(name: string): string {
   const slug = words(name).join("-").toLowerCase().slice(0, 64).replace(/-+$/, "")
-  return slug || "component"
+  return DEVICE.test(slug) ? `${slug}-part` : slug || "component"
 }
 
 /** Tags as the schema takes them, from text the user typed ("motor, NEMA 17" → two tags). */

@@ -5,10 +5,10 @@ import type { ComponentDefSnapshot } from "./library"
 const has = (record: object, id: unknown): boolean =>
   typeof id === "string" && Object.hasOwn(record, id)
 
-/** The licence texts a component definition's manifest names (geometry, data, thumbnail). */
+/** The licence texts a component definition's manifest names (its grants and inherited ones). */
 export function manifestLicenseTexts(def: ComponentDefSnapshot): string[] {
-  const { geometry, data, thumbnail } = def.manifest.license
-  return [geometry, data, thumbnail]
+  const { geometry, data, thumbnail, inherited } = def.manifest.license
+  return [geometry, data, thumbnail, ...(inherited ?? []).map((i) => i.grant)]
     .filter((g): g is LicenseGrant => g !== undefined)
     .flatMap((g) => (g.licenseText ? [g.licenseText.sha256] : []))
 }

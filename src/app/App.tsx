@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ImportDialog } from "@/features/import/ImportDialog"
 import { DragGhost } from "@/features/library/DragGhost"
+import { CreditsDialog } from "@/features/library/CreditsDialog"
 import { InstallPackDialog } from "@/features/library/InstallPackDialog"
 import { SaveComponentDialog } from "@/features/library/SaveComponentDialog"
 import { useFileDrop } from "@/features/import/useFileDrop"
@@ -35,6 +36,7 @@ export function App() {
       </div>
       <AboutDialog />
       <ImportDialog />
+      <CreditsDialog />
       <InstallPackDialog />
       <SaveComponentDialog />
       <DragGhost />

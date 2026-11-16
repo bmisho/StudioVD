@@ -6,7 +6,7 @@ import type { AppError, Result } from "@/lib/tauri/result"
 import type { History } from "@/store/document/history"
 import type { DocumentStore } from "@/store/document/documentStore"
 import type { PreferencesStore } from "@/store/preferences/preferencesStore"
-import type { DisplayMode, SessionStore } from "@/store/session/sessionStore"
+import type { DialogId, DisplayMode, SessionStore } from "@/store/session/sessionStore"
 
 export type CommandId =
   | "file.new"
@@ -48,6 +48,7 @@ export type CommandId =
   | "test.toggle"
   | "test.reset"
   | "dev.insertTestRig"
+  | "help.credits"
   | "help.about"
 
 export interface Command {
@@ -99,5 +100,5 @@ export interface CommandDeps {
   /** Moves keyboard focus to the menu bar (F10, as on Windows/Linux desktops). */
   focusMenuBar: () => void
   /** Opens a modal dialog owned by the shell. */
-  openDialog: (dialog: "about") => void
+  openDialog: (dialog: DialogId) => void
 }

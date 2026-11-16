@@ -68,8 +68,10 @@ export async function prepareInsertion(
     if (!body) throw new Error(`${g.generator} made no ${g.output}.`)
     assets[key] = await store(body)
   }
-  const { geometry, data, thumbnail } = manifest.license
-  const licenseTexts = [geometry, data, thumbnail].flatMap((grant) =>
+  const { geometry, data, thumbnail, inherited } = manifest.license
+  // Inherited grants' texts too: a component built from library parts carries their terms.
+  const grants = [geometry, data, thumbnail, ...(inherited ?? []).map((i) => i.grant)]
+  const licenseTexts = grants.flatMap((grant) =>
     grant?.licenseText
       ? [
           {

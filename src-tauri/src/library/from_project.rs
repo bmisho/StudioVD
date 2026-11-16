@@ -4,12 +4,13 @@
 //! checked as a pack's would be (content address, kind, GLB rules, size), then the component
 //! is recorded: as the user's own in their namespace, else as unverified.
 
-use super::install::RESERVED;
+use super::install::{PACK_LIMITS, RESERVED};
 use super::installed::{self, InstalledComponent, Origin};
 use super::packfile::{check_component_id, check_version, file_kind, FileKind};
 use super::publisher;
 use super::verify::check_content;
 use super::Library;
+use crate::bundle::guard::check_name;
 use crate::error::{AppError, AppResult};
 use crate::fsutil::write_atomic;
 use crate::workspace::sha256_hex;
@@ -117,6 +118,10 @@ pub fn add_from_project(
     let manifest: Value =
         serde_json::from_str(text).or_else(|_| bad("The component is not JSON."))?;
     let (id, version) = identity(&manifest)?;
+    // Its folder here and its path in a pack: the names an archive may hold (no device names).
+    let pack_path = format!("components/{id}/{version}/component.json");
+    check_name(pack_path.as_bytes(), PACK_LIMITS.max_name_len)
+        .map_err(|_| AppError::InvalidInput(format!("{id} cannot be a folder name.")))?;
     let ns = id.split('/').next().unwrap_or_default();
     if RESERVED.contains(&ns) {
         return bad(format!(

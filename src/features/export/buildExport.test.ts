@@ -59,4 +59,26 @@ describe("GLB export", () => {
     expect(volume?.thicknessFactor).toBeCloseTo(0.003, 9) // 3 mm
     expect(json.accessors[0]?.max?.[2]).toBeCloseTo(0.0015, 6) // the pane is 3 mm thick too
   })
+
+  it("writes its credits into asset.copyright and asset.extras", async () => {
+    const item = {
+      name: "Knob",
+      geometry: new BoxGeometry(5, 5, 5),
+      material: new MeshPhysicalMaterial(),
+      matrixWorld: new Matrix4(),
+    }
+    const credits = {
+      copyright: "(c) 2026 Acme Ltd (CC-BY-4.0)",
+      extras: { studiovdCredits: [{ title: "Knob" }] },
+    }
+    const json = jsonOf(await exportGlb([item], credits)) as { asset: Record<string, unknown> }
+    expect(json.asset).toMatchObject({
+      version: "2.0",
+      copyright: credits.copyright,
+      extras: credits.extras,
+    })
+    const plain = jsonOf(await exportGlb([item])) as { asset: Record<string, unknown> }
+    expect(plain.asset.copyright).toBeUndefined()
+    expect(plain.asset.extras).toBeUndefined()
+  })
 })

@@ -76,16 +76,24 @@ export function definitionOfPart(doc: SceneDocument, part: Part): ComponentDefSn
 /**
  * What `parts` inherit: each library component's geometry grant and what it inherited in turn,
  * or a part's own asset licence when no definition names it. The app's generators are ours
- * (CC0, no attribution) and add nothing.
+ * (CC0, no attribution) and add nothing; neither does the user's own earlier work (components
+ * in `ownNamespace`: re-saving one must not bind it to its previous version's terms), though
+ * what that work inherited from others still travels.
  */
-export function inheritedLicences(doc: SceneDocument, parts: readonly Part[]): Inherited[] {
+export function inheritedLicences(
+  doc: SceneDocument,
+  parts: readonly Part[],
+  ownNamespace?: string
+): Inherited[] {
   const found = new Map<string, Inherited>()
   const add = (i: Inherited) => found.set(JSON.stringify(i), i)
   for (const part of parts) {
     const def = definitionOfPart(doc, part)
     if (def) {
       if (def.origin === "generator") continue
-      add({ component: def.id, version: def.version, grant: def.manifest.license.geometry })
+      const own = ownNamespace !== undefined && def.id.startsWith(`${ownNamespace}/`)
+      if (!own)
+        add({ component: def.id, version: def.version, grant: def.manifest.license.geometry })
       for (const i of def.manifest.license.inherited ?? []) add(i)
       continue
     }

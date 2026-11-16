@@ -1006,12 +1006,26 @@ Exit criteria
   `.stvdpack` that Install from file reads; a licence that forbids passing it on is refused
   unless it is the user's own. Also fixed: installing a pack returned only its own components,
   which replaced the listed library until a refresh
-- [ ] 9.8 Credits: Project credits dialog, `licenses/` in the bundle, GLB export
-  `asset.copyright` + `extras`, STL `.credits.txt` sidecar
-- [ ] 9.9 Tests: generator golden tests (geometry within tolerance, anchor keys stable, analytic
+- [x] 9.8 Credits: Project credits dialog, `licenses/` in the bundle, GLB export
+  `asset.copyright` + `extras`, STL `.credits.txt` sidecar. As built: `core/library/credits.ts`
+  derives what a set of parts owes (each library component's geometry grant, what it
+  inherited, and the licence of a model whose component is gone; the app's generators are CC0
+  and owe nothing). Help › Project Credits… lists them (Copy as text). A GLB export carries
+  them in `asset.copyright` and `asset.extras.studiovdCredits`; an STL gets
+  `<name>.credits.txt` beside it (Rust derives the path from the export's own write token).
+  Licence texts of inherited grants are copied into the project and kept by save-time GC.
+  Exports now include belts, tubes and springs hanging on the exported parts
+- [x] 9.9 Tests: generator golden tests (geometry within tolerance, anchor keys stable, analytic
   mass vs mesh mass), schema fixtures, Rust guards (zip-slip, symlink, ratio bomb, unlisted
-  entry, reserved name), E2E: insert → undo → redo → save → reopen with an **empty** library dir
-- [ ] ⛔ 9.10 **User approval**
+  entry, reserved name), E2E: insert → undo → redo → save → reopen with an **empty** library dir.
+  As built: the guards are also tested on the pack path (`library/tests/refusals.rs`: symlink,
+  a 1000:1 expansion, an oversized text, a Windows device name, zip-slip, unlisted and
+  missing entries, reserved namespaces), each leaving nothing staged; `credits.spec.ts`
+  installs a licensed component, inserts it (undo, redo), checks the credits dialog, the STL
+  sidecar and the GLB, saves, empties the library and reopens
+- [x] ⛔ 9.10 **User approval** (gate waived, not reviewed: on 2026-11-16 the user asked to
+  "complete the rest of the steps for all stages", so the remaining phases run on without a
+  stop at each gate)
 
 ## Phase 10: Kinematic test mode at assembly scale
 

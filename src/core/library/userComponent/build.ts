@@ -176,7 +176,12 @@ export function buildUserComponent(
     suggestedMates: [],
     placement: { groundIfFirst: plan.root.grounded },
     thumbnails: [],
-    license: componentLicence(form.licence, author, year, inheritedLicences(doc, plan.parts)),
+    license: componentLicence(
+      form.licence,
+      author,
+      year,
+      inheritedLicences(doc, plan.parts, ctx.namespace)
+    ),
     authoring: {
       kind: "user",
       appVersion: ctx.appVersion,

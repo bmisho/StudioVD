@@ -17,7 +17,7 @@ export type Projection = "perspective" | "orthographic"
 export type SplitOrientation = "horizontal" | "vertical"
 export type Pane = "viewport" | "schematic"
 export type SimStatus = "idle" | "solving" | "error"
-export type DialogId = "about"
+export type DialogId = "about" | "credits"
 export type GizmoMode = "translate" | "rotate"
 /** How parts are drawn (PLAN 6.6). Wireframe shows feature edges only, not the triangles. */
 export type DisplayMode = "shaded" | "shadedEdges" | "wireframe" | "xray"

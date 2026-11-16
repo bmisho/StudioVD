@@ -27,6 +27,7 @@ export function installTauriMockScript(): void {
     verified: boolean
   }
   const library: Record<string, unknown>[] = []
+  const licenses = new Set<string>()
   let nextPack: Staged | null = null
   let staged: Staged | null = null
   const listeners = new Map<string, { eventId: number; handler: number }[]>()
@@ -78,6 +79,13 @@ export function installTauriMockScript(): void {
       }
     },
     libraryIds: () => library.map((c) => `${String(c.id)}@${String(c.version)}`),
+    /** An empty library folder, as on another machine. */
+    clearLibrary: () => library.splice(0),
+    /** A written export (or its credits sidecar) as text; null when there is none. */
+    exportText: (name: string) => {
+      const found = [...exports.values()].find((e) => e.name === name)
+      return found ? Array.from(found.bytes, (b) => String.fromCharCode(b)).join("") : null
+    },
     exports: () =>
       [...exports.values()].map((e) => ({
         name: e.name,
@@ -157,7 +165,16 @@ export function installTauriMockScript(): void {
       if (at >= 0) library.splice(at, 1)
       return [...library]
     },
-    library_copy_into_project: () => 0,
+    // Insertion copies the component's licence texts into the workspace, as Rust does
+    // (its geometry is whatever the test put into the asset store).
+    library_copy_into_project: (args) => {
+      const found = library.find((c) => c.id === args.id && c.version === args.version)
+      const text = typeof found?.manifest === "string" ? found.manifest : ""
+      const named = text.match(/licenses\/[0-9a-f]{64}\.txt/g) ?? []
+      const fresh = named.filter((name) => !licenses.has(name))
+      for (const name of fresh) licenses.add(name)
+      return fresh.length
+    },
     library_user_namespace: () => "u-e2etst",
     library_project_geometry_sizes: (args) => {
       const names = args.files as string[]
@@ -202,6 +219,14 @@ export function installTauriMockScript(): void {
       target.bytes = new Uint8Array(args).slice()
       return null
     },
+    write_export_credits: (args, headers) => {
+      const target = exports.get(headers["x-export-token"] ?? "")
+      if (!target?.name.toLowerCase().endsWith(".stl"))
+        return fail("invalidInput", "Only an STL export has a credits file.")
+      const name = `${target.name.slice(0, -4)}.credits.txt`
+      exports.set(`credits:${name}`, { name, bytes: new Uint8Array(args).slice() })
+      return name
+    },
     "plugin:event|listen": (args) => {
       const event = String(args.event)
       const eventId = ++counter
@@ -222,7 +247,7 @@ export function installTauriMockScript(): void {
   }
 
   // Shared with tauriProjectMock.ts (a second init script): commands, events and files.
-  w.__E2E_MOCK__ = { commands, emit, fail, assets, textures }
+  w.__E2E_MOCK__ = { commands, emit, fail, assets, textures, licenses }
   w.isTauri = true
   w.__TAURI_EVENT_PLUGIN_INTERNALS__ = { unregisterListener: () => undefined }
   w.__TAURI_INTERNALS__ = {
@@ -268,5 +293,7 @@ export interface E2EBackend {
   textureIds(): string[]
   queuePack(manifests: { id: string; version: string; manifest: string }[]): void
   libraryIds(): string[]
+  clearLibrary(): void
+  exportText(name: string): string | null
   exports(): { name: string; size: number; head: number[] }[]
 }

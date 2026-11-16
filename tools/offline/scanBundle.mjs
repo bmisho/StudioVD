@@ -21,6 +21,13 @@ export const ALLOWLIST = [
   { prefix: "https://docs.pmnd.rs/react-three-fiber/", why: "R3F error-message link" },
   { exact: "https://jcgt.org/published/0007/04/01/", why: "three.js shader source comment" },
   ...[
+    "https://creativecommons.org/publicdomain/zero/1.0/",
+    "https://creativecommons.org/licenses/by/4.0/",
+  ].map((exact) => ({
+    exact,
+    why: "licenseUrl text written into a saved component's manifest (Save as component)",
+  })),
+  ...[
     "https://github.com/codyjasonbennett",
     "https://github.com/drcmda",
     "https://github.com/joshuaellis",

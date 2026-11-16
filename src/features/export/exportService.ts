@@ -1,14 +1,16 @@
+import { creditsText, glbCredits, projectCredits } from "@/core/library/credits"
 import { partsInSelection } from "@/core/scene/partsInSelection"
 import type { Part } from "@/core/schema"
 import { assetBoxGeometry } from "@/features/viewport/parts/assetBoxGeometry"
 import { assetCache } from "@/features/viewport/parts/assetCache"
 import { partMaterials } from "@/features/viewport/materials/partMaterials"
 import { partObject } from "@/features/viewport/parts/partObjects"
-import { pickExportPath, writeExport } from "@/lib/tauri/files"
+import { pickExportPath, writeExport, writeExportCredits } from "@/lib/tauri/files"
 import { err, ok, type Result } from "@/lib/tauri/result"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { exportGlb, exportStl, type ExportItem } from "./buildExport"
+import { connectorItems } from "./connectorItems"
 
 /** File-name stem: no characters Windows or Linux reject (control characters included). */
 const fileStem = (name: string) =>
@@ -20,10 +22,13 @@ const fileStem = (name: string) =>
  * The selected parts (a group selects everything below it), else every part. Only parts drawn
  * now are exported: hidden parts are not mounted, so they have no scene object.
  */
-function exportItems(): { items: ExportItem[]; parts: Part[] } {
+function exportItems(): { items: ExportItem[]; parts: Part[]; dispose: () => void } {
   const { doc } = useDocumentStore.getState()
-  const selected = partsInSelection(doc, useSessionStore.getState().selection)
-  const parts = Object.values(doc.parts).filter((p) => selected.size === 0 || selected.has(p.id))
+  const { selection } = useSessionStore.getState()
+  const selected = partsInSelection(doc, selection)
+  // Nothing selected: everything. Only belts, tubes or springs selected: just those.
+  const everything = selected.size === 0 && !selection.some((s) => s.kind === "connector")
+  const parts = Object.values(doc.parts).filter((p) => everything || selected.has(p.id))
   const items: ExportItem[] = []
   const exported: Part[] = []
   for (const part of parts) {
@@ -42,22 +47,39 @@ function exportItems(): { items: ExportItem[]; parts: Part[] } {
     })
     exported.push(part)
   }
-  return { items, parts: exported }
+  const connectors = connectorItems(doc, selection, new Set(exported.map((p) => p.id)))
+  items.push(...connectors.items)
+  return { items, parts: exported, dispose: connectors.dispose }
 }
 
 /** File › Export: GLB (metres) or STL (mm) of the selection or the whole assembly (PLAN 4.9). */
 export async function exportScene(format: "glb" | "stl"): Promise<Result<void>> {
-  const { items, parts } = exportItems()
-  if (items.length === 0)
-    return err({ kind: "invalidInput", message: "There are no visible parts to export." })
-  const stem = parts.length === 1 && parts[0] ? fileStem(parts[0].name) : "assembly"
-  const target = await pickExportPath(format, stem)
-  if (!target.ok) return target
-  if (target.value === null) return ok(undefined) // cancelled
+  const { items, parts, dispose } = exportItems()
   try {
-    const bytes = format === "glb" ? await exportGlb(items) : exportStl(items)
-    return await writeExport(target.value.token, bytes)
+    if (items.length === 0)
+      return err({ kind: "invalidInput", message: "There are no visible parts to export." })
+    const only = items.length === 1 ? items[0] : undefined
+    const stem = only ? fileStem(only.name) : "assembly"
+    const target = await pickExportPath(format, stem)
+    if (!target.ok) return target
+    if (target.value === null) return ok(undefined) // cancelled
+    // Attribution travels with every export (PLAN 4.8): inside a GLB, beside an STL.
+    const { doc } = useDocumentStore.getState()
+    const credits = projectCredits(
+      doc,
+      parts.map((p) => p.id)
+    )
+    const bytes = format === "glb" ? await exportGlb(items, glbCredits(credits)) : exportStl(items)
+    const written = await writeExport(target.value.token, bytes)
+    if (!written.ok || format === "glb" || credits.length === 0) return written
+    const sidecar = await writeExportCredits(
+      target.value.token,
+      creditsText(credits, target.value.name)
+    )
+    return sidecar.ok ? ok(undefined) : sidecar
   } catch (e) {
     return err({ kind: "internal", message: e instanceof Error ? e.message : String(e) })
+  } finally {
+    dispose()
   }
 }

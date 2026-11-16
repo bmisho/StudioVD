@@ -350,8 +350,10 @@ Testing notes:
 - Do not verify a commit in a `git worktree` whose `node_modules` is a symlink to the main
   checkout: the shared Vite dep cache is re-optimized for the other root and pages reload
   mid-test (an import then looks lost). Run E2E in the main checkout.
-- `@playwright/test` is pinned to 1.56.1 because the dev sandbox ships Chromium build 1194. CI
-  installs browsers itself, so bumping it only breaks local sandbox runs.
+- `@playwright/test` is pinned to 1.56.1 (Chromium build 1194); CI installs that build itself.
+  A sandbox that ships another Chromium runs E2E with
+  `E2E_CHROMIUM_PATH=/opt/pw-browsers/chromium` (`playwright.config.ts` passes it as the
+  executable).
 - shadcn/ui: components in `src/components/ui/` come from `shadcn-ui/ui@e94cebe`
   (`apps/v4/registry/new-york-v4/ui`), with `cn`/registry imports rewritten to `@/lib/utils`
   and `@/components/ui`. Add more with `npx shadcn@latest add <name>` on a normal network.

@@ -32,6 +32,9 @@ describe("names to identifiers", () => {
   it("makes slugs, tags and plain text", () => {
     expect(slugFor("Mein Gehäuse!")).toBe("mein-gehause")
     expect(slugFor("***")).toBe("component")
+    expect(slugFor("CON")).toBe("con-part") // a DOS device name is never a folder
+    expect(slugFor("Lpt1")).toBe("lpt1-part")
+    expect(slugFor("console")).toBe("console")
     expect(tagsFrom(" Motor, NEMA 17,motor,, ünïcode ")).toEqual(["motor", "nema 17", "ncode"])
     expect(plain("  line\none\t ", 80)).toBe("line one")
   })

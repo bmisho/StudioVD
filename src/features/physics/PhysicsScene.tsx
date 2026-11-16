@@ -4,6 +4,7 @@ import type { PhysicsModel } from "@/core/physics/physicsModel"
 import { partObject } from "@/features/viewport/parts/partObjects"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { buildPhysicsScene, partPose, type PhysicsScene as Scene } from "./buildPhysicsScene"
+import { appColliderGeometry } from "./colliderGeometry"
 import { beforePhysicsStep, type Drag } from "./physicsStep"
 import { useDragInput } from "./useDragInput"
 
@@ -19,7 +20,7 @@ export function PhysicsScene({ model }: { model: PhysicsModel }) {
   const drag = useRef<Drag | null>(null)
 
   useLayoutEffect(() => {
-    scene.current = buildPhysicsScene(rapier, world, model)
+    scene.current = buildPhysicsScene(rapier, world, model, appColliderGeometry)
     return () => {
       scene.current = null
       drag.current = null
@@ -32,11 +33,13 @@ export function PhysicsScene({ model }: { model: PhysicsModel }) {
   })
   useAfterPhysicsStep(() => {
     for (const entry of scene.current?.dynamic ?? []) {
-      const object = partObject(entry.partId)
-      if (!object) continue
-      const { positionMm, quaternion } = partPose(entry)
-      object.position.set(...positionMm)
-      object.quaternion.set(...quaternion)
+      for (const part of entry.parts) {
+        const object = partObject(part.partId)
+        if (!object) continue
+        const { positionMm, quaternion } = partPose(entry, part)
+        object.position.set(...positionMm)
+        object.quaternion.set(...quaternion)
+      }
     }
   })
   useDragInput(scene, drag)
@@ -46,7 +49,7 @@ export function PhysicsScene({ model }: { model: PhysicsModel }) {
 /** From the CURRENT document: when a document change ends the run, its poses win. */
 function restoreDesignPoses(model: PhysicsModel): void {
   const parts = useDocumentStore.getState().doc.parts
-  for (const { partId } of model.bodies) {
+  for (const { partId } of model.bodies.flatMap((b) => b.parts)) {
     const object = partObject(partId)
     const part = Object.hasOwn(parts, partId) ? parts[partId] : undefined
     if (!object || !part) continue

@@ -19,8 +19,11 @@ describe("physicsModelFromDocument", () => {
   it("builds the rig: two boxes and one hinge on +Z at the hinge point", () => {
     const model = physicsModelFromDocument(rigDocument())
     expect(model.bodies.map((b) => b.grounded)).toEqual([true, false])
-    expect(model.bodies[1]?.box?.halfExtentsMm).toEqual([30, 4, 30])
-    expect(model.bodies[1]?.densityKgMm3).toBeCloseTo(DEFAULT_DENSITY_KG_M3 * 1e-9, 18)
+    const leaf = model.bodies[1]?.parts[0]
+    expect(leaf?.box.halfExtentsMm).toEqual([30, 4, 30])
+    expect(leaf?.offsetMm).toEqual([0, 0, 0])
+    // A 60 × 8 × 60 mm steel block.
+    expect(leaf?.massKg).toBeCloseTo(DEFAULT_DENSITY_KG_M3 * 1e-9 * 60 * 8 * 60, 12)
     const [joint] = model.joints
     joint?.pointMm.forEach((v, i) => expect(v).toBeCloseTo(TEST_RIG_HINGE_MM[i] ?? NaN, 12))
     expect(joint?.axis).toEqual([0, 0, 1])
@@ -42,7 +45,9 @@ describe("physicsModelFromDocument", () => {
     const alu = testMaterial("std.aluminium-6061", 1)
     doc.materials[alu.id] = alu
     for (const p of Object.values(doc.parts)) p.materialId = alu.id
-    expect(physicsModelFromDocument(doc).bodies[0]?.densityKgMm3).toBeCloseTo(2.7e-6, 15)
+    const [first] = physicsModelFromDocument(doc).bodies[0]?.parts ?? []
+    const { halfExtentsMm: h } = first?.box ?? { halfExtentsMm: [0, 0, 0] }
+    expect(first?.massKg).toBeCloseTo(2.7e-6 * 8 * h[0] * h[1] * h[2], 12)
   })
 
   it("skips hidden parts, suppressed mates and mates whose parts are gone", () => {

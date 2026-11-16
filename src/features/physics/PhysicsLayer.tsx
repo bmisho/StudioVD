@@ -28,9 +28,22 @@ export function PhysicsLayer() {
   const materials = useDocumentStore((s) => s.doc.materials)
   const anchors = useDocumentStore((s) => s.doc.anchors)
   const mates = useDocumentStore((s) => s.doc.mates)
+  const couplings = useDocumentStore((s) => s.doc.couplings)
+  const connectors = useDocumentStore((s) => s.doc.connectors)
   const model = useMemo(
-    () => stableModel(physicsModelFromDocument({ parts, assets, materials, anchors, mates })),
-    [parts, assets, materials, anchors, mates]
+    () =>
+      stableModel(
+        physicsModelFromDocument({
+          parts,
+          assets,
+          materials,
+          anchors,
+          mates,
+          couplings,
+          connectors,
+        })
+      ),
+    [parts, assets, materials, anchors, mates, couplings, connectors]
   )
   if (!testMode) return null
 

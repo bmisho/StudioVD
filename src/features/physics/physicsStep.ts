@@ -2,13 +2,17 @@ import type { RigidBody } from "@dimforge/rapier3d-compat"
 import { dampingForce, dampingTorque } from "@/core/physics/damping"
 import {
   DRAG_SPRING,
-  dragForce,
-  effectiveMass,
+  dragAcceleration,
+  pointForce,
   type DragSpringParams,
+  type Sym3,
 } from "@/core/physics/dragSpring"
-import { add, cross, length, quatConjugate, quatMultiply, rotate, sub } from "@/core/math/vec3"
+import { add, cross, quatConjugate, quatMultiply, rotate, sub } from "@/core/math/vec3"
 import type { Quat, Vec3 } from "@/core/schema"
 import type { PhysicsBody, PhysicsScene } from "./buildPhysicsScene"
+import { applyCouplings } from "./couplingStep"
+import { applyHingeStops, type AppliedForce } from "./hingeLimits"
+import { TIME_STEP_S } from "./physicsConfig"
 
 const vec = (p: { x: number; y: number; z: number }): Vec3 => [p.x, p.y, p.z]
 const quat = (p: { x: number; y: number; z: number; w: number }): Quat => [p.x, p.y, p.z, p.w]
@@ -43,34 +47,41 @@ function applyDamping(body: RigidBody): void {
   body.addTorque(xyz(dampingTorque(vec(body.principalInertia()), axes, vec(body.angvel()))), false)
 }
 
-function applyDrag(drag: Drag, params: DragSpringParams): void {
+function applyDrag(drag: Drag, params: DragSpringParams): AppliedForce {
   const { body } = drag.entry
   const grab = grabPoint(drag)
   const arm = sub(grab, vec(body.worldCom()))
   const velocity = add(vec(body.linvel()), cross(vec(body.angvel()), arm))
-  const inertia = vec(body.principalInertia())
-  const mass = effectiveMass(body.mass(), Math.min(...inertia), length(arm))
-  const force = dragForce(grab, drag.targetMm, velocity, mass, params)
+  const w = body.effectiveWorldInvInertia()
+  const mobility: Sym3 = [w.m11, w.m12, w.m13, w.m22, w.m23, w.m33]
+  const accel = dragAcceleration(grab, drag.targetMm, velocity, params)
+  const force = pointForce(body.mass(), mobility, arm, accel)
   body.addForceAtPoint(xyz(force), xyz(grab), true)
+  return { body, pointMm: grab, force }
 }
 
 /**
  * Runs before every physics step (app: useBeforePhysicsStep; tests: before world.step()).
  * Forces persist in Rapier until reset, so each step starts from zero, then adds viscous
- * damping (released parts come to rest) and the drag spring. The dragged body gets no extra
- * damping: the spring is critically damped on its own and would otherwise lag the cursor.
+ * damping (released parts come to rest), the drag spring and the couplings. The dragged body
+ * gets no extra damping: the spring is critically damped on its own and would otherwise lag
+ * the cursor.
  */
 export function beforePhysicsStep(
   scene: PhysicsScene,
   drag: Drag | null,
-  params: DragSpringParams = DRAG_SPRING
+  params: DragSpringParams = DRAG_SPRING,
+  dt: number = TIME_STEP_S
 ): void {
   for (const entry of scene.dynamic) {
     const { body } = entry
-    if (body.isSleeping()) continue
+    // Asleep or not: a coupling may push a sleeping body, on top of nothing stale.
     body.resetForces(false)
     body.resetTorques(false)
-    if (drag?.entry !== entry) applyDamping(body)
+    if (!body.isSleeping() && drag?.entry !== entry) applyDamping(body)
   }
-  if (drag) applyDrag(drag, params)
+  const pull = drag ? applyDrag(drag, params) : null
+  // After the resets: coupled joints share the forces just applied (and wake each other).
+  if (scene.couplings.length > 0) applyCouplings(scene.couplings, dt)
+  applyHingeStops(scene.joints, dt, pull)
 }

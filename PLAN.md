@@ -1029,24 +1029,68 @@ Exit criteria
 
 ## Phase 10: Kinematic test mode at assembly scale
 
-- [ ] 10.1 Build Rapier world from the assembly graph: rigid groups → bodies (compound colliders),
+- [x] 10.1 Build Rapier world from the assembly graph: rigid groups → bodies (compound colliders),
   grounded → fixed, mates → joints + limits (multibody tree, impulse loop closures, identity
-  body rotations: decision 13; the Phase 3 builder already does this for revolute mates)
-- [ ] 10.2 Collider strategy per part: trimesh (grounded only) / hull (default) / decomposed / box /
-  none; Rust `parry3d` convex decomposition command, async with progress, cached in `colliders/`
-- [ ] 10.3 Start-of-test interference scan: penetrating pairs filtered via `useFilterContactPair`
-  and listed in an Interference panel
-- [ ] 10.4 Drag controller generalized to imported parts and rigid groups; live joint readouts
-- [ ] 10.5 Coupling spike: gear ratio (revolute ↔ revolute), rack-pinion and lead screw
+  body rotations: decision 13; the Phase 3 builder already does this for revolute mates).
+  As built: `core/physics/physicsModel.ts` merges fixed-mated parts into one body; revolute,
+  prismatic and spherical mates are joints carrying the mate's coordinate at the design pose
+  (`mateCoordinate.ts`), so limits count from where the mate was snapped. Masses: material
+  density × the closed mesh's volume (else its box), or the part's override. Rapier 0.19.2's
+  JS build passes limits only for sliders, has no setter on multibody hinges, and an impulse
+  hinge beside a multibody one locks both bodies (measured), so a limited hinge within half a
+  turn is an impulse joint with Rapier's stop and one allowed further (a 300° knob) keeps its
+  multibody joint with a stop of ours, a torque before each step (`hingeLimits.ts`)
+- [x] 10.2 Collider strategy per part: trimesh (grounded only) / hull (default) / decomposed / box /
+  none; Rust `parry3d` convex decomposition command, async with progress, cached in `colliders/`.
+  As built: Part inspector › Collision shape. Hulls and trimeshes come from the loaded assets;
+  "Convex pieces" asks Rust (`geometry/decompose`, V-HACD at 64 voxels, at most 32 pieces, each
+  the exact hull of the mesh's surface inside its part) when a run needs it, then restarts the
+  run with them; until then the part collides as its hull. The cache is
+  `<app cache>/colliders/<sha256 of the mesh>.v1.bin` (derived data, shared by projects, never
+  in the `.stvd`: an entry can only answer for the exact mesh that made it). A moving trimesh
+  uses its hull; a missing shape falls back pieces → hull → box
+- [x] 10.3 Start-of-test interference scan: penetrating pairs filtered via `useFilterContactPair`
+  and listed in an Interference panel. As built: `interference.ts` prunes by each part's
+  bounding sphere, then asks Rapier for exact contacts between collider pairs (deeper than
+  0.05 mm counts; bodies whose joint has contacts off are skipped); the pairs' contacts are left
+  out of the run through the contact-pair hook (only their colliders are flagged for it). A
+  panel over the 3D view lists them (a row selects both parts). Rapier's JS `step` uses hooks
+  only together with an event queue (react-three-rapier always passes one)
+- [x] 10.4 Drag controller generalized to imported parts and rigid groups; live joint readouts.
+  As built: grabbing any part of a rigid group drags its body; the drag force is now
+  $\mathbf F=K^{-1}\mathbf a$ with the grabbed point's exact mobility
+  $K=\tfrac1m\mathbf 1-[\mathbf r]_\times I^{-1}[\mathbf r]_\times$ (the scalar bound from the
+  smallest inertia left slender parts hundreds of times too sluggish). The mate inspector
+  shows the live angle or travel in test mode (ten times a second)
+- [x] 10.5 Coupling spike: gear ratio (revolute ↔ revolute), rack-pinion and lead screw
   (revolute ↔ prismatic) as velocity-level coupling impulses before each step; belt drives as
-  gear couplings. Fallback if unstable: schematic-only coupling + readouts
-- [ ] 10.6 Derived connector geometry follows its anchors live during test mode
-- [ ] 10.7 Exit: Reset (default) / Apply pose (one undoable commit)
-- [ ] 10.8 Publish live joint coordinates to the transient pose buffer (for Phase 13 bindings)
-- [ ] 10.9 Tests: slider limits respected, 3-hinge chain stable, shaft-in-bore with decomposition
+  gear couplings. Fallback if unstable: schematic-only coupling + readouts. As built: stable,
+  no fallback needed. Before each step the rate error $C=\dot q_B-r\,\dot q_A$ (plus a share of
+  the drift) is cancelled by a pair of forces along the two joint coordinates,
+  $\lambda=C/(W_B+r^2W_A)$ (forces, since Rapier derives multibody velocities itself); a gear
+  pair holds its ratio within 1 % while cranked. Couplings are lifted from the Phase 5 gate:
+  select two mates › Couple (gear pair; rack and pinion or lead screw for a hinge and a
+  slider), the ratio suggested from the parts (spur gear teeth, GT2 pitch, T8 lead; signs from
+  which side of each mate the wheel is and which way its axis points), editable, Reverse and
+  Remove in the mate inspector. A coupling whose mates' types change waits (it is not refused)
+- [x] 10.6 Derived connector geometry follows its anchors live during test mode
+- [x] 10.7 Exit: Reset (default) / Apply pose (one undoable commit). As built: toolbar › Apply
+  Pose keeps where the parts are; `settlePoses` snaps the solver's few µm across each joint
+  out, from the ground outwards, keeping each joint's own reading, so every mate still holds
+  (a loop-closing mate stays as the solver left it)
+- [x] 10.8 Publish live joint coordinates to the transient pose buffer (for Phase 13 bindings).
+  As built: `jointReadings` (a plain map written after every step; readers hear at most every
+  100 ms); hinges are followed across whole turns
+- [x] 10.9 Tests: slider limits respected, 3-hinge chain stable, shaft-in-bore with decomposition
   has no false interference, gear pair keeps its ratio within 1 %, 200-part benchmark built from
-  generator parts (physics step < 4 ms target), dev perf overlay
-- [ ] ⛔ 10.10 **User approval**
+  generator parts (physics step < 4 ms target), dev perf overlay. As built: all headless
+  (Rapier in Node); 200 parts from the generators (50 bearings on their hinges, 100 M8 nuts,
+  every part a hull) step in 1.3 ms; the dev build shows physics ms per frame in test mode;
+  E2E: live reading, Apply Pose, undo. Also: `tools/repo/caseCollisions` fails on file names
+  that differ only by case (a Windows-only failure of the 3D view: `AnchorPreview.tsx` beside
+  `anchorPreview.ts`)
+- [x] ⛔ 10.10 **User approval** (gate waived, not reviewed: the user's 2026-11-16 instruction to
+  complete all remaining phases stands)
 
 ## Phase 11: Schematic editor
 

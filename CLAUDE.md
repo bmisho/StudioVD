@@ -170,6 +170,14 @@ Further rules:
   one of ~135 trapped Rapier's WASM). Rapier ignores body damping on multibody links, so
   damping is applied as forces before every step. `<Physics>` is paused: `PhysicsStepper`
   steps it, at most `MAX_STEPS_PER_FRAME` a frame, and leaves test mode if a step throws.
+- Phase 10: fixed-mated parts are ONE body. Rapier 0.19.2's JS build: limits reach only
+  sliders (`JointData` drops a hinge's), multibody hinges have no limit setter, and an impulse
+  hinge beside a multibody one locks the pair; so limited hinges are impulse joints, or get our
+  own stop past half a turn (`hingeLimits.ts`). `world.step` uses hooks only with an event
+  queue. Couplings and hinge stops are forces before each step, never velocity edits. Live
+  joint readings go to `jointReadings` (transient), never Zustand.
+- File names in one folder never differ only by case (`tools/repo/caseCollisions.test.js`):
+  Windows, the main target, cannot tell them apart and CI on Linux would not notice.
 
 ## 6. Rendering & performance rules
 

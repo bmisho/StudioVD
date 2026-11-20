@@ -1,5 +1,6 @@
 import { createTestRig } from "@/core/scene/testRig"
 import { prepareTestRigAssets } from "@/core/scene/testRigAssets"
+import { applyTestPose } from "@/features/physics/applyPose"
 import type { Command, CommandDeps } from "./types"
 
 /** Test mode (PLAN 3.10): physics runs from the design pose; leaving it restores that pose. */
@@ -18,6 +19,14 @@ export function testCommands(deps: CommandDeps): Command[] {
       label: "Reset to Design Pose",
       run: () => s().restartTestMode(),
       isEnabled: () => s().testMode,
+    },
+    {
+      // Leaving test mode puts every part back (the default); this keeps where they are.
+      id: "test.applyPose",
+      label: "Apply Pose",
+      run: () => void applyTestPose(document, session),
+      isEnabled: () => s().testMode,
+      disabledReason: "Only in test mode",
     },
     {
       // Phase 3 demo: two blocks on a hinge (PLAN 3.8), as real, undoable document entities

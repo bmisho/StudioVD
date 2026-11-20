@@ -7,6 +7,7 @@ import { useSessionStore } from "@/store/session/sessionStore"
 import { AnchorProperties } from "./AnchorProperties"
 import { ComponentSection } from "./ComponentSection"
 import { ConnectAnchors } from "./ConnectAnchors"
+import { CoupleMates } from "./CoupleMates"
 import { ConnectorProperties } from "./ConnectorProperties"
 import { GroupProperties } from "./GroupProperties"
 import { MateProperties } from "./MateProperties"
@@ -49,12 +50,15 @@ export function PropertiesPanel() {
   else {
     const n = selection.length
     const anchorIds = selection.flatMap((s) => (s.kind === "anchor" ? [s.id] : []))
+    const mateIds = selection.flatMap((s) => (s.kind === "mate" ? [s.id] : []))
+    const [mateA, mateB] = mateIds
     content = (
       <div className="flex flex-col gap-3">
         <p className="text-xs text-muted-foreground">
           {n} {n === 1 ? "item" : "items"} selected
         </p>
         {anchorIds.length === n && <ConnectAnchors anchors={anchorIds} />}
+        {n === 2 && mateA && mateB && <CoupleMates mates={[mateA, mateB]} />}
         {materials}
       </div>
     )

@@ -1,3 +1,4 @@
+import type * as Rapier from "@dimforge/rapier3d-compat"
 // Test helper (not app code): small mechanisms as real documents, stepped headless on the
 // same document -> model -> Rapier path the app uses.
 import { anchor as makeAnchor, mate as makeMate } from "@/core/assembly/testing/mateFixtures"
@@ -17,6 +18,7 @@ import {
   type Vec3,
 } from "@/core/schema"
 import { buildPhysicsScene, type RapierApi } from "../buildPhysicsScene"
+import { ignoreInterference, scanInterference } from "../interference"
 import { readJoint } from "../jointState"
 import type { ColliderGeometry } from "../partColliders"
 import { configureWorld, TIME_STEP_S } from "../physicsConfig"
@@ -76,11 +78,15 @@ export function mechanism() {
       return c
     },
     /** The world, built now from the document. */
-    sim(rapier: RapierApi, geometry?: ColliderGeometry) {
+    sim(rapier: RapierApi & Pick<typeof Rapier, "EventQueue">, geometry?: ColliderGeometry) {
       const world = new rapier.World({ x: 0, y: 0, z: 0 })
       configureWorld(world)
       const model = physicsModelFromDocument(doc)
       const scene = buildPhysicsScene(rapier, world, model, geometry)
+      const interferences = scanInterference(scene)
+      const hooks = ignoreInterference(scene, interferences)
+      // Rapier's JS step uses the hooks only with an event queue (as the app's <Physics>).
+      const events = new rapier.EventQueue(false)
       let drag: Drag | null = null
       const jointOf = (m: Mate) => {
         const j = scene.joints.find((x) => x.model.mateId === m.id)
@@ -91,6 +97,7 @@ export function mechanism() {
         world,
         model,
         scene,
+        interferences,
         grab(part: Part, worldMm: Vec3) {
           const entry = scene.bodies.get(part.id)
           if (!entry) throw new Error("no such body")
@@ -107,7 +114,7 @@ export function mechanism() {
         step(n = 1, each?: (i: number) => void) {
           for (let i = 0; i < n; i++) {
             beforePhysicsStep(scene, drag)
-            world.step()
+            world.step(events, hooks)
             for (const j of scene.joints) readJoint(j)
             each?.(i)
           }

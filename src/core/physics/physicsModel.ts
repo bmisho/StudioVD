@@ -1,9 +1,10 @@
 import { anchorWorld } from "@/core/assembly/mateSnap"
 import { unionFind } from "@/core/assembly/unionFind"
 import { add, normalize, rotate, scale, sub } from "@/core/math/vec3"
-import type { Anchor, Mate, Part, PartId, SceneDocument } from "@/core/schema"
+import type { Anchor, Coupling, Mate, MateType, Part, PartId, SceneDocument } from "@/core/schema"
 import { densityKgM3ToKgMm3 } from "@/core/units"
 import { beltCouplings } from "./beltCouplings"
+import { couplingKinds } from "./couplingRatio"
 import { mateCoordinate } from "./mateCoordinate"
 import type {
   ColliderKind,
@@ -95,9 +96,15 @@ export function physicsModelFromDocument(doc: ModelSource): PhysicsModel {
     })
   }
 
-  const jointed = new Set<string>(joints.map((j) => j.mateId))
+  // A coupling acts only between joints of the types its kind takes (a mate's type can
+  // change after the coupling was made: it then waits, it is not refused).
+  const typeOf = new Map<string, MateType>(joints.map((j) => [j.mateId, j.type]))
+  const fits = (c: Coupling) => {
+    const [a, b] = [typeOf.get(c.mateA), typeOf.get(c.mateB)]
+    return a !== undefined && b !== undefined && couplingKinds(a, b).includes(c.kind)
+  }
   const couplings: PhysicsCouplingModel[] = Object.values(doc.couplings)
-    .filter((c) => jointed.has(c.mateA) && jointed.has(c.mateB))
+    .filter(fits)
     .map((c) => ({ id: c.id, mateA: c.mateA, mateB: c.mateB, ratio: c.ratio }))
   const anchorOf = (id: string): { anchor: Anchor; part: Part } | null => {
     const anchor = has(doc.anchors, id)

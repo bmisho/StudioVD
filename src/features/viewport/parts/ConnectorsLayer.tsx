@@ -3,12 +3,18 @@ import { connectorFrames, connectorSignature } from "@/core/connectors/frames"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { ConnectorView } from "./ConnectorView"
+import { useLiveParts } from "./useLiveParts"
 
-/** Every visible connector at the design pose (PLAN 9.6), inside the pick root. */
+/**
+ * Every visible connector (PLAN 9.6), inside the pick root: at the design pose, or following
+ * its parts live while test mode runs (PLAN 10.6).
+ */
 export function ConnectorsLayer() {
   const connectors = useDocumentStore((s) => s.doc.connectors)
   const anchors = useDocumentStore((s) => s.doc.anchors)
-  const parts = useDocumentStore((s) => s.doc.parts)
+  const designParts = useDocumentStore((s) => s.doc.parts)
+  const testMode = useSessionStore((s) => s.testMode)
+  const parts = useLiveParts(designParts, anchors, connectors, testMode)
   const selection = useSessionStore((s) => s.selection)
   const views = useMemo(
     () =>

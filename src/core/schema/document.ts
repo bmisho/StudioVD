@@ -54,7 +54,7 @@ export const SceneDocumentSchema = z
     parts: z.record(PartIdSchema, PartSchema),
     anchors: z.record(AnchorIdSchema, AnchorSchema),
     mates: z.record(MateIdSchema, MateSchema),
-    couplings: emptyUntil(z.record(CouplingIdSchema, CouplingSchema), 10, "Couplings"),
+    couplings: z.record(CouplingIdSchema, CouplingSchema),
     schematic: z
       .object({
         nodes: emptyUntil(z.record(NodeIdSchema, SchematicNodeSchema), 11, "Schematic blocks"),

@@ -4,6 +4,7 @@ import { useRef } from "react"
 import { toastNotifier } from "@/lib/notify"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { stepFrame } from "./frameSteps"
+import { physicsStats } from "./physicsStats"
 
 /**
  * Steps test mode's world from the render loop (<Physics paused> leaves stepping to this),
@@ -15,7 +16,9 @@ export function PhysicsStepper() {
   const failed = useRef(false)
   useFrame((_, delta) => {
     if (failed.current) return
+    const start = performance.now()
     const error = stepFrame(step, delta)
+    physicsStats.record(performance.now() - start)
     if (error === null) return
     failed.current = true
     console.error("Physics step failed", error)

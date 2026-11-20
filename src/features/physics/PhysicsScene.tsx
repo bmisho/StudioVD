@@ -1,10 +1,19 @@
-import { useAfterPhysicsStep, useBeforePhysicsStep, useRapier } from "@react-three/rapier"
+import {
+  useAfterPhysicsStep,
+  useBeforePhysicsStep,
+  useFilterContactPair,
+  useRapier,
+} from "@react-three/rapier"
 import { useLayoutEffect, useRef } from "react"
 import type { PhysicsModel } from "@/core/physics/physicsModel"
 import { partObject } from "@/features/viewport/parts/partObjects"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { buildPhysicsScene, partPose, type PhysicsScene as Scene } from "./buildPhysicsScene"
+import { useTestRunStore } from "@/store/session/testRunStore"
 import { appColliderGeometry } from "./colliderGeometry"
+import { ignoreInterference, scanInterference, type ContactFilter } from "./interference"
+import { jointReadings } from "./jointReadings"
+import { readJoint } from "./jointState"
 import { beforePhysicsStep, type Drag } from "./physicsStep"
 import { useDragInput } from "./useDragInput"
 
@@ -19,19 +28,36 @@ export function PhysicsScene({ model }: { model: PhysicsModel }) {
   const scene = useRef<Scene | null>(null)
   const drag = useRef<Drag | null>(null)
 
+  const filter = useRef<ContactFilter | null>(null)
+
   useLayoutEffect(() => {
-    scene.current = buildPhysicsScene(rapier, world, model, appColliderGeometry)
+    const built = buildPhysicsScene(rapier, world, model, appColliderGeometry)
+    // Parts that overlap where the run starts keep out of each other's way (PLAN 10.3).
+    const found = scanInterference(built)
+    filter.current = ignoreInterference(built, found)
+    useTestRunStore.getState().setInterferences(found)
+    scene.current = built
     return () => {
       scene.current = null
       drag.current = null
+      filter.current = null
+      useTestRunStore.getState().setInterferences([])
+      jointReadings.clear()
       restoreDesignPoses(model)
     }
   }, [rapier, world, model])
+
+  useFilterContactPair(
+    (c1, c2, b1, b2) => filter.current?.filterContactPair(c1, c2, b1, b2) ?? null
+  )
 
   useBeforePhysicsStep(() => {
     if (scene.current) beforePhysicsStep(scene.current, drag.current)
   })
   useAfterPhysicsStep(() => {
+    // Every step: hinges are followed across whole turns, and bindings read the latest.
+    for (const j of scene.current?.joints ?? []) jointReadings.write(j.model.mateId, readJoint(j))
+    jointReadings.publish()
     for (const entry of scene.current?.dynamic ?? []) {
       for (const part of entry.parts) {
         const object = partObject(part.partId)

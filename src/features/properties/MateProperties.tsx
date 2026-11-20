@@ -7,7 +7,9 @@ import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { FOCUSABLE_HEADING, mateHeadingId, rescueFocusTo } from "./inspectorFocus"
 import { MateLimits } from "./MateLimits"
+import { MateCouplings } from "./MateCouplings"
 import { MateOptions } from "./MateOptions"
+import { MateReading } from "./MateReading"
 import { MateStatus } from "./MateStatus"
 import { PropertyToggle } from "./PropertyToggle"
 
@@ -69,6 +71,8 @@ export function MateProperties({ id }: { id: MateId }) {
         <MateOptions value={mate} onChange={(patch) => report(update(id, patch))} />
       </div>
       <MateLimits mate={mate} onChange={(limits) => update(id, { limits })} />
+      <MateReading mate={mate} />
+      <MateCouplings id={id} />
       <PropertyToggle
         label="Contacts between its parts"
         hint="Off: its two parts pass through each other in test mode (usual at a joint)"

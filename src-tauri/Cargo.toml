@@ -26,6 +26,7 @@ tauri-plugin-dialog = "2.8.2"
 zip = { version = "9.0.2", default-features = false, features = ["deflate-flate2"] }
 flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
 tauri-plugin-single-instance = "2.5.3"
+parry3d = "0.31"
 
 
 [target.'cfg(target_os = "linux")'.dependencies]

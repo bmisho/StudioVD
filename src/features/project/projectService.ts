@@ -1,6 +1,7 @@
 import { APP_VERSION } from "@/core/app-info"
 import { textureCache } from "@/features/viewport/materials/textureCache"
 import { assetCache } from "@/features/viewport/parts/assetCache"
+import { colliderPieces } from "@/features/physics/colliderGeometry"
 import { viewportBridge } from "@/features/viewport/viewportBridge"
 import { toastNotifier } from "@/lib/notify"
 import * as backend from "@/lib/tauri/project"
@@ -43,6 +44,7 @@ export const projectController = createProjectController({
     setTimeout(() => {
       assetCache.retain(ids)
       textureCache.retain(ids)
+      colliderPieces.retain(ids)
     }, 0),
   fitAll: () => viewportBridge.fitAllAfterChange(),
   captureThumbnail: () => viewportBridge.captureThumbnail(),

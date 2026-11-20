@@ -77,7 +77,18 @@ describe("document store contract", () => {
     s().setPartPose(leaf, { positionMm: [9, 9, 9], quaternion: [0, 0.6, 0, 0.8] })
     s().resnapMate(added.id)
     roundTrips("mate edits")
+    // A coupling: the rig's own hinge driving this mate as a gear (both revolute again).
+    s().updateMate(added.id, { type: "revolute" })
+    const hinge = rig.mates[0]?.id
+    if (!hinge) throw new Error("rig incomplete")
+    const coupling = s().addCoupling("gear", hinge, added.id, -2)
+    if (!coupling) throw new Error("coupling not added")
+    s().setCouplingRatio(coupling, -0.5)
+    s().setPartsCollider([leaf], "decomposed")
+    s().setPartPoses(new Map([[leaf, { positionMm: [4, 5, 6], quaternion: [0, 0, 0, 1] }]]))
+    roundTrips("coupling, collider, poses")
     s().deleteMates([added.id])
+    expect(s().doc.couplings).toEqual({}) // went with its mate
     roundTrips("delete mate")
     s().deleteAnchors([rig.anchors[0]?.id ?? anchor])
     roundTrips("delete anchor with its mate")

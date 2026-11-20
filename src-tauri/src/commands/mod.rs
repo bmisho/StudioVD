@@ -4,6 +4,7 @@ pub mod app;
 pub mod assets;
 mod dialog;
 pub mod export;
+pub mod geometry;
 pub mod import;
 mod ipc;
 pub mod library;

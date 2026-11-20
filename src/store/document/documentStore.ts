@@ -15,6 +15,7 @@ import { removeGroups } from "./deletion"
 import { anchorActions, type AnchorActions } from "./anchorActions"
 import { componentActions, type ComponentActions } from "./componentActions"
 import { connectorActions, type ConnectorActions } from "./connectorActions"
+import { couplingActions, type CouplingActions } from "./couplingActions"
 import { mateActions, type MateActions } from "./mateActions"
 import { materialActions, type MaterialActions } from "./materialActions"
 import { partActions, type PartActions } from "./partActions"
@@ -29,7 +30,8 @@ export interface DocumentState
     AnchorActions,
     MateActions,
     ComponentActions,
-    ConnectorActions {
+    ConnectorActions,
+    CouplingActions {
   /** The persisted, undoable document (CLAUDE.md §4, kind 1). */
   doc: SceneDocument
   /** Replaces the whole document (open, new). The caller decides whether to clear history. */
@@ -93,6 +95,7 @@ export function createDocumentStore(initial?: SceneDocument) {
         ...mateActions(set, get),
         ...componentActions(set, get),
         ...connectorActions(set, get),
+        ...couplingActions(set, get),
 
         insertEntities: (batch) => {
           const problems = entityBatchProblems(get().doc, batch)

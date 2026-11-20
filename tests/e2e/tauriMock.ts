@@ -175,6 +175,29 @@ export function installTauriMockScript(): void {
       for (const name of fresh) licenses.add(name)
       return fresh.length
     },
+    // Convex decomposition: one piece, the mesh's bounding box (Rust's V-HACD is tested there).
+    decompose_mesh: (args) => {
+      const view = new DataView(new Uint8Array(args).slice().buffer)
+      const vertices = view.getUint32(0, true)
+      const [lo, hi] = [
+        [Infinity, Infinity, Infinity],
+        [-Infinity, -Infinity, -Infinity],
+      ]
+      for (let v = 0; v < vertices; v++)
+        for (let k = 0; k < 3; k++) {
+          const c = view.getFloat32(8 + 12 * v + 4 * k, true)
+          lo[k] = Math.min(lo[k] ?? c, c)
+          hi[k] = Math.max(hi[k] ?? c, c)
+        }
+      const out = new DataView(new ArrayBuffer(4 + 4 + 8 * 12))
+      out.setUint32(0, 1, true)
+      out.setUint32(4, 8, true)
+      for (let i = 0; i < 8; i++)
+        for (let k = 0; k < 3; k++)
+          out.setFloat32(8 + 12 * i + 4 * k, ((i >> k) & 1 ? hi[k] : lo[k]) ?? 0, true)
+      calls.push("decompose_mesh:done")
+      return out.buffer
+    },
     library_user_namespace: () => "u-e2etst",
     library_project_geometry_sizes: (args) => {
       const names = args.files as string[]

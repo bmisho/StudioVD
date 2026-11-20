@@ -5,6 +5,7 @@ import {
   FolderPlus,
   Link2,
   MousePointer2,
+  Pin,
   Play,
   Redo2,
   RotateCcw,
@@ -54,6 +55,7 @@ export function MainToolbar() {
       />
       <div className="flex-1" />
       <ToolbarButton command="test.reset" icon={RotateCcw} disabled={!testMode} />
+      <ToolbarButton command="test.applyPose" icon={Pin} disabled={!testMode} />
       <ToolbarButton command="test.toggle" icon={testMode ? Square : Play} pressed={testMode} />
     </Toolbar.Root>
   )

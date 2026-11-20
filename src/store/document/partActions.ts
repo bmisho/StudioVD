@@ -3,6 +3,7 @@ import { nestsTooDeep } from "@/core/scene/groupNesting"
 import { commonParent, topLevelItems } from "@/core/scene/partOps"
 import type { SelectionRef } from "@/core/scene/selection"
 import {
+  type ColliderKind,
   type AnchorId,
   type ConnectorId,
   NameSchema,
@@ -22,6 +23,8 @@ export interface PartActions {
   setPartsVisible: (ids: readonly PartId[], visible: boolean) => void
   /** Grounded parts are fixed in test mode (PLAN 4.7); in design mode they still move. */
   setPartsGrounded: (ids: readonly PartId[], grounded: boolean) => void
+  /** How the parts collide in test mode (PLAN 10.2). */
+  setPartsCollider: (ids: readonly PartId[], collider: ColliderKind) => void
   /** Deletes parts with their anchors, mates, couplings, bindings and unused assets. */
   deleteParts: (ids: readonly PartId[]) => void
   /**
@@ -43,6 +46,8 @@ export interface PartActions {
   groupItems: (items: readonly SelectionRef[], name: string) => GroupId | null
   /** Design pose from the transform gizmo; an invalid pose is ignored. */
   setPartPose: (id: PartId, pose: Pose) => void
+  /** Several parts' poses at once, one undo entry (test mode's Apply pose, PLAN 10.7). */
+  setPartPoses: (poses: ReadonlyMap<PartId, Pose>) => void
 }
 
 type Set = (fn: (state: Draft<{ doc: SceneDocument }>) => void) => void
@@ -73,6 +78,11 @@ export function partActions(set: Set): PartActions {
     setPartsGrounded: (ids, grounded) =>
       each(ids, (part) => {
         if (part.grounded !== grounded) part.grounded = grounded
+      }),
+
+    setPartsCollider: (ids, collider) =>
+      each(ids, (part) => {
+        if (part.collider !== collider) part.collider = collider
       }),
 
     deleteParts: (ids) => set((s) => removeParts(s.doc, ids)),
@@ -121,6 +131,15 @@ export function partActions(set: Set): PartActions {
       if (!PoseSchema.safeParse(pose).success) return
       each([id], (part) => {
         part.pose = { positionMm: [...pose.positionMm], quaternion: [...pose.quaternion] }
+      })
+    },
+
+    setPartPoses: (poses) => {
+      // All or nothing: one pose the schema refuses (out of range) leaves every part put.
+      if ([...poses.values()].some((p) => !PoseSchema.safeParse(p).success)) return
+      each([...poses.keys()], (part) => {
+        const pose = poses.get(part.id)
+        if (pose) part.pose = { positionMm: [...pose.positionMm], quaternion: [...pose.quaternion] }
       })
     },
   }

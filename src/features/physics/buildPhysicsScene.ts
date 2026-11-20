@@ -22,7 +22,7 @@ export type RapierApi = Pick<
 export interface PhysicsBody {
   id: PartId
   body: RigidBody
-  parts: readonly (Pick<PhysicsPartModel, "partId" | "offsetMm" | "rotation"> & {
+  parts: readonly (Pick<PhysicsPartModel, "partId" | "offsetMm" | "rotation" | "box"> & {
     colliders: readonly Collider[]
   })[]
 }
@@ -114,6 +114,7 @@ export function buildPhysicsScene(
       partId: p.partId,
       offsetMm: p.offsetMm,
       rotation: p.rotation,
+      box: p.box,
       colliders: createPartColliders(rapier, world, body, p, geometry),
     }))
     // The colliders' masses were set after they were attached: Rapier would only take them

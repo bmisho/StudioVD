@@ -14,6 +14,8 @@ use tauri::{AppHandle, Manager, Runtime};
 pub struct AppState {
     /// `<app cache>/workspaces`, where every project workspace lives.
     workspaces: Option<PathBuf>,
+    /// `<app cache>/colliders`: convex decompositions by the SHA-256 of their input mesh.
+    colliders: Option<PathBuf>,
     /// `<app config>`: recent projects.
     config: Option<PathBuf>,
     project: Mutex<Project>,
@@ -28,11 +30,9 @@ impl AppState {
     /// Creates this session's workspace. A failure is logged, not fatal: the app starts and
     /// project commands report the error.
     pub fn new<R: Runtime>(app: &AppHandle<R>) -> Self {
-        let workspaces = app
-            .path()
-            .app_cache_dir()
-            .map(|dir| dir.join("workspaces"))
-            .ok();
+        let cache = app.path().app_cache_dir().ok();
+        let workspaces = cache.as_ref().map(|dir| dir.join("workspaces"));
+        let colliders = cache.as_ref().map(|dir| dir.join("colliders"));
         let workspace = workspaces.as_deref().and_then(|base| {
             Workspace::create(base)
                 .inspect_err(|e| eprintln!("StudioVD: no workspace ({e})."))
@@ -51,6 +51,7 @@ impl AppState {
         });
         Self {
             workspaces,
+            colliders,
             library,
             staged: Mutex::new(None),
             config: app.path().app_config_dir().ok(),
@@ -89,6 +90,11 @@ impl AppState {
     /// Where the `stvd` scheme serves library files from (`/lib-<sha256>.<ext>`).
     pub fn library_store_dir(&self) -> Option<PathBuf> {
         self.library.as_ref().map(|lib| lib.store_dir())
+    }
+
+    /// Where convex decompositions are cached (PLAN 10.2), if the app cache is reachable.
+    pub fn colliders_dir(&self) -> Option<PathBuf> {
+        self.colliders.clone()
     }
 
     pub fn workspaces_dir(&self) -> AppResult<&Path> {

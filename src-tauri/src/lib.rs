@@ -2,6 +2,7 @@ mod bundle;
 mod commands;
 mod error;
 mod fsutil;
+mod geometry;
 mod library;
 mod picked;
 mod project;
@@ -111,6 +112,7 @@ pub fn run() {
             commands::export::pick_export_path,
             commands::export::write_export,
             commands::export::write_export_credits,
+            commands::geometry::decompose_mesh,
             commands::library::library_list,
             commands::library::library_pick_pack,
             commands::library::library_install_commit,

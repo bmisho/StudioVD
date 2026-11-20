@@ -1,5 +1,5 @@
 import { Physics } from "@react-three/rapier"
-import { Suspense, useMemo } from "react"
+import { Suspense, useEffect, useMemo } from "react"
 import { physicsModelFromDocument } from "@/core/physics/physicsModel"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
@@ -10,6 +10,7 @@ import {
   SOLVER_ITERATIONS,
   TIME_STEP_S,
 } from "./physicsConfig"
+import { decompositions } from "./decompositionService"
 import { runIdOf, stableModel } from "./physicsRun"
 import { PhysicsScene } from "./PhysicsScene"
 import { PhysicsStepper } from "./PhysicsStepper"
@@ -45,6 +46,10 @@ export function PhysicsLayer() {
       ),
     [parts, assets, materials, anchors, mates, couplings, connectors]
   )
+  // "Convex pieces" parts get their decomposition (Rust) when a run needs it.
+  useEffect(() => {
+    if (testMode) decompositions.ensure(model)
+  }, [testMode, model])
   if (!testMode) return null
 
   return (

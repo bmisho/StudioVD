@@ -123,13 +123,29 @@ describe("openSceneBytes refuses", () => {
   it("collections a later phase owns, unless empty", () => {
     const json = asJson(sampleDocument())
     const id = uuid(1)
-    const [mateA, mateB] = Object.keys(json.mates as object)
-    json.couplings = { [id]: { id, kind: "gear", mateA, mateB: mateB ?? uuid(2), ratio: 2 } }
+    json.bindings = {
+      [id]: { id, from: { kind: "mate", ref: "x" }, to: { kind: "node", ref: "y" } },
+    }
     const result = open(json)
     expect(result).toMatchObject({
       ok: false,
-      problems: [{ path: "couplings", message: "Couplings are not supported yet (Phase 10)" }],
+      problems: [{ path: "bindings", message: "Bindings are not supported yet (Phase 13)" }],
     })
+  })
+
+  it("couplings between two of its mates (Phase 10)", () => {
+    const json = asJson(sampleDocument())
+    const id = uuid(1)
+    const mates = json.mates as Record<string, { id: string }>
+    const [mateA] = Object.keys(mates)
+    const first = mateA ? mates[mateA] : undefined
+    if (!mateA || !first) throw new Error("the sample has a mate")
+    const mateB = uuid(2) // a second mate on the same anchors
+    mates[mateB] = { ...first, id: mateB }
+    json.couplings = { [id]: { id, kind: "gear", mateA, mateB, ratio: -2 } }
+    expect(open(json).ok).toBe(true)
+    json.couplings = { [id]: { id, kind: "gear", mateA, mateB: uuid(9), ratio: -2 } }
+    expect(open(json).ok).toBe(false) // it names a mate the document lacks
   })
 
   it("inconsistent contents, with the paths at fault", () => {

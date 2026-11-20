@@ -110,3 +110,55 @@ test("leaving test mode from the keyboard refreshes the hover under a still curs
   await expect.poll(pickAtCursor).toBeNull()
   await expect.poll(() => hoveredId(page)).toBeNull()
 })
+
+// PLAN 10.4, 10.7: the mate shows its live angle while the leaf moves; Apply Pose keeps the
+// tested pose as one undo entry, with the hinge still exact (no "Snap again").
+test("test mode: the hinge reads live, and Apply Pose keeps the pose", async ({ page }) => {
+  await page.goto("/")
+  await waitForViewport(page)
+  const { leaf } = await insertTestRig(page)
+  const design = await partPose(page, leaf)
+  await page.keyboard.press("Control+1")
+  const tree = page.getByRole("tree", { name: "Scene graph" })
+  await tree.getByRole("treeitem", { name: /^Revolute: Base – Leaf/ }).click()
+  const inspector = page.getByRole("complementary", { name: "Properties" })
+
+  await enterTestMode(page)
+  const grab = await project(page, [115, 85, 30])
+  await page.mouse.move(grab.x, grab.y)
+  await page.mouse.down()
+  await page.mouse.move(grab.x - 30, grab.y - 60, { steps: 12 }) // lift the leaf
+  await page.mouse.up()
+  // Damped to rest: on a loaded machine the physics runs slower than real time, so wait for
+  // the leaf to stop rather than for a fixed time.
+  let last = Infinity
+  await expect
+    .poll(
+      async () => {
+        const now = angleZDeg(await partPose(page, leaf))
+        const still = Math.abs(now - last) < 0.02
+        last = now
+        return still
+      },
+      { intervals: [250], timeout: 20_000 }
+    )
+    .toBe(true)
+  const lifted = angleZDeg(await partPose(page, leaf))
+  expect(lifted).toBeGreaterThan(15)
+  // The reading follows the leaf (refreshed ten times a second; it may still creep a little).
+  const reading = inspector.getByText(/^Now \(test mode\)/).locator("..")
+  const shown = async () => Number(/(-?[\d.]+)°/.exec((await reading.textContent()) ?? "")?.[1])
+  await expect.poll(async () => Math.abs((await shown()) - lifted)).toBeLessThan(0.5)
+
+  const before = angleZDeg(await partPose(page, leaf))
+  await page.getByRole("button", { name: "Apply Pose" }).click()
+  await expect(page.getByText("Mode Design")).toBeVisible()
+  const kept = await partPose(page, leaf)
+  expect(Math.abs(angleZDeg(kept) - before)).toBeLessThan(0.5)
+  expect(Math.abs(angleZDeg(kept) - angleZDeg(design))).toBeGreaterThan(15)
+  await expect(inspector.getByText(/^Now \(test mode\)/)).toBeHidden()
+  await expect(inspector.getByRole("button", { name: "Snap again" })).toBeHidden()
+
+  await page.keyboard.press("Control+z") // one undo entry back to the design pose
+  await expect.poll(async () => (await partPose(page, leaf)).quaternion).toEqual(design.quaternion)
+})

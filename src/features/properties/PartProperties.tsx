@@ -4,6 +4,7 @@ import { PartMaterialSection } from "@/features/materials/PartMaterialSection"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { AnchorList } from "./AnchorList"
 import { NameField } from "./NameField"
+import { PartCollider } from "./PartCollider"
 import { PartMotion } from "./PartMotion"
 import { PropertyToggle } from "./PropertyToggle"
 import { PropertyField } from "./PropertyField"
@@ -51,6 +52,9 @@ export function PartProperties({ id }: { id: PartId }) {
         <AnchorList partId={id} />
       </div>
       <PartMotion id={id} />
+      <div className="mt-2">
+        <PartCollider id={id} />
+      </div>
       <h4 className="mt-3 text-xs font-semibold">Placement</h4>
       <PropertyField label="Position (mm)" value={triple(part.pose.positionMm)} />
       {asset && size && (

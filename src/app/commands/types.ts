@@ -47,6 +47,7 @@ export type CommandId =
   | "tool.mateApply"
   | "test.toggle"
   | "test.reset"
+  | "test.applyPose"
   | "dev.insertTestRig"
   | "help.credits"
   | "help.about"

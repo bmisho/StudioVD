@@ -8,6 +8,8 @@ import { GlyphScaler } from "@/features/assembly/GlyphScaler"
 import { MatePreview } from "@/features/assembly/MatePreview"
 import { InsertionGhost } from "@/features/library/InsertionGhost"
 import { MateToolHint } from "@/features/assembly/MateToolHint"
+import { InterferencePanel } from "@/features/physics/InterferencePanel"
+import { PhysicsStatsOverlay } from "@/features/physics/PhysicsStatsOverlay"
 import { PartTransformGizmo } from "./gizmos/PartTransformGizmo"
 import { createCameraRig } from "./camera/createCameraRig"
 import { MaterialSync } from "./materials/MaterialSync"
@@ -83,6 +85,8 @@ export function Viewport3D() {
       <ViewportStatusOverlay />
       <AnchorToolHint />
       <MateToolHint />
+      <InterferencePanel />
+      {import.meta.env.DEV && <PhysicsStatsOverlay />}
     </div>
   )
 }

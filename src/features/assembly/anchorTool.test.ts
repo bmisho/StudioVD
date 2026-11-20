@@ -5,7 +5,7 @@ import { createTestRig } from "@/core/scene/testRig"
 import type { PartId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { resetStores } from "@/test/resetStores"
-import type { AnchorPreview } from "./anchorPreview"
+import type { AnchorPreview } from "./anchorPreviewStore"
 import { clickAnchor } from "./anchorTool"
 
 const preview = vi.hoisted(() => ({ current: null as AnchorPreview | null }))

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react"
 import { useSessionStore } from "@/store/session/sessionStore"
-import { anchorPreview } from "./anchorPreview"
+import { anchorPreview } from "./anchorPreviewStore"
 
 /**
  * What Place Anchor is doing, over the top of the 3D view (PLAN 7.2): what the cursor snaps to

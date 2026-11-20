@@ -7,7 +7,7 @@ import { assetCache } from "@/features/viewport/parts/assetCache"
 import { partObject } from "@/features/viewport/parts/partObjects"
 import { pickRefOf } from "@/features/viewport/picking/pickTarget"
 import { useDocumentStore } from "@/store/document/documentStore"
-import type { AnchorPreview } from "./anchorPreview"
+import type { AnchorPreview } from "./anchorPreviewStore"
 
 const toLocal = new Matrix4()
 const v = new Vector3()

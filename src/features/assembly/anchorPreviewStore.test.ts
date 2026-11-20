@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import { anchorFrame } from "@/core/assembly/anchorFrames"
 import type { AnchorCandidate } from "@/core/assembly/snapCandidates"
 import type { PartId } from "@/core/schema"
-import { anchorPreview } from "./anchorPreview"
+import { anchorPreview } from "./anchorPreviewStore"
 
 const partId = "p" as PartId
 /** A fresh but equal candidate each call, as every pointer move computes one. */

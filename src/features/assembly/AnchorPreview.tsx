@@ -3,7 +3,7 @@ import type { Group } from "three"
 import type { PartId } from "@/core/schema"
 import { OVERLAY } from "@/features/viewport/thumbnail/overlay"
 import { AnchorGlyph } from "./AnchorGlyph"
-import { anchorPreview } from "./anchorPreview"
+import { anchorPreview } from "./anchorPreviewStore"
 import { registerGlyph } from "./glyphs"
 import { SnapFeatureLine } from "./SnapFeatureLine"
 

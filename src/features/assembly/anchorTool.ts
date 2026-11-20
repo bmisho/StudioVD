@@ -3,7 +3,7 @@ import { uniqueAnchorName } from "@/core/assembly/anchorNames"
 import { isPlainClick } from "@/core/scene/pickPolicy"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
-import { anchorPreview, type AnchorPreview } from "./anchorPreview"
+import { anchorPreview, type AnchorPreview } from "./anchorPreviewStore"
 import { candidateFromHit } from "./candidateFromHit"
 
 const cursorOf = (e: ThreeEvent<PointerEvent | MouseEvent>) => ({

@@ -9,7 +9,7 @@ import { useSessionStore } from "@/store/session/sessionStore"
 import { demandRoot, settle } from "@/test/demandRoot"
 import { resetStores } from "@/test/resetStores"
 import { AnchorPreview } from "./AnchorPreview"
-import { anchorPreview } from "./anchorPreview"
+import { anchorPreview } from "./anchorPreviewStore"
 
 vi.mock("@/features/viewport/theme/sceneTokens", async () => {
   const { flatSceneTokens } = await import("@/test/demandRoot")

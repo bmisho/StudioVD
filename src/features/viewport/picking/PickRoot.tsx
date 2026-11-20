@@ -7,7 +7,7 @@ import {
   selectionChangeForClick,
 } from "@/core/scene/pickPolicy"
 import { componentOfPart, pickTarget } from "@/core/scene/componentPick"
-import { anchorPreview } from "@/features/assembly/anchorPreview"
+import { anchorPreview } from "@/features/assembly/anchorPreviewStore"
 import { clickAnchor, previewAnchor } from "@/features/assembly/anchorTool"
 import { anchorAt } from "@/features/assembly/glyphs"
 import { pickMateAnchor } from "@/features/assembly/mateTool"

@@ -7,6 +7,7 @@ import { useSessionStore } from "@/store/session/sessionStore"
 import { NameField } from "./NameField"
 import { NodeLink } from "./NodeLink"
 import { NodeParam } from "./NodeParam"
+import { OperatingPoint } from "./OperatingPoint"
 import { PropertyField } from "./PropertyField"
 
 /** A schematic block (Phase 11): its label, block, parameters and linked part. */
@@ -54,6 +55,7 @@ export function NodeProperties({ id }: { id: NodeId }) {
           ))}
         </section>
       )}
+      <OperatingPoint id={id} def={def} />
       <NodeLink node={id} />
     </div>
   )

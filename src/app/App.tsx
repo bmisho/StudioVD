@@ -4,6 +4,7 @@ import { ImportDialog } from "@/features/import/ImportDialog"
 import { DragGhost } from "@/features/library/DragGhost"
 import { CreditsDialog } from "@/features/library/CreditsDialog"
 import { BlockEditorDialog } from "@/features/schematic/editor/BlockEditorDialog"
+import { SimulationRunner } from "@/features/simulation/SimulationRunner"
 import { InstallPackDialog } from "@/features/library/InstallPackDialog"
 import { SaveComponentDialog } from "@/features/library/SaveComponentDialog"
 import { useFileDrop } from "@/features/import/useFileDrop"
@@ -39,6 +40,7 @@ export function App() {
       <ImportDialog />
       <CreditsDialog />
       <BlockEditorDialog />
+      <SimulationRunner />
       <InstallPackDialog />
       <SaveComponentDialog />
       <DragGhost />

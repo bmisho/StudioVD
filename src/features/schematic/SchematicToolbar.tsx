@@ -1,5 +1,6 @@
 import { Box } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ResultsButton } from "@/features/simulation/ResultsButton"
 import { AddBlockMenu } from "./AddBlockMenu"
 
 /** Above the schematic: add a built-in block or a new black box. */
@@ -23,6 +24,7 @@ export function SchematicToolbar({
         <Box className="size-3.5" aria-hidden />
         Black box
       </Button>
+      <ResultsButton />
     </div>
   )
 }

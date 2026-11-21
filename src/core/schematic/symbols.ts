@@ -53,6 +53,8 @@ const SYMBOLS: Readonly<Record<string, string>> = {
   display: "M4 3h32v18h-32zM8 7h24v10h-24z",
   probe: "M8 10a6 6 0 1 0 12 0a6 6 0 1 0-12 0M18 14l8 8",
   mcu: "M8 2h24v20h-24zM4 6h4M4 12h4M4 18h4M32 6h4M32 12h4M32 18h4",
+  buffer: "M10 3v18l18-9zM0 12h10M28 12h12",
+  adc: "M4 4h22l10 8-10 8h-22zM10 12h12",
 }
 
 /** A black box, or a symbol a newer StudioVD drew. */

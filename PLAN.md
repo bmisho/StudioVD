@@ -1166,28 +1166,62 @@ Exit criteria
 
 ## Phase 12: Simulation engine
 
-- [ ] 12.1 Component interface: `stamp()` for conserved ports, `evaluate()` for signal ports,
-  optional per-instance state (hysteresis memory); unknown model IDs → diagnostic
-- [ ] 12.2 Netlist compiler: union-find nets per domain, ground references; diagnostics (floating
-  net, missing ground, shorted ideal sources, medium mismatch) mapped back to nodes
-- [ ] 12.3 MNA assembly + dense LU with partial pivoting; Newton-Raphson with junction-voltage
-  limiting, `gmin`, tanh-smoothed friction
-- [ ] 12.4 Signal propagation: topological order, cycle detection, fixed-point iteration
-- [ ] 12.5 Coupled outer loop (conserved ⇄ signal) with convergence limit; hysteresis state
-  carried between solves
-- [ ] 12.6 Gravity sources from 3D mass properties (§2) with mass/COM overrides: part weight,
+- [x] 12.1 Component interface: `stamp()` for conserved ports, `evaluate()` for signal ports,
+  optional per-instance state (hysteresis memory); unknown model IDs → diagnostic. As built:
+  `core/sim/engine/types.ts` (`Behaviour`: branches, references, stamp, evaluate, settle,
+  check), one behaviour per built-in model (`engine/behaviours`, a test makes every model have
+  one); boards and black boxes run their program. An unknown model is a warning and its block
+  is left out
+- [x] 12.2 Netlist compiler: union-find nets per domain, ground references; diagnostics (floating
+  net, missing ground, shorted ideal sources, medium mismatch) mapped back to nodes. As built:
+  references are the Ground and frame blocks and a pressure source's return (the atmosphere);
+  an island of nets with wires but no reference is "floating" (or "missing ground" when its
+  domain has none at all, with what to add); shorted or fighting ideal sources show as "no
+  single answer" from the solve, naming the blocks on the singular row
+- [x] 12.3 MNA assembly + dense LU with partial pivoting; Newton-Raphson with junction-voltage
+  limiting, `gmin`, tanh-smoothed friction. As built: rows scaled before pivoting (Pa and A
+  rows side by side); a vanishing pivot or a step beyond 10¹⁵ is singular. Junctions are
+  fitted from one datasheet point with n = 2 and continue as a straight line above 1000 × their
+  rated current (the job SPICE's junction limiting does, without per-iteration state). gmin is
+  10⁻¹² per net (10⁻¹⁵ for fluid), about nV on a kΩ divider. Steps that grow the residual are
+  halved
+- [x] 12.4 Signal propagation: topological order, cycle detection, fixed-point iteration. As
+  built: a loop (a block wired to itself included) runs up to 50 passes, then a warning
+- [x] 12.5 Coupled outer loop (conserved ⇄ signal) with convergence limit; hysteresis state
+  carried between solves. As built: up to 40 rounds; memories: relay contacts, a supply at its
+  current limit, a blown fuse, a stalled servo or stepper, which way power flows through a
+  gear or lead screw (their efficiency; a lead screw that cannot be back-driven holds)
+- [x] 12.6 Gravity sources from 3D mass properties (§2) with mass/COM overrides: part weight,
   distal torque per revolute, axial force per prismatic; configurable $\mathbf g$ (default
-  9.81 m/s² along −Y)
-- [ ] 12.7 Position-holding actuators (servo, stepper): hold within torque limit, else
-  "stalled/back-driven" diagnostic
-- [ ] 12.8 Solver in a Web Worker; debounced on edits, throttled (30 Hz) during drags
-- [ ] 12.9 Results UI: values on ports/wires, flow-proportional edge animation, rating warnings,
-  power totals, results table
-- [ ] 12.10 Tests against known answers: voltage divider, series/parallel, KCL residual < 1e-9
+  9.81 m/s² along −Y). As built: `core/physics/gravityLoads.ts` (centre of mass: the part's
+  override, else its asset's centroid, else its box centre; a joint on a loop or with ground
+  on both sides carries none); $\mathbf g$ is set in Project › Simulation. The loads reach the
+  schematic's Load blocks through bindings (Phase 13)
+- [x] 12.7 Position-holding actuators (servo, stepper): hold within torque limit, else
+  "stalled/back-driven" diagnostic. As built: a servo draws its idle current plus its stall
+  current in proportion to the torque it holds (new parameter, estimated); a stepper's holding
+  torque follows its coil current, nothing below a tenth of rated
+- [x] 12.8 Solver in a Web Worker; debounced on edits, throttled (30 Hz) during drags. As
+  built: 150 ms debounce, 30 Hz while a gesture is open, one solve in flight; "Solving…" only
+  when one takes over 300 ms
+- [x] 12.9 Results UI: values on ports/wires, flow-proportional edge animation, rating warnings,
+  power totals, results table. As built: readouts in probe, meter, LED, sensor and spring
+  blocks; every port's operating point in its tooltip and in the inspector; dots along wires
+  at one of three speeds by the square root of their share of the domain's largest flow (still
+  under reduced motion); badges on blocks with findings; Results (status, power supplied and
+  taken, findings that select their blocks, power by block); the status bar says Solved, with
+  warnings, or Errors. Two adapter blocks let boards meet circuits: Logic output (a pin as a
+  source behind its resistance) and Analog input (volts to ADC counts); a servo reads a board
+  pin's value as its pulse width
+- [x] 12.10 Tests against known answers: voltage divider, series/parallel, KCL residual < 1e-9
   per net, energy balance, LED operating point, motor stall ($I=V/R$) and no-load
   ($\omega=V/k_e$), cylinder $F=pA$, horizontal lever $\tau=mgL$, relay hysteresis, servo
-  stall, all diagnostics
-- [ ] ⛔ 12.11 **User approval**
+  stall, all diagnostics. As built: all of these, plus ISO 6358 choked flow, an H-bridge at
+  half duty, a black box's program and flow, a board reading a potentiometer to light an LED,
+  every model solving alone, the scheduler's timing, and E2E (wiring solves, a parameter edit
+  re-solves, a rating warning, a circuit without ground)
+- [x] ⛔ 12.11 **User approval** (gate waived, not reviewed: the user's 2026-11-16 instruction to
+  complete all remaining phases stands)
 
 ## Phase 13: 3D ↔ simulation bindings
 

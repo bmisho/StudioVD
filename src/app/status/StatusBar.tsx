@@ -12,7 +12,13 @@ function StatusItem({ label, value, live }: { label: string; value: string; live
   )
 }
 
-const SIM_LABEL = { idle: "Idle", solving: "Solving…", error: "Error" } as const
+const SIM_LABEL = {
+  idle: "Idle",
+  solving: "Solving…",
+  solved: "Solved",
+  warning: "Solved with warnings",
+  error: "Errors",
+} as const
 
 export function StatusBar() {
   const selectionCount = useSessionStore((s) => s.selection.length)

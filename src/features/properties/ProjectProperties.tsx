@@ -1,5 +1,6 @@
 import { useDocumentStore } from "@/store/document/documentStore"
 import { PropertyField } from "./PropertyField"
+import { SimulationSettings } from "./SimulationSettings"
 
 /** Shown when nothing is selected. */
 export function ProjectProperties() {
@@ -13,6 +14,9 @@ export function ProjectProperties() {
       <PropertyField label="Units" value="mm" />
       <PropertyField label="Groups" value={String(groupCount)} />
       <PropertyField label="Parts" value={String(partCount)} />
+      <div className="mt-2">
+        <SimulationSettings />
+      </div>
     </div>
   )
 }

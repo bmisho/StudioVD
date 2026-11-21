@@ -1,4 +1,6 @@
 import { BaseEdge, getSmoothStepPath, type EdgeProps } from "@xyflow/react"
+import { wireLevel } from "@/features/simulation/readouts"
+import { useSimulationStore } from "@/store/session/simulationStore"
 import { DOMAIN_STYLE } from "./domainStyle"
 import type { WireFlowEdge } from "./flowTypes"
 
@@ -6,7 +8,17 @@ import type { WireFlowEdge } from "./flowTypes"
 export function WireEdge(props: EdgeProps<WireFlowEdge>) {
   const { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, selected, data } =
     props
-  const style = DOMAIN_STYLE[data?.domain ?? "electrical"]
+  const domain = data?.domain ?? "electrical"
+  const style = DOMAIN_STYLE[domain]
+  // Flow from the last solve (PLAN 12.9): direction and a speed class, not every value.
+  const level = useSimulationStore((s) =>
+    wireLevel(
+      s.result,
+      s.scales,
+      { source: props.source, sourcePort: props.sourceHandleId ?? "" },
+      domain
+    )
+  )
   const [path] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -33,6 +45,18 @@ export function WireEdge(props: EdgeProps<WireFlowEdge>) {
           strokeLinecap: style.dash ? "round" : "butt",
         }}
       />
+      {level !== 0 && (
+        <path
+          d={path}
+          fill="none"
+          stroke="var(--background)"
+          strokeWidth={style.strokeWidth}
+          className={`sim-flow sim-flow-${Math.abs(level)}`}
+          style={{ animationDirection: level < 0 ? "reverse" : "normal" }}
+          pointerEvents="none"
+          data-flow={level}
+        />
+      )}
     </>
   )
 }

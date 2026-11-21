@@ -18,7 +18,8 @@ export type Tool = "select" | "anchor" | "mate"
 export type Projection = "perspective" | "orthographic"
 export type SplitOrientation = "horizontal" | "vertical"
 export type Pane = "viewport" | "schematic"
-export type SimStatus = "idle" | "solving" | "error"
+/** The last solve's outcome (PLAN 12.9); "solving" only once a solve takes a while. */
+export type SimStatus = "idle" | "solving" | "solved" | "warning" | "error"
 export type DialogId = "about" | "credits"
 export type GizmoMode = "translate" | "rotate"
 /** How parts are drawn (PLAN 6.6). Wireframe shows feature edges only, not the triangles. */
@@ -91,6 +92,7 @@ export interface SessionState {
   restartTestMode: () => void
   openDialog: (dialog: DialogId) => void
   openBlockEditor: (id: BlockDefId | null) => void
+  setSimStatus: (status: SimStatus) => void
   closeDialog: () => void
   setViewportGpu: (state: ViewportGpu) => void
   /** Isolates `ids`; when already isolating (or `ids` is empty), shows everything again. */
@@ -173,6 +175,7 @@ export function createSessionStore() {
     restartTestMode: () => set((s) => (s.testMode ? { testRun: s.testRun + 1 } : {})),
     openDialog: (dialog) => set({ dialog }),
     openBlockEditor: (blockEditor) => set({ blockEditor }),
+    setSimStatus: (simStatus) => set({ simStatus }),
     closeDialog: () => set({ dialog: null }),
     setViewportGpu: (viewportGpu) => set({ viewportGpu }),
     toggleIsolation: (ids) =>

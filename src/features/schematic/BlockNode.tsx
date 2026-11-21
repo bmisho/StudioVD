@@ -3,6 +3,7 @@ import { labelAt, symbolAt, type PortSpot } from "@/core/schematic/layout"
 import { SYMBOL_BOX, symbolPath } from "@/core/schematic/symbols"
 import { cn } from "@/lib/utils"
 import type { BlockFlowNode } from "./flowTypes"
+import { BlockStatus } from "./BlockStatus"
 import { PortHandle } from "./PortHandle"
 
 /** A port's name where the layout puts it (the export draws it there too). */
@@ -23,7 +24,7 @@ function PortLabel({ spot, width }: { spot: PortSpot; width: number }) {
 const ANCHOR_ALIGN = { start: "left", end: "right", middle: "center" } as const
 
 /** A schematic block: label, block name, built-in symbol and its ports (PLAN 11.3). */
-export function BlockNode({ data, selected }: NodeProps<BlockFlowNode>) {
+export function BlockNode({ id, data, selected }: NodeProps<BlockFlowNode>) {
   const { def, layout, label, designator, linked } = data
   return (
     <div
@@ -66,8 +67,9 @@ export function BlockNode({ data, selected }: NodeProps<BlockFlowNode>) {
         <PortLabel key={`l-${spot.port.key}`} spot={spot} width={layout.width} />
       ))}
       {layout.ports.map((spot) => (
-        <PortHandle key={spot.port.key} spot={spot} />
+        <PortHandle key={spot.port.key} node={id} spot={spot} />
       ))}
+      <BlockStatus node={id} simModel={def.simModel} />
     </div>
   )
 }

@@ -137,6 +137,10 @@ describe("document store contract", () => {
     roundTrips("schematic deletions")
     s().deleteItems([linked], [])
     roundTrips("linked part deleted")
+    s().setGravity([0, -1.62, 0]) // the Moon
+    s().setGravity([NaN, 0, 0]) // ignored
+    expect(s().doc.simulation.gravity).toEqual([0, -1.62, 0])
+    roundTrips("gravity")
   })
 
   it("New Group stops at the deepest nesting a file may hold", () => {

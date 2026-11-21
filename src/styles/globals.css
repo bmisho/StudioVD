@@ -146,3 +146,31 @@
 .studiovd-schematic .react-flow__minimap:focus-visible {
   outline: 2px solid var(--ring);
 }
+
+/* Flow along wires after a solve (PLAN 12.9): dots moving with the flow, faster for more. */
+@keyframes sim-flow {
+  from {
+    stroke-dashoffset: 12;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.sim-flow {
+  stroke-dasharray: 2 10;
+  animation: sim-flow linear infinite;
+}
+.sim-flow-1 {
+  animation-duration: 1.6s;
+}
+.sim-flow-2 {
+  animation-duration: 0.8s;
+}
+.sim-flow-3 {
+  animation-duration: 0.4s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sim-flow {
+    animation: none;
+  }
+}

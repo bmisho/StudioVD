@@ -50,6 +50,7 @@ src/
     properties/   Right sidebar inspectors
     library/      Library tab, insertion drag, credits dialog
     export/       GLB/STL export of the assembly or selection
+    simulation/   Solver scheduling (worker), results popover
     project/      New/Open/Save, dirty tracking, autosave, recovery, unsaved-changes prompt
   core/           PURE TypeScript. No React, no R3F, no DOM, no Tauri
     math/         Frames, transforms, fitting (three math types allowed)
@@ -246,6 +247,16 @@ Further rules:
   from the toolbar. React Flow's attribution stays visible; its link must not navigate.
   Block parameters and black-box definitions change only through store actions that keep
   wires and values valid (`schematicRepair.ts`).
+- Simulation (Phase 12): `core/sim/engine` compiles the schematic (`netlist.ts`), solves the
+  conserved domains by Newton over MNA (`newton.ts`, `lu.ts`) and the signals in dependency
+  order (`signals.ts`), alternating until both settle (`simulate.ts`). Each built-in model has
+  a `Behaviour` in `engine/behaviours` (a test fails for a model without one); stamps go
+  through `stampKit.ts` in port terms. Memories (relays, stalls, a blown fuse) travel in the
+  result's `state` and are passed back into the next solve, never into the document. It runs
+  in `simulation.worker.ts`, scheduled by `features/simulation` (debounced, 30 Hz while a
+  gesture is open); results go to `simulationStore` (session), read through selectors that
+  return the text shown, so a solve re-renders only what changed. gmin is on every net:
+  known-answer tests allow for it (about nV on a kΩ divider).
 - Connectors (Phase 9.6, scene.json v2): belts, tubes and springs are documents of their end
   anchors only; their meshes are derived in the view (`core/connectors`, `ConnectorsLayer`)
   from the anchors' world frames, rebuilt when the signature changes, never stored, never in

@@ -73,4 +73,41 @@ export const DATA: ModelDef[] = [
     ports: [signal("in", "value", "Value", "data", "", "number")],
     params: [],
   },
+  // Adapters between a board's signal pins and circuits (Phase 12): a pin driving a load,
+  // and a voltage read as ADC counts.
+  {
+    id: "data.pinOutput",
+    major: 1,
+    name: "Logic output",
+    summary: "A pin as a circuit sees it: its duty times the logic high, behind its resistance",
+    category: "data",
+    symbol: "buffer",
+    ports: [
+      signal("in", "level", "Level", "data", "1", "pwm"),
+      pin("out", "Out", "right"),
+      pin("gnd", "GND", "bottom"),
+    ],
+    params: [
+      num("high", "Logic high", "V", 5, { min: 0, max: 50 }),
+      num("rOut", "Output resistance", "Ω", 25, { min: 0.01, max: 1e6 }, true),
+      num("maxCurrent", "Maximum current", "A", 0.04, { min: 0, max: 10 }, true),
+    ],
+  },
+  {
+    id: "data.analogInput",
+    major: 1,
+    name: "Analog input",
+    summary: "Reads a voltage as ADC counts",
+    category: "data",
+    symbol: "adc",
+    ports: [
+      pin("in", "In"),
+      pin("gnd", "GND", "bottom"),
+      signal("out", "counts", "Counts", "data", "1", "adc"),
+    ],
+    params: [
+      num("vref", "Reference voltage", "V", 5, { min: 0.1, max: 50 }),
+      num("bits", "Resolution", "bit", 10, { min: 1, max: 24 }),
+    ],
+  },
 ]

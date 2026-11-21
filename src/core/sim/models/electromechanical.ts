@@ -38,6 +38,7 @@ export const ELECTROMECHANICAL: ModelDef[] = [
       num("pulseMin", "Pulse at one end", "s", 0.0005, { min: 0 }, true),
       num("pulseMax", "Pulse at the other", "s", 0.0025, { min: 0 }, true),
       num("idleCurrent", "Idle current", "A", 0.01, { min: 0 }, true),
+      num("stallCurrent", "Stall current", "A", 1, { min: 0 }, true),
     ],
   },
   {

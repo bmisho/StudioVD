@@ -16,6 +16,7 @@ import { anchorActions, type AnchorActions } from "./anchorActions"
 import { componentActions, type ComponentActions } from "./componentActions"
 import { connectorActions, type ConnectorActions } from "./connectorActions"
 import { couplingActions, type CouplingActions } from "./couplingActions"
+import { simulationActions, type SimulationActions } from "./simulationActions"
 import { schematicActions, type SchematicActions } from "./schematicActions"
 import { blockDefActions, type BlockDefActions } from "./blockDefActions"
 import { mateActions, type MateActions } from "./mateActions"
@@ -34,6 +35,7 @@ export interface DocumentState
     ComponentActions,
     ConnectorActions,
     CouplingActions,
+    SimulationActions,
     SchematicActions,
     BlockDefActions {
   /** The persisted, undoable document (CLAUDE.md §4, kind 1). */
@@ -100,6 +102,7 @@ export function createDocumentStore(initial?: SceneDocument) {
         ...componentActions(set, get),
         ...connectorActions(set, get),
         ...couplingActions(set, get),
+        ...simulationActions(set),
         ...schematicActions(set, get),
         ...blockDefActions(set, get),
 

@@ -48,6 +48,8 @@ export function portOf(doc: Schematic, ref: PortRef): Port | undefined {
 function payloadFits(from: Payload | undefined, to: Payload | undefined): boolean {
   if (!from || !to || from === to) return true
   if (to === "text") return true // a display shows anything
+  // A board pin carries what its program writes; a servo reads it as a pulse width (s).
+  if (to === "pulse" && from === "pwm") return true
   // A number input takes any numeric value; a PWM duty feeds a pulse input's driver logic.
   return to === "number" && from !== "bool" && from !== "text"
 }

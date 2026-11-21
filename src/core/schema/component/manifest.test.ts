@@ -20,7 +20,14 @@ describe("component.json (PLAN 4.3, 4.7)", () => {
 
   // Each case: what is changed, and the path the refusal names.
   const cases: [string, string, (string | number)[], unknown, string][] = [
-    ["an unknown top-level key", GENERATED, ["schematic"], {}, ""],
+    ["an unknown top-level key", GENERATED, ["scripts"], {}, ""],
+    [
+      "a schematic block that is not a model",
+      GENERATED,
+      ["schematic"],
+      { block: "resistor" },
+      "schematic.block",
+    ],
     ["no parts", ASSET, ["parts"], {}, "parts"],
     ["a root part that is not a part", ASSET, ["rootPart"], "lid", "rootPart"],
     [

@@ -77,3 +77,45 @@ describe("instantiateComponent", () => {
     expect(second.batch.parts?.[0]?.grounded).toBe(false)
   })
 })
+
+describe("components with a schematic block (PLAN 11.7)", () => {
+  it("makes the block on insert, linked both ways, sharing one definition", async () => {
+    const nut = await generated("fastener.nut", { size: "M3" })
+    const manifest = {
+      ...nut.def.manifest,
+      schematic: { block: "electromech.dcMotor@1", params: { resistance: 4, kt: -1 } },
+    }
+    const placed = { ...nut, def: { ...nut.def, manifest }, pose: at(0, 0, 0) }
+    let doc = createEmptyDocument("0.1.0")
+    const ids: string[] = []
+    for (let i = 0; i < 2; i++) {
+      const { batch, instance } = instantiateComponent(doc, placed)
+      expect(entityBatchProblems(doc, batch)).toEqual([])
+      doc = mergeBatch(doc, batch)
+      const record = doc.components[instance]
+      const node = record?.nodeId ? doc.schematic.nodes[record.nodeId] : undefined
+      expect(node?.componentInstanceId).toBe(instance)
+      expect(node?.label).toBe(record?.designator)
+      // The value outside its bounds is dropped; the other differs from the default.
+      expect(node?.paramValues).toEqual({ resistance: 4 })
+      ids.push(node?.id ?? "")
+    }
+    expect(Object.keys(doc.schematic.blockDefs)).toHaveLength(1)
+    const [a, b] = ids.map((id) => doc.schematic.nodes[id as never]?.position)
+    expect(a).not.toEqual(b) // side by side, not stacked
+    expect(parseDocument(JSON.parse(JSON.stringify(doc))).ok).toBe(true)
+  })
+
+  it("inserts without a block when the model is not known here", async () => {
+    const nut = await generated("fastener.nut", { size: "M3" })
+    const manifest = { ...nut.def.manifest, schematic: { block: "electromech.warpDrive@9" } }
+    const doc = createEmptyDocument("0.1.0")
+    const { batch } = instantiateComponent(doc, {
+      ...nut,
+      def: { ...nut.def, manifest },
+      pose: at(0, 0, 0),
+    })
+    expect(batch.schematicNodes).toEqual([])
+    expect(batch.components?.[0]?.nodeId).toBeUndefined()
+  })
+})

@@ -105,7 +105,7 @@ describe("App shell", () => {
     await user.click(screen.getByRole("button", { name: "Maximize 3D View" }))
     expect(screen.getByRole("button", { name: "Restore 3D View" })).toBeInTheDocument()
     // Both panes stay mounted (the 3D canvas must survive maximize).
-    expect(screen.getByTestId("schematic-placeholder")).toBeInTheDocument()
+    expect(await screen.findByTestId("schematic-editor")).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Restore 3D View" }))
     expect(screen.getByRole("button", { name: "Maximize 3D View" })).toBeInTheDocument()
   })

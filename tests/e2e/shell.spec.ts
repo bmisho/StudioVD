@@ -48,7 +48,7 @@ test.describe("application shell", () => {
     await expect(page.getByRole("button", { name: "Restore 3D View" })).toBeVisible()
     const maximized = (await viewport.boundingBox())?.width ?? 0
     expect(maximized).toBeGreaterThan(normal * 1.4)
-    await expect(page.getByTestId("schematic-placeholder")).toBeAttached()
+    await expect(page.getByTestId("schematic-editor")).toBeAttached()
     await page.getByRole("button", { name: "Restore 3D View" }).click()
     await expect(page.getByRole("region", { name: "Schematic" })).toBeVisible()
   })

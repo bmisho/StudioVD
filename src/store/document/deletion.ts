@@ -1,6 +1,14 @@
 import type { Draft } from "immer"
 import { anchorDeletion, mateDeletion, partDeletion } from "@/core/scene/partOps"
-import type { AnchorId, GroupId, MateId, PartId, SceneDocument } from "@/core/schema"
+import type {
+  AnchorId,
+  EdgeId,
+  GroupId,
+  MateId,
+  NodeId,
+  PartId,
+  SceneDocument,
+} from "@/core/schema"
 import { pruneComponents } from "./componentUpkeep"
 import { pruneConnectors } from "./connectorActions"
 
@@ -53,4 +61,23 @@ export function removeGroups(doc: Draft<SceneDocument>, ids: readonly GroupId[])
     delete doc.groups[id]
   }
   pruneComponents(doc) // a component whose group went is unlinked
+}
+
+/** Removes wires, and blocks with every wire on them; their components are unlinked. */
+export function removeSchematic(
+  doc: Draft<SceneDocument>,
+  nodes: readonly NodeId[],
+  edges: readonly EdgeId[]
+): void {
+  for (const id of edges) delete doc.schematic.edges[id]
+  const gone = new Set<string>(nodes)
+  for (const [id, e] of Object.entries(doc.schematic.edges))
+    if (gone.has(e.source) || gone.has(e.target)) delete doc.schematic.edges[id as EdgeId]
+  for (const id of nodes) {
+    const node = doc.schematic.nodes[id]
+    const c = node?.componentInstanceId
+    const instance = c !== undefined ? doc.components[c] : undefined
+    if (instance?.nodeId === id) delete instance.nodeId
+    delete doc.schematic.nodes[id]
+  }
 }

@@ -1,0 +1,109 @@
+import type { Locator, Page } from "@playwright/test"
+import { expect, exportedFiles, test, type E2EWindow } from "./fixtures"
+
+// Phase 11: the schematic editor, driven like a user would (PLAN 11.9).
+
+async function addBlock(page: Page, name: string) {
+  await page.getByRole("button", { name: "Add block" }).click()
+  await page.getByRole("textbox", { name: "Search blocks" }).fill(name)
+  await page.getByRole("listitem").filter({ hasText: name }).first().click()
+}
+
+const block = (page: Page, label: string) =>
+  page.locator(".react-flow__node").filter({ hasText: label })
+const port = (page: Page, label: string, key: string) =>
+  block(page, label).locator(`[data-port="${key}"]`)
+
+/** Drags a wire from one port to another with the mouse. */
+async function wire(page: Page, from: Locator, to: Locator, release = true) {
+  const [a, b] = [await from.boundingBox(), await to.boundingBox()]
+  if (!a || !b) throw new Error("port not on screen")
+  await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 })
+  if (release) await page.mouse.up()
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.getByRole("button", { name: "Maximize Schematic" }).click()
+  await expect(page.getByTestId("schematic-editor")).toBeVisible()
+})
+
+test("adds blocks, wires them by the rules, deletes and undoes", async ({ page }) => {
+  await addBlock(page, "Battery")
+  await addBlock(page, "Resistor")
+  await addBlock(page, "Probe")
+  await expect(page.locator(".react-flow__node")).toHaveCount(3)
+
+  await wire(page, port(page, "Battery 1", "pos"), port(page, "Resistor 1", "a"))
+  await expect(page.locator(".react-flow__edge")).toHaveCount(1)
+
+  // Electrical to data is refused, and the canvas says why while dragging.
+  await wire(page, port(page, "Battery 1", "neg"), port(page, "Probe 1", "value"), false)
+  await expect(page.getByRole("status").filter({ hasText: "one domain" })).toBeVisible()
+  await page.mouse.up()
+  await expect(page.locator(".react-flow__edge")).toHaveCount(1)
+
+  // Deleting a block takes its wire; one undo brings both back.
+  await block(page, "Resistor 1").click()
+  await page.keyboard.press("Delete")
+  await expect(page.locator(".react-flow__node")).toHaveCount(2)
+  await expect(page.locator(".react-flow__edge")).toHaveCount(0)
+  await page.keyboard.press("Control+z")
+  await expect(page.locator(".react-flow__node")).toHaveCount(3)
+  await expect(page.locator(".react-flow__edge")).toHaveCount(1)
+})
+
+test("dragging a block is one undo entry", async ({ page }) => {
+  await addBlock(page, "Resistor")
+  const node = block(page, "Resistor 1")
+  const before = await node.boundingBox()
+  if (!before) throw new Error("block not on screen")
+  await page.mouse.move(before.x + 40, before.y + 12)
+  await page.mouse.down()
+  for (let i = 1; i <= 6; i++) await page.mouse.move(before.x + 40 + i * 20, before.y + 12 + i * 8)
+  await page.mouse.up()
+  await expect.poll(async () => (await node.boundingBox())?.x).toBeGreaterThan(before.x + 60)
+  await page.keyboard.press("Control+z")
+  await expect.poll(async () => (await node.boundingBox())?.x).toBeCloseTo(before.x, 0)
+  await expect(node).toHaveCount(1) // the add itself is the entry before
+})
+
+test("edits a parameter and a black box, and exports the schematic", async ({ page }) => {
+  await addBlock(page, "Resistor")
+  const props = page.getByRole("complementary", { name: "Properties" })
+  const resistance = props.getByRole("textbox", { name: /Resistance/ })
+  await resistance.fill("4.7k")
+  await resistance.press("Enter")
+  await expect(resistance).toHaveValue("4.7 k")
+
+  await page.getByRole("button", { name: "Black box" }).click()
+  await props.getByRole("button", { name: "Edit block…" }).click()
+  const dialog = page.getByRole("dialog", { name: "Black box" })
+  await dialog.getByRole("button", { name: "Add port" }).click()
+  await dialog.getByRole("button", { name: "Add port" }).click()
+  const second = dialog.getByRole("group", { name: "Port 2" })
+  await second.getByRole("combobox", { name: "Direction" }).click()
+  await page.getByRole("option", { name: "Out" }).click()
+  await second.getByRole("textbox", { name: "Port key" }).fill("out")
+  const behaviour = dialog.getByRole("textbox", { name: "Behaviour" })
+  await behaviour.fill("out = in >")
+  await expect(dialog.getByRole("status")).toContainText("Line 1")
+  await behaviour.fill("out = in > 2 ? 1 : 0")
+  await dialog.getByRole("button", { name: "Apply" }).click()
+  await expect(dialog).toBeHidden()
+  await expect(port(page, "Black box 1", "out")).toBeVisible()
+
+  await page.getByRole("menuitem", { name: "File" }).click()
+  await page.getByRole("menuitem", { name: "Export" }).click()
+  await page.getByRole("menuitem", { name: "Schematic as SVG (.svg)…" }).click()
+  await expect
+    .poll(async () => (await exportedFiles(page)).map((f) => f.name))
+    .toContain("Untitled schematic.svg")
+  const svg = await page.evaluate(() =>
+    (window as unknown as E2EWindow).__E2E__.exportText("Untitled schematic.svg")
+  )
+  expect(svg).toContain("<svg")
+  expect(svg).toContain("Black box 1")
+  expect(svg).toContain("Resistor 1")
+})

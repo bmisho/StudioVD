@@ -15,6 +15,9 @@ export function unlinkInstance(doc: Draft<SceneDocument>, id: ComponentInstanceI
     const anchor = doc.anchors[anchorId]
     if (anchor) anchor.source = { kind: "manual" }
   }
+  // Its schematic block stays, no longer linked to anything.
+  const node = c.nodeId !== undefined ? doc.schematic.nodes[c.nodeId] : undefined
+  if (node?.componentInstanceId === id) delete node.componentInstanceId
   delete doc.components[id]
 }
 
@@ -35,5 +38,10 @@ export function pruneComponents(doc: Draft<SceneDocument>): void {
     if (c.nodeId !== undefined && !has(doc.schematic.nodes, c.nodeId)) delete c.nodeId
     if (!has(doc.groups, c.groupId)) unlinkInstance(doc, id as ComponentInstanceId)
     else if (Object.keys(c.parts).length === 0) delete doc.components[id as ComponentInstanceId]
+  }
+  // Blocks linked to a component that went keep their place in the schematic, unlinked.
+  for (const node of Object.values(doc.schematic.nodes)) {
+    const c = node.componentInstanceId
+    if (c !== undefined && !has(doc.components, c)) delete node.componentInstanceId
   }
 }

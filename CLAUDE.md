@@ -57,7 +57,9 @@ src/
     assembly/     Anchor frames and snap candidates (Phase 7); mate math and the assembly graph
     materials/    Built-in presets (with density sources), material -> three params, slot looks
     geometry/     Asset preparation, GLB codec (v1/v2 slots), faces, feature edges, snap features
-    sim/          Netlist compiler, MNA solver, signal propagation (no three.js at all)
+    sim/          Block models registry, connection rules, expression language; netlist
+                  compiler, MNA solver, signal propagation (no three.js at all)
+    schematic/    Block layout, built-in symbols, domain looks, SVG export (pure)
     generators/   Parametric standard parts: <id>/v<major>.ts (pure, runs in a worker)
     schema/       zod schemas for scene.json, component.json, packs, catalog + migrations;
                   the open/save pipeline (limits, migrations, integrity checks)
@@ -234,6 +236,16 @@ Further rules:
   Save as component (9.7) builds the manifest in `core/library/userComponent` and validates it
   with the download schema; Rust only checks and stores the files it names. Inherited licences
   travel in full in `license.inherited` and can never be dropped.
+- Schematic (Phase 11): the React Flow canvas is store-controlled. Its nodes and wires are
+  derived from the document (`useFlowElements`, cached per document object, so React Flow
+  keeps its measurements); measured sizes are view state, selection is the app's one list,
+  a drag is one gesture, Delete is Edit › Delete (React Flow's delete key stays off). Block
+  geometry (size, port spots, symbol, label places) comes from `core/schematic/layout.ts`,
+  never from measuring, so the canvas and the SVG export agree. No HTML5 drag and drop into
+  the canvas (Tauri's file-drop handling takes those events on Windows): blocks are added
+  from the toolbar. React Flow's attribution stays visible; its link must not navigate.
+  Block parameters and black-box definitions change only through store actions that keep
+  wires and values valid (`schematicRepair.ts`).
 - Connectors (Phase 9.6, scene.json v2): belts, tubes and springs are documents of their end
   anchors only; their meshes are derived in the view (`core/connectors`, `ConnectorsLayer`)
   from the anchors' world frames, rebuilt when the signature changes, never stored, never in
@@ -279,7 +291,9 @@ because light blue on white fails contrast (sky-400 #38BDF8 is only 2.14:1).
 | `axis-x` / `axis-y` / `axis-z` | `#DC2626` / `#15803D` / `#2563EB` | 3D axes, triad | >=3.92:1 on the viewport gradient; white labels >=4.83:1 |
 
 **Schematic domain colours** (wires, port glyphs; each >=3:1 on white). Colour is never the
-only cue: each domain also has a distinct line pattern and port shape.
+only cue: each domain also has a distinct line pattern and port shape (circle, square,
+octagon, diamond, triangle, arrow; `core/schematic/domainLook.ts`). Inputs are hollow,
+outputs and terminals filled.
 
 | Domain | Hex | Line |
 |---|---|---|

@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react"
+import { linkedToSelectedNodes } from "@/core/scene/linkedSelection"
 import { MATES_FOLDER_ID, type SceneTreeNode } from "@/core/scene/sceneTree"
 import {
   foldersHolding,
@@ -48,6 +49,16 @@ export function SceneTree({ tree }: { tree: SceneTreeNode[] }) {
   const select = useSessionStore((s) => s.select)
   const toggleSelected = useSessionStore((s) => s.toggleSelected)
   const selectedKeys = useMemo(() => new Set(selection.map(keyOf)), [selection])
+  const components = useDocumentStore((s) => s.doc.components)
+  const schematic = useDocumentStore((s) => s.doc.schematic)
+  // Parts and component groups linked to the selected schematic blocks (PLAN 11.6).
+  const linkedKeys = useMemo(() => {
+    const { parts, groups } = linkedToSelectedNodes({ components, schematic }, selection)
+    return new Set([
+      ...[...parts].map((id) => `part:${id}`),
+      ...[...groups].map((id) => `group:${id}`),
+    ])
+  }, [components, schematic, selection])
   const rowEls = useRef(new Map<string, HTMLElement>())
   const list = useRef<HTMLUListElement>(null)
   useRowFocusRescue(list, rows, rowEls)
@@ -141,6 +152,7 @@ export function SceneTree({ tree }: { tree: SceneTreeNode[] }) {
           key={keyOf(row.node)}
           row={row}
           selected={selectedKeys.has(keyOf(row.node))}
+          linked={linkedKeys.has(keyOf(row.node))}
           tabStop={row.node.id === tabStopId}
           onSelect={onSelect}
           onToggleExpanded={toggleExpanded}

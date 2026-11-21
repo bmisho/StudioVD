@@ -1,0 +1,76 @@
+import { choice, num, pin, signal, type ModelDef } from "./define"
+
+const inBool = (key: string, name: string) => signal("in", key, name, "data", "", "bool")
+const outBool = signal("out", "out", "Out", "data", "", "bool")
+
+/** Data models (PLAN 11.3): constants, comparisons, logic and displays. */
+export const DATA: ModelDef[] = [
+  {
+    id: "data.constant",
+    major: 1,
+    name: "Constant",
+    summary: "A number on its output",
+    category: "data",
+    symbol: "constant",
+    ports: [signal("out", "out", "Out", "data", "", "number")],
+    params: [num("value", "Value", "", 1)],
+  },
+  {
+    id: "data.comparator",
+    major: 1,
+    name: "Comparator",
+    summary: "True while A > B (with hysteresis)",
+    category: "data",
+    symbol: "comparator",
+    ports: [
+      signal("in", "a", "A", "data", "", "number"),
+      signal("in", "b", "B", "data", "", "number"),
+      outBool,
+    ],
+    params: [num("hysteresis", "Hysteresis", "", 0, { min: 0 })],
+  },
+  {
+    id: "data.logic",
+    major: 1,
+    name: "Logic gate",
+    summary: "AND, OR, XOR, NAND or NOR of two inputs",
+    category: "data",
+    symbol: "logic",
+    ports: [inBool("a", "A"), inBool("b", "B"), outBool],
+    params: [choice("op", "Operation", ["and", "or", "xor", "nand", "nor"], "and")],
+  },
+  {
+    id: "data.not",
+    major: 1,
+    name: "NOT",
+    summary: "The opposite of its input",
+    category: "data",
+    symbol: "not",
+    ports: [inBool("a", "In"), outBool],
+    params: [],
+  },
+  {
+    id: "data.display",
+    major: 1,
+    name: "Display",
+    summary: "Shows the value on its input (a probe, an LCD)",
+    category: "data",
+    symbol: "display",
+    ports: [
+      pin("vcc", "VCC"),
+      pin("gnd", "GND"),
+      signal("in", "value", "Value", "data", "", "text"),
+    ],
+    params: [num("current", "Supply current", "A", 0.002, { min: 0 }, true)],
+  },
+  {
+    id: "data.probe",
+    major: 1,
+    name: "Probe",
+    summary: "Shows a number on the schematic",
+    category: "data",
+    symbol: "probe",
+    ports: [signal("in", "value", "Value", "data", "", "number")],
+    params: [],
+  },
+]

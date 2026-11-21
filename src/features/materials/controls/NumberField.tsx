@@ -19,6 +19,8 @@ export function NumberField({
   onChange,
   onCancel,
   className,
+  format = formatValue,
+  parse = parseDecimal,
   "aria-label": ariaLabel,
   "aria-describedby": describedBy,
 }: {
@@ -30,6 +32,9 @@ export function NumberField({
   /** Escape, after the document is restored: for values the document does not hold. */
   onCancel?: () => void
   className?: string
+  /** Shown text of a value (default: up to 3 decimals) and the number typed text means. */
+  format?: (value: number) => string
+  parse?: (text: string) => number
   "aria-label"?: string
   "aria-describedby"?: string
 }) {
@@ -58,16 +63,16 @@ export function NumberField({
       className={cn("h-7 px-2 text-right text-xs tabular-nums md:text-xs", className)}
       aria-label={ariaLabel}
       aria-describedby={describedBy}
-      aria-invalid={draft !== null && clamp(parseDecimal(draft)) === null ? true : undefined}
-      value={draft ?? formatValue(value)}
+      aria-invalid={draft !== null && clamp(parse(draft)) === null ? true : undefined}
+      value={draft ?? format(value)}
       onFocus={() => {
         gesture.current = documentHistory.beginGesture()
         atFocus.current = value
-        setDraft(formatValue(value))
+        setDraft(format(value))
       }}
       onChange={(e) => {
         setDraft(e.target.value)
-        const next = clamp(parseDecimal(e.target.value))
+        const next = clamp(parse(e.target.value))
         if (next !== null) onChange(next)
       }}
       onBlur={finish}

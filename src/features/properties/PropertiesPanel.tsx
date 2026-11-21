@@ -12,6 +12,8 @@ import { ConnectorProperties } from "./ConnectorProperties"
 import { GroupProperties } from "./GroupProperties"
 import { MateProperties } from "./MateProperties"
 import { NewMateProperties } from "./NewMateProperties"
+import { NodeProperties } from "./NodeProperties"
+import { WireProperties } from "./WireProperties"
 import { PartProperties } from "./PartProperties"
 import { ProjectProperties } from "./ProjectProperties"
 import { showsNewMate, useFocusRescue } from "./useFocusRescue"
@@ -45,6 +47,8 @@ export function PropertiesPanel() {
   else if (single?.kind === "part") content = <PartProperties key={single.id} id={single.id} />
   else if (single?.kind === "anchor") content = <AnchorProperties key={single.id} id={single.id} />
   else if (single?.kind === "mate") content = <MateProperties key={single.id} id={single.id} />
+  else if (single?.kind === "node") content = <NodeProperties key={single.id} id={single.id} />
+  else if (single?.kind === "edge") content = <WireProperties key={single.id} id={single.id} />
   else if (single?.kind === "connector")
     content = <ConnectorProperties key={single.id} id={single.id} />
   else {

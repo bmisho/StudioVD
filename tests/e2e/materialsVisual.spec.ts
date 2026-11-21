@@ -113,7 +113,8 @@ test("materials change the rendered pixels as their values say", async ({ page }
   const opaque = await sample()
   await page.getByRole("menuitem", { name: "View" }).click()
   await page.getByRole("menuitem", { name: "Display Style" }).click()
-  await page.getByRole("menuitemradio", { name: "X-Ray", exact: true }).click()
+  // By keyboard: a mouse jump can close the submenu on a busy page (see materials.spec.ts).
+  await page.getByRole("menuitemradio", { name: "X-Ray", exact: true }).press("Enter")
   const xray = await sample()
   expect(luma(xray)).toBeGreaterThan(luma(opaque) + 30)
 })

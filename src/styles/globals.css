@@ -118,3 +118,31 @@
     overflow: hidden;
   }
 }
+
+/* React Flow in the app's tokens (Phase 11). */
+.studiovd-schematic .react-flow {
+  --xy-background-color: var(--background);
+  --xy-node-border-radius: var(--radius);
+  --xy-edge-stroke: var(--muted-foreground);
+  --xy-edge-stroke-selected: var(--ring);
+  --xy-connectionline-stroke: var(--ring);
+  --xy-connectionline-stroke-width: 1.5;
+  --xy-handle-background-color: var(--foreground);
+  --xy-minimap-background-color: var(--surface);
+  --xy-minimap-mask-background-color: rgb(248 250 252 / 0.6);
+  --xy-controls-button-background-color: var(--background);
+  --xy-controls-button-background-color-hover: var(--accent-subtle);
+  --xy-controls-button-color: var(--foreground);
+  --xy-controls-button-border-color: var(--border);
+  --xy-selection-background-color: rgb(14 165 233 / 0.08);
+  --xy-selection-border: 1px dashed var(--ring);
+}
+.studiovd-schematic .react-flow__node-block {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.studiovd-schematic .react-flow__controls-button:focus-visible,
+.studiovd-schematic .react-flow__minimap:focus-visible {
+  outline: 2px solid var(--ring);
+}

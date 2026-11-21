@@ -30,6 +30,7 @@ export function setupRegistry(overrides: Partial<Backend> = {}) {
     importFiles: vi.fn(() => Promise.resolve(notImplemented)),
     writeAsset: vi.fn(() => Promise.resolve({ ok: true as const, value: true })),
     exportScene: vi.fn(() => Promise.resolve(notImplemented)),
+    exportSchematic: vi.fn(() => Promise.resolve(notImplemented)),
     saveAsComponent: vi.fn(() => Promise.resolve({ ok: true as const, value: undefined })),
     closeWindow: vi.fn(() => Promise.resolve({ ok: true as const, value: undefined })),
     ...overrides,

@@ -17,6 +17,8 @@ export type CommandId =
   | "file.import"
   | "file.exportGlb"
   | "file.exportStl"
+  | "file.exportSchematicSvg"
+  | "file.exportSchematicPng"
   | "file.exit"
   | "edit.undo"
   | "edit.redo"
@@ -83,6 +85,7 @@ export interface Backend {
   /** Stores a normalized asset in the workspace (the test rig's boxes). */
   writeAsset: (id: string, bytes: Uint8Array) => Promise<Result<boolean>>
   exportScene: (format: "glb" | "stl") => Promise<Result<void>>
+  exportSchematic: (format: "svg" | "png") => Promise<Result<void>>
   /** Opens Save as component for these parts (PLAN 9.7). */
   saveAsComponent: (parts: readonly PartId[]) => Promise<Result<void>>
   closeWindow: () => Promise<Result<void>>

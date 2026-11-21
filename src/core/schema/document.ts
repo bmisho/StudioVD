@@ -57,9 +57,9 @@ export const SceneDocumentSchema = z
     couplings: z.record(CouplingIdSchema, CouplingSchema),
     schematic: z
       .object({
-        nodes: emptyUntil(z.record(NodeIdSchema, SchematicNodeSchema), 11, "Schematic blocks"),
-        edges: emptyUntil(z.record(EdgeIdSchema, SchematicEdgeSchema), 11, "Schematic wires"),
-        blockDefs: emptyUntil(z.record(BlockDefIdSchema, BlockDefSchema), 11, "Block types"),
+        nodes: z.record(NodeIdSchema, SchematicNodeSchema),
+        edges: z.record(EdgeIdSchema, SchematicEdgeSchema),
+        blockDefs: z.record(BlockDefIdSchema, BlockDefSchema),
       })
       .strict(),
     bindings: emptyUntil(z.record(BindingIdSchema, BindingSchema), 13, "Bindings"),

@@ -1,5 +1,6 @@
 import { useMemo } from "react"
 import { partShown } from "@/core/scene/partShown"
+import { linkedToSelectedNodes } from "@/core/scene/linkedSelection"
 import { partsInSelection } from "@/core/scene/partsInSelection"
 import { useAnchorGlyphs } from "@/features/assembly/useAnchorGlyphs"
 import { useDocumentStore } from "@/store/document/documentStore"
@@ -16,13 +17,17 @@ export function PartsLayer() {
   const groups = useDocumentStore((s) => s.doc.groups)
   const assets = useDocumentStore((s) => s.doc.assets)
   const selection = useSessionStore((s) => s.selection)
+  const components = useDocumentStore((s) => s.doc.components)
+  const schematic = useDocumentStore((s) => s.doc.schematic)
   const isolated = useSessionStore((s) => s.isolated)
   const shown = useMemo(() => (isolated ? new Set<string>(isolated) : null), [isolated])
   // immer keeps parts/groups referentially stable unless they change, so this is cheap.
-  const highlighted = useMemo(
-    () => partsInSelection({ parts, groups }, selection),
-    [parts, groups, selection]
-  )
+  // …and the parts linked to selected schematic blocks (cross-selection, PLAN 11.6).
+  const highlighted = useMemo(() => {
+    const direct = partsInSelection({ parts, groups }, selection)
+    const linked = linkedToSelectedNodes({ components, schematic }, selection).parts
+    return linked.size === 0 ? direct : new Set([...direct, ...linked])
+  }, [parts, groups, components, schematic, selection])
 
   // Hidden parts are not mounted: three raycasts invisible objects (Raycaster ignores
   // `visible`), so mounting them would make them pickable.

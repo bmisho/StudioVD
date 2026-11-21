@@ -1094,12 +1094,22 @@ Exit criteria
 
 ## Phase 11: Schematic editor
 
-- [ ] 11.1 React Flow canvas in the schematic pane: store-controlled, minimap, controls, dot grid,
-  snap-to-grid, node-drag = one undo entry
-- [ ] 11.2 Port model: domain, direction (in/out for signal, terminal for conserved), unit;
+- [x] 11.1 React Flow canvas in the schematic pane: store-controlled, minimap, controls, dot grid,
+  snap-to-grid, node-drag = one undo entry. As built: `@xyflow/react` 12.12.1, loaded in its
+  own chunk; nodes and wires are derived from the document (`useFlowElements`, cached per
+  document object so React Flow keeps its measurements), measured sizes stay in the view,
+  selection is the app's one selection list (a plain click in the schematic replaces what the
+  3D view had selected; Ctrl/Cmd adds). A drag (one block or a box selection) is one gesture;
+  arrow-key moves are one entry each. Delete goes through Edit › Delete (React Flow's own key
+  is off). Blocks snap to a 16 px grid; new blocks land in the middle of the view, at the
+  nearest spot clear of other blocks. React Flow's attribution stays visible (its authors
+  ask for it unless subscribed) but its link does not navigate (§6)
+- [x] 11.2 Port model: domain, direction (in/out for signal, terminal for conserved), unit;
   typed data payloads (bool, number, PWM duty, pulse width, ADC counts, text); fluid medium tag;
-  mechanical ports with a reference terminal
-- [ ] 11.3 Node library v1 as a registry of `SimModelId@major` + built-in symbols (library packs
+  mechanical ports with a reference terminal. As built: `PortSchema` refuses a conserved port
+  that is not a terminal (and the reverse), a payload off data, a medium off fluid and a
+  reference off mechanical ports; a reference must name another port of the block
+- [x] 11.3 Node library v1 as a registry of `SimModelId@major` + built-in symbols (library packs
   reference these IDs):
   - Electrical: source (battery/PSU), ground, resistor, capacitor (open), inductor (short),
     switch, potentiometer, LED, diode, fuse, relay (coil + contacts), voltmeter/ammeter probes
@@ -1110,18 +1120,49 @@ Exit criteria
   - Fluid: pressure source, restriction, valve, check valve, cylinder
   - Light: emitter, sensor, attenuator (lens/mirror)
   - Data: constant, comparator, logic gates, display/probe; MCU black boxes (Uno, Nano, ESP32, Pico)
-- [ ] 11.4 Connection validation (`isValidConnection`): same domain (and fluid medium) only,
-  signal out → in, one driver per input; domain colours + line patterns (`CLAUDE.md` §7)
-- [ ] 11.5 Black-box block editor: ports + sandboxed expression behaviour (AST interpreter; limits:
+
+  As built: 48 models in `core/sim/models` (plain data checked by the project schema), each a
+  symbol drawn by the app (`core/schematic/symbols.ts`, 44 path drawings). Typical defaults
+  carry an `estimated`, low-confidence source that says to set them from the real part.
+  Built-in blocks of one model share one definition per project; each board gets its own (its
+  program is its own). Parameters are typed with SI prefixes (`4.7k`, `100n`, `10u`)
+- [x] 11.4 Connection validation (`isValidConnection`): same domain (and fluid medium) only,
+  signal out → in, one driver per input; domain colours + line patterns (`CLAUDE.md` §7).
+  As built: `core/sim/connections.ts` (also: payloads must fit, no wire twice, no port to
+  itself); while a wire is dragged over a port it may not join, the canvas says why. Each
+  domain has a colour token, a wire pattern and a port shape (`core/schematic/domainLook.ts`);
+  inputs are hollow, outputs filled
+- [x] 11.5 Black-box block editor: ports + sandboxed expression behaviour (AST interpreter; limits:
   ≤ 2 KiB per expression, ≤ 512 AST nodes, depth ≤ 32; allowlisted pure functions only);
-  reusable block definitions
-- [ ] 11.6 Part ↔ node association stored as a `ComponentInstance`; cross-selection
-  3D ⇄ schematic ⇄ tree
-- [ ] 11.7 Library components with a schematic block create their node on insert
-- [ ] 11.8 Export schematic as SVG/PNG
-- [ ] 11.9 Tests: validation rules, expression parser (incl. rejection of unsafe input,
-  `__proto__`, deep nesting), store, E2E create/connect/delete nodes
-- [ ] ⛔ 11.10 **User approval**
+  reusable block definitions. As built: `core/sim/expr` (lexer, parser, interpreter over a
+  `Map`, no member access, no strings, 64 statements); the editor (inspector › Edit block…)
+  edits ports, numeric parameters and the behaviour of a definition every block of it shares,
+  with syntax errors (line and column), unknown names, inputs written to and outputs never
+  set shown as they are typed; Apply is one undo entry and drops wires that no longer fit.
+  Boards (Uno, Nano, ESP32, Pico) edit only their program. What a program may set on a
+  conserved terminal is the solver's to define (Phase 12)
+- [x] 11.6 Part ↔ node association stored as a `ComponentInstance`; cross-selection
+  3D ⇄ schematic ⇄ tree. As built: inspector › Part links a block to a part: to the part's
+  component, or a new definition-less component around a plain part (a group named after the
+  block, a designator from the block's kind: R1, M1, U1…); Unlink undoes that. A selected block
+  outlines its parts in 3D and marks their rows in the tree; a selected part marks its block
+  (dashed border). Deleting either side unlinks the other
+- [x] 11.7 Library components with a schematic block create their node on insert. As built:
+  manifests may name `schematic: { block, params }` (a built-in model only, §9); the block
+  goes in with the component in one undo entry, labelled with its designator. An unknown
+  model inserts the component without a block. Save as component carries a linked built-in
+  block and its values (a board's program and black boxes stay in the project)
+- [x] 11.8 Export schematic as SVG/PNG. As built: File › Export › Schematic as SVG / PNG; the
+  SVG is built in `core/schematic/svg.ts` from the same layout, symbols and domain looks, in
+  the theme's resolved colours; the PNG is that SVG drawn at 2× (at most 8192 px a side)
+- [x] 11.9 Tests: validation rules, expression parser (incl. rejection of unsafe input,
+  `__proto__`, deep nesting), store, E2E create/connect/delete nodes. As built: schema and
+  integrity, models, connections, expressions and the behaviour check, layout, placement,
+  SVG, store actions (one undo entry each, the contract round trip), instantiation; E2E: add,
+  wire, refused wire with its reason, delete and undo, a drag as one undo entry (shown to fail
+  without the gesture), a parameter, a black box, the SVG export
+- [x] ⛔ 11.10 **User approval** (gate waived, not reviewed: the user's 2026-11-16 instruction to
+  complete all remaining phases stands)
 
 ## Phase 12: Simulation engine
 

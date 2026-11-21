@@ -31,7 +31,9 @@ async function importColouredCube(page: Page): Promise<string> {
 async function displayStyle(page: Page, name: string) {
   await page.getByRole("menuitem", { name: "View" }).click()
   await page.getByRole("menuitem", { name: "Display Style" }).click()
-  await page.getByRole("menuitemradio", { name, exact: true }).click()
+  // By keyboard: a mouse jump to the item can cross the parent menu's other items and close
+  // the submenu first when the page is busy (it did, under parallel E2E load).
+  await page.getByRole("menuitemradio", { name, exact: true }).press("Enter")
 }
 
 test.describe("materials", () => {

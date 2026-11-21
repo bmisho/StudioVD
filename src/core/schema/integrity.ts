@@ -3,6 +3,7 @@ import type { SceneDocument } from "./document"
 import { checkComponentRefs } from "./componentIntegrity"
 import { connectorAnchors } from "./connector"
 import { checkMaterialRefs } from "./materialIntegrity"
+import { checkSchematicRefs } from "./schematicIntegrity"
 import type { DocumentProblem } from "./scanJson"
 
 type Entity = { id?: unknown }
@@ -105,6 +106,7 @@ export function checkIntegrity(doc: SceneDocument, maxProblems = 50): DocumentPr
   }
   checkMaterialRefs(doc, report)
   checkComponentRefs(doc, report)
+  checkSchematicRefs(doc, report)
   for (const [key, c] of Object.entries(doc.connectors)) {
     const ends = connectorAnchors(c)
     ends.forEach((a, i) => {

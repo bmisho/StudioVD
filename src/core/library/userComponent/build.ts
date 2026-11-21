@@ -14,6 +14,7 @@ import { localKey, plain } from "./keys"
 import { componentLicence, inheritedLicences, type UserLicence } from "./licence"
 import { manifestMaterials } from "./materials"
 import type { UserComponentPlan } from "./plan"
+import { savedSchematic } from "./schematic"
 
 /** What the Save as component dialog asks (PLAN 9.7). */
 export interface UserComponentForm {
@@ -188,6 +189,7 @@ export function buildUserComponent(
       createdAt: ctx.createdAt,
       ...(author && { author }),
     },
+    ...savedSchematic(doc, plan.parts),
   })
   if (parsed.success) return { manifest: parsed.data }
   const issue = parsed.error.issues[0]

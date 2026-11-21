@@ -1,6 +1,6 @@
 import type { SceneDocument } from "@/core/schema"
 
-export type SelectableKind = "group" | "part" | "anchor" | "mate" | "node" | "connector"
+export type SelectableKind = "group" | "part" | "anchor" | "mate" | "node" | "edge" | "connector"
 
 export interface SelectionRef {
   kind: SelectableKind
@@ -20,6 +20,8 @@ export function entityExists(doc: SceneDocument, item: SelectionRef): boolean {
       return Object.hasOwn(doc.mates, item.id)
     case "node":
       return Object.hasOwn(doc.schematic.nodes, item.id)
+    case "edge":
+      return Object.hasOwn(doc.schematic.edges, item.id)
     case "connector":
       return Object.hasOwn(doc.connectors, item.id)
   }

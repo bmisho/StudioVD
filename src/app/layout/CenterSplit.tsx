@@ -1,11 +1,15 @@
 import { lazy, Suspense } from "react"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
-import { SchematicPlaceholder } from "@/features/schematic/SchematicPlaceholder"
 import { ViewportLoading } from "@/features/viewport/ViewportLoading"
 import { cn } from "@/lib/utils"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { PaneFrame } from "./PaneFrame"
 import { useCollapsiblePanel } from "./useCollapsiblePanel"
+
+// The schematic editor (React Flow) loads in its own chunk too.
+const SchematicEditor = lazy(() =>
+  import("@/features/schematic/SchematicEditor").then((m) => ({ default: m.SchematicEditor }))
+)
 
 // three.js, R3F and camera-controls load in their own chunk, so the shell paints first.
 const Viewport3D = lazy(() =>
@@ -56,7 +60,9 @@ export function CenterSplit() {
         collapsedSize="0"
       >
         <PaneFrame pane="schematic" title="Schematic" hidden={schematic.collapsed}>
-          <SchematicPlaceholder />
+          <Suspense fallback={<div className="h-full bg-background" />}>
+            <SchematicEditor />
+          </Suspense>
         </PaneFrame>
       </ResizablePanel>
     </ResizablePanelGroup>

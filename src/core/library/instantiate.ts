@@ -20,6 +20,7 @@ import {
 } from "@/core/schema"
 import { componentMaterials } from "./componentMaterials"
 import { DEFAULT_PREFIX, nextDesignator } from "./designators"
+import { componentBlock } from "./instantiateBlock"
 
 /** A fresh copy of a frame (manifests are frozen; documents get their own). */
 export const copyFrame = (f: Frame): Frame => ({
@@ -134,6 +135,7 @@ export function instantiateComponent(
   }
 
   const assets = [...new Map(Object.values(placed.assets).map((a) => [a.id, a])).values()]
+  const block = componentBlock(doc, manifest, instance, designator)
   return {
     instance,
     group,
@@ -164,9 +166,12 @@ export function instantiateComponent(
           mates: mateIds,
           materials: materials.ids,
           bindings: {},
+          ...(block && { nodeId: block.node.id }),
         },
       ],
       licenseTexts: placed.licenseTexts ?? [],
+      blockDefs: block?.blockDef ? [block.blockDef] : [],
+      schematicNodes: block ? [block.node] : [],
     },
   }
 }

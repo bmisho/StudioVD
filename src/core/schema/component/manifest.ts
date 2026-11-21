@@ -9,6 +9,7 @@ import {
 import { ComponentIdentitySchema } from "./identity"
 import { AuthoringSchema, ComponentLicenseSchema, ThumbnailSchema } from "./license"
 import { ComponentPartSchema, MaterialRefSchema } from "./parts"
+import { ComponentSchematicSchema } from "./schematicBlock"
 import { atMost } from "./text"
 
 /** Entities one manifest may hold (PLAN 4.3: 1..64 parts). */
@@ -45,6 +46,8 @@ export const ComponentManifestSchema = z
     thumbnails: z.array(ThumbnailSchema).max(4),
     license: ComponentLicenseSchema,
     authoring: AuthoringSchema,
+    /** Its schematic block (PLAN 11.7): a built-in model, made on insert and linked to it. */
+    schematic: ComponentSchematicSchema.optional(),
   })
   .strict()
   .superRefine((m, ctx) => {

@@ -56,6 +56,8 @@ export function checkComponentRefs(
       if (!has(doc.bindings, bindingId)) report(`${at}.bindings.${key}`, missing)
     if (c.nodeId !== undefined && !has(doc.schematic.nodes, c.nodeId))
       report(`${at}.nodeId`, missing)
+    else if (c.nodeId !== undefined && doc.schematic.nodes[c.nodeId]?.componentInstanceId !== c.id)
+      report(`${at}.nodeId`, "names a block that does not name it back")
   }
 
   const listed = (instance: string, map: "parts" | "anchors", key: string, id: string) =>

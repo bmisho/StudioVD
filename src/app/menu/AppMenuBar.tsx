@@ -39,6 +39,9 @@ export function AppMenuBar() {
             <MenubarSubContent>
               <CommandMenuItem id="file.exportGlb" />
               <CommandMenuItem id="file.exportStl" />
+              <MenubarSeparator />
+              <CommandMenuItem id="file.exportSchematicSvg" />
+              <CommandMenuItem id="file.exportSchematicPng" />
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />

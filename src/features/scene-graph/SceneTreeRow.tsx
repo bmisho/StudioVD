@@ -38,6 +38,8 @@ const dofText = (dof: number | "floating") => (dof === "floating" ? "floating" :
 interface SceneTreeRowProps {
   row: VisibleRow
   selected: boolean
+  /** Linked to a selected schematic block (PLAN 11.6). */
+  linked: boolean
   /** The one row in the tab order (roving tabindex). */
   tabStop: boolean
   onSelect: (row: VisibleRow, additive: boolean) => void
@@ -56,6 +58,7 @@ export const SceneTreeRow = memo(function SceneTreeRow(props: SceneTreeRowProps)
   const {
     row,
     selected,
+    linked,
     tabStop,
     onSelect,
     onToggleExpanded,
@@ -73,7 +76,8 @@ export const SceneTreeRow = memo(function SceneTreeRow(props: SceneTreeRowProps)
   const EyeIcon = hidden ? EyeOff : Eye
   const Chevron = row.expanded ? ChevronDown : ChevronRight
   // Muted only on the plain row: on accent (4.15:1) and the hover tint (4.46:1) it fails AA.
-  const muted = !selected && "text-muted-foreground group-hover/row:text-accent-foreground"
+  const muted =
+    !selected && !linked && "text-muted-foreground group-hover/row:text-accent-foreground"
 
   return (
     <li
@@ -90,7 +94,11 @@ export const SceneTreeRow = memo(function SceneTreeRow(props: SceneTreeRowProps)
       className={cn(
         "group/row flex h-7 cursor-default items-center gap-0.5 rounded-sm pr-1 text-sm outline-none",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-        selected ? "bg-accent text-accent-foreground" : "hover:bg-accent-subtle"
+        selected
+          ? "bg-accent text-accent-foreground"
+          : linked
+            ? "bg-accent-subtle text-accent-foreground"
+            : "hover:bg-accent-subtle"
       )}
       style={{ paddingLeft: `${(row.level - 1) * 14}px` }}
       onClick={(e) => onSelect(row, e.ctrlKey || e.metaKey)}

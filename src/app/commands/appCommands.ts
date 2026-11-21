@@ -1,5 +1,6 @@
 import { toast } from "sonner"
 import { exportScene } from "@/features/export/exportService"
+import { exportSchematic } from "@/features/schematic/exportSchematic"
 import { userComponents } from "@/features/library/libraryService"
 import { chooseImportFiles } from "@/features/import/importService"
 import { projectController } from "@/features/project/projectService"
@@ -61,6 +62,7 @@ export const appCommands = createCommandRegistry({
     },
     writeAsset,
     exportScene,
+    exportSchematic,
     saveAsComponent: async (parts) => {
       rememberDialogReturnFocus()
       await userComponents.open(parts)

@@ -1,5 +1,6 @@
 import {
   AnchorSchema,
+  BlockDefSchema,
   checkIntegrity,
   ComponentDefSnapshotSchema,
   ComponentInstanceSchema,
@@ -9,8 +10,10 @@ import {
   MaterialSchema,
   MateSchema,
   PartSchema,
+  SchematicNodeSchema,
   TextureSchema,
   type Anchor,
+  type BlockDef,
   type ComponentDefSnapshot,
   type ComponentInstance,
   type GeometryAsset,
@@ -20,6 +23,7 @@ import {
   type Material,
   type Part,
   type SceneDocument,
+  type SchematicNode,
   type Texture,
 } from "@/core/schema"
 
@@ -38,6 +42,9 @@ export interface EntityBatch {
   components?: readonly ComponentInstance[]
   /** By the SHA-256 of the text. */
   licenseTexts?: readonly { sha256: string; text: LicenseText }[]
+  /** A component's schematic block (PLAN 11.7) and the definition it needs, if new. */
+  blockDefs?: readonly BlockDef[]
+  schematicNodes?: readonly SchematicNode[]
 }
 
 const has = (record: object, id: string) => Object.hasOwn(record, id)
@@ -103,6 +110,17 @@ export function entityBatchProblems(doc: SceneDocument, batch: EntityBatch): str
   }
   for (const l of batch.licenseTexts ?? [])
     check(LicenseTextSchema.safeParse(l.text).success, `licence text ${l.sha256} fails its schema`)
+  const defs = new Set(batch.blockDefs?.map((d) => d.id))
+  for (const d of batch.blockDefs ?? []) {
+    check(BlockDefSchema.safeParse(d).success, `block ${d.id} fails its schema`)
+    check(!has(doc.schematic.blockDefs, d.id), `block ${d.id} already exists`)
+  }
+  for (const n of batch.schematicNodes ?? []) {
+    check(SchematicNodeSchema.safeParse(n).success, `node ${n.id} fails its schema`)
+    check(!has(doc.schematic.nodes, n.id), `node ${n.id} already exists`)
+    const known = has(doc.schematic.blockDefs, n.blockDefId) || defs.has(n.blockDefId)
+    check(known, `node ${n.id}: unknown block`)
+  }
   if (problems.length > 0) return problems
   return checkIntegrity(mergeBatch(doc, batch)).map((p) => `${p.path}: ${p.message}`)
 }
@@ -148,4 +166,9 @@ export const mergeBatch = (doc: SceneDocument, batch: EntityBatch): SceneDocumen
     doc.licenseTexts,
     (batch.licenseTexts ?? []).map((l) => [l.sha256, l.text])
   ),
+  schematic: {
+    ...doc.schematic,
+    blockDefs: add(doc.schematic.blockDefs, batch.blockDefs),
+    nodes: add(doc.schematic.nodes, batch.schematicNodes),
+  },
 })

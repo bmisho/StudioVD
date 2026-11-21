@@ -3,6 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { ImportDialog } from "@/features/import/ImportDialog"
 import { DragGhost } from "@/features/library/DragGhost"
 import { CreditsDialog } from "@/features/library/CreditsDialog"
+import { BlockEditorDialog } from "@/features/schematic/editor/BlockEditorDialog"
 import { InstallPackDialog } from "@/features/library/InstallPackDialog"
 import { SaveComponentDialog } from "@/features/library/SaveComponentDialog"
 import { useFileDrop } from "@/features/import/useFileDrop"
@@ -37,6 +38,7 @@ export function App() {
       <AboutDialog />
       <ImportDialog />
       <CreditsDialog />
+      <BlockEditorDialog />
       <InstallPackDialog />
       <SaveComponentDialog />
       <DragGhost />

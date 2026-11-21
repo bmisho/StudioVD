@@ -76,6 +76,16 @@ export function fileCommands(deps: CommandDeps): Command[] {
       label: "STL (.stl)…",
       run: backendCommand(deps, "Export STL", () => backend.exportScene("stl")),
     },
+    {
+      id: "file.exportSchematicSvg",
+      label: "Schematic as SVG (.svg)…",
+      run: backendCommand(deps, "Export schematic", () => backend.exportSchematic("svg")),
+    },
+    {
+      id: "file.exportSchematicPng",
+      label: "Schematic as PNG (.png)…",
+      run: backendCommand(deps, "Export schematic", () => backend.exportSchematic("png")),
+    },
     { id: "file.exit", label: "Exit", run: backendCommand(deps, "Exit", backend.closeWindow) },
   ]
 }

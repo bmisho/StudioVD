@@ -16,8 +16,11 @@ fn export_extension(format: &str) -> AppResult<&'static str> {
     match format {
         "glb" => Ok("glb"),
         "stl" => Ok("stl"),
+        // The schematic (PLAN 11.8).
+        "svg" => Ok("svg"),
+        "png" => Ok("png"),
         other => Err(AppError::InvalidInput(format!(
-            "Unsupported export format '{other}' (expected 'glb' or 'stl')."
+            "Unsupported export format '{other}' (expected glb, stl, svg or png)."
         ))),
     }
 }
@@ -107,6 +110,8 @@ mod tests {
     #[test]
     fn formats() {
         assert_eq!(export_extension("glb").expect("glb"), "glb");
+        assert_eq!(export_extension("svg").expect("svg"), "svg");
+        assert_eq!(export_extension("png").expect("png"), "png");
         assert_eq!(export_extension("obj").unwrap_err().kind(), "invalidInput");
     }
 

@@ -99,8 +99,44 @@ describe("document store contract", () => {
     store.temporal.getState().undo()
     store.temporal.getState().undo()
     roundTrips("undo")
-    s().insertEntities(createTestRig()) // a second rig shares the content-addressed assets
+    const second = createTestRig()
+    s().insertEntities(second) // a second rig shares the content-addressed assets
     roundTrips("second rig")
+
+    // The schematic (Phase 11): blocks, wires, parameters, a black box, a block on a part.
+    const bat = s().addBlock("electrical.battery@1", { x: 0, y: 0 })
+    const res = s().addBlock("electrical.resistor@1", { x: 120, y: 0 })
+    const uno = s().addBlock("mcu.arduinoUno@1", { x: 0, y: 200 })
+    const box = s().createBlackBox("Sensor board", { x: 240, y: 0 })
+    if (!bat || !res || !uno || !box) throw new Error("blocks not added")
+    s().connectPorts({ node: bat, port: "pos" }, { node: res, port: "a" })
+    s().moveNodes(new Map([[res, { x: 121.5, y: -3 }]]))
+    s().renameNode(res, "R_load")
+    s().setNodeParam(res, "resistance", 220)
+    roundTrips("blocks and a wire")
+    const boxDef = s().doc.schematic.nodes[box]?.blockDefId
+    const board = s().doc.schematic.nodes[uno]?.blockDefId
+    if (!boxDef || !board) throw new Error("no definitions")
+    s().updateBlockDef(boxDef, {
+      ports: [
+        { key: "vin", name: "Vin", domain: "electrical", direction: "terminal", unit: "V" },
+        { key: "out", name: "Out", domain: "data", direction: "out", unit: "", payload: "bool" },
+      ],
+      params: [{ key: "level", name: "Level", unit: "V", kind: "number", default: 2.5 }],
+      behaviour: "out = vin > level",
+    })
+    s().updateBlockDef(board, { behaviour: "d13 = a0 > 512" })
+    s().connectPorts({ node: box, port: "vin" }, { node: res, port: "b" })
+    roundTrips("black box")
+    const linked = second.parts[0]?.id
+    if (!linked) throw new Error("rig incomplete")
+    s().linkNode(res, linked)
+    roundTrips("block linked to a part")
+    s().deleteSchematic([bat], [])
+    s().updateBlockDef(boxDef, { ports: [] })
+    roundTrips("schematic deletions")
+    s().deleteItems([linked], [])
+    roundTrips("linked part deleted")
   })
 
   it("New Group stops at the deepest nesting a file may hold", () => {

@@ -38,6 +38,11 @@ export const ALLOWLIST = [
     "https://github.com/react-spring/react-use-measure/#resize-observer-polyfills",
     "https://opencollective.com/react-three-fiber",
   ].map((exact) => ({ exact, why: "package metadata or doc links embedded by R3F" })),
+  { exact: "https://${e}flow.dev/error#001", why: "React Flow error-message link (text only)" },
+  ...["https://reactflow.dev/", "https://reactflow.dev?utm_source=attribution"].map((exact) => ({
+    exact,
+    why: "React Flow attribution link: kept as the authors ask, clicks are prevented (Phase 11)",
+  })),
 ]
 
 export function isAllowed(url, allowlist = ALLOWLIST) {

@@ -16,6 +16,8 @@ import { anchorActions, type AnchorActions } from "./anchorActions"
 import { componentActions, type ComponentActions } from "./componentActions"
 import { connectorActions, type ConnectorActions } from "./connectorActions"
 import { couplingActions, type CouplingActions } from "./couplingActions"
+import { schematicActions, type SchematicActions } from "./schematicActions"
+import { blockDefActions, type BlockDefActions } from "./blockDefActions"
 import { mateActions, type MateActions } from "./mateActions"
 import { materialActions, type MaterialActions } from "./materialActions"
 import { partActions, type PartActions } from "./partActions"
@@ -31,7 +33,9 @@ export interface DocumentState
     MateActions,
     ComponentActions,
     ConnectorActions,
-    CouplingActions {
+    CouplingActions,
+    SchematicActions,
+    BlockDefActions {
   /** The persisted, undoable document (CLAUDE.md §4, kind 1). */
   doc: SceneDocument
   /** Replaces the whole document (open, new). The caller decides whether to clear history. */
@@ -96,6 +100,8 @@ export function createDocumentStore(initial?: SceneDocument) {
         ...componentActions(set, get),
         ...connectorActions(set, get),
         ...couplingActions(set, get),
+        ...schematicActions(set, get),
+        ...blockDefActions(set, get),
 
         insertEntities: (batch) => {
           const problems = entityBatchProblems(get().doc, batch)
@@ -116,6 +122,8 @@ export function createDocumentStore(initial?: SceneDocument) {
             for (const c of batch.components ?? []) d.components[c.id] = c
             for (const l of batch.licenseTexts ?? [])
               if (!Object.hasOwn(d.licenseTexts, l.sha256)) d.licenseTexts[l.sha256] = l.text
+            for (const b of batch.blockDefs ?? []) d.schematic.blockDefs[b.id] = b
+            for (const n of batch.schematicNodes ?? []) d.schematic.nodes[n.id] = n
           })
         },
       })),

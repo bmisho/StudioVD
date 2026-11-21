@@ -6,16 +6,18 @@ import {
   type ColliderKind,
   type AnchorId,
   type ConnectorId,
+  type EdgeId,
   NameSchema,
   newId,
   PoseSchema,
   type GroupId,
   type MateId,
+  type NodeId,
   type PartId,
   type Pose,
   type SceneDocument,
 } from "@/core/schema"
-import { removeAnchors, removeGroups, removeMates, removeParts } from "./deletion"
+import { removeAnchors, removeGroups, removeMates, removeParts, removeSchematic } from "./deletion"
 
 export interface PartActions {
   /** Renames a part; names the schema would reject are ignored (like `renameGroup`). */
@@ -36,7 +38,8 @@ export interface PartActions {
     groups: readonly GroupId[],
     anchors?: readonly AnchorId[],
     mates?: readonly MateId[],
-    connectors?: readonly ConnectorId[]
+    connectors?: readonly ConnectorId[],
+    schematic?: { nodes: readonly NodeId[]; edges: readonly EdgeId[] }
   ) => void
   /**
    * Moves the selected parts and groups (outermost ones) into a new group under their shared
@@ -87,8 +90,9 @@ export function partActions(set: Set): PartActions {
 
     deleteParts: (ids) => set((s) => removeParts(s.doc, ids)),
 
-    deleteItems: (parts, groups, anchors = [], mates = [], connectors = []) =>
+    deleteItems: (parts, groups, anchors = [], mates = [], connectors = [], schematic) =>
       set((s) => {
+        if (schematic) removeSchematic(s.doc, schematic.nodes, schematic.edges)
         // A component's group goes with the whole component (its parts, anchors, mates).
         const whole = groups.flatMap((g) =>
           Object.values(s.doc.components)

@@ -1,8 +1,10 @@
 import { create } from "zustand"
 import type {
   AnchorId,
+  BlockDefId,
   ComponentInstanceId,
   ConnectorId,
+  EdgeId,
   GroupId,
   MateId,
   MateType,
@@ -31,6 +33,7 @@ export type SelectionItem =
   | { kind: "anchor"; id: AnchorId }
   | { kind: "mate"; id: MateId }
   | { kind: "node"; id: NodeId }
+  | { kind: "edge"; id: EdgeId }
   | { kind: "connector"; id: ConnectorId }
 
 /** The Mate tool's picks so far (PLAN 8.2): anchor A, then B with the new mate's options. */
@@ -60,6 +63,8 @@ export interface SessionState {
   simStatus: SimStatus
   /** Modal dialog currently open, if any. */
   dialog: DialogId | null
+  /** The block definition open in the black-box editor (PLAN 11.5). */
+  blockEditor: BlockDefId | null
   viewportGpu: ViewportGpu
   /** View > Isolate: only these parts are drawn (a view filter, not a document change). */
   isolated: readonly PartId[] | null
@@ -85,6 +90,7 @@ export interface SessionState {
   toggleTestMode: () => void
   restartTestMode: () => void
   openDialog: (dialog: DialogId) => void
+  openBlockEditor: (id: BlockDefId | null) => void
   closeDialog: () => void
   setViewportGpu: (state: ViewportGpu) => void
   /** Isolates `ids`; when already isolating (or `ids` is empty), shows everything again. */
@@ -109,6 +115,7 @@ export const initialSessionState = {
   testRun: 0,
   simStatus: "idle",
   dialog: null,
+  blockEditor: null,
   viewportGpu: "starting",
   isolated: null,
   gizmoMode: "translate",
@@ -161,9 +168,11 @@ export function createSessionStore() {
         testMode: false,
         activeTool: "select",
         mateDraft: null,
+        blockEditor: null,
       }),
     restartTestMode: () => set((s) => (s.testMode ? { testRun: s.testRun + 1 } : {})),
     openDialog: (dialog) => set({ dialog }),
+    openBlockEditor: (blockEditor) => set({ blockEditor }),
     closeDialog: () => set({ dialog: null }),
     setViewportGpu: (viewportGpu) => set({ viewportGpu }),
     toggleIsolation: (ids) =>

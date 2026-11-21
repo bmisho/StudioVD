@@ -57,7 +57,7 @@ export const textureUrl = (id: string, ext: string): string =>
 
 /** Save dialog for an export; `null` when the user cancelled. */
 export const pickExportPath = (
-  format: "glb" | "stl",
+  format: "glb" | "stl" | "svg" | "png",
   suggestedName: string
 ): Promise<Result<PickedFile | null>> =>
   call<PickedFile | null>("pick_export_path", { format, suggestedName })

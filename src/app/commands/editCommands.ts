@@ -3,41 +3,36 @@ import {
   SCENE_LIMITS,
   type AnchorId,
   type ConnectorId,
+  type EdgeId,
   type GroupId,
   type MateId,
+  type NodeId,
   type PartId,
 } from "@/core/schema"
 import { applyMateDraft } from "@/features/assembly/mateTool"
 import type { Command, CommandDeps } from "./types"
 
-function selectedGroupIds(deps: CommandDeps): GroupId[] {
-  return deps.session
-    .getState()
-    .selection.flatMap((item) => (item.kind === "group" ? [item.id] : []))
-}
-
-function selectedDirectPartIds(deps: CommandDeps): PartId[] {
-  return deps.session
-    .getState()
-    .selection.flatMap((item) => (item.kind === "part" ? [item.id] : []))
-}
-
-function selectedAnchorIds(deps: CommandDeps): AnchorId[] {
-  return deps.session
-    .getState()
-    .selection.flatMap((item) => (item.kind === "anchor" ? [item.id] : []))
-}
-
-function selectedMateIds(deps: CommandDeps): MateId[] {
-  return deps.session
-    .getState()
-    .selection.flatMap((item) => (item.kind === "mate" ? [item.id] : []))
-}
-
-function selectedConnectorIds(deps: CommandDeps): ConnectorId[] {
-  return deps.session
-    .getState()
-    .selection.flatMap((item) => (item.kind === "connector" ? [item.id] : []))
+/** Everything Edit › Delete would remove, by kind. */
+function deletable(deps: CommandDeps) {
+  const d = {
+    parts: [] as PartId[],
+    groups: [] as GroupId[],
+    anchors: [] as AnchorId[],
+    mates: [] as MateId[],
+    connectors: [] as ConnectorId[],
+    nodes: [] as NodeId[],
+    edges: [] as EdgeId[],
+  }
+  for (const item of deps.session.getState().selection) {
+    if (item.kind === "part") d.parts.push(item.id)
+    else if (item.kind === "group") d.groups.push(item.id)
+    else if (item.kind === "anchor") d.anchors.push(item.id)
+    else if (item.kind === "mate") d.mates.push(item.id)
+    else if (item.kind === "connector") d.connectors.push(item.id)
+    else if (item.kind === "node") d.nodes.push(item.id)
+    else d.edges.push(item.id)
+  }
+  return d
 }
 
 /** The parts the given anchors are on, each once, in selection order. */
@@ -84,24 +79,16 @@ export function editCommands(deps: CommandDeps): Command[] {
       // anchors go with their mates, and then their parts are shown (the inspector's Delete
       // anchor does the same); mates go with their couplings.
       run: () => {
-        const parts = selectedDirectPartIds(deps)
-        const groups = selectedGroupIds(deps)
-        const anchors = selectedAnchorIds(deps)
-        const mates = selectedMateIds(deps)
-        const connectors = selectedConnectorIds(deps)
-        const total = parts.length + groups.length + anchors.length + mates.length
-        if (total + connectors.length === 0) return
-        const owners = parts.length + groups.length === 0 ? anchorParts(deps, anchors) : []
-        document.getState().deleteItems(parts, groups, anchors, mates, connectors)
+        const d = deletable(deps)
+        if (Object.values(d).every((ids) => ids.length === 0)) return
+        const owners = d.parts.length + d.groups.length === 0 ? anchorParts(deps, d.anchors) : []
+        document.getState().deleteItems(d.parts, d.groups, d.anchors, d.mates, d.connectors, {
+          nodes: d.nodes,
+          edges: d.edges,
+        })
         session.getState().select(owners.map((id) => ({ kind: "part", id })))
       },
-      isEnabled: () =>
-        selectedDirectPartIds(deps).length +
-          selectedGroupIds(deps).length +
-          selectedAnchorIds(deps).length +
-          selectedMateIds(deps).length +
-          selectedConnectorIds(deps).length >
-        0,
+      isEnabled: () => Object.values(deletable(deps)).some((ids) => ids.length > 0),
     },
     {
       id: "edit.newGroup",

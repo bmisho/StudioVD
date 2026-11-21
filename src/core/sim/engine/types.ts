@@ -77,6 +77,18 @@ export interface Behaviour {
   check?: (c: Instance, r: Reader) => Omit<Diagnostic, "nodes">[]
 }
 
+/**
+ * What bindings bring in from 3D (PLAN 13.1): parameter values by block, values on inputs by
+ * `node/port`, and inputs fed by another block's output times a gain (light paths).
+ */
+export interface Injected {
+  params: Record<string, Record<string, ParamValue>>
+  signals: Record<string, number>
+  light: Record<string, { from: string; gain: number }>
+}
+
+export const NOTHING_INJECTED: Injected = { params: {}, signals: {}, light: {} }
+
 /** A number parameter (with its default already filled in). */
 export const num = (c: Instance, key: string): number => {
   const v = c.params[key]

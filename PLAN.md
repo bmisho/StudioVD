@@ -1225,19 +1225,43 @@ Exit criteria
 
 ## Phase 13: 3D ↔ simulation bindings
 
-- [ ] 13.1 Binding model: sources (mate angle/position, part/sub-assembly mass, gravity torque,
+- [x] 13.1 Binding model: sources (mate angle/position, part/sub-assembly mass, gravity torque,
   contact state between two parts, anchor distance, raycast distance along an anchor axis for
   ultrasonic sensors, illuminance between emitter and sensor anchors per §2 with occlusion) →
   node parameters/inputs; sinks (node outputs) → 3D visuals (emissive colour/intensity, tint,
-  force arrows, labels, commanded-pose ghost)
-- [ ] 13.2 Component-local bindings resolve on insert; external slots prompt the user
-- [ ] 13.3 Binding editor UI (from a mate/part or from a port)
-- [ ] 13.4 Live loop: drag → pose buffer → sampler → solver worker → session results → 3D
-  visual update via subscriptions (no React re-render per frame)
-- [ ] 13.5 Example projects: hinge-driven potentiometer dims an LED; limit switch (contact) cuts
-  a motor; lever holding torque sets motor current; LED → LDR light path blocked by a dragged part
-- [ ] 13.6 Tests: sampler, illuminance formula, end-to-end examples in E2E
-- [ ] ⛔ 13.7 **User approval**
+  force arrows, labels, commanded-pose ghost). As built: `core/schema/binding.ts` (scene.json
+  `bindings`, the gate lifted); every binding maps value × scale + offset, then clamps. Contact
+  is Rapier's contacts (within 0.5 mm) in test mode and oriented bounding boxes within 0.5 mm
+  otherwise; light is $E=I\cos\theta/d^2$ inside the beam, zero when a ray between the anchors
+  hits a part. A part's mass is per part (a sub-assembly's is the sum of bindings). Targets are
+  number or switch parameters (a value above one half is on) and inputs nothing else drives (a
+  wire to a bound input is refused). Deleting what a binding names deletes it; changing a block
+  drops bindings to what it lost
+- [x] 13.2 Component-local bindings resolve on insert; external slots prompt the user. As
+  built: manifests list `bindings` by their own keys (parts, anchors, mates, their block's ports
+  and parameters); they are made in the insert's one undo entry and recorded in the instance. A
+  contact with a part outside the component is a slot: a toast says what the component needs and
+  its inspector asks for the part (Needs)
+- [x] 13.3 Binding editor UI (from a mate/part or from a port). As built: Bind… in the mate,
+  part and block inspectors opens the editor with that end filled in; each lists its bindings in
+  words, with Edit (the mapping) and Remove
+- [x] 13.4 Live loop: drag → pose buffer → sampler → solver worker → session results → 3D
+  visual update via subscriptions (no React re-render per frame). As built: every solve request
+  samples the bindings at the poses drawn now; in test mode a 30 Hz watch asks for a solve when
+  the sampled values change, and the physics reads contacts for the pairs bindings watch after
+  each step. Results become per-part overlays (`simVisualStore`): glow and tint on the part's
+  geometry, arrows and labels at anchors, a ghost that follows the live joint reading
+- [x] 13.5 Example projects: hinge-driven potentiometer dims an LED; limit switch (contact) cuts
+  a motor; lever holding torque sets motor current; LED → LDR light path blocked by a dragged part.
+  As built: Help › Examples builds each in a new project from box-generator parts (they save
+  like any project); the lever drives a servo, whose current shows at its hinge
+- [x] 13.6 Tests: sampler, illuminance formula, end-to-end examples in E2E. As built: also the
+  binding schema and integrity, store actions and slots (one undo entry each, the contract round
+  trip), box contact, visuals; E2E: gravity on the lever gives the servo's current, the light
+  path reads 50 cd / (0.15 m)² = 2.222 klx, the dimmer and limit switch build and solve, and
+  opening the lid in test mode lights the LED
+- [x] ⛔ 13.7 **User approval** (gate waived, not reviewed: the user's 2026-11-16 instruction to
+  complete all remaining phases stands)
 
 ## Phase 14: Component library II (online catalog & content packs)
 

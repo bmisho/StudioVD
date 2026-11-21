@@ -120,17 +120,22 @@ describe("openSceneBytes refuses", () => {
     )
   })
 
-  it("collections a later phase owns, unless empty", () => {
+  it("bindings naming what is not there (Phase 13)", () => {
     const json = asJson(sampleDocument())
     const id = uuid(1)
     json.bindings = {
-      [id]: { id, from: { kind: "mate", ref: "x" }, to: { kind: "node", ref: "y" } },
+      [id]: {
+        id,
+        from: { kind: "mateCoordinate", mate: uuid(2) },
+        to: { kind: "param", node: uuid(3), param: "position" },
+        scale: 1,
+        offset: 0,
+      },
     }
     const result = open(json)
-    expect(result).toMatchObject({
-      ok: false,
-      problems: [{ path: "bindings", message: "Bindings are not supported yet (Phase 13)" }],
-    })
+    expect(!result.ok && result.problems.map((p) => p.path)).toEqual(
+      expect.arrayContaining([`bindings.${id}.from.mate`, `bindings.${id}.to.node`])
+    )
   })
 
   it("couplings between two of its mates (Phase 10)", () => {

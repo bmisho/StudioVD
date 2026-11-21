@@ -1,4 +1,5 @@
 import { instantiateComponent } from "@/core/library/instantiate"
+import { openSlots } from "@/core/library/instantiateBindings"
 import { placePose } from "@/core/library/placement"
 import type { Pose } from "@/core/schema"
 import type { InsertionDeps } from "./insertionController"
@@ -44,6 +45,13 @@ export function insertionSteps(deps: InsertionDeps) {
       const session = deps.session.getState()
       if (session.isolated) session.toggleIsolation([])
       session.select([{ kind: "group", id: placed.group }])
+      // Slots ask for a part from outside the component (PLAN 13.2): say so now.
+      const needs = openSlots(ready.def.manifest, {})
+      if (needs.length > 0)
+        deps.notify.info(
+          `${placed.designator} needs ${needs.map((t) => (t.from.kind === "contactSlot" ? t.from.slot : t.key)).join(", ")}`,
+          "Pick the part in its inspector."
+        )
     },
   }
 }

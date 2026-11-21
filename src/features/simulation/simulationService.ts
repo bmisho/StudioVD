@@ -4,6 +4,10 @@ import { useSessionStore, type SimStatus } from "@/store/session/sessionStore"
 import { useSimulationStore } from "@/store/session/simulationStore"
 import type { SimResult } from "@/core/sim/engine/results"
 import type { SimulationReply, SimulationRequest } from "@/workers/simulationProtocol"
+import { NO_VISUALS, visualsOf } from "@/core/bindings/visuals"
+import { sampleNow } from "@/features/bindings/bindingSampler"
+import { watchLiveBindings } from "@/features/bindings/liveBindings"
+import { useSimVisualStore } from "@/features/bindings/simVisualStore"
 import { flowScales } from "./readouts"
 import { createScheduler } from "./solveScheduler"
 
@@ -51,8 +55,11 @@ export function startSimulation(): () => void {
       if (reply.id !== nextId) return // a newer request is on its way
       if (reply.ok) {
         state = reply.result.state
-        const scales = flowScales(useDocumentStore.getState().doc, reply.result)
-        useSimulationStore.getState().setResult(reply.result, reply.ms, scales)
+        const { doc } = useDocumentStore.getState()
+        useSimulationStore
+          .getState()
+          .setResult(reply.result, reply.ms, flowScales(doc, reply.result))
+        useSimVisualStore.getState().set(visualsOf(doc, reply.result))
         setStatus(statusOf(reply.result))
       } else setStatus("error")
       settle()
@@ -71,6 +78,7 @@ export function startSimulation(): () => void {
       const { doc } = useDocumentStore.getState()
       if (Object.keys(doc.schematic.nodes).length === 0) {
         useSimulationStore.getState().setResult(null)
+        useSimVisualStore.getState().set(NO_VISUALS)
         setStatus("idle")
         done()
         return
@@ -82,17 +90,27 @@ export function startSimulation(): () => void {
         id,
         doc: { schematic: doc.schematic, simulation: doc.simulation },
         state,
+        injected: sampleNow(),
       }
       workerOf().postMessage(request)
     },
   })
+  // Poses, mates and bindings feed the solve too (PLAN 13.4).
   const unsubscribe = useDocumentStore.subscribe((s, prev) => {
-    if (s.doc.schematic !== prev.doc.schematic || s.doc.simulation !== prev.doc.simulation)
+    const a = s.doc
+    const b = prev.doc
+    const moved =
+      a.bindings !== b.bindings ||
+      (Object.keys(a.bindings).length > 0 &&
+        (a.parts !== b.parts || a.mates !== b.mates || a.anchors !== b.anchors))
+    if (a.schematic !== b.schematic || a.simulation !== b.simulation || moved)
       scheduler.changed(documentHistory.isInGesture())
   })
+  const stopLive = watchLiveBindings(() => scheduler.changed(true))
   scheduler.changed(false)
   return () => {
     unsubscribe()
+    stopLive()
     scheduler.dispose()
     if (slow !== null) clearTimeout(slow)
     worker?.terminate()

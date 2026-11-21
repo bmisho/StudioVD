@@ -1,12 +1,6 @@
 import { z } from "zod"
 import { ValueSourceSchema } from "./component/text"
-import {
-  BindingIdSchema,
-  BlockDefIdSchema,
-  ComponentInstanceIdSchema,
-  EdgeIdSchema,
-  NodeIdSchema,
-} from "./ids"
+import { BlockDefIdSchema, ComponentInstanceIdSchema, EdgeIdSchema, NodeIdSchema } from "./ids"
 import { LocalKeySchema, NameSchema } from "./primitives"
 
 // The schematic (PLAN §3, Phase 11): blocks with typed ports, wired by domain. Behaviour
@@ -151,13 +145,3 @@ export const SchematicEdgeSchema = z
   })
   .strict()
 export type SchematicEdge = z.infer<typeof SchematicEdgeSchema>
-
-/** 3D quantity -> schematic input, or schematic output -> 3D visual (PLAN.md Phase 13). */
-export const BindingSchema = z
-  .object({
-    id: BindingIdSchema,
-    from: z.object({ kind: z.string().max(32), ref: z.string().max(128) }).strict(),
-    to: z.object({ kind: z.string().max(32), ref: z.string().max(128) }).strict(),
-  })
-  .strict()
-export type Binding = z.infer<typeof BindingSchema>

@@ -1,7 +1,7 @@
 import type { NodeId, Payload, Port, SceneDocument } from "@/core/schema"
 import { CONSERVED_DOMAINS } from "@/core/schema/schematic"
 
-type Schematic = Pick<SceneDocument, "schematic">
+type Schematic = Pick<SceneDocument, "schematic"> & Partial<Pick<SceneDocument, "bindings">>
 
 export interface PortRef {
   node: NodeId
@@ -83,6 +83,11 @@ export function connectionProblem(doc: Schematic, a: PortRef, b: PortRef): Conne
   if (!payloadFits(from?.payload, to?.payload)) return "payload"
   const { target } = ordered
   if (edges.some((e) => e.target === target.node && e.targetPort === target.port)) return "driven"
+  // A binding from 3D may drive the input instead (PLAN 13.1).
+  const bound = Object.values(doc.bindings ?? {}).some(
+    (b) => b.to.kind === "input" && b.to.node === target.node && b.to.port === target.port
+  )
+  if (bound) return "driven"
   return null
 }
 

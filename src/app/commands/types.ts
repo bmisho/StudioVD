@@ -1,4 +1,5 @@
 import type { StandardView } from "@/core/math/standardViews"
+import type { ExampleId } from "@/features/examples/openExample"
 import type { NavigationPresetId } from "@/core/navigation/mousePresets"
 import type { ViewportApi } from "@/features/viewport/viewportBridge"
 import type { PartId } from "@/core/schema"
@@ -51,6 +52,7 @@ export type CommandId =
   | "test.reset"
   | "test.applyPose"
   | "dev.insertTestRig"
+  | `help.example.${ExampleId}`
   | "help.credits"
   | "help.about"
 
@@ -86,6 +88,8 @@ export interface Backend {
   writeAsset: (id: string, bytes: Uint8Array) => Promise<Result<boolean>>
   exportScene: (format: "glb" | "stl") => Promise<Result<void>>
   exportSchematic: (format: "svg" | "png") => Promise<Result<void>>
+  /** Help › Examples (PLAN 13.5): a new project with an example built in it. */
+  openExample: (id: ExampleId) => Promise<void>
   /** Opens Save as component for these parts (PLAN 9.7). */
   saveAsComponent: (parts: readonly PartId[]) => Promise<Result<void>>
   closeWindow: () => Promise<Result<void>>

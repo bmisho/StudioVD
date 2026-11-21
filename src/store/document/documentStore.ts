@@ -17,6 +17,8 @@ import { componentActions, type ComponentActions } from "./componentActions"
 import { connectorActions, type ConnectorActions } from "./connectorActions"
 import { couplingActions, type CouplingActions } from "./couplingActions"
 import { simulationActions, type SimulationActions } from "./simulationActions"
+import { bindingActions, type BindingActions } from "./bindingActions"
+import { slotActions, type SlotActions } from "./slotActions"
 import { schematicActions, type SchematicActions } from "./schematicActions"
 import { blockDefActions, type BlockDefActions } from "./blockDefActions"
 import { mateActions, type MateActions } from "./mateActions"
@@ -36,6 +38,8 @@ export interface DocumentState
     ConnectorActions,
     CouplingActions,
     SimulationActions,
+    BindingActions,
+    SlotActions,
     SchematicActions,
     BlockDefActions {
   /** The persisted, undoable document (CLAUDE.md §4, kind 1). */
@@ -103,6 +107,8 @@ export function createDocumentStore(initial?: SceneDocument) {
         ...connectorActions(set, get),
         ...couplingActions(set, get),
         ...simulationActions(set),
+        ...bindingActions(set, get),
+        ...slotActions(set, get),
         ...schematicActions(set, get),
         ...blockDefActions(set, get),
 
@@ -127,6 +133,7 @@ export function createDocumentStore(initial?: SceneDocument) {
               if (!Object.hasOwn(d.licenseTexts, l.sha256)) d.licenseTexts[l.sha256] = l.text
             for (const b of batch.blockDefs ?? []) d.schematic.blockDefs[b.id] = b
             for (const n of batch.schematicNodes ?? []) d.schematic.nodes[n.id] = n
+            for (const b of batch.bindings ?? []) d.bindings[b.id] = b
           })
         },
       })),

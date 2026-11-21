@@ -4,6 +4,7 @@ import {
   type BindingId,
   type CouplingId,
   type GroupId,
+  type NodeId,
   type SceneDocument,
 } from "@/core/schema"
 import { commonParent, partDeletion, topLevelItems } from "./partOps"
@@ -34,8 +35,10 @@ describe("partDeletion", () => {
     }
     doc.bindings["b" as BindingId] = {
       id: "b" as BindingId,
-      from: { kind: "part", ref: leaf.id },
-      to: { kind: "node", ref: "n" },
+      from: { kind: "mass", part: leaf.id },
+      to: { kind: "param", node: "n" as NodeId, param: "torque" },
+      scale: 1,
+      offset: 0,
     }
     const gone = partDeletion(doc, [leaf.id])
     expect(gone.parts).toEqual([leaf.id])

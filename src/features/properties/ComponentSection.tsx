@@ -4,6 +4,7 @@ import { userComponents } from "@/features/library/libraryService"
 import { editParameters, generatorOf } from "@/features/library/parameterService"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useLibraryStore } from "@/store/session/libraryStore"
+import { ComponentSlots } from "./ComponentSlots"
 import { GeneratorParamsForm } from "./GeneratorParamsForm"
 
 const ORIGINS = {
@@ -60,6 +61,7 @@ export function ComponentSection({ groupId }: { groupId: GroupId }) {
           />
         </>
       )}
+      <ComponentSlots instance={id} />
       {harvestable && (
         <div>
           <Button

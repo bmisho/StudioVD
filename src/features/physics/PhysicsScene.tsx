@@ -12,6 +12,8 @@ import { buildPhysicsScene, partPose, type PhysicsScene as Scene } from "./build
 import { useTestRunStore } from "@/store/session/testRunStore"
 import { appColliderGeometry } from "./colliderGeometry"
 import { ignoreInterference, scanInterference, type ContactFilter } from "./interference"
+import { contactReadings } from "./contactReadings"
+import { readContacts } from "./contactStep"
 import { jointReadings } from "./jointReadings"
 import { readJoint } from "./jointState"
 import { beforePhysicsStep, type Drag } from "./physicsStep"
@@ -43,6 +45,7 @@ export function PhysicsScene({ model }: { model: PhysicsModel }) {
       filter.current = null
       useTestRunStore.getState().setInterferences([])
       jointReadings.clear()
+      contactReadings.clear()
       restoreDesignPoses(model)
     }
   }, [rapier, world, model])
@@ -58,6 +61,7 @@ export function PhysicsScene({ model }: { model: PhysicsModel }) {
     // Every step: hinges are followed across whole turns, and bindings read the latest.
     for (const j of scene.current?.joints ?? []) jointReadings.write(j.model.mateId, readJoint(j))
     jointReadings.publish()
+    if (scene.current) readContacts(world, scene.current)
     for (const entry of scene.current?.dynamic ?? []) {
       for (const part of entry.parts) {
         const object = partObject(part.partId)

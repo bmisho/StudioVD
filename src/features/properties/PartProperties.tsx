@@ -5,6 +5,7 @@ import { useDocumentStore } from "@/store/document/documentStore"
 import { AnchorList } from "./AnchorList"
 import { NameField } from "./NameField"
 import { PartCollider } from "./PartCollider"
+import { BindingsSection } from "./BindingsSection"
 import { PartMotion } from "./PartMotion"
 import { PropertyToggle } from "./PropertyToggle"
 import { PropertyField } from "./PropertyField"
@@ -52,6 +53,9 @@ export function PartProperties({ id }: { id: PartId }) {
         <AnchorList partId={id} />
       </div>
       <PartMotion id={id} />
+      <div className="mt-2">
+        <BindingsSection entity={id} preset={{ to: { kind: "glow", part: id, color: "red" } }} />
+      </div>
       <div className="mt-2">
         <PartCollider id={id} />
       </div>

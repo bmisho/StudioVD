@@ -19,11 +19,14 @@ const DREI_OFFLINE_ALLOWLIST = {
     {
       name: "@react-three/drei",
       // TransformControls: three-stdlib's gizmo wrapped in React, no loaders (checked 10.7.9).
+      // Html: a DOM element placed over a 3D point (react-dom root), no loaders or fetches
+      // (checked 10.7.9; simulation labels, Phase 13).
       allowImportNames: [
         "CameraControlsImpl",
         "GizmoHelper",
         "GizmoViewcube",
         "GizmoViewport",
+        "Html",
         "TransformControls",
       ],
       message: "drei export not on the offline allowlist (CLAUDE.md §6). See eslint.config.js.",

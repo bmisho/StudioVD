@@ -125,6 +125,15 @@ export function AppMenuBar() {
       <MenubarMenu>
         <MenubarTrigger className={triggerClass}>Help</MenubarTrigger>
         <MenubarContent>
+          <MenubarSub>
+            <MenubarSubTrigger>Examples</MenubarSubTrigger>
+            <MenubarSubContent>
+              <CommandMenuItem id="help.example.hingeDimmer" />
+              <CommandMenuItem id="help.example.limitSwitch" />
+              <CommandMenuItem id="help.example.leverTorque" />
+              <CommandMenuItem id="help.example.lightPath" />
+            </MenubarSubContent>
+          </MenubarSub>
           <CommandMenuItem id="dev.insertTestRig" />
           <MenubarSeparator />
           <CommandMenuItem id="help.credits" />

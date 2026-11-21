@@ -1,5 +1,6 @@
 import {
   AnchorSchema,
+  BindingSchema,
   BlockDefSchema,
   checkIntegrity,
   ComponentDefSnapshotSchema,
@@ -13,6 +14,7 @@ import {
   SchematicNodeSchema,
   TextureSchema,
   type Anchor,
+  type Binding,
   type BlockDef,
   type ComponentDefSnapshot,
   type ComponentInstance,
@@ -45,6 +47,8 @@ export interface EntityBatch {
   /** A component's schematic block (PLAN 11.7) and the definition it needs, if new. */
   blockDefs?: readonly BlockDef[]
   schematicNodes?: readonly SchematicNode[]
+  /** A component's own bindings (PLAN 13.2). */
+  bindings?: readonly Binding[]
 }
 
 const has = (record: object, id: string) => Object.hasOwn(record, id)
@@ -121,6 +125,10 @@ export function entityBatchProblems(doc: SceneDocument, batch: EntityBatch): str
     const known = has(doc.schematic.blockDefs, n.blockDefId) || defs.has(n.blockDefId)
     check(known, `node ${n.id}: unknown block`)
   }
+  for (const b of batch.bindings ?? []) {
+    check(BindingSchema.safeParse(b).success, `binding ${b.id} fails its schema`)
+    check(!has(doc.bindings, b.id), `binding ${b.id} already exists`)
+  }
   if (problems.length > 0) return problems
   return checkIntegrity(mergeBatch(doc, batch)).map((p) => `${p.path}: ${p.message}`)
 }
@@ -166,6 +174,7 @@ export const mergeBatch = (doc: SceneDocument, batch: EntityBatch): SceneDocumen
     doc.licenseTexts,
     (batch.licenseTexts ?? []).map((l) => [l.sha256, l.text])
   ),
+  bindings: add(doc.bindings, batch.bindings),
   schematic: {
     ...doc.schematic,
     blockDefs: add(doc.schematic.blockDefs, batch.blockDefs),

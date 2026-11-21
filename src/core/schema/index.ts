@@ -1,4 +1,5 @@
 export * from "./assembly"
+export * from "./binding"
 export * from "./caps"
 export * from "./component"
 export * from "./componentIntegrity"

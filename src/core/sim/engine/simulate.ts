@@ -3,7 +3,14 @@ import { compileNetlist, portId, type Block, type Netlist } from "./netlist"
 import { assemble, readerFor, solveConserved, type Signals, type Solution } from "./newton"
 import { results, type SimResult } from "./results"
 import { evaluateSignals, planSignals } from "./signals"
-import type { Diagnostic, Reader, SignalValue } from "./types"
+import {
+  asNumber,
+  NOTHING_INJECTED,
+  type Diagnostic,
+  type Injected,
+  type Reader,
+  type SignalValue,
+} from "./types"
 
 // One steady-state solve (PLAN 12.5): signals and the conserved system alternate until
 // neither changes, then hysteresis memories settle (and the whole repeats if one flipped).
@@ -14,21 +21,27 @@ const MAX_ROUNDS = 40
 export interface Previous {
   /** Each block's memory from the last solve (relay contacts, a stalled servo...). */
   state?: Readonly<Record<string, Record<string, SignalValue>>>
+  /** What bindings bring in from 3D now (PLAN 13.4). */
+  injected?: Injected
 }
 
 type Doc = Pick<SceneDocument, "schematic" | "simulation">
 
 export function simulate(doc: Doc, previous: Previous = {}): SimResult {
-  const netlist = compileNetlist(doc, previous.state)
+  const injected = previous.injected ?? NOTHING_INJECTED
+  const netlist = compileNetlist(doc, previous.state, injected)
   const settings = {
     maxIterations: Math.min(doc.simulation.maxIterations, 500),
     tolerance: doc.simulation.tolerance,
   }
   const values = new Map<string, SignalValue>()
+  for (const [id, v] of Object.entries(injected.signals)) values.set(`bind:${id}`, v)
   const signals: Signals = {
     input: (block, port) => {
       const driver = block.drivers[port]
-      return driver === undefined ? undefined : values.get(driver)
+      const v = driver === undefined ? undefined : values.get(driver)
+      const gain = block.gains[port]
+      return gain === undefined || v === undefined ? v : asNumber(v) * gain
     },
     own: (block, key) => values.get(portId(block.inst.node, key)),
   }

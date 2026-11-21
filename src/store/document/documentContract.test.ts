@@ -137,6 +137,32 @@ describe("document store contract", () => {
     roundTrips("schematic deletions")
     s().deleteItems([linked], [])
     roundTrips("linked part deleted")
+    // Bindings (Phase 13): a hinge into a block, a block onto a part.
+    const third = createTestRig()
+    s().insertEntities(third)
+    const hingeMate = third.mates[0]?.id
+    const pot = s().addBlock("electrical.potentiometer@1", { x: 0, y: 400 })
+    const lamp = s().addBlock("electrical.led@1", { x: 300, y: 400 })
+    const shown = third.parts[1]?.id
+    if (!hingeMate || !pot || !lamp || !shown) throw new Error("binding ends")
+    const bound = s().addBinding({
+      from: { kind: "mateCoordinate", mate: hingeMate },
+      to: { kind: "param", node: pot, param: "position" },
+      scale: 0.5,
+      offset: 0.5,
+      min: 0,
+      max: 1,
+    })
+    const glows = s().addBinding({
+      from: { kind: "output", node: lamp, port: "light", quantity: "value" },
+      to: { kind: "glow", part: shown, color: "green" },
+      scale: 10,
+      offset: 0,
+    })
+    expect([bound.ok, glows.ok]).toEqual([true, true])
+    roundTrips("bindings")
+    if (bound.ok) s().updateBinding(bound.id, { max: null, scale: 2 })
+    roundTrips("binding edited")
     s().setGravity([0, -1.62, 0]) // the Moon
     s().setGravity([NaN, 0, 0]) // ignored
     expect(s().doc.simulation.gravity).toEqual([0, -1.62, 0])

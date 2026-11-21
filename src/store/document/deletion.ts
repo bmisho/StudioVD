@@ -1,7 +1,9 @@
 import type { Draft } from "immer"
 import { anchorDeletion, mateDeletion, partDeletion } from "@/core/scene/partOps"
+import { bindingRefs } from "@/core/schema/binding"
 import type {
   AnchorId,
+  BindingId,
   EdgeId,
   GroupId,
   MateId,
@@ -73,6 +75,9 @@ export function removeSchematic(
   const gone = new Set<string>(nodes)
   for (const [id, e] of Object.entries(doc.schematic.edges))
     if (gone.has(e.source) || gone.has(e.target)) delete doc.schematic.edges[id as EdgeId]
+  // Bindings to or from these blocks go with them.
+  for (const [id, b] of Object.entries(doc.bindings))
+    if (bindingRefs(b).some((ref) => gone.has(ref))) delete doc.bindings[id as BindingId]
   for (const id of nodes) {
     const node = doc.schematic.nodes[id]
     const c = node?.componentInstanceId
@@ -80,4 +85,5 @@ export function removeSchematic(
     if (instance?.nodeId === id) delete instance.nodeId
     delete doc.schematic.nodes[id]
   }
+  pruneComponents(doc) // components forget the bindings that went
 }

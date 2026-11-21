@@ -19,15 +19,10 @@ import {
   TextureIdSchema,
 } from "./ids"
 import { ConnectorSchema } from "./connector"
-import { emptyUntil } from "./gates"
 import { ComponentDefSnapshotSchema, ComponentInstanceSchema, LicenseTextSchema } from "./library"
 import { NameSchema, Vec3Schema } from "./primitives"
-import {
-  BindingSchema,
-  BlockDefSchema,
-  SchematicEdgeSchema,
-  SchematicNodeSchema,
-} from "./schematic"
+import { BindingSchema } from "./binding"
+import { BlockDefSchema, SchematicEdgeSchema, SchematicNodeSchema } from "./schematic"
 import { GeometryAssetSchema, GroupSchema, PartSchema, TextureSchema } from "./scene"
 import { MaterialSchema } from "./material"
 import { safeSegment } from "./shown"
@@ -62,7 +57,7 @@ export const SceneDocumentSchema = z
         blockDefs: z.record(BlockDefIdSchema, BlockDefSchema),
       })
       .strict(),
-    bindings: emptyUntil(z.record(BindingIdSchema, BindingSchema), 13, "Bindings"),
+    bindings: z.record(BindingIdSchema, BindingSchema),
     componentDefs: z.record(ComponentDefKeySchema, ComponentDefSnapshotSchema),
     components: z.record(ComponentInstanceIdSchema, ComponentInstanceSchema),
     licenseTexts: z.record(Sha256Schema, LicenseTextSchema),

@@ -55,6 +55,17 @@
      stay distinct from the slate-50 -> slate-200 viewport gradient. */
   --part-default: #94a3b8;
 
+  /* What the simulation shows in 3D (Phase 13): LED glow colours (emission, decorative, 3D
+     only) and the cool-to-hot tint ends. */
+  --glow-red: #ff3b30;
+  --glow-green: #30d158;
+  --glow-blue: #0a84ff;
+  --glow-white: #ffffff;
+  --glow-yellow: #ffd60a;
+  --glow-amber: #ff9f0a;
+  --sim-cool: #0284c7;
+  --sim-hot: #dc2626;
+
   /* Schematic domains (each >= 3:1 on white; always paired with a line pattern) */
   --domain-electrical: #ea580c;
   --domain-mechanical: #475569;

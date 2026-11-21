@@ -4,7 +4,14 @@ import { findModel } from "../models/registry"
 import { effectiveParam } from "../params"
 import { behaviourOf } from "./behaviours"
 import { groundingDiagnostics } from "./grounding"
-import type { Behaviour, Diagnostic, Instance, SignalValue } from "./types"
+import {
+  NOTHING_INJECTED,
+  type Behaviour,
+  type Diagnostic,
+  type Injected,
+  type Instance,
+  type SignalValue,
+} from "./types"
 
 // The netlist compiler (PLAN 12.2): conserved ports joined by wires become nets (union-find),
 // one unknown per net that is not a reference, plus each block's branch unknowns.
@@ -33,6 +40,8 @@ export interface Block {
   /** Index of the first branch unknown, and how many. */
   firstBranch: number
   branches: number
+  /** Inputs fed through a gain (light paths from 3D), by port key. */
+  gains: Record<string, number>
 }
 
 export interface Netlist {
@@ -51,6 +60,14 @@ function find(parent: number[], i: number): number {
   return r
 }
 
+/** Bound values for parameters the block has (a bound value wins over the block's own). */
+function boundParams(def: BlockDef, bound: Readonly<Record<string, ParamValue>> | undefined) {
+  const out: Record<string, ParamValue> = {}
+  for (const [key, v] of Object.entries(bound ?? {}))
+    if (def.params.some((p) => p.key === key)) out[key] = v
+  return out
+}
+
 /** Parameter values: the block's own, else its definition's default, else the model's. */
 function paramsOf(def: BlockDef, values: Readonly<Record<string, ParamValue>>) {
   const out: Record<string, ParamValue> = {}
@@ -62,7 +79,8 @@ function paramsOf(def: BlockDef, values: Readonly<Record<string, ParamValue>>) {
 
 export function compileNetlist(
   doc: Schematic,
-  state: Readonly<Record<string, Record<string, SignalValue>>> = {}
+  state: Readonly<Record<string, Record<string, SignalValue>>> = {},
+  injected: Injected = NOTHING_INJECTED
 ): Netlist {
   const { nodes, edges, blockDefs } = doc.schematic
   const diagnostics: Diagnostic[] = []
@@ -88,6 +106,13 @@ export function compileNetlist(
     ]
     if (a !== undefined && b !== undefined) parent[find(parent, a)] = find(parent, b)
     else drivers.set(portId(e.target, e.targetPort), portId(e.source, e.sourcePort))
+  }
+  // Inputs driven from 3D: a value of their own, or another block's output through a gain.
+  for (const id of Object.keys(injected.signals)) drivers.set(id, `bind:${id}`)
+  const gains = new Map<string, number>()
+  for (const [id, link] of Object.entries(injected.light)) {
+    drivers.set(id, link.from)
+    gains.set(id, link.gain)
   }
   const netOf = new Map<number, number>()
   const nets: Net[] = []
@@ -121,7 +146,10 @@ export function compileNetlist(
       inst: {
         node: node.id,
         label: node.label,
-        params: paramsOf(def, node.paramValues),
+        params: {
+          ...paramsOf(def, node.paramValues),
+          ...boundParams(def, injected.params[node.id]),
+        },
         state: { ...(state[node.id] ?? {}) },
       },
       def,
@@ -130,12 +158,15 @@ export function compileNetlist(
       drivers: {},
       firstBranch: 0,
       branches: 0,
+      gains: {},
     }
     for (const p of def.ports) {
       const id = portId(node.id, p.key)
       if (index.has(id)) block.nets[p.key] = netIndex(id)
       const driver = drivers.get(id)
       if (driver !== undefined) block.drivers[p.key] = driver
+      const gain = gains.get(id)
+      if (gain !== undefined) block.gains[p.key] = gain
     }
     for (const g of behaviour.grounds ?? []) {
       const n = block.nets[g]

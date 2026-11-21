@@ -8,6 +8,7 @@ import type {
   PartId,
   SceneDocument,
 } from "@/core/schema"
+import { bindingRefs } from "@/core/schema/binding"
 import type { SelectionRef } from "./selection"
 
 type Doc = Pick<
@@ -75,7 +76,7 @@ function mateDependents(doc: Doc, mates: readonly MateId[], alsoGone: ReadonlySe
     .filter((c) => gone.has(c.mateA) || gone.has(c.mateB))
     .map((c) => c.id)
   const bindings = Object.values(doc.bindings)
-    .filter((b) => gone.has(b.from.ref) || gone.has(b.to.ref))
+    .filter((b) => bindingRefs(b).some((id) => gone.has(id)))
     .map((b) => b.id)
   return { couplings, bindings }
 }

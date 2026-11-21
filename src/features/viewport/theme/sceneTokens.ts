@@ -18,6 +18,14 @@ export const SCENE_TOKEN_VARS = {
   text: "--foreground",
   hover: "--accent",
   stroke: "--input",
+  glowRed: "--glow-red",
+  glowGreen: "--glow-green",
+  glowBlue: "--glow-blue",
+  glowWhite: "--glow-white",
+  glowYellow: "--glow-yellow",
+  glowAmber: "--glow-amber",
+  simCool: "--sim-cool",
+  simHot: "--sim-hot",
 } as const
 
 export type SceneTokens = { readonly [K in keyof typeof SCENE_TOKEN_VARS]: string }

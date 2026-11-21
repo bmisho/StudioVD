@@ -21,6 +21,7 @@ import {
 import { componentMaterials } from "./componentMaterials"
 import { DEFAULT_PREFIX, nextDesignator } from "./designators"
 import { componentBlock } from "./instantiateBlock"
+import { componentBindings } from "./instantiateBindings"
 
 /** A fresh copy of a frame (manifests are frozen; documents get their own). */
 export const copyFrame = (f: Frame): Frame => ({
@@ -136,6 +137,16 @@ export function instantiateComponent(
 
   const assets = [...new Map(Object.values(placed.assets).map((a) => [a.id, a])).values()]
   const block = componentBlock(doc, manifest, instance, designator)
+  const blockDef = block
+    ? (block.blockDef ?? doc.schematic.blockDefs[block.node.blockDefId])
+    : undefined
+  const bound = componentBindings(manifest, {
+    parts: partIds,
+    anchors: anchorIds,
+    mates: mateIds,
+    ...(block && { node: block.node.id }),
+    ...(blockDef && { def: blockDef }),
+  })
   return {
     instance,
     group,
@@ -165,13 +176,14 @@ export function instantiateComponent(
           anchors: anchorIds,
           mates: mateIds,
           materials: materials.ids,
-          bindings: {},
+          bindings: bound.byKey,
           ...(block && { nodeId: block.node.id }),
         },
       ],
       licenseTexts: placed.licenseTexts ?? [],
       blockDefs: block?.blockDef ? [block.blockDef] : [],
       schematicNodes: block ? [block.node] : [],
+      bindings: bound.bindings,
     },
   }
 }

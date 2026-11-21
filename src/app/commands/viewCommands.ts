@@ -1,3 +1,4 @@
+import { EXAMPLES, type ExampleId } from "@/features/examples/openExample"
 import type { Command, CommandDeps } from "./types"
 
 export function viewCommands({
@@ -5,6 +6,7 @@ export function viewCommands({
   viewport,
   openDialog,
   focusMenuBar,
+  backend,
 }: CommandDeps): Command[] {
   const s = () => session.getState()
   return [
@@ -75,6 +77,11 @@ export function viewCommands({
       isEnabled: () => !s().testMode,
       disabledReason: "leave test mode first",
     },
+    ...(Object.keys(EXAMPLES) as ExampleId[]).map((id) => ({
+      id: `help.example.${id}` as const,
+      label: EXAMPLES[id].name,
+      run: () => void backend.openExample(id),
+    })),
     { id: "help.credits", label: "Project Credits…", run: () => openDialog("credits") },
     { id: "help.about", label: "About StudioVD", run: () => openDialog("about") },
   ]

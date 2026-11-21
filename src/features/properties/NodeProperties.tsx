@@ -5,6 +5,7 @@ import { findModel } from "@/core/sim/models/registry"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { NameField } from "./NameField"
+import { BindingsSection } from "./BindingsSection"
 import { NodeLink } from "./NodeLink"
 import { NodeParam } from "./NodeParam"
 import { OperatingPoint } from "./OperatingPoint"
@@ -57,6 +58,7 @@ export function NodeProperties({ id }: { id: NodeId }) {
       )}
       <OperatingPoint id={id} def={def} />
       <NodeLink node={id} />
+      <BindingsSection entity={id} preset={{ to: { kind: "param", node: id, param: "" } }} />
     </div>
   )
 }

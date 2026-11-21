@@ -8,7 +8,7 @@ import {
   ReactFlow,
   useReactFlow,
 } from "@xyflow/react"
-import { useCallback, useRef, type MouseEvent } from "react"
+import { useCallback, useEffect, useRef, type MouseEvent } from "react"
 import { blockLayout, GRID } from "@/core/schematic/layout"
 import { freeSpot } from "@/core/schematic/placement"
 import type { NodeId, Port } from "@/core/schema"
@@ -17,6 +17,7 @@ import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { BlockNode } from "./BlockNode"
 import { ConnectionHint } from "./ConnectionHint"
+import { onSchematicFit } from "./fitRequest"
 import type { BlockFlowNode, WireFlowEdge } from "./flowTypes"
 import { SchematicToolbar } from "./SchematicToolbar"
 import { useConnecting } from "./useConnecting"
@@ -54,6 +55,14 @@ export function SchematicCanvas() {
     },
     [flow]
   )
+
+  // A project opened or an example built: show all of its schematic.
+  const project = useDocumentStore((s) => s.doc.project)
+  useEffect(() => {
+    const fit = () => requestAnimationFrame(() => void flow.fitView({ padding: 0.15, maxZoom: 1 }))
+    fit()
+    return onSchematicFit(fit)
+  }, [flow, project])
 
   const placed = useCallback((id: NodeId | null) => {
     if (id) useSessionStore.getState().select([{ kind: "node", id }])

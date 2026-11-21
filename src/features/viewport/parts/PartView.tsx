@@ -5,6 +5,8 @@ import { useSessionStore, type SelectionItem } from "@/store/session/sessionStor
 import { AnchorPreview } from "@/features/assembly/AnchorPreview"
 import { PartAnchors } from "@/features/assembly/PartAnchors"
 import { PartHighlight, type HighlightState } from "../highlight/PartHighlight"
+import { PartSimLook } from "../simLook/PartSimLook"
+import { PartSimMarks } from "../simLook/PartSimMarks"
 import { viewportHover } from "../picking/hoverStore"
 import { edgeLineMaterial } from "../materials/materialCache"
 import { noRaycast, setPickRef } from "../picking/pickTarget"
@@ -60,6 +62,8 @@ export const PartView = memo(function PartView({ part, asset, selected, glyphs }
       />
       {edges && <lineSegments geometry={edges} material={edgeLineMaterial()} raycast={noRaycast} />}
       <PartHighlight geometry={geometry} state={state} />
+      <PartSimLook partId={part.id} geometry={geometry} />
+      <PartSimMarks partId={part.id} geometry={geometry} />
       <PartAnchors ids={glyphs} />
       <AnchorPreview partId={part.id} />
     </group>

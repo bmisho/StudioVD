@@ -51,6 +51,8 @@ src/
     library/      Library tab, insertion drag, credits dialog
     export/       GLB/STL export of the assembly or selection
     simulation/   Solver scheduling (worker), results popover
+    bindings/     Binding editor, sampler at the drawn poses, live watch, 3D visual store
+    examples/     Help › Examples, built from generated parts
     project/      New/Open/Save, dirty tracking, autosave, recovery, unsaved-changes prompt
   core/           PURE TypeScript. No React, no R3F, no DOM, no Tauri
     math/         Frames, transforms, fitting (three math types allowed)
@@ -61,6 +63,7 @@ src/
     sim/          Block models registry, connection rules, expression language; netlist
                   compiler, MNA solver, signal propagation (no three.js at all)
     schematic/    Block layout, built-in symbols, domain looks, SVG export (pure)
+    bindings/     Binding sampler, light formula, box contact, visuals from results (pure)
     generators/   Parametric standard parts: <id>/v<major>.ts (pure, runs in a worker)
     schema/       zod schemas for scene.json, component.json, packs, catalog + migrations;
                   the open/save pipeline (limits, migrations, integrity checks)
@@ -257,6 +260,12 @@ Further rules:
   gesture is open); results go to `simulationStore` (session), read through selectors that
   return the text shown, so a solve re-renders only what changed. gmin is on every net:
   known-answer tests allow for it (about nV on a kΩ divider).
+- Bindings (Phase 13): 3D → solver goes through `core/bindings/sample.ts` at the poses drawn
+  now (part objects in test mode); the solver's results come back as `simVisualStore` entries
+  that each part's overlays read (glow, tint, arrows, labels, ghosts: overlays like the
+  highlight, never picked, never in bounds or exports). The simulation never moves a part. A
+  binding into an input is that input's one driver; deleting what a binding names deletes it,
+  and component records forget bindings that went (`pruneComponents`).
 - Connectors (Phase 9.6, scene.json v2): belts, tubes and springs are documents of their end
   anchors only; their meshes are derived in the view (`core/connectors`, `ConnectorsLayer`)
   from the anchors' world frames, rebuilt when the signature changes, never stored, never in

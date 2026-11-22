@@ -2,6 +2,7 @@ import {
   BatteryFull,
   Box,
   CircleDot,
+  CircuitBoard,
   Cog,
   Disc3,
   Frame,
@@ -14,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import type { LibraryBadge, LibraryItem } from "@/core/library/items"
+import { catalogThumbUrl } from "@/lib/tauri/catalog"
 import { libraryFileUrl } from "@/lib/tauri/library"
 import { cn } from "@/lib/utils"
 
@@ -29,6 +31,7 @@ const ICONS: Record<string, LucideIcon> = {
   batteries: BatteryFull,
   enclosures: Box,
   primitives: Shapes,
+  schematic: CircuitBoard,
 }
 
 const BADGES: Record<LibraryBadge, { label: string; className: string }> = {
@@ -37,6 +40,7 @@ const BADGES: Record<LibraryBadge, { label: string; className: string }> = {
   unverified: { label: "Unverified", className: "text-warning" },
   newer: { label: "Needs newer StudioVD", className: "text-muted-foreground" },
   invalid: { label: "Invalid", className: "text-destructive" },
+  revoked: { label: "Withdrawn", className: "text-destructive" },
 }
 
 export const CARD_HEIGHT = 52
@@ -53,12 +57,18 @@ export function LibraryCard({ item, active }: { item: LibraryItem; active: boole
       )}
     >
       <div className="flex size-9 shrink-0 items-center justify-center rounded border bg-background">
-        {item.thumbnail ? (
+        {item.thumbnail || item.catalogThumbnail ? (
           <img
-            src={libraryFileUrl(item.thumbnail, "png")}
+            src={
+              item.thumbnail
+                ? libraryFileUrl(item.thumbnail, "png")
+                : catalogThumbUrl(item.catalogThumbnail ?? "")
+            }
             alt=""
             className="size-9 rounded object-contain"
             draggable={false}
+            // A catalog thumbnail whose preview pack failed: no broken-image glyph.
+            onError={(e) => (e.currentTarget.style.visibility = "hidden")}
           />
         ) : (
           <Icon className="size-5 text-muted-foreground" aria-hidden />

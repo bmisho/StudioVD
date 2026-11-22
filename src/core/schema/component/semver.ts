@@ -8,7 +8,7 @@ export const SEMVER_PATTERN =
 
 const COMPARATOR = /^(>=|<=|>|<|=|\^|~)?(.+)$/
 
-interface Version {
+export interface Version {
   core: [number, number, number]
   pre: string[]
 }

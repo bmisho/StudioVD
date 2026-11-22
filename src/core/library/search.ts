@@ -4,6 +4,8 @@ import type { LibraryItem } from "./items"
 export interface SearchDoc {
   key: string
   source: LibraryItem["source"]
+  /** Not listed under "All sources" (a catalog card for an installed component). */
+  ownSourceOnly?: boolean
   name: string
   text: string
 }
@@ -15,6 +17,7 @@ export const fold = (s: string): string =>
 export const searchDoc = (item: LibraryItem): SearchDoc => ({
   key: item.key,
   source: item.source,
+  ...(item.ownSourceOnly && { ownSourceOnly: true }),
   name: fold(item.name),
   text: fold([item.detail, ...item.category, ...item.tags].join(" ")),
 })
@@ -47,7 +50,7 @@ export function search(
   source: SearchDoc["source"] | "all"
 ): string[] {
   const words = tokens(query)
-  const pool = docs.filter((d) => source === "all" || d.source === source)
+  const pool = docs.filter((d) => (source === "all" ? !d.ownSourceOnly : d.source === source))
   if (words.length === 0) return pool.map((d) => d.key)
   const scored: { key: string; score: number; at: number }[] = []
   pool.forEach((d, at) => {

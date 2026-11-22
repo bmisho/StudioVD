@@ -56,6 +56,7 @@ export async function prepareInsertion(
     for (const [key, a] of Object.entries(out.assets)) assets[key] = await store(a)
     return { def: await definitionOf(out.manifest, "generator"), assets, licenseTexts: [] }
   }
+  if (ref.kind === "block") throw new Error("A schematic block is added to the schematic.")
   await unwrap(backend.copyComponentIntoProject(ref.id, ref.version))
   const { manifest } = ref
   for (const [key, part] of Object.entries(manifest.parts)) {

@@ -17,6 +17,7 @@ import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { BlockNode } from "./BlockNode"
 import { ConnectionHint } from "./ConnectionHint"
+import { onBlockRequest } from "./blockRequest"
 import { onSchematicFit } from "./fitRequest"
 import type { BlockFlowNode, WireFlowEdge } from "./flowTypes"
 import { SchematicToolbar } from "./SchematicToolbar"
@@ -67,6 +68,14 @@ export function SchematicCanvas() {
   const placed = useCallback((id: NodeId | null) => {
     if (id) useSessionStore.getState().select([{ kind: "node", id }])
   }, [])
+  const addBlock = useCallback(
+    (key: string) => {
+      const ports = findModel(key)?.ports ?? []
+      placed(useDocumentStore.getState().addBlock(key, spotFor(ports)))
+    },
+    [placed, spotFor]
+  )
+  useEffect(() => onBlockRequest(addBlock), [addBlock])
 
   return (
     <div
@@ -114,10 +123,7 @@ export function SchematicCanvas() {
         <Controls showInteractive={false} aria-label="Zoom controls" />
         <Panel position="top-left">
           <SchematicToolbar
-            onAddBlock={(key) => {
-              const ports = findModel(key)?.ports ?? []
-              placed(useDocumentStore.getState().addBlock(key, spotFor(ports)))
-            }}
+            onAddBlock={addBlock}
             onAddBlackBox={() =>
               placed(useDocumentStore.getState().createBlackBox("Black box", spotFor([])))
             }

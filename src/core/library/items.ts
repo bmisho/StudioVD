@@ -7,12 +7,16 @@ import {
   type ValueSource,
 } from "@/core/schema"
 
-export type LibrarySource = "generators" | "installed" | "user"
-export type LibraryBadge = "official" | "user" | "unverified" | "newer" | "invalid"
+export type LibrarySource = "generators" | "installed" | "user" | "catalog" | "primitives"
+export type LibraryBadge = "official" | "user" | "unverified" | "newer" | "invalid" | "revoked"
 
-/** How a card is inserted (PLAN 4.6): run a generator, or copy an installed component. */
+/**
+ * How a card is inserted (PLAN 4.6): run a generator, copy an installed component, or add a
+ * schematic block (PLAN 11.3 primitives).
+ */
 export type InsertRef =
   | { kind: "generator"; id: string; major: number; params: GeneratorParams }
+  | { kind: "block"; model: string }
   | {
       kind: "installed"
       id: string
@@ -44,6 +48,12 @@ export interface LibraryItem {
   badges: LibraryBadge[]
   /** A PNG in the library store, by SHA-256. */
   thumbnail?: string
+  /** A catalog thumbnail (`catalogs/thumbs/`), by SHA-256. */
+  catalogThumbnail?: string
+  /** An online catalog card (PLAN 14.5): its pack, and whether it is installed. */
+  catalog?: CatalogCard
+  /** Listed under its own source only (a catalog card for what is installed already). */
+  ownSourceOnly?: boolean
   /** Null when it cannot be inserted (made for a newer StudioVD, or invalid). */
   insert: InsertRef | null
   licence: LicenceLine[]
@@ -51,6 +61,16 @@ export interface LibraryItem {
   sources: { what: string; source: ValueSource }[]
   /** Why it cannot be inserted. */
   note?: string
+}
+
+export interface CatalogCard {
+  id: string
+  version: string
+  pack: string
+  bytes: number
+  installed: boolean
+  revoked?: { severity: "yanked" | "security"; reason: string }
+  deprecated?: string
 }
 
 /** An installed component as the library lists it (src/lib/tauri/library.ts). */

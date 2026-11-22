@@ -8,7 +8,9 @@ import {
   type AnchorId,
   type ComponentDefSnapshot,
   type ComponentInstanceId,
+  type ComponentInstance,
   type GeometryAsset,
+  type LicenseText,
   type MateId,
   type PartId,
   type SceneDocument,
@@ -18,8 +20,23 @@ import { removeAnchors, removeMates, removeParts } from "./deletion"
 const keyed = <T>(record: Record<string, T>, key: string): T | undefined =>
   Object.hasOwn(record, key) ? record[key] : undefined
 
+/** Where an instance's component frame is now: read off a surviving part (root first). */
+export function instanceFrame(
+  d: Pick<SceneDocument, "parts">,
+  c: ComponentInstance,
+  old: ComponentDefSnapshot["manifest"]
+) {
+  const anchorKey = [old.rootPart, ...Object.keys(c.parts)].find(
+    (k) => keyed(c.parts, k) && keyed(old.parts, k)
+  )
+  const anchorPart = anchorKey ? d.parts[c.parts[anchorKey] as PartId] : undefined
+  const anchorDef = anchorKey ? keyed(old.parts, anchorKey) : undefined
+  if (!anchorKey || !anchorPart || !anchorDef) throw new Error("No part left to place it by.")
+  return compose(fromPose(anchorPart.pose), invert(fromPose(anchorDef.transform)))
+}
+
 /**
- * Edit parameters (PLAN 9.5): the instance takes definition `def`, keeping the ids of every
+ * Edit parameters (PLAN 9.5) and same-MAJOR Update (PLAN 14.6): the instance takes definition `def`, keeping the ids of every
  * key both versions have, so mates from other parts to its anchors survive. Parts move with
  * the component frame (read off a surviving part); names the user changed and materials the
  * user set stay; keys the new version lacks go with what hangs on them; keys only the new one
@@ -30,21 +47,18 @@ export function regenerateInstance(
   d: Draft<SceneDocument>,
   id: ComponentInstanceId,
   def: ComponentDefSnapshot,
-  assets: Record<string, GeometryAsset>
+  assets: Record<string, GeometryAsset>,
+  licenseTexts: readonly { sha256: string; text: LicenseText }[] = []
 ): void {
   const c = d.components[id]
   const old = c?.def ? keyed(d.componentDefs, c.def)?.manifest : undefined
   if (!c || !old) throw new Error("This component has no definition to regenerate from.")
   const next = def.manifest
-  const anchorKey = [old.rootPart, ...Object.keys(c.parts)].find(
-    (k) => keyed(c.parts, k) && keyed(old.parts, k)
-  )
-  const anchorPart = anchorKey ? d.parts[c.parts[anchorKey] as PartId] : undefined
-  const anchorDef = anchorKey ? keyed(old.parts, anchorKey) : undefined
-  if (!anchorKey || !anchorPart || !anchorDef) throw new Error("No part left to place it by.")
-  const frame = compose(fromPose(anchorPart.pose), invert(fromPose(anchorDef.transform)))
+  const frame = instanceFrame(d, c, old)
 
   if (!Object.hasOwn(d.componentDefs, def.key)) d.componentDefs[def.key] = def
+  for (const l of licenseTexts)
+    if (!Object.hasOwn(d.licenseTexts, l.sha256)) d.licenseTexts[l.sha256] = l.text
   for (const a of Object.values(assets)) if (!Object.hasOwn(d.assets, a.id)) d.assets[a.id] = a
   const wanted = {
     ...next,

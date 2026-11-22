@@ -5,6 +5,7 @@ import { editParameters, generatorOf } from "@/features/library/parameterService
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useLibraryStore } from "@/store/session/libraryStore"
 import { ComponentSlots } from "./ComponentSlots"
+import { ComponentUpdate } from "./ComponentUpdate"
 import { GeneratorParamsForm } from "./GeneratorParamsForm"
 
 const ORIGINS = {
@@ -50,6 +51,7 @@ export function ComponentSection({ groupId }: { groupId: GroupId }) {
         <dt className="text-muted-foreground">Parts</dt>
         <dd className="tabular-nums">{Object.keys(instance.parts).length}</dd>
       </dl>
+      <ComponentUpdate id={id} />
       {made && (
         <>
           <h4 className="text-xs font-medium">Parameters</h4>

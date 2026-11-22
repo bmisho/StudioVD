@@ -270,7 +270,7 @@ export function installTauriMockScript(): void {
   }
 
   // Shared with tauriProjectMock.ts (a second init script): commands, events and files.
-  w.__E2E_MOCK__ = { commands, emit, fail, assets, textures, licenses }
+  w.__E2E_MOCK__ = { commands, emit, fail, assets, textures, licenses, library }
   w.isTauri = true
   w.__TAURI_EVENT_PLUGIN_INTERNALS__ = { unregisterListener: () => undefined }
   w.__TAURI_INTERNALS__ = {

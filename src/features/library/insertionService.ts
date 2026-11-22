@@ -5,6 +5,7 @@ import { copyComponentIntoProject } from "@/lib/tauri/library"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { useProjectStore } from "@/store/session/projectStore"
 import { useSessionStore } from "@/store/session/sessionStore"
+import { requestBlock } from "@/features/schematic/blockRequest"
 import { generateComponent } from "./generatorClient"
 import { createInsertionController } from "./insertionController"
 import { insertionPreview } from "./insertionPreview"
@@ -18,4 +19,5 @@ export const insertion = createInsertionController({
   preview: insertionPreview,
   notify: toastNotifier,
   projectBusy: () => useProjectStore.getState().busy !== null,
+  addBlock: requestBlock,
 })

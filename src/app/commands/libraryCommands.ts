@@ -19,5 +19,10 @@ export function libraryCommands(deps: CommandDeps): Command[] {
       },
       disabledReason: "Select 1 to 64 parts (not in test mode)",
     },
+    {
+      id: "settings.network",
+      label: "Network Settings…",
+      run: () => backend.openNetworkSettings(),
+    },
   ]
 }

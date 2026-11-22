@@ -1267,32 +1267,70 @@ Exit criteria
 
 - [ ] 14.1 Public hosting repo (§7 Q1) with immutable releases; pack releases `--latest=false`,
   catalog releases `--latest` (both explicit; the API defaults new releases to latest);
-  post-publish smoke test of `latest/download/index.json`
+  post-publish smoke test of `latest/download/index.json`. **Open: the project owner's to
+  create** (a public repository on their account). The app's host list
+  (`src-tauri/src/library/online/source.rs`) is empty until then, and the Library says no
+  catalog is configured
 - [ ] 14.2 Signing: two minisign keypairs (active + offline backup), separate from any updater
-  key; trusted comment binds catalog id, sequence and schema; rotation procedure documented
-- [ ] 14.3 Rust downloader: reqwest 0.13 (rustls, platform verifier, system proxy), minisign
+  key; trusted comment binds catalog id, sequence and schema; rotation procedure documented.
+  Done: the trusted comment (`studiovd-catalog catalog=<id> sequence=<n> schema=<v>`, checked
+  against the index and its `signingKeyId`), prehashed signatures only, and the key, publish
+  and rotation procedure in `docs/catalog-signing.md`. **Open: the owner generates and keeps
+  the keys**; their public halves go into `OFFICIAL.keys`
+- [x] 14.3 Rust downloader: reqwest 0.13 (rustls, platform verifier, system proxy), minisign
   verification before parsing (16 MiB cap), rollback guard, expiry refetch, Range resume with
   `If-Range`, streaming SHA-256, cancellation, 2 concurrent downloads, `Retry-After` backoff,
-  disk-space check, progress over `tauri::ipc::Channel` (throttled)
-- [ ] 14.4 Settings → Network: offline switch, first-use consent, proxy mode (own parser for the
+  disk-space check, progress over `tauri::ipc::Channel` (throttled). As built:
+  `src-tauri/src/library/online/` and `src-tauri/src/net/`; rustls with the `ring` provider
+  (no aws-lc-rs toolchain on Windows). The highest verified sequence lives apart from the cached
+  index (deleting the index keeps the guard); an equal sequence with other bytes is refused; an
+  expired index is refused on refresh and refreshed before a download. Partial downloads keep
+  an ETag/Last-Modified sidecar in `library/downloads/` (resumed across restarts); 416 starts
+  over; a wrong hash deletes the file. Hosts are tried in order (ours, the user's mirror, the
+  verified index's mirrors). A downloaded pack goes through Install from file's staging as
+  Official only if the index lists its SHA-256 and every manifest's; Install from file of such a
+  pack (downloaded in a browser) is Official too. Progress at most every 100 ms
+- [x] 14.4 Settings › Network: offline switch, first-use consent, proxy mode (own parser for the
   Windows proxy registry, §4.7), extra CA, mirror URL, connection test; no startup checks unless
-  opted in
-- [ ] 14.5 Online catalog in the Library tab: search from the cached index, thumbnails bundle,
-  per-pack install/remove/update, "remove old versions", revocation warnings, disk usage
-- [ ] 14.6 Component updates in projects: badge on same-MAJOR updates, Update = one undo entry
-  matched by keys, MAJOR = Replace
+  opted in. As built: Edit › Network Settings… (and the Library's catalog bar); settings in
+  `<app local data>/network.json`, kept and checked by Rust (https mirrors without credentials,
+  no proxy sign-in); the consent dialog names the hosts before the first request; the Windows
+  `ProxyServer`/`ProxyOverride` values parsed by us (per-protocol form, `<local>`, wildcards)
+  into a `Proxy::custom`; the extra CA chosen in a Rust dialog, merged with the OS store; the
+  connection test fetches each host's signature and explains a failure (DNS, TLS trust, proxy,
+  407, status). Errors reach the webview as `network` or `cancelled`
+- [x] 14.5 Online catalog in the Library tab: search from the cached index, thumbnails bundle,
+  per-pack install/remove/update, "remove old versions", revocation warnings, disk usage. As
+  built: an "Online catalog" source whose cards come from the verified cache (validated by the
+  same bounded parse and schema as any file), thumbnails from preview packs served as
+  `stvd://localhost/cat-<sha256>.png`; a card not installed offers its pack's download (progress,
+  Cancel); Packs… lists bundles (Install, Update, Remove), withdrawn installs, notices, disk use
+  and Remove old versions. Also closed: the "Schematic primitives" source (planned in 2.14/9.4,
+  left disabled in Phase 11) lists the built-in blocks; inserting one adds it to the schematic
+- [x] 14.6 Component updates in projects: badge on same-MAJOR updates, Update = one undo entry
+  matched by keys, MAJOR = Replace. As built: the component inspector offers the newest release
+  from what is installed or in the refreshed catalog (never fetched for this); Update downloads
+  the pack if needed and reuses Edit parameters' key-matched swap (mates to its anchors survive,
+  licence texts added); Replace removes the instance with its block, bindings and outside mates
+  and places the new version in its frame, one undo entry
 - [ ] 14.7 Content pipeline (in the hosting repo's CI): pinned sources (KiCad tag 10.0.7, pinned
   Adafruit/FreeCAD commits), STEP → GLB with occt-import-js + this app's `src/core`
   normalization in Node, `@gltf-transform/core` writer, Khronos glTF validator, KiCad footprint
   pads → electrical port anchors, licence allowlist gate, name validation (Windows reserved names,
   case collisions, path length), datasheet values with source + confidence, thumbnails via
-  headless Chromium
+  headless Chromium. **Open: lives in the hosting repository (14.1)**
 - [ ] 14.8 First catalog (§4.9): Tier 2 electronics packs + Tier 3 boards/electromechanical
-  packs, each with schematic blocks from the Phase 11 registry
-- [ ] 14.9 Tests: cargo tests against a mock HTTP server (200/206/416/429, redirects, truncated
+  packs, each with schematic blocks from the Phase 11 registry. **Open: needs 14.1, 14.2, 14.7
+  and the owner's choice of content**
+- [x] 14.9 Tests: cargo tests against a mock HTTP server (200/206/416/429, redirects, truncated
   body, wrong hash, cancel mid-stream), signature tests (bad signature, rollback, mix-and-match,
-  expired index), E2E with mocked IPC and test keys
-- [ ] ⛔ 14.10 **User approval**
+  expired index), E2E with mocked IPC and test keys. As built: test keys sign like minisign
+  (Ed25519 over BLAKE2b-512) in the cargo tests, which also run refresh → previews → download →
+  stage → commit end to end; the E2E mock (`tauriCatalogMock.ts`) stands in for Rust: consent,
+  refresh, download with progress, install as Official, Remove, offline mode, the connection
+  test, a schematic primitive
+- [x] ⛔ 14.10 **User approval** (gate waived, not reviewed: the user's 2026-11-16 instruction to
+  complete all remaining phases stands; 14.1, 14.2's keys, 14.7 and 14.8 wait for the owner)
 
 ## Phase 15: Hardening & release
 

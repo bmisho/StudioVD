@@ -19,6 +19,8 @@ export interface InsertionDeps {
   preview: InsertionPreviewStore
   notify: Notifier
   projectBusy: () => boolean
+  /** A schematic primitive (PLAN 9.4): added to the schematic, not placed in 3D. */
+  addBlock: (modelKey: string) => void
   target?: Pick<Window, "addEventListener" | "removeEventListener">
 }
 
@@ -137,6 +139,7 @@ export function createInsertionController(deps: InsertionDeps) {
     /** A primary press on an insertable card: the drag starts once it moves. */
     press(item: LibraryItem, e: Pick<PointerEvent, "pointerId" | "clientX" | "clientY">): void {
       stop()
+      if (item.insert?.kind === "block") return // blocks are not dragged into the 3D view
       const start = { x: e.clientX, y: e.clientY }
       drag = {
         item,
@@ -157,6 +160,7 @@ export function createInsertionController(deps: InsertionDeps) {
     },
     /** Enter, double-click or Insert: on the surface or ground at the middle of the view. */
     async insertAtDefault(item: LibraryItem): Promise<void> {
+      if (item.insert?.kind === "block") return deps.addBlock(item.insert.model)
       if (blocked()) return
       let ready: ReadyComponent
       try {

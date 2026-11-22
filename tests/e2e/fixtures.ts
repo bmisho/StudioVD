@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs"
 import { test as base, expect, type BrowserContext, type Page } from "@playwright/test"
 import { installTauriMockScript, type E2EBackend } from "./tauriMock"
+import { installCatalogMockScript } from "./tauriCatalogMock"
 import { installProjectMockScript, type E2EProjectBackend } from "./tauriProjectMock"
 
 /**
@@ -36,6 +37,7 @@ export const test = base.extend<{ offlineGuard: undefined }>({
   page: async ({ page }, use) => {
     await page.addInitScript(installTauriMockScript)
     await page.addInitScript(installProjectMockScript)
+    await page.addInitScript(installCatalogMockScript)
     await page.goto("/")
     await expect(page.getByRole("menubar", { name: "Main menu" })).toBeVisible()
     await use(page)

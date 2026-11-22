@@ -8,6 +8,10 @@ import { SimulationRunner } from "@/features/simulation/SimulationRunner"
 import { BindingDialog } from "@/features/bindings/BindingDialog"
 import { InstallPackDialog } from "@/features/library/InstallPackDialog"
 import { SaveComponentDialog } from "@/features/library/SaveComponentDialog"
+import { ConsentDialog } from "@/features/library/online/ConsentDialog"
+import { NetworkSettingsDialog } from "@/features/library/online/NetworkSettingsDialog"
+import { PacksDialog } from "@/features/library/online/PacksDialog"
+import { useWeeklyCatalogCheck } from "@/features/library/online/useWeeklyCatalogCheck"
 import { useFileDrop } from "@/features/import/useFileDrop"
 import { RecoveryDialog } from "@/features/project/RecoveryDialog"
 import { UnsavedChangesDialog } from "@/features/project/UnsavedChangesDialog"
@@ -25,6 +29,7 @@ export function App() {
   useGlobalShortcuts(useCommands())
   useFileDrop()
   useProjectSession()
+  useWeeklyCatalogCheck()
 
   return (
     <TooltipProvider delayDuration={400}>
@@ -45,6 +50,9 @@ export function App() {
       <BindingDialog />
       <InstallPackDialog />
       <SaveComponentDialog />
+      <PacksDialog />
+      <NetworkSettingsDialog />
+      <ConsentDialog />
       <DragGhost />
       <UnsavedChangesDialog />
       <RecoveryDialog />

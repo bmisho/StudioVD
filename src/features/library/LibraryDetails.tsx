@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import type { LibraryItem } from "@/core/library/items"
 import { userComponents } from "./libraryService"
 import { LicencePopover } from "./LicencePopover"
+import { CatalogActions } from "./online/CatalogActions"
 
 /** The active card's details under the list: name, what it is, licence, Export and Insert. */
 export function LibraryDetails({ item, onInsert }: { item: LibraryItem; onInsert: () => void }) {
@@ -15,6 +16,9 @@ export function LibraryDetails({ item, onInsert }: { item: LibraryItem; onInsert
       <p className="truncate font-medium">{item.name}</p>
       <p className="truncate text-muted-foreground">{item.detail}</p>
       {item.note && <p className="text-muted-foreground">{item.note}</p>}
+      {item.catalog && !item.catalog.installed && (
+        <CatalogActions card={item.catalog} name={item.name} />
+      )}
       <div className="flex min-w-0 items-center justify-between gap-2">
         <LicencePopover item={item} />
         <div className="flex shrink-0 gap-1">
@@ -39,7 +43,13 @@ export function LibraryDetails({ item, onInsert }: { item: LibraryItem; onInsert
               <Share className="size-3.5" aria-hidden />
             </Button>
           )}
-          <Button size="sm" className="h-7 text-xs" disabled={!item.insert} onClick={onInsert}>
+          <Button
+            size="sm"
+            className="h-7 text-xs"
+            aria-disabled={!item.insert}
+            title={item.insert ? undefined : (item.note ?? "This component cannot be inserted")}
+            onClick={() => item.insert && onInsert()}
+          >
             Insert
           </Button>
         </div>

@@ -48,7 +48,8 @@ src/
     schematic/    React Flow editor, node types, ports
     scene-graph/  Left sidebar tree
     properties/   Right sidebar inspectors
-    library/      Library tab, insertion drag, credits dialog
+    library/      Library tab, insertion drag, credits dialog; online/ catalog, packs, network
+                  settings (Phase 14)
     export/       GLB/STL export of the assembly or selection
     simulation/   Solver scheduling (worker), results popover
     bindings/     Binding editor, sampler at the drawn poses, live watch, 3D visual store
@@ -79,7 +80,8 @@ src-tauri/src/
   workspace/      Per-project working directory, sweep, crash recovery
   picked/         Files the user chose in a dialog or dropped (opaque tokens for the webview)
   geometry/       Convex decomposition (parry3d) and other heavy geometry
-  library/        Component store, install, signature verification, downloads
+  library/        Component store, install; online/ signed catalog, downloads, trust
+  net/            Network settings, proxy plan (Windows registry), the one HTTP client
 tests/e2e/        Playwright specs
 docs/research/    Research behind PLAN.md decisions (not shipped; values need re-verification)
 ```
@@ -266,6 +268,14 @@ Further rules:
   highlight, never picked, never in bounds or exports). The simulation never moves a part. A
   binding into an input is that input's one driver; deleting what a binding names deletes it,
   and component records forget bindings that went (`pruneComponents`).
+- Catalog (Phase 14): only Rust goes online, only on an explicit action (Refresh, Download,
+  Test connection, the opt-in weekly check), never offline and never before the consent the
+  webview asks for once. The index is verified (compiled-in minisign keys, trusted comment
+  bound to catalog/sequence/schema) before anything parses it, then validated again in the
+  webview like any file; a pack is Official only when the verified index lists its SHA-256 and
+  every manifest's. The official source in `library/online/source.rs` is empty until the owner
+  creates the hosting repo and keys (`docs/catalog-signing.md`). Component Update reuses the
+  key-matched `regenerateInstance`; Replace is remove + instantiate in one undo entry.
 - Connectors (Phase 9.6, scene.json v2): belts, tubes and springs are documents of their end
   anchors only; their meshes are derived in the view (`core/connectors`, `ConnectorsLayer`)
   from the anchors' world frames, rebuilt when the signature changes, never stored, never in

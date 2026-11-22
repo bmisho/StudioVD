@@ -27,6 +27,7 @@ export type CommandId =
   | "edit.newGroup"
   | "edit.clearSelection"
   | "library.saveAsComponent"
+  | "settings.network"
   | "view.fitAll"
   | "view.toggleProjection"
   | "view.toggleSplit"
@@ -92,6 +93,8 @@ export interface Backend {
   openExample: (id: ExampleId) => Promise<void>
   /** Opens Save as component for these parts (PLAN 9.7). */
   saveAsComponent: (parts: readonly PartId[]) => Promise<Result<void>>
+  /** Settings › Network (PLAN 14.4). */
+  openNetworkSettings: () => Promise<void>
   closeWindow: () => Promise<Result<void>>
 }
 

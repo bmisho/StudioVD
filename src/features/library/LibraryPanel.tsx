@@ -14,6 +14,8 @@ import { search, searchDoc } from "@/core/library/search"
 import { useLibraryStore, type LibraryFilter } from "@/store/session/libraryStore"
 import { insertion } from "./insertionService"
 import { LibraryDetails } from "./LibraryDetails"
+import { CatalogBar } from "./online/CatalogBar"
+import { catalogController } from "./online/catalogService"
 import { LibraryList } from "./LibraryList"
 import { libraryController } from "./libraryService"
 import { useLibraryItems } from "./useLibraryItems"
@@ -24,12 +26,16 @@ const FILTERS: { value: LibraryFilter; label: string }[] = [
   { value: "generators", label: "Generators" },
   { value: "installed", label: "Installed" },
   { value: "user", label: "My components" },
+  { value: "catalog", label: "Online catalog" },
+  { value: "primitives", label: "Schematic primitives" },
 ]
 const EMPTY: Record<LibraryFilter, string> = {
   all: "No component matches.",
   generators: "No generator matches.",
   installed: "Nothing installed matches. Install a pack from a file with the button above.",
   user: "No saved component matches. Select parts, then Edit › Save as Component….",
+  catalog: "No catalog component matches. Refresh to download the catalog.",
+  primitives: "No schematic block matches.",
 }
 
 /** The Library tab (PLAN 9.4): sources, search, cards; drag a card into the 3D view. */
@@ -46,7 +52,10 @@ export function LibraryPanel() {
   }, [items, keys])
   // The remembered card, or the top result when a new search no longer lists it.
   const active = shown.find((i) => i.key === activeKey) ?? shown[0]
-  useEffect(() => void libraryController.refresh(), [])
+  useEffect(() => {
+    void libraryController.refresh()
+    void catalogController.load() // the verified cache only: no network
+  }, [])
 
   return (
     <div className="flex h-full flex-col">
@@ -104,15 +113,10 @@ export function LibraryPanel() {
                 {f.label}
               </SelectItem>
             ))}
-            <SelectItem value="catalog" disabled className="text-xs">
-              Online catalog (Phase 14)
-            </SelectItem>
-            <SelectItem value="primitives" disabled className="text-xs">
-              Schematic primitives (Phase 11)
-            </SelectItem>
           </SelectContent>
         </Select>
       </div>
+      {filter === "catalog" && <CatalogBar />}
       <div className="min-h-0 flex-1 py-1">
         <LibraryList
           items={shown}

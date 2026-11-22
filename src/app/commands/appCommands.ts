@@ -2,6 +2,7 @@ import { toast } from "sonner"
 import { exportScene } from "@/features/export/exportService"
 import { exportSchematic } from "@/features/schematic/exportSchematic"
 import { openExample } from "@/features/examples/openExample"
+import { networkController } from "@/features/library/online/catalogService"
 import { userComponents } from "@/features/library/libraryService"
 import { chooseImportFiles } from "@/features/import/importService"
 import { projectController } from "@/features/project/projectService"
@@ -70,6 +71,10 @@ export const appCommands = createCommandRegistry({
       await userComponents.open(parts)
       if (useLibraryStore.getState().save.phase === "idle") forgetDialogReturnFocus()
       return ok(undefined)
+    },
+    openNetworkSettings: () => {
+      rememberDialogReturnFocus()
+      return networkController.open()
     },
     closeWindow: closeMainWindow,
   },

@@ -62,6 +62,8 @@ export function AppMenuBar() {
           <MenubarSeparator />
           <CommandRadioGroup ids={["transform.translate", "transform.rotate"]} />
           <CommandMenuItem id="edit.clearSelection" />
+          <MenubarSeparator />
+          <CommandMenuItem id="settings.network" />
         </MenubarContent>
       </MenubarMenu>
 

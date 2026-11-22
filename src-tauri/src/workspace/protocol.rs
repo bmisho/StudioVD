@@ -85,6 +85,25 @@ pub fn library_reply(
     serve(store_dir, folders, id, ext, cap, mime)
 }
 
+/// Catalog thumbnails (`/cat-<sha256>.png`, the prefix stripped by the caller) from
+/// `catalogs/thumbs/` (Phase 14), each at most 512 KiB.
+pub fn catalog_reply(
+    catalogs_dir: Option<&Path>,
+    uri_path: &str,
+) -> (StatusCode, &'static str, Vec<u8>) {
+    match parse(uri_path) {
+        Some((id, "png", _)) => serve(
+            catalogs_dir,
+            &["thumbs"],
+            id,
+            "png",
+            512 * 1024,
+            "image/png",
+        ),
+        _ => (StatusCode::BAD_REQUEST, "text/plain", Vec::new()),
+    }
+}
+
 /// The HTTP response. Assets are not secret (the webview wrote them), so any origin may read
 /// them: the dev server (`http://localhost:1420`) and the bundled app have different origins.
 pub fn asset_response(status: StatusCode, mime: &str, body: Vec<u8>) -> Response<Vec<u8>> {

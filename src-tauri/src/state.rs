@@ -1,7 +1,8 @@
 //! Process-wide backend state: the open project and the files the user picked.
 
 use crate::error::{AppError, AppResult};
-use crate::library::install::Staged;
+use crate::library::online::jobs::Downloads;
+use crate::library::staged::StagedSet;
 use crate::library::Library;
 use crate::picked::PickedFiles;
 use crate::project::Project;
@@ -22,8 +23,13 @@ pub struct AppState {
     picked: Mutex<PickedFiles>,
     /// `<app local data>/library` (PLAN 4.5), opened at startup.
     library: Option<Arc<Library>>,
-    /// A pack extracted for Install from file, waiting for the user's confirmation.
-    staged: Mutex<Option<Staged>>,
+    /// Packs extracted (Install from file, catalog downloads), waiting to be committed.
+    staged: Mutex<StagedSet>,
+    /// `<app local data>`: network settings and the extra CA (Phase 14).
+    local_data: Option<PathBuf>,
+    downloads: Downloads,
+    /// Held while the network settings are read and written.
+    network: Mutex<()>,
 }
 
 impl AppState {
@@ -43,7 +49,8 @@ impl AppState {
             let (base, keep) = (base.clone(), ws.root().to_path_buf());
             std::thread::spawn(move || clean_stale(&base, &keep, LEFTOVER_AGE, RECOVERABLE_AGE));
         }
-        let library = app.path().app_local_data_dir().ok().and_then(|dir| {
+        let local_data = app.path().app_local_data_dir().ok();
+        let library = local_data.as_ref().and_then(|dir| {
             Library::open(&dir.join("library"))
                 .inspect_err(|e| eprintln!("StudioVD: no component library ({e})."))
                 .ok()
@@ -53,7 +60,10 @@ impl AppState {
             workspaces,
             colliders,
             library,
-            staged: Mutex::new(None),
+            staged: Mutex::new(StagedSet::default()),
+            local_data,
+            downloads: Downloads::default(),
+            network: Mutex::new(()),
             config: app.path().app_config_dir().ok(),
             project: Mutex::new(Project {
                 workspace,
@@ -81,15 +91,38 @@ impl AppState {
             .ok_or_else(|| AppError::Io("The component library folder is unavailable.".into()))
     }
 
-    pub fn staged(&self) -> AppResult<MutexGuard<'_, Option<Staged>>> {
+    pub fn staged(&self) -> AppResult<MutexGuard<'_, StagedSet>> {
         self.staged
             .lock()
             .map_err(|_| AppError::Io("The install in progress is unavailable.".into()))
     }
 
+    pub fn downloads(&self) -> &Downloads {
+        &self.downloads
+    }
+
+    /// `<app local data>/<name>` (network.json, network-ca.pem), held while it is used.
+    pub fn network_file(&self, name: &str) -> AppResult<(PathBuf, MutexGuard<'_, ()>)> {
+        let dir = self
+            .local_data
+            .as_ref()
+            .ok_or_else(|| AppError::Io("The app data folder is unavailable.".into()))?;
+        let guard = self
+            .network
+            .lock()
+            .map_err(|_| AppError::Io("The network settings are unavailable.".into()))?;
+        std::fs::create_dir_all(dir)?;
+        Ok((dir.join(name), guard))
+    }
+
     /// Where the `stvd` scheme serves library files from (`/lib-<sha256>.<ext>`).
     pub fn library_store_dir(&self) -> Option<PathBuf> {
         self.library.as_ref().map(|lib| lib.store_dir())
+    }
+
+    /// Where the `stvd` scheme serves catalog thumbnails from (`/cat-<sha256>.png`).
+    pub fn catalog_dir(&self) -> Option<PathBuf> {
+        self.library.as_ref().map(|lib| lib.root().join("catalogs"))
     }
 
     /// Where convex decompositions are cached (PLAN 10.2), if the app cache is reachable.

@@ -4,6 +4,8 @@ export const APP_ERROR_KINDS = [
   "unavailable",
   "invalidInput",
   "io",
+  "network",
+  "cancelled",
   "internal",
 ] as const
 export type AppErrorKind = (typeof APP_ERROR_KINDS)[number]

@@ -4,6 +4,7 @@
 //! "Unverified"); `commit` moves the blobs into the store and records each component.
 
 use super::installed::Origin;
+use super::online::trust::Trust;
 use super::packfile::{file_kind, parse_pack_manifest, PackManifest, MAX_PACK_JSON_BYTES};
 use super::verify::check_content;
 use super::Library;
@@ -34,8 +35,7 @@ pub(super) fn pack_entry_rule(name: &str) -> Option<u64> {
     }
 }
 
-/// Namespaces only signed catalogs may install (PLAN 4.7).
-pub(super) const RESERVED: [&str; 4] = ["official", "gen", "builtin", "studiovd"];
+pub(super) use super::online::trust::RESERVED;
 
 /// A pack extracted and checked, waiting for the user's confirmation.
 pub struct Staged {
@@ -80,7 +80,7 @@ fn token(archive: &Path) -> String {
     hex(&Sha256::digest(seed.as_bytes()))[..32].to_owned()
 }
 
-fn hash_file(path: &Path) -> AppResult<String> {
+pub fn hash_file(path: &Path) -> AppResult<String> {
     let mut reader = BufReader::new(fs::File::open(path)?);
     let mut hasher = Sha256::new();
     let mut buf = vec![0u8; 64 * 1024];
@@ -95,6 +95,17 @@ fn hash_file(path: &Path) -> AppResult<String> {
 
 /// Extracts and checks an unsigned pack (Install from file).
 pub fn stage_pack(lib: &Library, archive: &Path) -> AppResult<(Staged, StagedSummary)> {
+    stage_pack_as(lib, archive, &Trust::Unsigned)
+}
+
+/// Extracts and checks a pack, vouched for by `trust` (a verified catalog, or nobody).
+pub fn stage_pack_as(
+    lib: &Library,
+    archive: &Path,
+    trust: &Trust,
+) -> AppResult<(Staged, StagedSummary)> {
+    let pack_sha256 = hash_file(archive)?;
+    trust.check_pack(&pack_sha256)?;
     let token = token(archive);
     let dir = lib.staging_dir().join(&token);
     let reader = BufReader::new(fs::File::open(archive)?);
@@ -122,13 +133,7 @@ pub fn stage_pack(lib: &Library, archive: &Path) -> AppResult<(Staged, StagedSum
             check_content(&dir.join(&f.path), &f.path)?;
         }
         for c in &pack.components {
-            let ns = c.id.split('/').next().unwrap_or_default();
-            if RESERVED.contains(&ns) {
-                return bad(format!(
-                    "{} uses a namespace reserved for signed catalogs",
-                    c.id
-                ));
-            }
+            trust.check_component(c)?;
         }
         Ok(pack)
     })();
@@ -157,16 +162,15 @@ pub fn stage_pack(lib: &Library, archive: &Path) -> AppResult<(Staged, StagedSum
         components,
         files: pack.files.len(),
         bytes: pack.files.iter().map(|f| f.bytes).sum(),
-        verified: false,
+        verified: trust.verified(),
     };
-    let pack_sha256 = hash_file(archive)?;
     Ok((
         Staged {
             token,
             dir,
             pack,
             pack_sha256,
-            origin: Origin::Sideloaded,
+            origin: trust.origin(),
         },
         summary,
     ))

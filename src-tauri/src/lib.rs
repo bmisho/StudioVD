@@ -4,6 +4,7 @@ mod error;
 mod fsutil;
 mod geometry;
 mod library;
+mod net;
 mod picked;
 mod project;
 mod state;
@@ -69,16 +70,21 @@ pub fn run() {
                 let path = request.uri().path().to_owned();
                 tauri::async_runtime::spawn_blocking(move || {
                     let state = app.try_state::<state::AppState>();
-                    let (status, mime, body) = match path.strip_prefix("/lib-") {
-                        Some(rest) => {
-                            let store = state.and_then(|s| s.library_store_dir());
-                            workspace::protocol::library_reply(store.as_deref(), rest)
-                        }
-                        None => {
-                            let dir = state.and_then(|s| s.bundle_dir());
-                            workspace::protocol::asset_reply(dir.as_deref(), &path)
-                        }
-                    };
+                    let (status, mime, body) =
+                        match (path.strip_prefix("/lib-"), path.strip_prefix("/cat-")) {
+                            (Some(rest), _) => {
+                                let store = state.and_then(|s| s.library_store_dir());
+                                workspace::protocol::library_reply(store.as_deref(), rest)
+                            }
+                            (None, Some(rest)) => {
+                                let dir = state.and_then(|s| s.catalog_dir());
+                                workspace::protocol::catalog_reply(dir.as_deref(), rest)
+                            }
+                            (None, None) => {
+                                let dir = state.and_then(|s| s.bundle_dir());
+                                workspace::protocol::asset_reply(dir.as_deref(), &path)
+                            }
+                        };
                     responder.respond(workspace::protocol::asset_response(status, mime, body));
                 });
             },
@@ -114,15 +120,25 @@ pub fn run() {
             commands::export::write_export_credits,
             commands::geometry::decompose_mesh,
             commands::library::library_list,
-            commands::library::library_pick_pack,
-            commands::library::library_install_commit,
-            commands::library::library_install_cancel,
+            commands::library_install::library_pick_pack,
+            commands::library_install::library_install_commit,
+            commands::library_install::library_install_cancel,
             commands::library::library_remove,
             commands::library::library_copy_into_project,
             commands::library::library_user_namespace,
             commands::library::library_project_geometry_sizes,
             commands::library::library_add_from_project,
             commands::library::library_export_pack,
+            commands::catalog::catalog_status,
+            commands::catalog::catalog_refresh,
+            commands::catalog::catalog_download,
+            commands::catalog::catalog_cancel,
+            commands::catalog::library_disk_usage,
+            commands::network::network_settings,
+            commands::network::network_save,
+            commands::network::network_pick_ca,
+            commands::network::network_clear_ca,
+            commands::network::network_test,
         ])
         .build(tauri::generate_context!());
     match app {

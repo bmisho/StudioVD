@@ -12,6 +12,10 @@ pub enum AppError {
     InvalidInput(String),
     /// File-system or OS failure.
     Io(String),
+    /// A download failed: no connection, a refused certificate, a server error (Phase 14).
+    Network(String),
+    /// The user cancelled it (a download).
+    Cancelled(String),
 }
 
 impl AppError {
@@ -20,6 +24,8 @@ impl AppError {
         match self {
             Self::InvalidInput(m) => Self::InvalidInput(format!("{what} {m}")),
             Self::Io(m) => Self::Io(format!("{what} {m}")),
+            Self::Network(m) => Self::Network(format!("{what} {m}")),
+            Self::Cancelled(m) => Self::Cancelled(format!("{what} {m}")),
         }
     }
 
@@ -27,6 +33,8 @@ impl AppError {
         match self {
             Self::InvalidInput(_) => "invalidInput",
             Self::Io(_) => "io",
+            Self::Network(_) => "network",
+            Self::Cancelled(_) => "cancelled",
         }
     }
 }
@@ -34,7 +42,9 @@ impl AppError {
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidInput(msg) | Self::Io(msg) => f.write_str(msg),
+            Self::InvalidInput(msg) | Self::Io(msg) | Self::Network(msg) | Self::Cancelled(msg) => {
+                f.write_str(msg)
+            }
         }
     }
 }

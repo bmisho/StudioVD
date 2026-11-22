@@ -10,7 +10,9 @@
 //! components/<ns>/<slug>/<version>/component.json   the manifest, byte for byte
 //! components/<ns>/<slug>/<version>/install.json     origin and the blobs it uses
 //! staging/<token>/          a pack being installed (swept at startup)
-//! catalogs/                 signed catalog indexes (Phase 14)
+//! downloads/<sha256>.part   a pack being downloaded (kept across restarts for Range resume)
+//! catalogs/<id>/            a verified catalog index, its signature, the rollback state
+//! catalogs/thumbs/          catalog thumbnails by SHA-256 (Phase 14)
 //! ```
 
 pub mod commit;
@@ -21,8 +23,10 @@ pub mod gc;
 pub mod glb;
 pub mod install;
 pub mod installed;
+pub mod online;
 pub mod packfile;
 pub mod publisher;
+pub mod staged;
 mod verify;
 
 use crate::error::AppResult;
@@ -69,6 +73,11 @@ impl Library {
 
     pub fn root(&self) -> &Path {
         &self.root
+    }
+
+    /// Packs being downloaded and finished downloads not installed yet (Phase 14).
+    pub fn downloads_dir(&self) -> PathBuf {
+        self.root.join("downloads")
     }
 
     pub fn publisher_path(&self) -> PathBuf {

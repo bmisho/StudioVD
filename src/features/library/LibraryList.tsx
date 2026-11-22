@@ -90,6 +90,9 @@ export function LibraryList({
                 if (e.button === 0 && item.insert) onPress(item, e)
               }}
               onDoubleClick={() => item.insert && onInsert(item)}
+              // WebKit (WebKitGTK, the Linux webview) starts a native drag of a selected icon
+              // mid-gesture and then sends no more pointer events, nor a pointercancel.
+              onDragStart={(e) => e.preventDefault()}
             >
               <LibraryCard item={item} active={item.key === activeKey} />
             </div>

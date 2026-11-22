@@ -128,6 +128,11 @@ test("test mode: the hinge reads live, and Apply Pose keeps the pose", async ({ 
   await page.mouse.move(grab.x, grab.y)
   await page.mouse.down()
   await page.mouse.move(grab.x - 30, grab.y - 60, { steps: 12 }) // lift the leaf
+  // Hold until it has lifted: the drag spring pulls it up over physics steps, and how many run
+  // during the moves depends on the browser's frame rate (WebKit released it at 9.5°).
+  await expect
+    .poll(async () => angleZDeg(await partPose(page, leaf)), { timeout: 20_000 })
+    .toBeGreaterThan(20)
   await page.mouse.up()
   // Damped to rest: on a loaded machine the physics runs slower than real time, so wait for
   // the leaf to stop rather than for a fixed time.

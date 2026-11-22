@@ -1,0 +1,50 @@
+# cargo-deny (PLAN 15.7): known vulnerabilities, licences, banned crates and sources for the
+# Rust side. Run with `cargo deny check` in src-tauri; CI runs it on every push.
+
+[graph]
+all-features = false
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = []
+
+[licenses]
+version = 2
+confidence-threshold = 0.9
+# Permissive licences, plus MPL-2.0 (file-level copyleft: the crates' sources stay public) and
+# CDLA-Permissive-2.0 (root certificate data). LGPL appears only as one choice of an OR.
+allow = [
+  "MIT",
+  "MIT-0",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "Unicode-3.0",
+  "Unlicense",
+  "0BSD",
+  "CC0-1.0",
+  "MPL-2.0",
+  "CDLA-Permissive-2.0",
+]
+
+[licenses.private]
+ignore = true
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+deny = [
+  # PLAN 4.7: one reqwest, the OS trust store; these bring a second reqwest and bundled roots.
+  { crate = "tauri-plugin-http", reason = "downloads go through src-tauri/src/net only" },
+  { crate = "tauri-plugin-upload", reason = "downloads go through src-tauri/src/net only" },
+  # Zip extraction goes through bundle/guard.rs; never the zip crate's extract with defaults.
+  { crate = "zip-extract", reason = "use bundle::guard" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

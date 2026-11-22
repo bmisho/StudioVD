@@ -22,3 +22,9 @@ pub fn app_info(app: tauri::AppHandle) -> AppResult<AppInfo> {
         arch: std::env::consts::ARCH,
     })
 }
+
+/// An uncaught error in the webview (PLAN 15.5), written to the log file.
+#[tauri::command]
+pub fn log_webview_error(message: String) {
+    log::error!("webview: {}", crate::logging::clean_line(&message));
+}

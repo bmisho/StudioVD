@@ -105,6 +105,6 @@ impl Project {
 /// manifest only means a recovered session comes back untitled.
 pub fn remember_path(ws: &Workspace, path: Option<&Path>) {
     if let Err(e) = recovery::write_manifest(ws, path) {
-        eprintln!("StudioVD: workspace manifest not written ({e}).");
+        log::warn!("workspace manifest not written ({e}).");
     }
 }

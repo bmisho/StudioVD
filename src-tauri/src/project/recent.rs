@@ -43,7 +43,7 @@ fn store(config: &Path, paths: Vec<PathBuf>) {
         .map_err(Into::into)
         .and_then(|()| write_atomic(&config.join(FILE), &json.unwrap_or_default()));
     if let Err(e) = written {
-        eprintln!("StudioVD: recent projects not saved ({e}).");
+        log::warn!("recent projects not saved ({e}).");
     }
 }
 

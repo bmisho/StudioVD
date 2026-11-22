@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "StudioVD: 3D CAD assembly visualizer and multi-domain simulator"
 authors = []
 edition = "2021"
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -35,6 +36,9 @@ minisign-verify = "0.3"
 tokio = { version = "1", features = ["sync", "time", "macros", "fs", "io-util", "rt"] }
 tokio-util = "0.7"
 fs4 = "1.1"
+# Phase 15.5: a log file in the app's log folder (rotated), panics and webview errors in it.
+tauri-plugin-log = "2"
+log = "0.4"
 
 
 [target.'cfg(windows)'.dependencies]

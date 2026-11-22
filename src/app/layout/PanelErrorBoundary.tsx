@@ -1,3 +1,4 @@
+import { logError } from "@/lib/tauri/log"
 import { Component, type ErrorInfo, type ReactNode } from "react"
 import { CircleAlert, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -24,8 +25,8 @@ export class PanelErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
-    // Phase 15 routes this to the log file (tauri-plugin-log).
     console.error(`[${this.props.panelName}] panel crashed`, error, info.componentStack)
+    logError(`${this.props.panelName} panel crashed`, error)
   }
 
   override render() {

@@ -14,6 +14,7 @@ All files here are CC0-1.0, written for StudioVD's tests (no third-party geometr
 | `sample-draco.glb` | `npx @gltf-transform/cli@4.2.1 draco sample.glb sample-draco.glb` | `sample.glb` with `KHR_draco_mesh_compression` |
 | `sample-meshopt.glb` | `npx @gltf-transform/cli@4.2.1 meshopt sample.glb sample-meshopt.glb` | `sample.glb` with `EXT_meshopt_compression` + `KHR_mesh_quantization` |
 | `large.glb` | `tools/fixtures/makeLargeGlb.mjs` | `sample.glb` ×40 (2 m plate, 4 m from the origin), names with spaces, dots and brackets |
+| `textured.glb` | `tools/fixtures/makeTexturedGlb.mjs` | 20 × 2 × 20 mm plate whose material embeds `checker.png` (a blob: URL in three's loader; the release CSP test) |
 | `large-meshopt.glb` | `npx @gltf-transform/cli@4.2.1 meshopt large.glb large-meshopt.glb` | `large.glb` quantized: world coordinates over 1 m |
 
 The compressed files were produced once (glTF-Transform v4.5.1 core) and are committed

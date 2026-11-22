@@ -41,7 +41,7 @@ impl AppState {
         let colliders = cache.as_ref().map(|dir| dir.join("colliders"));
         let workspace = workspaces.as_deref().and_then(|base| {
             Workspace::create(base)
-                .inspect_err(|e| eprintln!("StudioVD: no workspace ({e})."))
+                .inspect_err(|e| log::warn!("no workspace ({e})."))
                 .ok()
         });
         if let (Some(base), Some(ws)) = (&workspaces, &workspace) {
@@ -52,7 +52,7 @@ impl AppState {
         let local_data = app.path().app_local_data_dir().ok();
         let library = local_data.as_ref().and_then(|dir| {
             Library::open(&dir.join("library"))
-                .inspect_err(|e| eprintln!("StudioVD: no component library ({e})."))
+                .inspect_err(|e| log::warn!("no component library ({e})."))
                 .ok()
                 .map(Arc::new)
         });

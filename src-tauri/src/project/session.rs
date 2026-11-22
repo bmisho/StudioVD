@@ -33,7 +33,7 @@ pub fn page_started<R: Runtime>(app: &AppHandle<R>) {
         return;
     };
     if let Err(e) = restart(&state) {
-        eprintln!("StudioVD: could not start a new session after a reload ({e}).");
+        log::warn!("could not start a new session after a reload ({e}).");
     }
     let project = state.project();
     if let Ok(project) = project {

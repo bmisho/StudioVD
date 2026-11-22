@@ -4,16 +4,21 @@ mod error;
 mod fsutil;
 mod geometry;
 mod library;
+mod logging;
 mod net;
 mod picked;
 mod project;
 mod state;
 mod workspace;
 
+#[cfg(test)]
+mod acl_tests;
+
 use tauri::{DragDropEvent, Manager, RunEvent, WebviewEvent, WindowEvent};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    logging::install_panic_hook();
     // Managed before any plugin: a second launch can hand over its file during startup.
     let mut builder = tauri::Builder::default().manage(project::launch::LaunchSlot::default());
     if project::launch::single_instance_usable() {
@@ -22,6 +27,7 @@ pub fn run() {
         builder = builder.plugin(project::launch::single_instance());
     }
     let app = builder
+        .plugin(logging::plugin())
         // The dialog plugin is used from Rust only; no capability exposes it to the webview.
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
@@ -91,6 +97,7 @@ pub fn run() {
         )
         .invoke_handler(tauri::generate_handler![
             commands::app::app_info,
+            commands::app::log_webview_error,
             commands::project::project_info,
             commands::project::project_new,
             commands::project::project_open,

@@ -79,7 +79,7 @@ export function Viewport3D() {
               <PhysicsLayer />
             </Suspense>
           )}
-          {import.meta.env.DEV && <ViewportProbe />}
+          {(import.meta.env.DEV || import.meta.env.VITE_E2E_PROBE === "1") && <ViewportProbe />}
         </ViewportContext>
       </Canvas>
       <ViewportStatusOverlay />

@@ -540,8 +540,9 @@ version change is offered as Replace.
 
 ## 7. Open questions (answers change the plan)
 
-1. **App licence.** The repo has no LICENSE yet. Not blocking until a public release, but it
-   decides how third-party notices are shipped (GPL code is excluded either way).
+1. **App licence.** Decided 2026-11-23 by the owner: no licence, all rights reserved (the
+   source is readable once the repository is public; reuse needs the owner's permission).
+   Third-party notices ship as they do now (Help › About).
 
 ---
 
@@ -1408,4 +1409,53 @@ Exit criteria
   shipped npm package and crate with its licence texts), shown in Help › About.
   `@react-three/rapier` publishes no licence field or file; its repository's LICENSE is MIT
   (Copyright (c) 2022 Poimandres, checked 2026-11-23), so the notices carry that text
-- [ ] ⛔ 15.9 **User approval / release**
+- [ ] ⛔ 15.9 **User approval / release**. The owner approved the release on 2026-11-23, then
+  chose to hold it until Phase 16 is in: the first public release is v0.2.0, after 16.9.
+  Installers stay unsigned for now (docs/release.md: SmartScreen warns on first run)
+
+---
+
+## Phase 16: Wiring & pedal parts
+
+Approved by the owner on 2026-11-23, from a guitar-pedal build in another CAD tool: a
+see-through enclosure, pots with knobs, jacks, a 3PDT footswitch, a 9 V battery, a PCB, and
+wires of set lengths routed along the walls through clips (some as twisted pairs). StudioVD
+already imports STEP parts (GrabCAD downloads among them), makes parts see-through (glass and
+transparent materials, X-ray) and orbits the view; this phase adds what it lacks. The release
+(15.9, v0.2.0) and the KiCad packs (14.7, 14.8) follow it.
+
+- [ ] 16.1 Cable connector (scene.json **v3**): a wire of the length the user sets, between two
+  end anchors through optional waypoint anchors (a clip's, a wall's: cables follow the parts
+  they hang on), with its outer diameter, colour (material), one conductor or a twisted pair
+  (pitch), and how spare length is laid (arc, wave or coil). Documents of anchors only, like
+  belts and tubes: derived in the view, never stored geometry, never in physics. v2 → v3
+  migration (no change to v2 content) with a frozen v2 fixture.
+- [ ] 16.2 Length solver (pure, `core/connectors`): the route leaves each end along its anchor's
+  z and passes through every waypoint (centripetal Catmull-Rom); spare length is laid in the
+  chosen style and solved so the drawn centreline is the set length (±0.1 mm); a cable shorter
+  than its route is drawn taut with a warning look and says how much it lacks. Deterministic,
+  tested on random routes.
+- [ ] 16.3 Cable editing: a Cable tool (two anchors, then waypoints), the inspector (length with
+  "fit to route + margin", route length and spare or shortfall, diameter presets for hook-up
+  wire gauges, wire colours, pair and pitch, waypoints add/remove/reorder), short cables as
+  issues in the scene tree, and a cut list (each cable's colour, diameter and length) to copy
+  or export as CSV.
+- [ ] 16.4 Pedal part generators, each dimension with a source and confidence: potentiometers
+  (16 and 24 mm bodies), knobs, 6.35 mm jacks, DC barrel jack, 3PDT footswitch, 9 V battery
+  and snap, PCB board, LED with bezel, cable clip and zip tie. Anchors where things attach:
+  shaft and bushing axes, mounting faces, solder lugs and pads (cable ends), clip centres
+  (cable waypoints).
+- [ ] 16.5 Import from a zip (GrabCAD-style downloads): pick or drop a `.zip`; Rust extracts it
+  through the zip guard and the Import dialog lists the STEP, IGES, STL, OBJ and GLB files in
+  it; native formats (SLDPRT, IPT, F3D...) are listed as not readable, with "export STEP" as
+  the advice. No GrabCAD integration: it has no public API, its terms do not allow automated
+  downloads, its models carry their own licences, and the app makes no web requests (§6).
+- [ ] 16.6 Help › Examples › Guitar pedal: a see-through box with pots and knobs, jacks, DC
+  jack, footswitch, LED, battery and PCB, wired with cables of set lengths through clips, and
+  its schematic linked to the parts.
+- [ ] 16.7 Tests: solver property tests, cable integrity and contract tests, generator golden
+  tests, E2E (draw a cable through a clip, set its length, a short cable's warning, undo, the
+  cut list, a zip import), the example builds and solves.
+- [ ] 16.8 Docs: user guide (cables, pedal parts, importing downloads), project-file format
+  (v3).
+- [ ] ⛔ 16.9 **User approval**; then 14.7/14.8 and the v0.2.0 release (15.9)

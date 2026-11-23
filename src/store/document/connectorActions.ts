@@ -1,5 +1,6 @@
 import type { Draft } from "immer"
-import { CONNECTOR_DEFAULTS, endsFit, wheelOf } from "@/core/connectors/defaults"
+import { CONNECTOR_DEFAULTS, endsFit } from "@/core/connectors/defaults"
+import { newConnector } from "@/core/connectors/newConnector"
 import {
   builtinByKey,
   materialFromBuiltin,
@@ -32,21 +33,31 @@ export interface ConnectorPatch {
   wireMm?: number
   coils?: number
   radii?: number[]
+  /** A cable's (PLAN 16.3). */
+  lengthMm?: number
+  pitchMm?: number
+  conductors?: 1 | 2
+  slack?: "arc" | "wave" | "coil"
 }
 
 export interface ConnectorActions {
-  /** A belt, tube or spring between anchors (PLAN 9.6), sized from what they belong to. */
+  /** A belt, tube, spring or cable (start, waypoints..., end) between anchors (PLAN 9.6, 16.1). */
   addConnector: (kind: ConnectorKind, anchors: readonly AnchorId[]) => ConnectorId | null
   /** Invalid values (the schema's bounds) are ignored, like the other inspectors'. */
   updateConnector: (id: ConnectorId, patch: ConnectorPatch) => void
   deleteConnectors: (ids: readonly ConnectorId[]) => void
 }
 
-/** Connectors whose anchors went go with them (PLAN 9.6: they hang on their anchors). */
+/**
+ * Connectors whose anchors went go with them (PLAN 9.6: they hang on their anchors); a cable
+ * whose waypoint went (a clip deleted) keeps its ends and is routed without it (16.1).
+ */
 export function pruneConnectors(doc: Draft<SceneDocument>): void {
-  for (const [id, c] of Object.entries(doc.connectors))
+  for (const [id, c] of Object.entries(doc.connectors)) {
+    if (c.kind === "cable") c.via = c.via.filter((a) => Object.hasOwn(doc.anchors, a))
     if (connectorAnchors(c).some((a) => !Object.hasOwn(doc.anchors, a)))
       delete doc.connectors[id as ConnectorId]
+  }
 }
 
 function patched(c: Connector, patch: ConnectorPatch): Connector {
@@ -78,32 +89,7 @@ export function connectorActions(set: Set, get: Get): ConnectorActions {
         materialId: reuse?.id ?? material?.id ?? null,
         visible: true,
       }
-      const wheels = known.map((a) => wheelOf(doc, a))
-      const connector: Connector =
-        kind === "belt"
-          ? {
-              ...common,
-              kind,
-              ends: known.map((anchor, i) => ({ anchor, radiusMm: wheels[i]?.radiusMm ?? 10 })),
-              widthMm: wheels.find((w) => w.widthMm)?.widthMm ?? CONNECTOR_DEFAULTS.belt.widthMm,
-              thicknessMm: CONNECTOR_DEFAULTS.belt.thicknessMm,
-            }
-          : kind === "tube"
-            ? {
-                ...common,
-                kind,
-                ends: [known[0] as AnchorId, known[1] as AnchorId],
-                outerMm: CONNECTOR_DEFAULTS.tube.outerMm,
-                leadMm: CONNECTOR_DEFAULTS.tube.leadMm,
-              }
-            : {
-                ...common,
-                kind,
-                ends: [known[0] as AnchorId, known[1] as AnchorId],
-                outerMm: CONNECTOR_DEFAULTS.spring.outerMm,
-                wireMm: CONNECTOR_DEFAULTS.spring.wireMm,
-                coils: CONNECTOR_DEFAULTS.spring.coils,
-              }
+      const connector = newConnector(doc, kind, known, common)
       if (!ConnectorSchema.safeParse(connector).success) return null
       if (material && Object.keys(doc.materials).length >= COLLECTION_CAPS.materials) return null
       set((s) => {

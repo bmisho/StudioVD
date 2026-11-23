@@ -25,8 +25,10 @@ describe("scene.json schema", () => {
   })
 
   it("rejects a different schema version", () => {
-    expect(parseDocument({ ...valid(), schemaVersion: 1 }).ok).toBe(false) // v1 opens via its migration
-    expect(parseDocument({ ...valid(), schemaVersion: 3 }).ok).toBe(false)
+    // Older files open through their migrations, never straight into the current schema.
+    expect(parseDocument({ ...valid(), schemaVersion: 1 }).ok).toBe(false)
+    expect(parseDocument({ ...valid(), schemaVersion: 2 }).ok).toBe(false)
+    expect(parseDocument({ ...valid(), schemaVersion: 4 }).ok).toBe(false)
   })
 
   it("rejects non-finite numbers", () => {

@@ -66,8 +66,8 @@ export interface ViewportProbeApi {
   dragReady(): boolean
   /** Document parts, in insertion order. */
   parts(): { id: string; name: string }[]
-  /** Derived connectors (PLAN 9.6): kind and end anchors. */
-  connectors(): { id: string; kind: string; ends: string[] }[]
+  /** Derived connectors (PLAN 9.6): kind and anchors (a cable's in route order) and length. */
+  connectors(): { id: string; kind: string; ends: string[]; lengthMm?: number }[]
   /** Library component instances (PLAN 9.5): designator, definition name, part keys. */
   components(): {
     id: string

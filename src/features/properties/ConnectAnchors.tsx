@@ -8,9 +8,14 @@ const KINDS: { kind: ConnectorKind; label: string; hint: string }[] = [
   { kind: "belt", label: "Belt", hint: "Round pulleys: each anchor on a belt line" },
   { kind: "tube", label: "Tube", hint: "Between two fittings" },
   { kind: "spring", label: "Spring", hint: "Between two anchors" },
+  {
+    kind: "cable",
+    label: "Cable",
+    hint: "Through the anchors in the order you selected them: the first and last are its ends",
+  },
 ]
 
-/** With anchors selected: draw a belt, tube or spring between them (PLAN 9.6). */
+/** With anchors selected: draw a belt, tube, spring or cable between them (PLAN 9.6, 16.3). */
 export function ConnectAnchors({ anchors }: { anchors: readonly AnchorId[] }) {
   const add = (kind: ConnectorKind) => {
     const id = useDocumentStore.getState().addConnector(kind, anchors)

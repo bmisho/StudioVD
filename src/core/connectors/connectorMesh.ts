@@ -5,6 +5,7 @@ import { applyPoint, type Rigid } from "@/core/math/rigid"
 import { add, cross, dot, length, normalize, rotate, scale, sub } from "@/core/math/vec3"
 import type { Connector, Vec3 } from "@/core/schema"
 import { beltPath } from "./beltPath"
+import { buildCable, cableLayout } from "./cableMesh"
 
 const originOf = (r: Rigid): Vec3 => applyPoint(r, [0, 0, 0])
 const zOf = (r: Rigid): Vec3 => rotate(r.q, [0, 0, 1])
@@ -69,6 +70,13 @@ const bezier = (p0: Vec3, p1: Vec3, p2: Vec3, p3: Vec3, n: number): Vec3[] =>
  */
 export function connectorMesh(c: Connector, ends: readonly Rigid[]): BodyMesh | null {
   if (c.kind === "belt") return belt(c, ends)
+  if (c.kind === "cable") {
+    const laid = cableLayout(c, ends)
+    if (!laid) return null
+    const b = new BodyBuilder()
+    buildCable(b, c, laid)
+    return outward(b.build())
+  }
   const [a, z] = ends
   if (!a || !z) return null
   const [pa, pz] = [originOf(a), originOf(z)]

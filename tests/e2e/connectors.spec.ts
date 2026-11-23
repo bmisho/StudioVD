@@ -32,8 +32,11 @@ const anchorPoint = async (page: Page, id: string) => {
   return project(page, world.originMm)
 }
 
-test("a belt round two pulleys, from their belt-line anchors", async ({ page }) => {
-  test.setTimeout(90_000)
+/**
+ * Two GT2 pulleys from the Library and their two belt-line anchors selected (the anchors'
+ * Properties then offer belts, tubes, springs and cables between them).
+ */
+async function twoBeltAnchorsSelected(page: Page) {
   await waitForViewport(page)
   await page.getByRole("tab", { name: "Library" }).click()
   await dragCardTo(page, "20 teeth bore 5", [-30, 0, 0])
@@ -72,6 +75,12 @@ test("a belt round two pulleys, from their belt-line anchors", async ({ page }) 
 
   const panel = page.getByRole("complementary", { name: "Properties" })
   await expect(panel.getByRole("heading", { name: "Connect 2 anchors" })).toBeVisible()
+  return { panel, a, b }
+}
+
+test("a belt round two pulleys, from their belt-line anchors", async ({ page }) => {
+  test.setTimeout(90_000)
+  const { panel, a, b } = await twoBeltAnchorsSelected(page)
   await panel.getByRole("button", { name: "Belt" }).click()
   await expect
     .poll(() => probe<{ kind: string; ends: string[] }[]>(page, "connectors"))
@@ -86,5 +95,30 @@ test("a belt round two pulleys, from their belt-line anchors", async ({ page }) 
   await expect(page.getByRole("treeitem", { name: /Connectors/ })).toBeVisible()
   await page.getByTestId("viewport-canvas").screenshot({ path: test.info().outputPath("belt.png") })
   await page.keyboard.press("Control+z")
+  await expect.poll(() => probe<unknown[]>(page, "connectors")).toEqual([])
+})
+
+test("a cable of a set length between two lugs: spare, too short, undo (PLAN 16.3)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  const { panel } = await twoBeltAnchorsSelected(page)
+  await panel.getByRole("button", { name: "Cable" }).click()
+  await expect(panel.getByRole("heading", { name: "Cable" })).toBeVisible()
+  await expect(panel.getByText(/^Route [\d.]+ mm, [\d.]+ mm spare\.$/)).toBeVisible()
+  const length = panel.getByRole("textbox", { name: "Length (mm)" })
+  await length.fill("5")
+  await length.press("Enter")
+  await expect(panel.getByRole("alert")).toContainText("Too short by")
+  await expect
+    .poll(() => probe<{ kind: string; lengthMm?: number }[]>(page, "connectors"))
+    .toEqual([expect.objectContaining({ kind: "cable", lengthMm: 5 })])
+  await panel.getByRole("button", { name: "Fit to route + 10%" }).click()
+  await expect(panel.getByRole("alert")).toBeHidden()
+  await page
+    .getByTestId("viewport-canvas")
+    .screenshot({ path: test.info().outputPath("cable.png") })
+  // Three undo steps: fit, the length typed, the cable itself.
+  for (let i = 0; i < 3; i++) await page.keyboard.press("Control+z")
   await expect.poll(() => probe<unknown[]>(page, "connectors")).toEqual([])
 })

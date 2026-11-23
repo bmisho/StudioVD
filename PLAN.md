@@ -1424,18 +1424,32 @@ already imports STEP parts (GrabCAD downloads among them), makes parts see-throu
 transparent materials, X-ray) and orbits the view; this phase adds what it lacks. The release
 (15.9, v0.2.0) and the KiCad packs (14.7, 14.8) follow it.
 
-- [ ] 16.1 Cable connector (scene.json **v3**): a wire of the length the user sets, between two
+- [x] 16.1 Cable connector (scene.json **v3**): a wire of the length the user sets, between two
   end anchors through optional waypoint anchors (a clip's, a wall's: cables follow the parts
   they hang on), with its outer diameter, colour (material), one conductor or a twisted pair
   (pitch), and how spare length is laid (arc, wave or coil). Documents of anchors only, like
   belts and tubes: derived in the view, never stored geometry, never in physics. v2 → v3
-  migration (no change to v2 content) with a frozen v2 fixture.
-- [ ] 16.2 Length solver (pure, `core/connectors`): the route leaves each end along its anchor's
+  migration (no change to v2 content) with a frozen v2 fixture. As built: `kind: "cable"` in
+  `schema/connector.ts` (≤ 32 waypoints, 1 mm to 1 km); `phase9-v2.scene.json` (a belt, a tube
+  and a spring, saved by the v2 build) opens as v3 unchanged; new cables use a new built-in
+  material `std.pvc` (density a low-confidence class default) and start 15% + 10 mm longer
+  than their route; deleting a waypoint's anchor (a clip) drops it from the route, deleting an
+  end's deletes the cable (shown failing without that rule)
+- [x] 16.2 Length solver (pure, `core/connectors`): the route leaves each end along its anchor's
   z and passes through every waypoint (centripetal Catmull-Rom); spare length is laid in the
   chosen style and solved so the drawn centreline is the set length (±0.1 mm); a cable shorter
   than its route is drawn taut with a warning look and says how much it lacks. Deterministic,
-  tested on random routes.
-- [ ] 16.3 Cable editing: a Cable tool (two anchors, then waypoints), the inspector (length with
+  tested on random routes. As built: `cableRoute.ts` (leads, centripetal Catmull-Rom with
+  phantom ends continuing the leads), `cableSlack.ts` (one amplitude or turn count bisected
+  for all flexible spans: arcs bulge away from the ends' surfaces, waves of about 6 diameters,
+  one coil in the longest span whose radius grows with the spare so turns sit a wire apart),
+  `cableMesh.ts` (one tube, or two strands twisted about the centreline; a pair's length is
+  along the pair). 40 seeded random routes × 3 styles land within ±0.05 mm and pass through
+  every waypoint; solves take 2-20 ms
+- [ ] 16.3 Cable editing (part done: Properties › Connect N anchors › Cable, in the order the
+  anchors were selected; the inspector's length, route/spare or "too short by", Fit to route +
+  10%, diameter, leads, one wire or a twisted pair and pitch, arcs/waves/coil; E2E in
+  `connectors.spec.ts`): a Cable tool (two anchors, then waypoints), the inspector (length with
   "fit to route + margin", route length and spare or shortfall, diameter presets for hook-up
   wire gauges, wire colours, pair and pitch, waypoints add/remove/reorder), short cables as
   issues in the scene tree, and a cut list (each cable's colour, diameter and length) to copy

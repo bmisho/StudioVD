@@ -27,11 +27,11 @@ import { GeometryAssetSchema, GroupSchema, PartSchema, TextureSchema } from "./s
 import { MaterialSchema } from "./material"
 import { safeSegment } from "./shown"
 
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 /**
- * `scene.json` v2 (v1 final since Phase 5; v2 adds `connectors`. Changing what a saved file means needs a migration,
- * `migrate.ts`). Every entity collection is normalized as Record<Id, Entity> (CLAUDE.md §4).
+ * `scene.json` v3 (v1 final since Phase 5; v2 adds `connectors`; v3 adds cables to them).
+ * Changing what a saved file means needs a migration (`migrate.ts`). Every entity collection is normalized as Record<Id, Entity> (CLAUDE.md §4).
  * Collections a later phase owns are gated empty until then (`emptyUntil`). Cross-entity
  * rules (keys, references, cycles, caps) live in `integrity.ts`.
  */

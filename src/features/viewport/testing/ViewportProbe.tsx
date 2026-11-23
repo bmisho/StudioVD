@@ -132,6 +132,7 @@ export function ViewportProbe() {
           id: c.id,
           kind: c.kind,
           ends: connectorAnchors(c),
+          ...(c.kind === "cable" && { lengthMm: c.lengthMm }),
         })),
       components: () => {
         const doc = useDocumentStore.getState().doc

@@ -9,7 +9,7 @@ const ORIGIN: Vec3 = [0, 0, 0]
  * Rotation-minimizing frames along a polyline (double reflection, Wang et al. 2008): the
  * cross-section does not twist about the path, so a coiled wire looks round all along.
  */
-function frames(path: readonly Vec3[]): { t: Vec3; n: Vec3 }[] {
+export function frames(path: readonly Vec3[]): { t: Vec3; n: Vec3 }[] {
   const tangent = (i: number) => {
     const p = path[Math.max(0, i - 1)] ?? ORIGIN
     const q = path[Math.min(path.length - 1, i + 1)] ?? ORIGIN

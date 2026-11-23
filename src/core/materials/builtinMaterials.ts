@@ -158,6 +158,18 @@ export const BUILTIN_MATERIALS: readonly BuiltinMaterial[] = [
     lookSource: `${PB} ("Tire"); IOR of natural rubber 1.519 (Sigma)`,
   },
   {
+    key: "std.pvc",
+    name: "PVC (wire insulation)",
+    densityKgM3: 1300,
+    density: {
+      source:
+        "Class default for flexible (plasticized) PVC compounds, about 1.2-1.4 g/cm³; rigid PVC is 1.35-1.45 g/cm³ (typical published ranges)",
+      confidence: "low",
+    },
+    look: look({ color: "#1f1f1f", roughness: 0.45, ior: 1.54 }),
+    lookSource: "Glossy plastic; IOR of PVC about 1.54 (typical published value)",
+  },
+  {
     key: "std.fr4",
     name: "FR-4",
     densityKgM3: 1850,

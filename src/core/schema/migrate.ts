@@ -12,6 +12,8 @@ export type Migration = (doc: JsonObject) => { doc: JsonObject; warnings?: strin
 export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   /** v1 → v2 (Phase 9.6): derived connectors (belts, tubes, springs) get their collection. */
   1: (doc) => ({ doc: { ...doc, connectors: {} } }),
+  /** v2 → v3 (Phase 16): cables join the connectors; a v2 file has none, so nothing changes. */
+  2: (doc) => ({ doc }),
 }
 
 export type MigrateResult =

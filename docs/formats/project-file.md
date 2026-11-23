@@ -1,4 +1,4 @@
-# StudioVD project file (`.stvd`, `scene.json` v2)
+# StudioVD project file (`.stvd`, `scene.json` v3)
 
 The normative definition is the zod schema in `src/core/schema/` (`document.ts` and the files
 it imports) plus the cross-entity rules in `integrity.ts`; this page explains it. Every file is
@@ -34,7 +34,7 @@ Windows device names); duplicate names differing only by case are refused.
 ```json
 {
   "format": "studiovd",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "appVersion": "0.1.0",
   "units": { "length": "mm" },
   "project": { "name": "Lid hinge" },
@@ -72,7 +72,7 @@ definitions and licence texts; 5 000 schematic nodes, 20 000 edges.
 | `componentDefs` | The frozen `component.json` of every library component used (see `component-format.md`), its origin and manifest SHA-256. |
 | `components` | Placed instances: `{ id, def, designator, groupId, parts, anchors, mates, materials, bindings, nodeId?, unlinked? }`, each map from the manifest's local keys to document ids. |
 | `licenseTexts` | `{ path: "licenses/<sha256>.txt", spdx }` |
-| `connectors` | Belts, tubes and springs between anchors (v2). Their meshes are derived, never stored. |
+| `connectors` | Belts, tubes and springs between anchors (v2), and cables (v3: two ends, waypoints in order, the length as cut, diameter, one wire or a twisted pair, how spare length lies). Their meshes are derived, never stored. |
 
 ## Integrity rules (beyond the schema)
 
@@ -84,6 +84,7 @@ definitions are present.
 
 ## Versions
 
-`schemaVersion` 1 → 2 added `connectors`. Opening an older file migrates it in memory
-(`migrate.ts`); a newer one is refused with "made by a newer StudioVD". Frozen
-fixtures (`src/core/schema/testing/fixtures`, e.g. `phase5-v1.scene.json`) must keep opening.
+`schemaVersion` 1 → 2 added `connectors`; 2 → 3 added the `cable` kind (a v2 file has none,
+so it opens unchanged). Opening an older file migrates it in memory (`migrate.ts`); a newer one
+is refused with "made by a newer StudioVD". Frozen fixtures (`src/core/schema/testing/fixtures`:
+`phase5-v1.scene.json`, `phase9-v2.scene.json`) must keep opening.

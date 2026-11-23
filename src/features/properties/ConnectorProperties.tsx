@@ -11,9 +11,10 @@ import type { Connector, ConnectorId, MaterialId } from "@/core/schema"
 import { NumberField } from "@/features/materials/controls/NumberField"
 import type { ConnectorPatch } from "@/store/document/connectorActions"
 import { useDocumentStore } from "@/store/document/documentStore"
+import { CableFields } from "./CableFields"
 import { NameField } from "./NameField"
 
-const TITLES = { belt: "Belt", tube: "Tube", spring: "Spring" } as const
+const TITLES = { belt: "Belt", tube: "Tube", spring: "Spring", cable: "Cable" } as const
 
 type Field = { key: keyof ConnectorPatch; label: string; value: number; min: number; max: number }
 
@@ -28,11 +29,13 @@ function fields(c: Connector): Field[] {
       { key: "outerMm", label: "Outer diameter (mm)", value: c.outerMm, min: 0.1, max: 1000 },
       { key: "leadMm", label: "Straight out of each end (mm)", value: c.leadMm, min: 0, max: 1e5 },
     ]
-  return [
-    { key: "outerMm", label: "Outer diameter (mm)", value: c.outerMm, min: 0.1, max: 1000 },
-    { key: "wireMm", label: "Wire (mm)", value: c.wireMm, min: 0.1, max: 100 },
-    { key: "coils", label: "Coils", value: c.coils, min: 1, max: 500 },
-  ]
+  if (c.kind === "spring")
+    return [
+      { key: "outerMm", label: "Outer diameter (mm)", value: c.outerMm, min: 0.1, max: 1000 },
+      { key: "wireMm", label: "Wire (mm)", value: c.wireMm, min: 0.1, max: 100 },
+      { key: "coils", label: "Coils", value: c.coils, min: 1, max: 500 },
+    ]
+  return [] // a cable's are in CableFields
 }
 
 /** A connector (PLAN 9.6): its sizes, material and Delete; drawn from its anchors. */
@@ -65,6 +68,7 @@ export function ConnectorProperties({ id }: { id: ConnectorId }) {
         rename={(name) => updateConnector(id, { name })}
       />
       {fields(c).map((f) => number(f, f.value, (v) => updateConnector(id, { [f.key]: v })))}
+      {c.kind === "cable" && <CableFields cable={c} />}
       {c.kind === "belt" &&
         c.ends.map((e, i) =>
           number(

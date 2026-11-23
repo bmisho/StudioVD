@@ -7,6 +7,7 @@ export const CONNECTOR_DEFAULTS = {
   belt: { widthMm: 6, thicknessMm: 1.4, radiusMm: 10, material: "std.rubber", name: "Belt" },
   tube: { outerMm: 4, leadMm: 10, material: "std.polyurethane", name: "Tube" },
   spring: { outerMm: 10, wireMm: 1, coils: 10, material: "std.steel", name: "Spring" },
+  cable: { outerMm: 1.6, leadMm: 3, pitchMm: 12, material: "std.pvc", name: "Cable" },
 } as const
 
 export const CONNECTOR_SOURCES = [
@@ -17,6 +18,13 @@ export const CONNECTOR_SOURCES = [
   {
     what: "Tube and spring sizes",
     source: estimated("Visual defaults: 4 mm pneumatic tube; Ø10 spring of 1 mm wire", "low"),
+  },
+  {
+    what: "Cable diameter",
+    source: estimated(
+      "Ø1.6 mm: about the outside of 22 AWG PVC hook-up wire (conductor Ø0.64 mm); varies by maker",
+      "low"
+    ),
   },
 ]
 
@@ -56,7 +64,9 @@ export function wheelOf(
   return { radiusMm: CONNECTOR_DEFAULTS.belt.radiusMm }
 }
 
-/** How many ends each kind takes. */
+/** How many anchors each kind takes (a cable's: its two ends and up to 32 waypoints). */
 export function endsFit(kind: ConnectorKind, count: number): boolean {
-  return kind === "belt" ? count >= 2 && count <= 16 : count === 2
+  if (kind === "belt") return count >= 2 && count <= 16
+  if (kind === "cable") return count >= 2 && count <= 34
+  return count === 2
 }

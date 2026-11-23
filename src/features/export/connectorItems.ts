@@ -6,7 +6,7 @@ import { materialCache } from "@/features/viewport/materials/materialCache"
 import type { SelectionItem } from "@/store/session/sessionStore"
 import type { ExportItem } from "./buildExport"
 
-const NAMES = { belt: "Belt", tube: "Tube", spring: "Spring" } as const
+const NAMES = { belt: "Belt", tube: "Tube", spring: "Spring", cable: "Cable" } as const
 
 /**
  * Belts, tubes and springs for an export (PLAN 9.6): the selected ones, and those hanging

@@ -1,0 +1,4 @@
+# Byte-exact fixtures: signatures and SHA-256 hashes cover their bytes, and frozen project
+# files are kept byte for byte, so Windows checkouts (core.autocrlf) must not convert them.
+src-tauri/src/library/online/tests/fixtures/** -text
+src/core/schema/testing/fixtures/** -text

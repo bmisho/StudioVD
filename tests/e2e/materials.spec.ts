@@ -19,8 +19,16 @@ async function importColouredCube(page: Page): Promise<string> {
   await page.keyboard.press("Control+i")
   const dialog = page.getByRole("dialog", { name: "Import" })
   await dialog.getByRole("button", { name: "Import" }).click()
-  await expect(page.getByText("Imported 1 part from 1 file")).toBeVisible({ timeout: 30_000 })
-  await expect(dialog).toBeHidden({ timeout: 15_000 })
+  // The outcome, not the "Imported 1 part" toast: that one hides after a few seconds, and on a
+  // GPU-less runner the new part's first render can hold the page for about as long (WebKit
+  // CI once never saw it). A failure names the toasts shown, say "The project is busy".
+  try {
+    await expect(dialog).toBeHidden({ timeout: 30_000 })
+    await expect.poll(async () => (await parts(page)).length, { timeout: 15_000 }).toBe(1)
+  } catch (e) {
+    const toasts = await page.locator("[data-sonner-toast]").allInnerTexts()
+    throw new Error(`the import did not finish; toasts: ${JSON.stringify(toasts)}`, { cause: e })
+  }
   const [cube] = await parts(page)
   if (!cube) throw new Error("no part imported")
   // Loaded: one material per slot (grey body, red and blue faces).

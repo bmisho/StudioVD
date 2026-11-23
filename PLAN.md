@@ -1265,7 +1265,7 @@ Exit criteria
 
 ## Phase 14: Component library II (online catalog & content packs)
 
-- [ ] 14.1 Public hosting repo (§7 Q1) with immutable releases; pack releases `--latest=false`,
+- [x] 14.1 Public hosting repo (§7 Q1) with immutable releases; pack releases `--latest=false`,
   catalog releases `--latest` (both explicit; the API defaults new releases to latest);
   post-publish smoke test of `latest/download/index.json`. As built: the owner created
   `bmisho/studiovd-catalog` (public, 2026-11-23). Its **Publish catalog** workflow (by hand and
@@ -1277,9 +1277,11 @@ Exit criteria
   signs with a throwaway key on every push. The app reads `latest/download/` for the index and
   `releases/download/<tag>/` for packs; the consent dialog also names
   `release-assets.githubusercontent.com` (GitHub's redirect). A cargo test verifies an index
-  built by those tools and signed by real minisign 0.11 (`tests/interop.rs`). **Open: the
-  owner's secrets in the `catalog-publish` environment, the first publish, and the repository's
-  immutable-releases setting**
+  built by those tools and signed by real minisign 0.11 (`tests/interop.rs`). The owner added the secrets and
+  turned on immutable releases; the first publish (2026-11-23) released `catalog-1` (sequence 1, no packs yet,
+  valid until 2027-02-21), immutable, and the app's own checks accept what
+  `latest/download/` serves: minisign with the active key, `live_official_catalog` (the Rust
+  verifier with the compiled-in keys) and `CatalogIndexSchema`
 - [x] 14.2 Signing: two minisign keypairs (active + offline backup), separate from any updater
   key; trusted comment binds catalog id, sequence and schema; rotation procedure documented.
   Done: the trusted comment (`studiovd-catalog catalog=<id> sequence=<n> schema=<v>`, checked

@@ -11,7 +11,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # A push replaces the previous push's run, but never a manual run (the installer jobs).
+  group: ci-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:

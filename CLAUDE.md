@@ -370,7 +370,7 @@ No hard-coded hex values in components; use Tailwind theme tokens.
 - `npm run build`: typecheck + production frontend build
 - `npm run notices`: regenerate `public/third-party-notices.txt` (npm and Rust licences) after
   dependency changes; `STUDIOVD_PERF=1 npx playwright test perf.spec.ts`: the 200-part
-  measurement (PLAN 15.3)
+  measurement (PLAN 15.3; add `E2E_GPU=1` on a machine with a GPU: headed, no SwiftShader)
 - `cd src-tauri && cargo deny check`: advisories, licences, bans, sources (`deny.toml`; CI)
 - `cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test`
 

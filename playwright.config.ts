@@ -6,8 +6,10 @@ import { defineConfig, devices } from "@playwright/test"
 const browsers = (process.env.E2E_BROWSERS ?? "chromium").split(",").map((b) => b.trim())
 const viewport = { width: 1440, height: 900 }
 // CI runners have no GPU. Chromium's implicit software-WebGL fallback is deprecated, so opt
-// in to SwiftShader explicitly: WebGL2 then behaves the same on every machine.
-const chromiumArgs = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
+// in to SwiftShader explicitly: WebGL2 then behaves the same on every machine. E2E_GPU=1 (the
+// PLAN 15.3 measurement on real hardware) opens a visible window on the machine's own GPU.
+const gpu = Boolean(process.env.E2E_GPU)
+const chromiumArgs = gpu ? [] : ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 // A sandbox whose preinstalled Chromium is not the build this Playwright downloads points at
 // its own binary (E2E_CHROMIUM_PATH=/opt/pw-browsers/chromium); CI installs the pinned build.
 const executablePath = process.env.E2E_CHROMIUM_PATH
@@ -50,7 +52,7 @@ export default defineConfig({
           {
             name: "chromium",
             testIgnore: CSP_SPEC,
-            use: { ...devices["Desktop Chrome"], viewport, launchOptions },
+            use: { ...devices["Desktop Chrome"], viewport, launchOptions, headless: !gpu },
           },
           {
             name: "chromium-release-csp",

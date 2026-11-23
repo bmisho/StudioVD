@@ -17,6 +17,10 @@ job; nothing here has been done with real keys yet.
   minisign -G -p studiovd-catalog-backup.pub -s studiovd-catalog-backup.key
   ```
 
+  On Windows: download the `win64` zip from https://github.com/jedisct1/minisign/releases,
+  unzip it, and run the same two commands from that folder in PowerShell (`.\minisign.exe -G
+  ...`). Each asks for a password twice. Only the two `.pub` files are ever shared.
+
 - Keep both secret keys out of every repository. The backup key goes offline (a USB key in a
   safe, a printed copy); the active key lives where the publish job can use it (a CI secret
   scoped to the hosting repository's release workflow).

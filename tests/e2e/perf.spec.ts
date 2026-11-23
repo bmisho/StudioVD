@@ -70,7 +70,12 @@ test("200 parts, 2.2 M triangles: load, orbit and test-mode frame times", async 
   })
   await enterTestMode(page)
   const testMode = await frameTimes(page, () => page.waitForTimeout(3000))
-  console.log(
-    `PERF ${JSON.stringify({ parts: 200, triangles: 2_199_040, loadMs, orbit, testMode })}`
-  )
+  // Which renderer drew it: SwiftShader on CI, the GPU's name with E2E_GPU=1.
+  const renderer = await page.evaluate(() => {
+    const gl = document.createElement("canvas").getContext("webgl2")
+    const info = gl?.getExtension("WEBGL_debug_renderer_info")
+    return gl && info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : "unknown"
+  })
+  const result = { renderer, parts: 200, triangles: 2_199_040, loadMs, orbit, testMode }
+  console.log(`PERF ${JSON.stringify(result)}`)
 })

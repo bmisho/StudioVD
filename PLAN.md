@@ -1366,6 +1366,7 @@ Exit criteria
   cost is rasterizing 2.2 M triangles on the CPU, not per-part work; physics alone steps 200
   parts in 1.3 ms (10.9). No optimization is called for by these numbers. **Open: the 60 fps
   orbit target needs a run on an integrated GPU** (the owner's hardware), with the same spec
+  and `E2E_GPU=1` (a visible window on the machine's GPU; the result names the renderer)
 - [x] 15.4 Undo/redo coverage audit, context menus, shortcut help overlay. As built:
   `undoAudit.test.ts` fails when a document action is never called by a test (it found
   `deleteConnectors`, now tested: one undo entry, undo restores); one context menu, its items

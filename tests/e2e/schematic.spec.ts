@@ -57,15 +57,19 @@ test("adds blocks, wires them by the rules, deletes and undoes", async ({ page }
 test("dragging a block is one undo entry", async ({ page }) => {
   await addBlock(page, "Resistor")
   const node = block(page, "Resistor 1")
+  // Its place on the canvas (React Flow's translate, in flow units), not on the screen: the
+  // panels can still settle by a few pixels after Maximize, which moves the screen box only.
+  const place = () => node.evaluate((el) => (el as HTMLElement).style.transform)
+  const start = await place()
   const before = await node.boundingBox()
   if (!before) throw new Error("block not on screen")
   await page.mouse.move(before.x + 40, before.y + 12)
   await page.mouse.down()
   for (let i = 1; i <= 6; i++) await page.mouse.move(before.x + 40 + i * 20, before.y + 12 + i * 8)
   await page.mouse.up()
-  await expect.poll(async () => (await node.boundingBox())?.x).toBeGreaterThan(before.x + 60)
+  await expect.poll(place).not.toBe(start)
   await page.keyboard.press("Control+z")
-  await expect.poll(async () => (await node.boundingBox())?.x).toBeCloseTo(before.x, 0)
+  await expect.poll(place).toBe(start)
   await expect(node).toHaveCount(1) // the add itself is the entry before
 })
 

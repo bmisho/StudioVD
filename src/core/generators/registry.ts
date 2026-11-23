@@ -16,7 +16,16 @@ import { frameCornerBracket } from "./frame/cornerBracket/v1"
 import { frameTslot } from "./frame/tslot/v1"
 import { connectorPinHeader } from "./connector/pinHeader/v1"
 import { batteryCell } from "./battery/cell/v1"
+import { batteryPp3 } from "./battery/pp3/v1"
+import { boardPcb } from "./board/pcb/v1"
+import { indicatorLed } from "./indicator/led/v1"
+import { cableClip } from "./cable/clip/v1"
+import { cableZipTie } from "./cable/zipTie/v1"
 import { enclosureBox } from "./enclosure/box/v1"
+import { connectorJack } from "./connector/jack/v1"
+import { controlKnob } from "./control/knob/v1"
+import { switchFootswitch } from "./switch/footswitch/v1"
+import { controlPot } from "./control/pot/v1"
 import { primitiveBox } from "./primitive/box/v1"
 import { primitiveCone } from "./primitive/cone/v1"
 import { primitiveCylinder } from "./primitive/cylinder/v1"
@@ -48,6 +57,15 @@ export const GENERATORS: readonly AnyGenerator[] = [
   connectorPinHeader,
   batteryCell,
   enclosureBox,
+  controlPot,
+  controlKnob,
+  connectorJack,
+  switchFootswitch,
+  batteryPp3,
+  boardPcb,
+  indicatorLed,
+  cableClip,
+  cableZipTie,
 ]
 
 /** The generator a manifest names, or undefined (unknown id, or a MAJOR this app lacks). */

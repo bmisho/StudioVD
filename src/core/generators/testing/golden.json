@@ -1773,5 +1773,535 @@
         }
       }
     }
+  },
+  "control.pot@1": {
+    "defaults": {
+      "anchors": ["mount", "bushing", "axis", "shaftAxis", "shaftTip", "lug1", "lug2", "lug3"],
+      "mates": ["turn"],
+      "bodies": {
+        "housing": {
+          "triangles": 368,
+          "faces": 23,
+          "volumeMm3": 1700.47519,
+          "offsetMm": [0, 0, -2.5],
+          "bboxMm": [-8, -7, -10.5, 8, 7, 10.5]
+        },
+        "shaft": {
+          "triangles": 128,
+          "faces": 4,
+          "volumeMm3": 204.314018,
+          "offsetMm": [0, 11, 0.450000048],
+          "bboxMm": [-2.99732757, -4, -2.54999995, 2.99732757, 4, 2.54999995]
+        }
+      }
+    },
+    "p16": {
+      "anchors": ["mount", "bushing", "axis", "shaftAxis", "shaftTip", "lug1", "lug2", "lug3"],
+      "mates": ["turn"],
+      "bodies": {
+        "housing": {
+          "triangles": 368,
+          "faces": 23,
+          "volumeMm3": 1700.47519,
+          "offsetMm": [0, 0, -2.5],
+          "bboxMm": [-8, -7, -10.5, 8, 7, 10.5]
+        },
+        "shaft": {
+          "triangles": 128,
+          "faces": 4,
+          "volumeMm3": 204.314018,
+          "offsetMm": [0, 11, 0.450000048],
+          "bboxMm": [-2.99732757, -4, -2.54999995, 2.99732757, 4, 2.54999995]
+        }
+      }
+    },
+    "p24": {
+      "anchors": ["mount", "bushing", "axis", "shaftAxis", "shaftTip", "lug1", "lug2", "lug3"],
+      "mates": ["turn"],
+      "bodies": {
+        "housing": {
+          "triangles": 448,
+          "faces": 23,
+          "volumeMm3": 4764.20058,
+          "offsetMm": [0, 0.25, -2.5],
+          "bboxMm": [-12, -9.25, -14.5, 12, 9.25, 14.5]
+        },
+        "shaft": {
+          "triangles": 124,
+          "faces": 3,
+          "volumeMm3": 298.928108,
+          "offsetMm": [0, 14.25, 0],
+          "bboxMm": [-3.17499995, -4.75, -3.17499995, 3.17499995, 4.75, 3.17499995]
+        }
+      }
+    }
+  },
+  "control.knob@1": {
+    "defaults": {
+      "anchors": ["bore", "top"],
+      "mates": [],
+      "bodies": {
+        "knob": {
+          "triangles": 1292,
+          "faces": 14,
+          "volumeMm3": 4497.99361,
+          "offsetMm": [0, 7.55000019, 0],
+          "bboxMm": [-12, -7.55000019, -12, 12, 7.55000019, 12]
+        }
+      }
+    },
+    "skirted6": {
+      "anchors": ["bore", "top"],
+      "mates": [],
+      "bodies": {
+        "knob": {
+          "triangles": 1292,
+          "faces": 14,
+          "volumeMm3": 4497.99361,
+          "offsetMm": [0, 7.55000019, 0],
+          "bboxMm": [-12, -7.55000019, -12, 12, 7.55000019, 12]
+        }
+      }
+    },
+    "skirted635": {
+      "anchors": ["bore", "top"],
+      "mates": [],
+      "bodies": {
+        "knob": {
+          "triangles": 1452,
+          "faces": 14,
+          "volumeMm3": 5547.0368,
+          "offsetMm": [0, 7.55000019, 0],
+          "bboxMm": [-13.5, -7.55000019, -13.5, 13.5, 7.55000019, 13.5]
+        }
+      }
+    },
+    "plain6": {
+      "anchors": ["bore", "top"],
+      "mates": [],
+      "bodies": {
+        "knob": {
+          "triangles": 780,
+          "faces": 12,
+          "volumeMm3": 2289.2408,
+          "offsetMm": [0, 8.05000019, 0],
+          "bboxMm": [-7.5, -8.05000019, -7.5, 7.5, 8.05000019, 7.5]
+        }
+      }
+    }
+  },
+  "connector.jack@1": {
+    "defaults": {
+      "anchors": ["mount", "bushing", "socket", "lug1", "lug2", "lug3"],
+      "mates": [],
+      "bodies": {
+        "jack": {
+          "triangles": 304,
+          "faces": 28,
+          "volumeMm3": 4949.50748,
+          "offsetMm": [0, -6.5, -2.5],
+          "bboxMm": [-8, -15.5, -9, 8, 15.5, 9]
+        }
+      }
+    },
+    "mono": {
+      "anchors": ["mount", "bushing", "socket", "lug1", "lug2", "lug3"],
+      "mates": [],
+      "bodies": {
+        "jack": {
+          "triangles": 304,
+          "faces": 28,
+          "volumeMm3": 4949.50748,
+          "offsetMm": [0, -6.5, -2.5],
+          "bboxMm": [-8, -15.5, -9, 8, 15.5, 9]
+        }
+      }
+    },
+    "stereo": {
+      "anchors": ["mount", "bushing", "socket", "lug1", "lug2", "lug3"],
+      "mates": [],
+      "bodies": {
+        "jack": {
+          "triangles": 304,
+          "faces": 28,
+          "volumeMm3": 4949.50748,
+          "offsetMm": [0, -6.5, -2.5],
+          "bboxMm": [-8, -15.5, -9, 8, 15.5, 9]
+        }
+      }
+    },
+    "dc": {
+      "anchors": ["mount", "bushing", "socket", "lug1", "lug2", "lug3"],
+      "mates": [],
+      "bodies": {
+        "jack": {
+          "triangles": 476,
+          "faces": 28,
+          "volumeMm3": 1717.49838,
+          "offsetMm": [0, -2, -2.25],
+          "bboxMm": [-5.5, -11, -7.75, 5.5, 11, 7.75]
+        }
+      }
+    }
+  },
+  "switch.footswitch@1": {
+    "defaults": {
+      "anchors": [
+        "mount",
+        "bushing",
+        "plunger",
+        "lug1",
+        "lug2",
+        "lug3",
+        "lug4",
+        "lug5",
+        "lug6",
+        "lug7",
+        "lug8",
+        "lug9"
+      ],
+      "mates": [],
+      "bodies": {
+        "switch": {
+          "triangles": 404,
+          "faces": 65,
+          "volumeMm3": 6793.47808,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-8.5, -22, -8.5, 8.5, 22, 8.5]
+        }
+      }
+    },
+    "threePole": {
+      "anchors": [
+        "mount",
+        "bushing",
+        "plunger",
+        "lug1",
+        "lug2",
+        "lug3",
+        "lug4",
+        "lug5",
+        "lug6",
+        "lug7",
+        "lug8",
+        "lug9"
+      ],
+      "mates": [],
+      "bodies": {
+        "switch": {
+          "triangles": 404,
+          "faces": 65,
+          "volumeMm3": 6793.47808,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-8.5, -22, -8.5, 8.5, 22, 8.5]
+        }
+      }
+    },
+    "twoPole": {
+      "anchors": ["mount", "bushing", "plunger", "lug1", "lug2", "lug3", "lug4", "lug5", "lug6"],
+      "mates": [],
+      "bodies": {
+        "switch": {
+          "triangles": 368,
+          "faces": 47,
+          "volumeMm3": 6776.67808,
+          "offsetMm": [0, 0, 0],
+          "bboxMm": [-8.5, -22, -8.5, 8.5, 22, 8.5]
+        }
+      }
+    }
+  },
+  "battery.pp3@1": {
+    "defaults": {
+      "anchors": ["base", "plus", "minus", "red", "black"],
+      "mates": [],
+      "bodies": {
+        "battery": {
+          "triangles": 232,
+          "faces": 31,
+          "volumeMm3": 25028.4964,
+          "offsetMm": [0, 28, 0],
+          "bboxMm": [-13.25, -28, -8.75, 13.25, 28, 8.75]
+        }
+      }
+    },
+    "snap": {
+      "anchors": ["base", "plus", "minus", "red", "black"],
+      "mates": [],
+      "bodies": {
+        "battery": {
+          "triangles": 232,
+          "faces": 31,
+          "volumeMm3": 25028.4964,
+          "offsetMm": [0, 28, 0],
+          "bboxMm": [-13.25, -28, -8.75, 13.25, 28, 8.75]
+        }
+      }
+    },
+    "bare": {
+      "anchors": ["base", "plus", "minus"],
+      "mates": [],
+      "bodies": {
+        "battery": {
+          "triangles": 156,
+          "faces": 21,
+          "volumeMm3": 21626.5294,
+          "offsetMm": [0, 24.25, 0],
+          "bboxMm": [-13.25, -24.25, -8.75, 13.25, 24.25, 8.75]
+        }
+      }
+    }
+  },
+  "board.pcb@1": {
+    "defaults": {
+      "anchors": [
+        "top",
+        "bottom",
+        "hole1",
+        "hole2",
+        "hole3",
+        "hole4",
+        "pad1",
+        "pad2",
+        "pad3",
+        "pad4",
+        "pad5",
+        "pad6",
+        "pad7",
+        "pad8"
+      ],
+      "mates": [],
+      "bodies": {
+        "board": {
+          "triangles": 428,
+          "faces": 62,
+          "volumeMm3": 3790.16099,
+          "offsetMm": [0, 0.824999988, 0],
+          "bboxMm": [-30, -0.824999988, -20, 30, 0.824999988, 20]
+        }
+      }
+    },
+    "small": {
+      "anchors": [
+        "top",
+        "bottom",
+        "hole1",
+        "hole2",
+        "hole3",
+        "hole4",
+        "pad1",
+        "pad2",
+        "pad3",
+        "pad4",
+        "pad5",
+        "pad6",
+        "pad7",
+        "pad8"
+      ],
+      "mates": [],
+      "bodies": {
+        "board": {
+          "triangles": 428,
+          "faces": 62,
+          "volumeMm3": 3790.16099,
+          "offsetMm": [0, 0.824999988, 0],
+          "bboxMm": [-30, -0.824999988, -20, 30, 0.824999988, 20]
+        }
+      }
+    },
+    "large": {
+      "anchors": [
+        "top",
+        "bottom",
+        "hole1",
+        "hole2",
+        "hole3",
+        "hole4",
+        "pad1",
+        "pad2",
+        "pad3",
+        "pad4",
+        "pad5",
+        "pad6",
+        "pad7",
+        "pad8",
+        "pad9",
+        "pad10",
+        "pad11",
+        "pad12"
+      ],
+      "mates": [],
+      "bodies": {
+        "board": {
+          "triangles": 476,
+          "faces": 86,
+          "volumeMm3": 12751.1211,
+          "offsetMm": [0, 0.824999988, 0],
+          "bboxMm": [-50, -0.824999988, -40, 50, 0.824999988, 40]
+        }
+      }
+    }
+  },
+  "indicator.led@1": {
+    "defaults": {
+      "anchors": ["lens", "flange", "anode", "cathode", "panel"],
+      "mates": [],
+      "bodies": {
+        "led": {
+          "triangles": 984,
+          "faces": 21,
+          "volumeMm3": 253.100538,
+          "offsetMm": [0, -3.19999981, 0],
+          "bboxMm": [-4, -11.8000002, -4, 4, 11.8000002, 4]
+        }
+      }
+    },
+    "red": {
+      "anchors": ["lens", "flange", "anode", "cathode", "panel"],
+      "mates": [],
+      "bodies": {
+        "led": {
+          "triangles": 984,
+          "faces": 21,
+          "volumeMm3": 253.100538,
+          "offsetMm": [0, -3.19999981, 0],
+          "bboxMm": [-4, -11.8000002, -4, 4, 11.8000002, 4]
+        }
+      }
+    },
+    "green": {
+      "anchors": ["lens", "flange", "anode", "cathode", "panel"],
+      "mates": [],
+      "bodies": {
+        "led": {
+          "triangles": 984,
+          "faces": 21,
+          "volumeMm3": 253.100538,
+          "offsetMm": [0, -3.19999981, 0],
+          "bboxMm": [-4, -11.8000002, -4, 4, 11.8000002, 4]
+        }
+      }
+    },
+    "blue": {
+      "anchors": ["lens", "flange", "anode", "cathode", "panel"],
+      "mates": [],
+      "bodies": {
+        "led": {
+          "triangles": 984,
+          "faces": 21,
+          "volumeMm3": 253.100538,
+          "offsetMm": [0, -3.19999981, 0],
+          "bboxMm": [-4, -11.8000002, -4, 4, 11.8000002, 4]
+        }
+      }
+    }
+  },
+  "cable.clip@1": {
+    "defaults": {
+      "anchors": ["base", "cable"],
+      "mates": [],
+      "bodies": {
+        "clip": {
+          "triangles": 828,
+          "faces": 9,
+          "volumeMm3": 130.252058,
+          "offsetMm": [0, 2.89744687, 0],
+          "bboxMm": [-5, -2.89744687, -5, 5, 2.89744687, 5]
+        }
+      }
+    },
+    "c2": {
+      "anchors": ["base", "cable"],
+      "mates": [],
+      "bodies": {
+        "clip": {
+          "triangles": 828,
+          "faces": 9,
+          "volumeMm3": 80.4743389,
+          "offsetMm": [0, 1.87814987, 0],
+          "bboxMm": [-4, -1.87814987, -4, 4, 1.87814987, 4]
+        }
+      }
+    },
+    "c4": {
+      "anchors": ["base", "cable"],
+      "mates": [],
+      "bodies": {
+        "clip": {
+          "triangles": 828,
+          "faces": 9,
+          "volumeMm3": 130.252058,
+          "offsetMm": [0, 2.89744687, 0],
+          "bboxMm": [-5, -2.89744687, -5, 5, 2.89744687, 5]
+        }
+      }
+    },
+    "c8": {
+      "anchors": ["base", "cable"],
+      "mates": [],
+      "bodies": {
+        "clip": {
+          "triangles": 828,
+          "faces": 9,
+          "volumeMm3": 262.363851,
+          "offsetMm": [0, 4.83958525, 0],
+          "bboxMm": [-7, -4.85992813, -7, 7, 4.85992813, 7]
+        }
+      }
+    }
+  },
+  "cable.zipTie@1": {
+    "defaults": {
+      "anchors": ["cable"],
+      "mates": [],
+      "bodies": {
+        "tie": {
+          "triangles": 968,
+          "faces": 9,
+          "volumeMm3": 81.2363826,
+          "offsetMm": [0, -1.5937103, 0],
+          "bboxMm": [-1.5, -5.30628967, -3.71664977, 1.5, 5.30628967, 3.71664977]
+        }
+      }
+    },
+    "z3": {
+      "anchors": ["cable"],
+      "mates": [],
+      "bodies": {
+        "tie": {
+          "triangles": 968,
+          "faces": 9,
+          "volumeMm3": 69.5145052,
+          "offsetMm": [0, -1.74414992, 0],
+          "bboxMm": [-1.5, -4.25584984, -2.51445389, 1.5, 4.25584984, 2.51445389]
+        }
+      }
+    },
+    "z6": {
+      "anchors": ["cable"],
+      "mates": [],
+      "bodies": {
+        "tie": {
+          "triangles": 968,
+          "faces": 9,
+          "volumeMm3": 84.6616057,
+          "offsetMm": [0, -1.59423208, 0],
+          "bboxMm": [-1.5, -5.80576801, -4.21615362, 1.5, 5.80576801, 4.21615362]
+        }
+      }
+    },
+    "z12": {
+      "anchors": ["cable"],
+      "mates": [],
+      "bodies": {
+        "tie": {
+          "triangles": 968,
+          "faces": 9,
+          "volumeMm3": 122.472265,
+          "offsetMm": [0, -1.44587922, 0],
+          "bboxMm": [-1.5, -8.85412121, -7.41636372, 1.5, 8.85412121, 7.41636372]
+        }
+      }
+    }
   }
 }

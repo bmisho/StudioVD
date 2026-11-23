@@ -1460,11 +1460,23 @@ transparent materials, X-ray) and orbits the view; this phase adds what it lacks
   an anchor, use an end or name a missing one). Too-short cables get a warning in the tree's
   Connectors folder. File › Export › Cable Cut List (.csv): RFC 4180, CRLF, names starting
   with = + - @ prefixed with an apostrophe so spreadsheets show rather than run them
-- [ ] 16.4 Pedal part generators, each dimension with a source and confidence: potentiometers
+- [x] 16.4 Pedal part generators, each dimension with a source and confidence: potentiometers
   (16 and 24 mm bodies), knobs, 6.35 mm jacks, DC barrel jack, 3PDT footswitch, 9 V battery
   and snap, PCB board, LED with bezel, cable clip and zip tie. Anchors where things attach:
   shaft and bushing axes, mounting faces, solder lugs and pads (cable ends), clip centres
-  (cable waypoints).
+  (cable waypoints). As built (nine generators, every
+  size a parameter; tables say where numbers come from, most "typical datasheet" values at low
+  confidence, so check the part you buy): `control.pot` (16/24 mm presets, D or round shaft;
+  the shaft is its own body on a built-in revolute mate limited to ±150°, 300° typical, so a
+  binding can drive a schematic pot), `control.knob` (skirted or plain, pointer; its bore
+  anchor at the ceiling seats it over a shaft tip), `connector.jack` (6.35 mm mono/stereo
+  box body, 5.5 × 2.1 mm DC round body with centre pin), `switch.footswitch` (3PDT/DPDT, lugs
+  named by pole and throw), `battery.pp3` (IEC 60086-2 6LR61 maxima, optional snap with red
+  and black lead anchors), `board.pcb` (FR-4 1.6 mm, ISO 273 M3 clearance holes, a row of
+  wire pads), `indicator.led` (5 mm, five colours, optional bezel), `cable.clip` and
+  `cable.zipTie` (their "Cable through" anchor is a cable waypoint). Panel parts stand behind
+  the panel with y = 0 their mounting face; lugs and pads are point anchors (cable ends).
+  All pass the closed-body, analytic-volume and manifest checks; golden runs added
 - [ ] 16.5 Import from a zip (GrabCAD-style downloads): pick or drop a `.zip`; Rust extracts it
   through the zip guard and the Import dialog lists the STEP, IGES, STL, OBJ and GLB files in
   it; native formats (SLDPRT, IPT, F3D...) are listed as not readable, with "export STEP" as

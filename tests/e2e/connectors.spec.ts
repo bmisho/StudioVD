@@ -14,11 +14,9 @@ const probe = <T>(page: Page, fn: string, arg?: unknown) =>
 
 async function dragCardTo(page: Page, query: string, point: [number, number, number]) {
   await page.getByRole("searchbox", { name: "Search components" }).fill(query)
-  const card = await page
-    .getByRole("listbox", { name: "Components" })
-    .getByRole("option")
-    .first()
-    .boundingBox()
+  const option = page.getByRole("listbox", { name: "Components" }).getByRole("option").first()
+  await expect(option).toBeVisible() // boundingBox() does not wait for the filtered list
+  const card = await option.boundingBox()
   if (!card) throw new Error("no card")
   const to = await project(page, point)
   await page.mouse.move(card.x + 20, card.y + 20)

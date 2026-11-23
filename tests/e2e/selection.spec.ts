@@ -51,8 +51,15 @@ test.describe("3D selection", () => {
     await expect(row(page, "Base")).toHaveAttribute("aria-selected", "false")
     await expect(row(page, "Leaf")).toHaveAttribute("aria-selected", "true")
 
+    // A right click on empty space keeps the selection and opens the context menu (15.4);
+    // close it first, or the next click only dismisses the menu.
     await page.mouse.click(empty.x, empty.y, { button: "right" })
+    const menu = page.getByRole("menu", { name: "Context menu" })
+    await expect(menu).toBeVisible()
     await expect(row(page, "Leaf")).toHaveAttribute("aria-selected", "true")
+    await page.keyboard.press("Escape")
+    await expect(menu).toBeHidden()
+    await expect(row(page, "Leaf")).toHaveAttribute("aria-selected", "true") // Escape closed only the menu
     await page.mouse.click(empty.x, empty.y)
     await expect(row(page, "Leaf")).toHaveAttribute("aria-selected", "false")
     await expect.poll(() => highlightPixels(page)).toBe(0)

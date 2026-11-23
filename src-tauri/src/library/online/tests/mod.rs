@@ -4,6 +4,7 @@
 mod catalog;
 mod fetch;
 mod guards;
+mod interop;
 mod mock;
 mod sign;
 
@@ -116,6 +117,7 @@ pub fn source(keys: &[&TestKey], index_base: &str, pack_bases: &[&str]) -> &'sta
         keys: Box::leak(keys.into_boxed_slice()),
         index_bases: Box::leak(vec![leak(index_base)].into_boxed_slice()),
         pack_bases: Box::leak(packs.into_boxed_slice()),
+        redirect_hosts: &[],
     }))
 }
 

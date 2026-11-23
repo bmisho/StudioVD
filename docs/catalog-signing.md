@@ -4,7 +4,10 @@ How the official catalog is signed and how its keys are kept (PLAN 4.4, 14.2). T
 is built: `src-tauri/src/library/online/` verifies, caches and guards; it trusts only the keys
 compiled into `source.rs`. Creating the keys and the hosting repository is the project owner's
 job. The keys exist (created 2026-11-23; ids `A26FD5C302F7F8FB` active, `97EEE73CB6AC658E`
-backup) and are compiled in; the hosting repository and the publish job do not exist yet.
+backup) and are compiled in. The hosting repository is `bmisho/studiovd-catalog`: its
+**Publish catalog** workflow does the Publishing steps below (by hand from the Actions tab, and
+monthly so the index never expires), with the active key from the `catalog-publish`
+environment's secrets `MINISIGN_SECRET_KEY` (the key file's text) and `MINISIGN_PASSWORD`.
 
 ## Keys
 

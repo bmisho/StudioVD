@@ -1267,10 +1267,19 @@ Exit criteria
 
 - [ ] 14.1 Public hosting repo (§7 Q1) with immutable releases; pack releases `--latest=false`,
   catalog releases `--latest` (both explicit; the API defaults new releases to latest);
-  post-publish smoke test of `latest/download/index.json`. **Open: the project owner's to
-  create** (a public repository on their account). The app's host list
-  (`src-tauri/src/library/online/source.rs`) is empty until then, and the Library says no
-  catalog is configured
+  post-publish smoke test of `latest/download/index.json`. As built: the owner created
+  `bmisho/studiovd-catalog` (public, 2026-11-23). Its **Publish catalog** workflow (by hand and
+  monthly) takes the next sequence above every `catalog-N` release, builds `index.json` from
+  `catalog/` with `tools/build-index.mjs` (refusing what the app would refuse: the JSON Schema
+  copy of `CatalogIndexSchema`, `docs/formats/catalog-index.schema.json`, kept equal by a test,
+  plus the superRefine cross-references), signs it with minisign 0.11 (prehashed, bound comment;
+  `tools/sign.sh`), releases it as a draft then latest, and fetches it back. Its Check workflow
+  signs with a throwaway key on every push. The app reads `latest/download/` for the index and
+  `releases/download/<tag>/` for packs; the consent dialog also names
+  `release-assets.githubusercontent.com` (GitHub's redirect). A cargo test verifies an index
+  built by those tools and signed by real minisign 0.11 (`tests/interop.rs`). **Open: the
+  owner's secrets in the `catalog-publish` environment, the first publish, and the repository's
+  immutable-releases setting**
 - [x] 14.2 Signing: two minisign keypairs (active + offline backup), separate from any updater
   key; trusted comment binds catalog id, sequence and schema; rotation procedure documented.
   Done: the trusted comment (`studiovd-catalog catalog=<id> sequence=<n> schema=<v>`, checked

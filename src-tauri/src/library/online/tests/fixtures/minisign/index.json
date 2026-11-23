@@ -1,0 +1,21 @@
+{
+  "format": "studiovd-catalog",
+  "schemaVersion": 1,
+  "catalogId": "official",
+  "sequence": 1,
+  "generatedAt": "2026-11-23T12:00:00Z",
+  "expiresAt": "2027-02-21T12:00:00Z",
+  "minAppVersion": "0.1.0",
+  "signingKeyId": "6FEA78BE67AB28D8",
+  "mirrors": [
+    "https://github.com/bmisho/studiovd-catalog/releases/download/"
+  ],
+  "categories": [],
+  "components": [],
+  "packs": {},
+  "bundles": [],
+  "previewPacks": {},
+  "generatorPresets": [],
+  "revoked": [],
+  "notices": []
+}

@@ -275,8 +275,11 @@ Further rules:
   bound to catalog/sequence/schema) before anything parses it, then validated again in the
   webview like any file; a pack is Official only when the verified index lists its SHA-256 and
   every manifest's. The official source in `library/online/source.rs` has the owner's keys
-  (active first, then the offline backup) and no hosts until the owner creates the hosting
-  repo (`docs/catalog-signing.md`); never add a key without the owner. Component Update reuses the
+  (active first, then the offline backup; never add one without the owner) and reads
+  `bmisho/studiovd-catalog`'s releases, which its publish workflow signs
+  (`docs/catalog-signing.md`). `docs/formats/catalog-index.schema.json` is the JSON Schema copy
+  of `CatalogIndexSchema` that repository validates with: regenerate it (a test fails until you
+  do) and copy it there when the schema changes. Component Update reuses the
   key-matched `regenerateInstance`; Replace is remove + instantiate in one undo entry.
 - Connectors (Phase 9.6, scene.json v2): belts, tubes and springs are documents of their end
   anchors only; their meshes are derived in the view (`core/connectors`, `ConnectorsLayer`)

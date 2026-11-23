@@ -2,9 +2,9 @@
 //! that serve them. Hosts are untrusted (trust comes only from the signatures), so a user
 //! mirror can serve the same files.
 //!
-//! The official catalog has its signing keys (PLAN 14.2: active, then the offline backup) but
-//! no hosts yet: its hosting repository (14.1) is the project owner's to create. Until then
-//! Refresh says no catalog is configured; Install from file still works.
+//! The official catalog (PLAN 14.1/14.2): signed with the owner's keys (active, then the
+//! offline backup) and published as GitHub releases of bmisho/studiovd-catalog, whose
+//! publish workflow signs `index.json` into the release marked latest.
 
 /// One signed catalog: its id (the index's `catalogId`), the keys that may sign it, where its
 /// `index.json` (+ `.minisig`) lives, and the bases its packs' relative URLs resolve against.
@@ -14,6 +14,8 @@ pub struct CatalogSource {
     pub keys: &'static [&'static str],
     pub index_bases: &'static [&'static str],
     pub pack_bases: &'static [&'static str],
+    /// Hosts the bases redirect to (named in the consent dialog with the bases' own hosts).
+    pub redirect_hosts: &'static [&'static str],
 }
 
 pub const OFFICIAL: CatalogSource = CatalogSource {
@@ -24,8 +26,12 @@ pub const OFFICIAL: CatalogSource = CatalogSource {
         "RWT7+PcCw9Vvols8Pi3Ar0x9gYuBFRJbvhdIo4cx0Pwbrr+eaQhidO70",
         "RWSOZay2POful1LzQR6TTV8gBHqHH0hvSRLnJ8if9BEOgby/OcF67gyg",
     ],
-    index_bases: &[],
-    pack_bases: &[],
+    // `latest/download/` follows the release marked latest (the newest catalog); packs live in
+    // their own releases (`<tag>/<file>`, never marked latest).
+    index_bases: &["https://github.com/bmisho/studiovd-catalog/releases/latest/download/"],
+    pack_bases: &["https://github.com/bmisho/studiovd-catalog/releases/download/"],
+    // GitHub serves release files from here (checked 2026-11-23: two redirects).
+    redirect_hosts: &["release-assets.githubusercontent.com"],
 };
 
 impl CatalogSource {
@@ -73,6 +79,7 @@ impl CatalogSource {
             .copied()
             .chain(mirror)
             .filter_map(|u| reqwest::Url::parse(u).ok()?.host_str().map(str::to_owned))
+            .chain(self.redirect_hosts.iter().map(|h| (*h).to_owned()))
             .collect();
         out.sort();
         out.dedup();
@@ -89,6 +96,7 @@ mod tests {
         keys: &["k"],
         index_bases: &["https://a.example/latest/"],
         pack_bases: &["https://a.example/dl/"],
+        redirect_hosts: &["cdn.example"],
     };
 
     #[test]
@@ -110,9 +118,13 @@ mod tests {
         );
         assert_eq!(
             TEST.hosts(Some("https://m.example/")),
-            ["a.example", "m.example"]
+            ["a.example", "cdn.example", "m.example"]
         );
-        assert!(!OFFICIAL.configured()); // keys, but no hosts until the hosting repo exists
+        assert!(OFFICIAL.configured());
+        assert_eq!(
+            OFFICIAL.hosts(None),
+            ["github.com", "release-assets.githubusercontent.com"]
+        );
     }
 
     #[test]

@@ -42,6 +42,8 @@ export function AppMenuBar() {
               <MenubarSeparator />
               <CommandMenuItem id="file.exportSchematicSvg" />
               <CommandMenuItem id="file.exportSchematicPng" />
+              <MenubarSeparator />
+              <CommandMenuItem id="file.exportCutList" />
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />

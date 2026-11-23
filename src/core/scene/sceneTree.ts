@@ -1,7 +1,10 @@
 import type { AssemblyGraph, MateIssue } from "@/core/assembly/assemblyGraph"
 import { mateTypeLabel } from "@/core/assembly/mateNames"
+import { cableStatus } from "@/core/connectors/cableMesh"
+import { connectorFrames } from "@/core/connectors/frames"
 import type {
   AnchorId,
+  Connector,
   ConnectorId,
   ConnectorKind,
   GroupId,
@@ -35,7 +38,14 @@ export type SceneTreeNode =
       name: string
       children: SceneTreeNode[]
     }
-  | { kind: "connector"; id: ConnectorId; name: string; connector: ConnectorKind }
+  | {
+      kind: "connector"
+      id: ConnectorId
+      name: string
+      connector: ConnectorKind
+      /** A cable shorter than its route: by how many mm (PLAN 16.3). */
+      shortMm?: number
+    }
 
 type TreeSource = Pick<SceneDocument, "groups" | "parts"> &
   Partial<Pick<SceneDocument, "anchors" | "mates" | "connectors">>
@@ -123,14 +133,26 @@ export function buildSceneTree(doc: TreeSource, graph?: AssemblyGraph): SceneTre
       kind: "connectors",
       id: CONNECTORS_FOLDER_ID,
       name: "Connectors",
-      children: connectors.map((c) => ({
-        kind: "connector",
-        id: c.id,
-        name: c.name,
-        connector: c.kind,
-      })),
+      children: connectors.map((c) => {
+        const short = c.kind === "cable" ? cableShortMm(doc, c) : 0
+        return {
+          kind: "connector",
+          id: c.id,
+          name: c.name,
+          connector: c.kind,
+          ...(short > 0 && { shortMm: short }),
+        }
+      }),
     })
   return roots
+}
+
+/** How much a cable lacks for its route, to 0.1 mm (0 when it reaches or cannot be drawn). */
+function cableShortMm(doc: TreeSource, c: Extract<Connector, { kind: "cable" }>): number {
+  if (!doc.anchors) return 0
+  const frames = connectorFrames({ anchors: doc.anchors, parts: doc.parts }, c)
+  const status = frames ? cableStatus(c, frames) : null
+  return Math.round((status?.shortMm ?? 0) * 10) / 10
 }
 
 /** A part's DOF badge: only for parts in a mechanism (mated, or fixed to another part). */

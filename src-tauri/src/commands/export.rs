@@ -19,8 +19,10 @@ fn export_extension(format: &str) -> AppResult<&'static str> {
         // The schematic (PLAN 11.8).
         "svg" => Ok("svg"),
         "png" => Ok("png"),
+        // The cable cut list (PLAN 16.3).
+        "csv" => Ok("csv"),
         other => Err(AppError::InvalidInput(format!(
-            "Unsupported export format '{other}' (expected glb, stl, svg or png)."
+            "Unsupported export format '{other}' (expected glb, stl, svg, png or csv)."
         ))),
     }
 }
@@ -112,6 +114,7 @@ mod tests {
         assert_eq!(export_extension("glb").expect("glb"), "glb");
         assert_eq!(export_extension("svg").expect("svg"), "svg");
         assert_eq!(export_extension("png").expect("png"), "png");
+        assert_eq!(export_extension("csv").expect("csv"), "csv");
         assert_eq!(export_extension("obj").unwrap_err().kind(), "invalidInput");
     }
 

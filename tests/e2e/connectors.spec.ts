@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { expect, test } from "./fixtures"
+import { expect, exportedFiles, test, type E2EWindow } from "./fixtures"
 import { project, waitForViewport } from "./viewportHelpers"
 
 // PLAN 9.6: a GT2 belt drawn round two pulleys from their belt-line anchors.
@@ -115,10 +115,29 @@ test("a cable of a set length between two lugs: spare, too short, undo (PLAN 16.
     .toEqual([expect.objectContaining({ kind: "cable", lengthMm: 5 })])
   await panel.getByRole("button", { name: "Fit to route + 10%" }).click()
   await expect(panel.getByRole("alert")).toBeHidden()
+  // Red insulation (one shared "Wire (red)" material) and a 22 AWG hook-up wire size.
+  await panel.getByRole("button", { name: "Red" }).click()
+  await expect(panel.getByRole("button", { name: "Red" })).toHaveAttribute("aria-pressed", "true")
+  await panel.getByRole("combobox", { name: "Hook-up wire size" }).click()
+  await page.getByRole("option", { name: "22 AWG (Ø1.46 mm)" }).click()
+  await expect(panel.getByRole("textbox", { name: "Diameter (mm)" })).toHaveValue("1.46")
   await page
     .getByTestId("viewport-canvas")
     .screenshot({ path: test.info().outputPath("cable.png") })
-  // Three undo steps: fit, the length typed, the cable itself.
-  for (let i = 0; i < 3; i++) await page.keyboard.press("Control+z")
+  // The cut list: its colour, size and length, as CSV.
+  await page.getByRole("menuitem", { name: "File" }).click()
+  await page.getByRole("menuitem", { name: "Export" }).click()
+  await page.getByRole("menuitem", { name: "Cable Cut List (.csv)…" }).click()
+  await expect
+    .poll(async () => (await exportedFiles(page)).map((f) => f.name))
+    .toContain("Untitled cut list.csv")
+  const csv = await page.evaluate(() =>
+    (window as unknown as E2EWindow).__E2E__.exportText("Untitled cut list.csv")
+  )
+  expect(csv).toMatch(
+    /^Cable,Colour,Diameter \(mm\),Wires,Length \(mm\),Waypoints,Note\r\nCable,Wire \(red\),1\.46,1,\d+,0,\r\n$/
+  )
+  // Five undo steps: size, colour, fit, the length typed, the cable itself.
+  for (let i = 0; i < 5; i++) await page.keyboard.press("Control+z")
   await expect.poll(() => probe<unknown[]>(page, "connectors")).toEqual([])
 })

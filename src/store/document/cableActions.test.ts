@@ -3,6 +3,7 @@ import { cableStatus } from "@/core/connectors/cableMesh"
 import { connectorMesh } from "@/core/connectors/connectorMesh"
 import { connectorFrames } from "@/core/connectors/frames"
 import { volumeAndCentroid } from "@/core/geometry/massProperties"
+import { buildSceneTree } from "@/core/scene/sceneTree"
 import { instantiateComponent } from "@/core/library/instantiate"
 import { at, generated } from "@/core/library/testing/generatedComponent"
 import {
@@ -119,5 +120,54 @@ describe("cable actions (PLAN 16.1, 16.3)", () => {
       expect(volumeMm3 / expected).toBeGreaterThan(0.97)
       expect(volumeMm3 / expected).toBeLessThan(conductors === 1 ? 1.03 : 1.25)
     }
+  })
+})
+
+describe("cable colour, waypoints and the tree (PLAN 16.3)", () => {
+  it("colours cables with one shared material per colour, one undo entry each", async () => {
+    const { store, anchors } = await threeAnchors()
+    const s = () => store.getState()
+    const a = s().addConnector("cable", [anchors[0] as AnchorId, anchors[1] as AnchorId])
+    const b = s().addConnector("cable", [anchors[1] as AnchorId, anchors[2] as AnchorId])
+    if (!a || !b) throw new Error("no cables")
+    const steps = store.temporal.getState().pastStates.length
+    s().setCableColour(a, "red")
+    expect(store.temporal.getState().pastStates.length).toBe(steps + 1)
+    s().setCableColour(b, "red")
+    const red = cableOf(store, a).materialId
+    expect(cableOf(store, b).materialId).toBe(red)
+    expect(s().doc.materials[red ?? ("" as never)]?.name).toBe("Wire (red)")
+    roundTrips(store, "coloured")
+  })
+
+  it("reorders, removes and adds waypoints; refuses missing, repeated or end anchors", async () => {
+    const { store, anchors } = await threeAnchors()
+    const s = () => store.getState()
+    const [start, mid, end] = anchors as [AnchorId, AnchorId, AnchorId]
+    const id = s().addConnector("cable", [start, end])
+    if (!id) throw new Error("no cable")
+    s().setCableVia(id, [mid])
+    expect(cableOf(store, id).via).toEqual([mid])
+    s().setCableVia(id, [mid, mid]) // repeated
+    s().setCableVia(id, [start]) // an end
+    s().setCableVia(id, ["00000000-0000-4000-8000-000000000000" as AnchorId]) // missing
+    expect(cableOf(store, id).via).toEqual([mid])
+    roundTrips(store, "routed")
+    s().setCableVia(id, [])
+    expect(cableOf(store, id).via).toEqual([])
+  })
+
+  it("marks a cable shorter than its route in the scene tree", async () => {
+    const { store, anchors } = await threeAnchors()
+    const id = store.getState().addConnector("cable", anchors)
+    if (!id) throw new Error("no cable")
+    const row = () =>
+      buildSceneTree(store.getState().doc)
+        .find((n) => n.kind === "connectors")
+        ?.children.find((n) => n.kind === "connector" && n.id === id)
+    expect(row()).not.toHaveProperty("shortMm")
+    store.getState().updateConnector(id, { lengthMm: 10 })
+    const marked = row()
+    expect(marked?.kind === "connector" && marked.shortMm).toBeGreaterThan(0)
   })
 })

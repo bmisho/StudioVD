@@ -86,6 +86,11 @@ export function fileCommands(deps: CommandDeps): Command[] {
       label: "Schematic as PNG (.png)…",
       run: backendCommand(deps, "Export schematic", () => backend.exportSchematic("png")),
     },
+    {
+      id: "file.exportCutList",
+      label: "Cable Cut List (.csv)…",
+      run: backendCommand(deps, "Export cut list", backend.exportCutList),
+    },
     { id: "file.exit", label: "Exit", run: backendCommand(deps, "Exit", backend.closeWindow) },
   ]
 }

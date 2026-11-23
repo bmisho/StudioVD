@@ -20,6 +20,7 @@ export type CommandId =
   | "file.exportStl"
   | "file.exportSchematicSvg"
   | "file.exportSchematicPng"
+  | "file.exportCutList"
   | "file.exit"
   | "edit.undo"
   | "edit.redo"
@@ -90,6 +91,7 @@ export interface Backend {
   writeAsset: (id: string, bytes: Uint8Array) => Promise<Result<boolean>>
   exportScene: (format: "glb" | "stl") => Promise<Result<void>>
   exportSchematic: (format: "svg" | "png") => Promise<Result<void>>
+  exportCutList: () => Promise<Result<void>>
   /** Help › Examples (PLAN 13.5): a new project with an example built in it. */
   openExample: (id: ExampleId) => Promise<void>
   /** Opens Save as component for these parts (PLAN 9.7). */

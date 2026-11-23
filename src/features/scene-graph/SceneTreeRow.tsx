@@ -136,6 +136,9 @@ export const SceneTreeRow = memo(function SceneTreeRow(props: SceneTreeRowProps)
         {node.kind === "part" && node.dof !== undefined && (
           <span className="sr-only"> ({dofText(node.dof)})</span>
         )}
+        {node.kind === "connector" && node.shortMm !== undefined && (
+          <span className="sr-only"> (too short by {node.shortMm} mm)</span>
+        )}
         {issues.map((i) => (
           <span key={i} className="sr-only">
             {" "}
@@ -149,6 +152,11 @@ export const SceneTreeRow = memo(function SceneTreeRow(props: SceneTreeRowProps)
         </span>
       )}
       {suppressed && <Ban className="size-3 shrink-0" aria-hidden />}
+      {node.kind === "connector" && node.shortMm !== undefined && (
+        <span title={`Too short by ${node.shortMm} mm for its route`} className="shrink-0">
+          <TriangleAlert className="size-3.5 text-warning" aria-hidden />
+        </span>
+      )}
       {warnings.length > 0 && (
         <span title={warnings.map((w) => ISSUE_TEXT[w]).join(" ")} className="shrink-0">
           <TriangleAlert className="size-3.5 text-warning" aria-hidden />

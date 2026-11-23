@@ -12,6 +12,8 @@ import { connectorFrames } from "@/core/connectors/frames"
 import { NumberField } from "@/features/materials/controls/NumberField"
 import type { ConnectorPatch } from "@/store/document/connectorActions"
 import { useDocumentStore } from "@/store/document/documentStore"
+import { CableLook } from "./CableLook"
+import { CableWaypoints } from "./CableWaypoints"
 
 const SLACK = [
   { value: "arc", label: "Arcs" },
@@ -128,11 +130,8 @@ export function CableFields({ cable: c }: { cable: Cable }) {
           </SelectContent>
         </Select>
       </Row>
-      <p className="text-xs text-muted-foreground">
-        {c.via.length === 0
-          ? "Straight from end to end; select anchors in order to route it through clips."
-          : `Through ${c.via.length} waypoint${c.via.length === 1 ? "" : "s"}, in order.`}
-      </p>
+      <CableLook cable={c} />
+      <CableWaypoints cable={c} />
     </>
   )
 }

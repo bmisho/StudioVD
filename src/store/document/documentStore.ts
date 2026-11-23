@@ -14,6 +14,7 @@ import {
 import { removeGroups } from "./deletion"
 import { anchorActions, type AnchorActions } from "./anchorActions"
 import { componentActions, type ComponentActions } from "./componentActions"
+import { cableActions, type CableActions } from "./cableActions"
 import { connectorActions, type ConnectorActions } from "./connectorActions"
 import { couplingActions, type CouplingActions } from "./couplingActions"
 import { simulationActions, type SimulationActions } from "./simulationActions"
@@ -37,6 +38,7 @@ export interface DocumentState
     MateActions,
     ComponentActions,
     ConnectorActions,
+    CableActions,
     CouplingActions,
     SimulationActions,
     BindingActions,
@@ -106,6 +108,7 @@ export function createDocumentStore(initial?: SceneDocument) {
         ...mateActions(set, get),
         ...componentActions(set, get),
         ...connectorActions(set, get),
+        ...cableActions(set, get),
         ...couplingActions(set, get),
         ...simulationActions(set),
         ...bindingActions(set, get),

@@ -1,5 +1,6 @@
 import { toast } from "sonner"
 import { exportScene } from "@/features/export/exportService"
+import { exportCutList } from "@/features/export/exportCutList"
 import { exportSchematic } from "@/features/schematic/exportSchematic"
 import { openExample } from "@/features/examples/openExample"
 import { networkController } from "@/features/library/online/catalogService"
@@ -65,6 +66,7 @@ export const appCommands = createCommandRegistry({
     writeAsset,
     exportScene,
     exportSchematic,
+    exportCutList,
     openExample,
     saveAsComponent: async (parts) => {
       rememberDialogReturnFocus()

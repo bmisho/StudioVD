@@ -1446,14 +1446,20 @@ transparent materials, X-ray) and orbits the view; this phase adds what it lacks
   `cableMesh.ts` (one tube, or two strands twisted about the centreline; a pair's length is
   along the pair). 40 seeded random routes × 3 styles land within ±0.05 mm and pass through
   every waypoint; solves take 2-20 ms
-- [ ] 16.3 Cable editing (part done: Properties › Connect N anchors › Cable, in the order the
-  anchors were selected; the inspector's length, route/spare or "too short by", Fit to route +
-  10%, diameter, leads, one wire or a twisted pair and pitch, arcs/waves/coil; E2E in
-  `connectors.spec.ts`): a Cable tool (two anchors, then waypoints), the inspector (length with
+- [x] 16.3 Cable editing: a Cable tool (two anchors, then waypoints), the inspector (length with
   "fit to route + margin", route length and spare or shortfall, diameter presets for hook-up
   wire gauges, wire colours, pair and pitch, waypoints add/remove/reorder), short cables as
   issues in the scene tree, and a cut list (each cable's colour, diameter and length) to copy
-  or export as CSV.
+  or export as CSV. As built: no separate tool; Properties › Connect N anchors › Cable takes
+  the anchors in the order they were selected (first and last are the ends). The inspector:
+  length with "Route … mm, … spare" or an alert "Too short by …", Fit to route + 10%,
+  diameter, leads, one wire or a twisted pair and pitch, arcs/waves/coil, ten wire colours
+  (each a "Wire (colour)" PVC material made once and shared, `wireSpecs.ts`), hook-up sizes
+  16-30 AWG (ASTM B258 conductor + UL 1007 nominal 0.41 mm wall, low confidence on the wall),
+  and the route list (move up/down, remove, add any other anchor; refused if it would repeat
+  an anchor, use an end or name a missing one). Too-short cables get a warning in the tree's
+  Connectors folder. File › Export › Cable Cut List (.csv): RFC 4180, CRLF, names starting
+  with = + - @ prefixed with an apostrophe so spreadsheets show rather than run them
 - [ ] 16.4 Pedal part generators, each dimension with a source and confidence: potentiometers
   (16 and 24 mm bodies), knobs, 6.35 mm jacks, DC barrel jack, 3PDT footswitch, 9 V battery
   and snap, PCB board, LED with bezel, cable clip and zip tie. Anchors where things attach:

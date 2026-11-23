@@ -104,7 +104,8 @@ docs/research/    Research behind PLAN.md decisions (not shipped; values need re
   and no JSX in `src/core`. Lint catches mistakes; it is not a sandbox.
 - No `any` (use `unknown` + narrowing). No non-null assertions without a comment saying why.
 - No `eval`, `new Function`, or string-to-code. User-defined block behaviour uses a sandboxed
-  expression parser.
+  expression parser. `zod` resolves to `core/schema/zodNoEval.ts` (jitless; vite alias), so
+  zod never compiles parsers with `new Function` either.
 - IDs are opaque strings (`crypto.randomUUID()`), typed with branded types (`PartId`, `AnchorId`, ...).
   The schema accepts only lowercase UUIDs as minted ids; files are keyed by their SHA-256.
 - Look entities up with `Object.hasOwn` (a record also "has" `toString`).
@@ -364,8 +365,13 @@ No hard-coded hex values in components; use Tailwind theme tokens.
 - `npm run lint` / `npm run typecheck` / `npm test` (Vitest) / `npm run check` (all three)
 - `npm run format` / `npm run format:check` (Prettier; Markdown is excluded to protect LaTeX)
 - `npm run test:e2e`: Playwright against the dev server with a mocked Tauri backend
-  (`tests/e2e/fixtures.ts`). `E2E_BROWSERS=chromium,webkit` runs WebKit too (CI does).
+  (`tests/e2e/fixtures.ts`). `E2E_BROWSERS=chromium,webkit` runs WebKit too (CI does). The
+  `*-release-csp` projects run `csp.spec.ts` against a production build served with the CSP.
 - `npm run build`: typecheck + production frontend build
+- `npm run notices`: regenerate `public/third-party-notices.txt` (npm and Rust licences) after
+  dependency changes; `STUDIOVD_PERF=1 npx playwright test perf.spec.ts`: the 200-part
+  measurement (PLAN 15.3)
+- `cd src-tauri && cargo deny check`: advisories, licences, bans, sources (`deny.toml`; CI)
 - `cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test`
 
 Before every commit: lint, typecheck, unit tests, and `cargo clippy`/`cargo test` must pass.
@@ -448,7 +454,12 @@ Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindi
   primitive per material slot); slot names are re-validated, never trusted.
 - Every `component.json`, including those inside an opened `.stvd` (a project file is
   untrusted input), passes the same strict zod validation.
-- A strict CSP replaces `"csp": null` before release (Phase 15).
+- The release CSP lives in `tauri.conf.json` (self only, `'wasm-unsafe-eval'`, `blob:` workers
+  and images, `ipc:`/`stvd:`); `csp.spec.ts` runs the production build under it in Chromium and
+  WebKit and fails on any violation. Anything needing a new source changes both.
+- App commands go through Tauri's ACL: a new `#[tauri::command]` goes in `generate_handler!`,
+  `build.rs` and `capabilities/default.json` (`acl_tests.rs` checks all three); the webview
+  gets no `core:default` and no plugin permissions.
 
 ## 10. Git
 

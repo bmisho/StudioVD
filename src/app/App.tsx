@@ -18,6 +18,8 @@ import { UnsavedChangesDialog } from "@/features/project/UnsavedChangesDialog"
 import { useProjectSession } from "@/features/project/useProjectSession"
 import { useCommands } from "./commands/commandsContext"
 import { AboutDialog } from "./dialogs/AboutDialog"
+import { ShortcutsDialog } from "./dialogs/ShortcutsDialog"
+import { ContextMenuHost } from "./menu/ContextMenuHost"
 import { WorkspaceLayout } from "./layout/WorkspaceLayout"
 import { AppMenuBar } from "./menu/AppMenuBar"
 import { useGlobalShortcuts } from "./shortcuts/useGlobalShortcuts"
@@ -43,6 +45,8 @@ export function App() {
         <StatusBar />
       </div>
       <AboutDialog />
+      <ShortcutsDialog />
+      <ContextMenuHost />
       <ImportDialog />
       <CreditsDialog />
       <BlockEditorDialog />

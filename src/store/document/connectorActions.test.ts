@@ -69,6 +69,15 @@ describe("connector actions (PLAN 9.6)", () => {
       edited?.kind === "belt" && [edited.widthMm, edited.thicknessMm, edited.ends[1]?.radiusMm]
     ).toEqual([9, 1.4, 12])
     roundTrips(store, "edited")
+    // Delete is one undo entry; undo brings the belt back as it was.
+    const steps = store.temporal.getState().pastStates.length
+    const kept = s().doc.connectors[id]
+    s().deleteConnectors([id])
+    expect(Object.hasOwn(s().doc.connectors, id)).toBe(false)
+    expect(store.temporal.getState().pastStates.length).toBe(steps + 1)
+    roundTrips(store, "deleted")
+    store.temporal.getState().undo()
+    expect(s().doc.connectors[id]).toEqual(kept)
   })
 
   it("refuses ends that do not fit the kind, and goes with an end's part", async () => {

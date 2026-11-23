@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  selectionForContextMenu,
   hoverTargetForMove,
   isPlainClick,
   isPrimaryClick,
@@ -82,5 +83,16 @@ describe("plain and primary clicks", () => {
     expect([isPlainClick(at(1), 3), isPrimaryClick(at(1), 3)]).toEqual([false, false])
     expect(isPrimaryClick(at(1, 1), 0)).toBe(false)
     expect(isPrimaryClick({ type: "dblclick", button: 0 }, 0)).toBe(false)
+  })
+})
+
+describe("selectionForContextMenu (PLAN 15.4)", () => {
+  const a = { kind: "part" as const, id: "a" }
+  const b = { kind: "part" as const, id: "b" }
+  it("selects what is under the pointer unless it is selected already", () => {
+    expect(selectionForContextMenu([a], b)).toEqual(b)
+    expect(selectionForContextMenu([a, b], b)).toBeNull()
+    expect(selectionForContextMenu([a], null)).toBeNull()
+    expect(selectionForContextMenu([{ kind: "group", id: "b" }], b)).toEqual(b)
   })
 })

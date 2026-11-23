@@ -18,9 +18,9 @@ export const MANIFEST_CAPS = { parts: 64, materials: 64, anchors: 512, mates: 12
 
 /**
  * `component.json` (PLAN 4.3): one format for downloaded, generated and user components, one
- * validator, one insertion path. Strict everywhere; cross-references checked below. Schematic
- * blocks and bindings arrive with Phases 11 and 13 (a manifest holding them is refused until
- * then, and states the app version it needs).
+ * validator, one insertion path. Strict everywhere; cross-references checked below, including
+ * those of its schematic block (Phase 11) and bindings (Phase 13). See
+ * `docs/formats/component-format.md`.
  */
 export const ComponentManifestSchema = z
   .object({

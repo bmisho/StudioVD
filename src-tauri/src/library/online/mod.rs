@@ -9,6 +9,7 @@ pub mod jobs;
 pub mod meta;
 pub mod previews;
 pub mod request;
+pub mod resume;
 pub mod retry;
 pub mod signed;
 pub mod source;

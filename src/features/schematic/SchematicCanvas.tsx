@@ -17,6 +17,7 @@ import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { BlockNode } from "./BlockNode"
 import { ConnectionHint } from "./ConnectionHint"
+import { openBlockContextMenu } from "./blockContextMenu"
 import { onBlockRequest } from "./blockRequest"
 import { onSchematicFit } from "./fitRequest"
 import type { BlockFlowNode, WireFlowEdge } from "./flowTypes"
@@ -97,6 +98,8 @@ export function SchematicCanvas() {
         onSelectionDragStart={changes.onDragStart}
         onSelectionDragStop={changes.onDragStop}
         onConnect={onConnect}
+        onNodeContextMenu={openBlockContextMenu}
+        onPaneContextMenu={(e) => e.preventDefault()}
         isValidConnection={isValidConnection}
         connectionMode={ConnectionMode.Loose}
         snapToGrid

@@ -1334,23 +1334,64 @@ Exit criteria
 
 ## Phase 15: Hardening & release
 
-- [ ] 15.1 Strict CSP: no external origins at all; `script-src 'self' 'wasm-unsafe-eval'`, workers,
+- [x] 15.1 Strict CSP: no external origins at all; `script-src 'self' 'wasm-unsafe-eval'`, workers,
   IPC (`ipc:` and `http://ipc.localhost`: without them Tauri falls back to postMessage and
   binary uploads arrive as JSON, which `write_asset`/`write_export` refuse) and the `stvd`
   scheme (`stvd:` and `http://stvd.localhost`) only, plus `blob:` in
   `connect-src` and `img-src`. GLTFLoader turns embedded GLB textures into blob URLs and
   fetches them on Chromium/WebView2, and `'self'` never matches `blob:`. E2E test: a textured
-  GLB renders under the release CSP
-- [ ] 15.2 Capability audit (least privilege): app commands restricted via the build-time app
+  GLB renders under the release CSP. As built: `tauri.conf.json` also allows `blob:` workers
+  (DRACO's decoder), `data:` images, fonts and connections (imported glTF with data URIs), and
+  sets `object-src`, frames, `base-uri` and `form-action` to none; Tauri leaves `style-src`
+  alone (React and Radix set inline styles, which a nonce would block). `csp.spec.ts` serves the
+  production build with that header (`vite preview`, `STUDIOVD_RELEASE_CSP`, the dev probe kept
+  by `VITE_E2E_PROBE`) in Chromium and WebKit: a GLB with an embedded texture, a DRACO GLB, test
+  mode and a solved example, with no CSP violation. It found zod 4 compiling parsers with
+  `new Function`; `zod` now resolves to `core/schema/zodNoEval.ts`, jitless before any schema
+  is built, in the page and every worker
+- [x] 15.2 Capability audit (least privilege): app commands restricted via the build-time app
   manifest, library commands for the main window only, no asset protocol (content addresses
   through the `stvd` scheme),
-  `core:default` replaced by the individual core permissions the UI actually uses
-- [ ] 15.3 Performance pass on a 200-part reference assembly (load time, orbit fps, test-mode fps)
-- [ ] 15.4 Undo/redo coverage audit, context menus, shortcut help overlay
-- [ ] 15.5 Logging (`tauri-plugin-log`), crash reporting to local log file
-- [ ] 15.6 Installers: Windows (NSIS + MSI, WebView2 bootstrapper) and Linux (AppImage + .deb),
-  icons, `.stvd` file association, code-signing notes, optional updater (own key)
-- [ ] 15.7 CI build matrix (`tauri build` per OS) + Playwright in CI; `cargo-deny`/`cargo-audit`
-- [ ] 15.8 Docs: user guide, `scene.json` and component format specs, third-party notices
-  (occt-import-js LGPL, generator data attributions)
+  `core:default` replaced by the individual core permissions the UI actually uses. As built:
+  `build.rs` lists every command; the main window's capability grants exactly those plus
+  `core:event:allow-listen`/`unlisten` and `core:window:allow-close` (dialogs run in Rust, so
+  no plugin permission is granted); `acl_tests.rs` fails when `generate_handler!`, `build.rs`
+  and the capability disagree
+- [x] 15.3 Performance pass on a 200-part reference assembly (load time, orbit fps, test-mode fps).
+  As built: `perf.spec.ts` (`STUDIOVD_PERF=1`) inserts 70 lead screws and 130 spur gears from
+  the Library (200 parts, 2 199 040 triangles) and measures. On this sandbox (SwiftShader, 4
+  CPU cores, no GPU): 14.8 s from the first insert to every part drawn (200 single-step
+  inserts), orbit 1 283 ms median per frame, test mode about 1.2 s per frame. The same 200 parts
+  as 12-triangle cubes orbit at 50 ms (20 fps in software) and step test mode at 50 ms, so the
+  cost is rasterizing 2.2 M triangles on the CPU, not per-part work; physics alone steps 200
+  parts in 1.3 ms (10.9). No optimization is called for by these numbers. **Open: the 60 fps
+  orbit target needs a run on an integrated GPU** (the owner's hardware), with the same spec
+- [x] 15.4 Undo/redo coverage audit, context menus, shortcut help overlay. As built:
+  `undoAudit.test.ts` fails when a document action is never called by a test (it found
+  `deleteConnectors`, now tested: one undo entry, undo restores); one context menu, its items
+  registry commands acting on the selection: the scene tree (also from the Menu key and
+  Shift+F10), the 3D view (a right click decided on release, so a preset's right-drag orbit
+  never opens it; the part under the pointer is picked as a left click would) and schematic
+  blocks; Help › Keyboard Shortcuts (F1) lists every key the registry answers, grouped as the
+  menus are, with the mouse preset
+- [x] 15.5 Logging (`tauri-plugin-log`), crash reporting to local log file. As built:
+  `studiovd.log` in the app's log folder (2 MiB, three old files kept; stdout too in
+  development); a panic hook logs before the abort; the webview's uncaught errors, rejections
+  and panel crashes go through `log_webview_error` as one escaped line of at most 4 KiB
+- [x] 15.6 Installers: Windows (NSIS + MSI, WebView2 bootstrapper) and Linux (AppImage + .deb),
+  icons, `.stvd` file association, code-signing notes, optional updater (own key). As built:
+  per-user NSIS, MSI, AppImage and .deb (MIME type and desktop entry); `docs/release.md` has the
+  code-signing notes and why the updater is left out (its key, endpoint and certificates are
+  the owner's)
+- [x] 15.7 CI build matrix (`tauri build` per OS) + Playwright in CI; `cargo-deny`/`cargo-audit`.
+  As built: an Installers job builds and keeps the installers for Ubuntu and Windows on `main`,
+  `v*` tags and manual runs; `cargo-deny` (advisories from RustSec, licences, banned crates,
+  sources; `src-tauri/deny.toml`) on every push; Playwright already ran Chromium and WebKit
+- [x] 15.8 Docs: user guide, `scene.json` and component format specs, third-party notices
+  (occt-import-js LGPL, generator data attributions). As built: `docs/user-guide.md`,
+  `docs/formats/project-file.md`, `docs/formats/component-format.md`, `docs/release.md`,
+  `docs/catalog-signing.md`; `npm run notices` writes `public/third-party-notices.txt` (every
+  shipped npm package and crate with its licence texts), shown in Help › About. **Open:**
+  `@react-three/rapier` publishes no licence field or file (listed as unknown, to confirm
+  upstream before a release)
 - [ ] ⛔ 15.9 **User approval / release**

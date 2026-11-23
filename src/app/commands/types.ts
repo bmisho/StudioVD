@@ -28,6 +28,7 @@ export type CommandId =
   | "edit.clearSelection"
   | "library.saveAsComponent"
   | "settings.network"
+  | "help.shortcuts"
   | "view.fitAll"
   | "view.toggleProjection"
   | "view.toggleSplit"

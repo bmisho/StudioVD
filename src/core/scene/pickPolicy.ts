@@ -70,3 +70,16 @@ export function periodicRefreshDue(nowMs: number, lastMs: number, periodMs?: num
   if (periodMs === undefined) return false
   return nowMs < lastMs || nowMs - lastMs >= periodMs
 }
+
+/**
+ * A right click (PLAN 15.4 context menu): the menu acts on the selection, so what is under the
+ * pointer becomes the selection unless it is already part of it; empty space keeps it. Returns
+ * the item to select, or null to keep the selection as it is.
+ */
+export function selectionForContextMenu<T extends SelectionRef>(
+  selection: readonly SelectionRef[],
+  target: T | null
+): T | null {
+  if (!target) return null
+  return selection.some((s) => s.kind === target.kind && s.id === target.id) ? null : target
+}

@@ -8,7 +8,9 @@ import {
 } from "@/components/ui/dialog"
 import { APP_NAME, APP_VERSION } from "@/core/app-info"
 import { getAppInfo, type AppInfo } from "@/lib/tauri/commands"
+import { Button } from "@/components/ui/button"
 import { restoreDialogFocus } from "./focusReturn"
+import { NoticesView } from "./NoticesView"
 import { useSessionStore } from "@/store/session/sessionStore"
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -26,6 +28,7 @@ export function AboutDialog() {
   const closeDialog = useSessionStore((s) => s.closeDialog)
   const [info, setInfo] = useState<AppInfo | null>(null)
   const [backendError, setBackendError] = useState<string | null>(null)
+  const [notices, setNotices] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -41,7 +44,14 @@ export function AboutDialog() {
   }, [open])
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && closeDialog()}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) return
+        setNotices(false)
+        closeDialog()
+      }}
+    >
       <DialogContent className="select-text sm:max-w-sm" onCloseAutoFocus={restoreDialogFocus}>
         <DialogHeader>
           <DialogTitle>{APP_NAME}</DialogTitle>
@@ -59,6 +69,22 @@ export function AboutDialog() {
           )}
           {backendError && <Row label="Backend" value={backendError} />}
         </dl>
+        <p className="text-xs text-muted-foreground">
+          Built with open-source software; STEP and IGES import use OpenCascade through
+          occt-import-js (LGPL-2.1), loaded as separate, replaceable files.
+        </p>
+        {notices ? (
+          <NoticesView />
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={() => setNotices(true)}
+          >
+            Third-party notices
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   )

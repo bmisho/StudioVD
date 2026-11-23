@@ -3,6 +3,7 @@ import { useThree } from "@react-three/fiber"
 import { Vector2, type Group } from "three"
 import { NAVIGATION_PRESETS } from "@/core/navigation/mousePresets"
 import { usePreferencesStore } from "@/store/preferences/preferencesStore"
+import { openViewportContextMenu } from "../picking/viewportContextMenu"
 import { viewportBridge } from "../viewportBridge"
 import { applyZoomSettings } from "./applyNavigation"
 import type { CameraRig } from "./createCameraRig"
@@ -39,7 +40,7 @@ export function useNavigationInput(rig: CameraRig, partsRoot: RefObject<Group | 
         return raycaster.intersectObject(root, true)[0]?.point ?? null
       },
       onMiddleDoubleClick: () => viewportBridge.fitAll(),
-      onContextMenuRequest: () => undefined, // no viewport context menu yet
+      onContextMenuRequest: openViewportContextMenu,
     })
     return () => {
       detach()

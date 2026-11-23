@@ -20,7 +20,7 @@ export type SplitOrientation = "horizontal" | "vertical"
 export type Pane = "viewport" | "schematic"
 /** The last solve's outcome (PLAN 12.9); "solving" only once a solve takes a while. */
 export type SimStatus = "idle" | "solving" | "solved" | "warning" | "error"
-export type DialogId = "about" | "credits"
+export type DialogId = "about" | "credits" | "shortcuts"
 export type GizmoMode = "translate" | "rotate"
 /** How parts are drawn (PLAN 6.6). Wireframe shows feature edges only, not the triangles. */
 export type DisplayMode = "shaded" | "shadedEdges" | "wireframe" | "xray"

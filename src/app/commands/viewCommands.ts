@@ -82,6 +82,12 @@ export function viewCommands({
       label: EXAMPLES[id].name,
       run: () => void backend.openExample(id),
     })),
+    {
+      id: "help.shortcuts",
+      label: "Keyboard Shortcuts",
+      shortcuts: ["F1"],
+      run: () => openDialog("shortcuts"),
+    },
     { id: "help.credits", label: "Project Credits…", run: () => openDialog("credits") },
     { id: "help.about", label: "About StudioVD", run: () => openDialog("about") },
   ]

@@ -20,6 +20,7 @@ import { ISSUE_TEXT, WARNING_ISSUES } from "@/core/assembly/mateNames"
 import type { SceneTreeNode } from "@/core/scene/sceneTree"
 import type { VisibleRow } from "@/core/scene/treeNav"
 import { cn } from "@/lib/utils"
+import { useContextMenuStore } from "@/store/session/contextMenuStore"
 
 /** The row's icon: a folder, a part, the Mates folder, or a mate by its type. */
 function RowIcon({ node }: { node: SceneTreeNode }) {
@@ -102,6 +103,16 @@ export const SceneTreeRow = memo(function SceneTreeRow(props: SceneTreeRowProps)
       )}
       style={{ paddingLeft: `${(row.level - 1) * 14}px` }}
       onClick={(e) => onSelect(row, e.ctrlKey || e.metaKey)}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        if (node.kind === "mates" || node.kind === "connectors") return
+        if (!selected) onSelect(row, false)
+        // The Menu key and Shift+F10 report no pointer: open at the row.
+        const r = e.currentTarget.getBoundingClientRect()
+        const keyboard = e.clientX === 0 && e.clientY === 0
+        const [x, y] = keyboard ? [r.left + 24, r.bottom] : [e.clientX, e.clientY]
+        useContextMenuStore.getState().show({ place: "tree", x, y })
+      }}
       onFocus={(e) => {
         if (e.target === e.currentTarget) onFocusRow(node.id)
       }}

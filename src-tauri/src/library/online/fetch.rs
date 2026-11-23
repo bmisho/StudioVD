@@ -1,60 +1,27 @@
-//! Pack downloads (PLAN 14.3): into `<sha>.part` files, hashed while they stream, resumed with `Range` + `If-Range` after a dropped connection,
-//! cancellable, with throttled progress and `Retry-After` on 429/503.
+//! Pack downloads (PLAN 14.3): into `<sha>.part` files, hashed while they stream, resumed with
+//! `Range` + `If-Range` after a dropped connection (`resume.rs`), cancellable, with throttled
+//! progress and `Retry-After` on 429/503.
 
 use super::request::{cancelled, send};
+use super::resume::{discard, forget, remember, resumable};
 use crate::error::{AppError, AppResult};
 use crate::net::diagnose::{explain, status};
 use crate::workspace::hex;
 use reqwest::header::{CONTENT_RANGE, ETAG, IF_RANGE, LAST_MODIFIED, RANGE};
 use reqwest::{Client, Response, StatusCode};
 use sha2::{Digest, Sha256};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::time::{Duration, Instant};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::AsyncWriteExt;
 use tokio_util::sync::CancellationToken;
 
-/// What a download must be: its exact size and SHA-256 (both from the verified index).
 /// How often progress is reported at most.
 const PROGRESS_EVERY: Duration = Duration::from_millis(100);
 
+/// What a download must be: its exact size and SHA-256 (both from the verified index).
 pub struct Expect<'a> {
     pub bytes: u64,
     pub sha256: &'a str,
-}
-
-/// Where a resumable download keeps its validator (ETag or Last-Modified) and URL.
-fn sidecar(part: &Path) -> PathBuf {
-    part.with_extension("part.json")
-}
-
-#[derive(serde::Serialize, serde::Deserialize)]
-struct Side {
-    url: String,
-    validator: String,
-}
-
-async fn discard(part: &Path) {
-    let _ = tokio::fs::remove_file(part).await;
-    let _ = tokio::fs::remove_file(sidecar(part)).await;
-}
-
-/// The bytes already in `part` for `url`, with their hash state, if they can be resumed.
-async fn resumable(part: &Path, url: &str, max: u64) -> Option<(u64, Sha256, String)> {
-    let side: Side = serde_json::from_slice(&tokio::fs::read(sidecar(part)).await.ok()?).ok()?;
-    let len = tokio::fs::metadata(part).await.ok()?.len();
-    if side.url != url || len == 0 || len >= max {
-        return None;
-    }
-    let mut file = tokio::fs::File::open(part).await.ok()?;
-    let mut hasher = Sha256::new();
-    let mut buf = vec![0u8; 64 * 1024];
-    loop {
-        let n = file.read(&mut buf).await.ok()?;
-        if n == 0 {
-            return Some((len, hasher, side.validator));
-        }
-        hasher.update(&buf[..n]);
-    }
 }
 
 /// A pack into `part` (renamed by the caller once this returns Ok): resumed when the server
@@ -108,12 +75,7 @@ pub async fn download(
             .find(|v| !v.starts_with("W/"))
             .map(str::to_owned);
         if let Some(validator) = validator {
-            let side = serde_json::to_vec(&Side {
-                url: url.to_owned(),
-                validator,
-            })
-            .map_err(|e| AppError::Io(e.to_string()))?;
-            tokio::fs::write(sidecar(part), side).await?;
+            remember(part, url, validator).await?;
         }
         return stream(resp, part, offset, hasher, want, cancel, progress, &host).await;
     }
@@ -155,17 +117,26 @@ async fn stream(
     loop {
         let chunk = tokio::select! {
             _ = cancel.cancelled() => {
+                let _ = file.flush().await;
                 drop(file);
                 discard(part).await;
                 return cancelled();
             }
             c = resp.chunk() => c,
         };
-        let Some(chunk) = chunk.map_err(|e| AppError::Network(explain(host, &e)))? else {
-            break;
+        let chunk = match chunk {
+            Ok(Some(chunk)) => chunk,
+            Ok(None) => break,
+            Err(e) => {
+                // tokio writes on a background thread: what arrived is on disk before the next
+                // attempt measures it for its Range offset.
+                file.flush().await?;
+                return Err(AppError::Network(explain(host, &e)));
+            }
         };
         done += chunk.len() as u64;
         if done > want.bytes {
+            let _ = file.flush().await;
             drop(file);
             discard(part).await;
             return Err(AppError::InvalidInput(format!(
@@ -193,6 +164,6 @@ async fn stream(
             "The file from {host} does not match the catalog (SHA-256); it was deleted."
         )));
     }
-    let _ = tokio::fs::remove_file(sidecar(part)).await;
+    forget(part).await;
     Ok(())
 }

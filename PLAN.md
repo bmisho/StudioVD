@@ -1391,7 +1391,7 @@ Exit criteria
   (occt-import-js LGPL, generator data attributions). As built: `docs/user-guide.md`,
   `docs/formats/project-file.md`, `docs/formats/component-format.md`, `docs/release.md`,
   `docs/catalog-signing.md`; `npm run notices` writes `public/third-party-notices.txt` (every
-  shipped npm package and crate with its licence texts), shown in Help › About. **Open:**
-  `@react-three/rapier` publishes no licence field or file (listed as unknown, to confirm
-  upstream before a release)
+  shipped npm package and crate with its licence texts), shown in Help › About.
+  `@react-three/rapier` publishes no licence field or file; its repository's LICENSE is MIT
+  (Copyright (c) 2022 Poimandres, checked 2026-11-23), so the notices carry that text
 - [ ] ⛔ 15.9 **User approval / release**

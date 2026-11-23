@@ -15,9 +15,39 @@ const LICENCE_FILE = /^(licen[cs]e|copying|notice)([-._][a-z0-9.-]*)?$/i
 /** Packages whose manifest names no licence: what they state elsewhere, with where. */
 const DECLARED = {
   "webgl-constants": "MIT (stated in its README; LICENSE file included)",
+  "@react-three/rapier": "MIT (its repository's LICENSE; the npm package omits field and file)",
+}
+
+const mit = (copyright) =>
+  [
+    "MIT License",
+    "",
+    copyright,
+    "",
+    "Permission is hereby granted, free of charge, to any person obtaining a copy",
+    'of this software and associated documentation files (the "Software"), to deal',
+    "in the Software without restriction, including without limitation the rights",
+    "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell",
+    "copies of the Software, and to permit persons to whom the Software is",
+    "furnished to do so, subject to the following conditions:",
+    "",
+    "The above copyright notice and this permission notice shall be included in all",
+    "copies or substantial portions of the Software.",
+    "",
+    'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR',
+    "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
+    "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE",
+    "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
+    "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,",
+    "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE",
+    "SOFTWARE.",
+  ].join("\n")
+
+/** Licence texts for packages that ship none, taken from their source repository. */
+const UPSTREAM_TEXT = {
   "@react-three/rapier":
-    "UNKNOWN: the published package has no licence field or file; see " +
-    "https://github.com/pmndrs/react-three-rapier",
+    mit("Copyright (c) 2022 Poimandres") +
+    "\n\n(From https://github.com/pmndrs/react-three-rapier/blob/main/LICENSE, read 2026-11-23.)",
 }
 
 function licenceTexts(dir) {
@@ -39,7 +69,9 @@ function npmPackages() {
     if (!licence && existsSync(join(dir, "package.json")))
       licence = JSON.parse(readFileSync(join(dir, "package.json"), "utf8")).license
     licence ??= Object.hasOwn(DECLARED, name) ? DECLARED[name] : "UNKNOWN"
-    out.push({ name, version: entry.version, licence, texts: licenceTexts(dir) })
+    let texts = licenceTexts(dir)
+    if (texts.length === 0 && Object.hasOwn(UPSTREAM_TEXT, name)) texts = [UPSTREAM_TEXT[name]]
+    out.push({ name, version: entry.version, licence, texts })
   }
   return out
 }

@@ -2,9 +2,9 @@
 //! that serve them. Hosts are untrusted (trust comes only from the signatures), so a user
 //! mirror can serve the same files.
 //!
-//! The official catalog is EMPTY in this build: its hosting repository (PLAN 14.1) and its
-//! signing keys (14.2, an active and an offline backup key) are the project owner's to
-//! create. Until then Refresh says no catalog is configured; Install from file still works.
+//! The official catalog has its signing keys (PLAN 14.2: active, then the offline backup) but
+//! no hosts yet: its hosting repository (14.1) is the project owner's to create. Until then
+//! Refresh says no catalog is configured; Install from file still works.
 
 /// One signed catalog: its id (the index's `catalogId`), the keys that may sign it, where its
 /// `index.json` (+ `.minisig`) lives, and the bases its packs' relative URLs resolve against.
@@ -18,7 +18,12 @@ pub struct CatalogSource {
 
 pub const OFFICIAL: CatalogSource = CatalogSource {
     id: "official",
-    keys: &[],
+    // Created by the owner on 2026-11-23 (docs/catalog-signing.md). Key ids: A26FD5C302F7F8FB
+    // (active, signs every publish), 97EEE73CB6AC658E (backup, kept offline).
+    keys: &[
+        "RWT7+PcCw9Vvols8Pi3Ar0x9gYuBFRJbvhdIo4cx0Pwbrr+eaQhidO70",
+        "RWSOZay2POful1LzQR6TTV8gBHqHH0hvSRLnJ8if9BEOgby/OcF67gyg",
+    ],
     index_bases: &[],
     pack_bases: &[],
 };
@@ -107,6 +112,25 @@ mod tests {
             TEST.hosts(Some("https://m.example/")),
             ["a.example", "m.example"]
         );
-        assert!(!OFFICIAL.configured());
+        assert!(!OFFICIAL.configured()); // keys, but no hosts until the hosting repo exists
+    }
+
+    #[test]
+    fn official_keys_parse_with_their_ids() {
+        for k in OFFICIAL.keys {
+            assert!(minisign_verify::PublicKey::from_base64(k).is_ok(), "{k}");
+        }
+        let ids: Vec<_> = OFFICIAL
+            .keys
+            .iter()
+            .map(|k| super::super::signed::key_id(k))
+            .collect();
+        assert_eq!(
+            ids,
+            [
+                Some("A26FD5C302F7F8FB".to_owned()),
+                Some("97EEE73CB6AC658E".to_owned())
+            ]
+        );
     }
 }

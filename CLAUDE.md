@@ -274,8 +274,9 @@ Further rules:
   webview asks for once. The index is verified (compiled-in minisign keys, trusted comment
   bound to catalog/sequence/schema) before anything parses it, then validated again in the
   webview like any file; a pack is Official only when the verified index lists its SHA-256 and
-  every manifest's. The official source in `library/online/source.rs` is empty until the owner
-  creates the hosting repo and keys (`docs/catalog-signing.md`). Component Update reuses the
+  every manifest's. The official source in `library/online/source.rs` has the owner's keys
+  (active first, then the offline backup) and no hosts until the owner creates the hosting
+  repo (`docs/catalog-signing.md`); never add a key without the owner. Component Update reuses the
   key-matched `regenerateInstance`; Replace is remove + instantiate in one undo entry.
 - Connectors (Phase 9.6, scene.json v2): belts, tubes and springs are documents of their end
   anchors only; their meshes are derived in the view (`core/connectors`, `ConnectorsLayer`)

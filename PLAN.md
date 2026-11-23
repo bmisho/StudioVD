@@ -1271,12 +1271,14 @@ Exit criteria
   create** (a public repository on their account). The app's host list
   (`src-tauri/src/library/online/source.rs`) is empty until then, and the Library says no
   catalog is configured
-- [ ] 14.2 Signing: two minisign keypairs (active + offline backup), separate from any updater
+- [x] 14.2 Signing: two minisign keypairs (active + offline backup), separate from any updater
   key; trusted comment binds catalog id, sequence and schema; rotation procedure documented.
   Done: the trusted comment (`studiovd-catalog catalog=<id> sequence=<n> schema=<v>`, checked
   against the index and its `signingKeyId`), prehashed signatures only, and the key, publish
-  and rotation procedure in `docs/catalog-signing.md`. **Open: the owner generates and keeps
-  the keys**; their public halves go into `OFFICIAL.keys`
+  and rotation procedure in `docs/catalog-signing.md`. The owner generated both keys on their
+  own machine with minisign 0.12 (2026-11-23, passwords set): active `A26FD5C302F7F8FB`,
+  backup `97EEE73CB6AC658E`, public halves in `OFFICIAL.keys` (a test checks they parse and
+  carry those ids). The active secret key becomes a CI secret of the hosting repo (14.1/14.7)
 - [x] 14.3 Rust downloader: reqwest 0.13 (rustls, platform verifier, system proxy), minisign
   verification before parsing (16 MiB cap), rollback guard, expiry refetch, Range resume with
   `If-Range`, streaming SHA-256, cancellation, 2 concurrent downloads, `Retry-After` backoff,

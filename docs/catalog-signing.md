@@ -3,7 +3,8 @@
 How the official catalog is signed and how its keys are kept (PLAN 4.4, 14.2). The app's side
 is built: `src-tauri/src/library/online/` verifies, caches and guards; it trusts only the keys
 compiled into `source.rs`. Creating the keys and the hosting repository is the project owner's
-job; nothing here has been done with real keys yet.
+job. The keys exist (created 2026-11-23; ids `A26FD5C302F7F8FB` active, `97EEE73CB6AC658E`
+backup) and are compiled in; the hosting repository and the publish job do not exist yet.
 
 ## Keys
 

@@ -1,7 +1,8 @@
 //! Serving the files a .gltf/.obj names next to itself, through the model's read token.
 
-use super::{read_capped, refs, resolve_sibling, Access, PickedFiles, MAX_IMPORT_BYTES};
+use super::{read_capped, refs, Access, PickedFiles, MAX_IMPORT_BYTES};
 use crate::error::{AppError, AppResult};
+use std::path::{Component, Path, PathBuf};
 use std::sync::MutexGuard;
 
 /// Reads `relative` for the model behind `token`: only a name the model itself refers to,
@@ -36,6 +37,29 @@ pub fn read_resource<'a>(
     let bytes = read_capped(&path, MAX_IMPORT_BYTES.saturating_sub(used))?;
     lock()?.entry(token, Access::Read)?.resource_bytes += bytes.len() as u64;
     Ok(bytes)
+}
+
+/// Resolves `relative` (a URI a .gltf or .obj file wrote, already percent-decoded) against the
+/// directory of `base_file`. Only plain relative paths that stay inside that directory, after
+/// following symlinks, are accepted.
+pub fn resolve_sibling(base_file: &Path, relative: &str) -> AppResult<PathBuf> {
+    let refuse =
+        || AppError::InvalidInput(format!("'{relative}' is not a file next to the model."));
+    let rel = Path::new(relative);
+    if relative.is_empty()
+        || relative.contains('\0')
+        || !rel
+            .components()
+            .all(|c| matches!(c, Component::Normal(_) | Component::CurDir))
+    {
+        return Err(refuse());
+    }
+    let dir = base_file.parent().ok_or_else(refuse)?.canonicalize()?;
+    let resolved = dir.join(rel).canonicalize().map_err(|_| refuse())?;
+    if !resolved.starts_with(&dir) || !resolved.is_file() {
+        return Err(refuse());
+    }
+    Ok(resolved)
 }
 
 #[cfg(test)]

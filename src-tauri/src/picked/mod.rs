@@ -3,17 +3,23 @@
 //! bytes, or for a sibling the .gltf/.obj itself names (`refs`), which must also resolve
 //! inside the same directory.
 
+pub mod archive;
+mod archive_names;
+mod expand;
 mod refs;
 mod resource;
 
+pub use expand::{clean_imports, expand_archives};
 pub use resource::read_resource;
+#[cfg(test)]
+use resource::resolve_sibling;
 
 use crate::error::{AppError, AppResult};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
 use std::io::Read;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 
 /// Largest file read for an import (a big STEP assembly is a few hundred MB).
 pub const MAX_IMPORT_BYTES: u64 = 1024 * 1024 * 1024;
@@ -155,29 +161,6 @@ impl PickedFiles {
     }
 }
 
-/// Resolves `relative` (a URI a .gltf or .obj file wrote, already percent-decoded) against the
-/// directory of `base_file`. Only plain relative paths that stay inside that directory, after
-/// following symlinks, are accepted.
-pub fn resolve_sibling(base_file: &Path, relative: &str) -> AppResult<PathBuf> {
-    let refuse =
-        || AppError::InvalidInput(format!("'{relative}' is not a file next to the model."));
-    let rel = Path::new(relative);
-    if relative.is_empty()
-        || relative.contains('\0')
-        || !rel
-            .components()
-            .all(|c| matches!(c, Component::Normal(_) | Component::CurDir))
-    {
-        return Err(refuse());
-    }
-    let dir = base_file.parent().ok_or_else(refuse)?.canonicalize()?;
-    let resolved = dir.join(rel).canonicalize().map_err(|_| refuse())?;
-    if !resolved.starts_with(&dir) || !resolved.is_file() {
-        return Err(refuse());
-    }
-    Ok(resolved)
-}
-
 /// Reads a whole file, refusing anything larger than `max` bytes (checked while reading too,
 /// in case the file grows).
 pub fn read_capped(path: &Path, max: u64) -> AppResult<Vec<u8>> {
@@ -202,5 +185,7 @@ pub fn read_capped(path: &Path, max: u64) -> AppResult<Vec<u8>> {
     Ok(bytes)
 }
 
+#[cfg(test)]
+mod archive_tests;
 #[cfg(test)]
 mod tests;

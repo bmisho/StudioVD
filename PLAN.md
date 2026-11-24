@@ -1477,11 +1477,19 @@ transparent materials, X-ray) and orbits the view; this phase adds what it lacks
   `cable.zipTie` (their "Cable through" anchor is a cable waypoint). Panel parts stand behind
   the panel with y = 0 their mounting face; lugs and pads are point anchors (cable ends).
   All pass the closed-body, analytic-volume and manifest checks; golden runs added
-- [ ] 16.5 Import from a zip (GrabCAD-style downloads): pick or drop a `.zip`; Rust extracts it
+- [x] 16.5 Import from a zip (GrabCAD-style downloads): pick or drop a `.zip`; Rust extracts it
   through the zip guard and the Import dialog lists the STEP, IGES, STL, OBJ and GLB files in
   it; native formats (SLDPRT, IPT, F3D...) are listed as not readable, with "export STEP" as
   the advice. No GrabCAD integration: it has no public API, its terms do not allow automated
-  downloads, its models carry their own licences, and the app makes no web requests (§6).
+  downloads, its models carry their own licences, and the app makes no web requests (§6). As built:
+  `picked/archive.rs` (not the strict `.stvd`/pack guard, which refuses the data descriptors
+  streamed downloads use: a test shows both); `picked/expand.rs` swaps each picked or dropped
+  zip for its models, unpacked into `<app cache>/imports/<pid>-…` (earlier sessions' folders
+  removed at startup); drops unpack off the event thread. Skipped entries arrive as
+  `archive.zip: entry`, and the notice names SolidWorks, Inventor, Fusion, CATIA... files and
+  says to export STEP (`core/import/skippedAdvice.ts`). Tests: models and their materials
+  unpacked, PDFs and native files skipped, macOS forks ignored, names that would leave the
+  folder or clash on Windows refused, a zip bomb refused with nothing left behind
 - [ ] 16.6 Help › Examples › Guitar pedal: a see-through box with pots and knobs, jacks, DC
   jack, footswitch, LED, battery and PCB, wired with cables of set lengths through clips, and
   its schematic linked to the parts.

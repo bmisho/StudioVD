@@ -95,8 +95,12 @@ test.describe("import", () => {
   })
 
   test("dropped files open the dialog; other items are reported", async ({ page }) => {
-    await dropFiles(page, [fixtureFile("bracket.stl")], ["notes.txt"])
+    // What Rust reports after unpacking a dropped zip: its native CAD files left out (16.5).
+    await dropFiles(page, [fixtureFile("bracket.stl")], ["notes.txt", "Pedal.zip: Pedal.SLDASM"])
     await expect(page.getByText("Some items cannot be imported")).toBeVisible()
+    await expect(
+      page.getByText(/SolidWorks files cannot be read: export them as STEP/)
+    ).toBeVisible()
     const dialog = page.getByRole("dialog", { name: "Import" })
     await expect(dialog.getByText("bracket.stl")).toBeVisible()
     await dialog.getByRole("button", { name: "Cancel" }).click()

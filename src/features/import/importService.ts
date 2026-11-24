@@ -15,6 +15,7 @@ import { useSessionStore } from "@/store/session/sessionStore"
 import { toastNotifier as notify } from "@/lib/notify"
 import { createImportController } from "./importController"
 import { startImport } from "./importClient"
+import { skippedMessage } from "@/core/import/skippedAdvice"
 
 /** The app's import controller, wired to the real backend, stores and worker. */
 export const importController = createImportController({
@@ -30,7 +31,7 @@ export const importController = createImportController({
 
 /** Opens the import dialog on picked or dropped files; reports the ones left out. */
 function openChosen({ files, skipped }: ChosenFiles): boolean {
-  if (skipped.length > 0) notify.warning("Some items cannot be imported", skipped.join("\n"))
+  if (skipped.length > 0) notify.warning("Some items cannot be imported", skippedMessage(skipped))
   if (files.length === 0) return false
   if (useImportStore.getState().status.phase === "running") {
     notify.info("An import is already running", "Try again when it has finished.")

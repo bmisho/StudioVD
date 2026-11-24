@@ -17,6 +17,8 @@ pub struct AppState {
     workspaces: Option<PathBuf>,
     /// `<app cache>/colliders`: convex decompositions by the SHA-256 of their input mesh.
     colliders: Option<PathBuf>,
+    /// `<app cache>/imports`: models unpacked from downloaded zips (PLAN 16.5).
+    imports: Option<PathBuf>,
     /// `<app config>`: recent projects.
     config: Option<PathBuf>,
     project: Mutex<Project>,
@@ -39,6 +41,11 @@ impl AppState {
         let cache = app.path().app_cache_dir().ok();
         let workspaces = cache.as_ref().map(|dir| dir.join("workspaces"));
         let colliders = cache.as_ref().map(|dir| dir.join("colliders"));
+        let imports = cache.as_ref().map(|dir| dir.join("imports"));
+        if let Some(dir) = imports.clone() {
+            // Earlier sessions' unpacked zips; this one's folders start with its process id.
+            std::thread::spawn(move || crate::picked::clean_imports(&dir));
+        }
         let workspace = workspaces.as_deref().and_then(|base| {
             Workspace::create(base)
                 .inspect_err(|e| log::warn!("no workspace ({e})."))
@@ -57,6 +64,7 @@ impl AppState {
                 .map(Arc::new)
         });
         Self {
+            imports,
             workspaces,
             colliders,
             library,
@@ -128,6 +136,11 @@ impl AppState {
     /// Where convex decompositions are cached (PLAN 10.2), if the app cache is reachable.
     pub fn colliders_dir(&self) -> Option<PathBuf> {
         self.colliders.clone()
+    }
+
+    /// Where downloaded zips are unpacked for import (PLAN 16.5), if the app cache is reachable.
+    pub fn imports_dir(&self) -> Option<&Path> {
+        self.imports.as_deref()
     }
 
     pub fn workspaces_dir(&self) -> AppResult<&Path> {

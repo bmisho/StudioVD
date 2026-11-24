@@ -439,6 +439,11 @@ Linux dev needs: `libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindi
   backslashes, Windows device names), regular files only, case-insensitive duplicates and
   file/folder clashes rejected, byte-counted size and compression-ratio limits, CRC read to
   the end, a fresh destination folder. Every content-addressed file is checked by SHA-256.
+  Zips picked or dropped for import (downloads, PLAN 16.5) go through `picked/archive.rs`
+  instead: any zip tool's output (data descriptors, ZIP64, folder entries, non-ASCII names),
+  but only importable models and the files they name are written, under names that stay
+  inside a fresh `<app cache>/imports` folder on Windows and Linux, byte-counted against
+  per-file and per-archive limits, CRC-checked; the rest is reported as skipped by name.
 - **Library packs are data only.** Allowed files: JSON, GLB, PNG, JPG, TXT. No SVG, HTML,
   scripts, or GLB buffers/images with external or `data:` URIs. Behaviour comes only from
   app-built-in model/generator/symbol IDs or the sandboxed expression parser.

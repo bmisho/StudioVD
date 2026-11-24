@@ -6,7 +6,7 @@ use std::io::{Read, Seek, SeekFrom};
 use zip::ZipArchive;
 
 /// DOS device names, refused as a path component on every OS (Windows would open the device).
-fn reserved(component: &str) -> bool {
+pub(crate) fn reserved(component: &str) -> bool {
     let stem = component
         .split('.')
         .next()

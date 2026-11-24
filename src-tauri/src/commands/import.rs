@@ -3,7 +3,7 @@
 
 use super::ipc::{blocking, into_path};
 use crate::error::AppResult;
-use crate::picked::{self, DroppedFiles, IMPORT_EXTENSIONS, MAX_IMPORT_BYTES};
+use crate::picked::{self, expand_archives, DroppedFiles, IMPORT_EXTENSIONS, MAX_IMPORT_BYTES};
 use crate::project::launch;
 use crate::state::AppState;
 use std::path::PathBuf;
@@ -20,27 +20,40 @@ pub(super) fn both_cases(extensions: &[&str]) -> Vec<String> {
 }
 
 /// File › Import: the dialog runs here, the webview gets tokens. A file that cannot be
-/// registered (deleted meanwhile, not a regular file) is reported, not fatal.
+/// registered (deleted meanwhile, not a regular file) is reported, not fatal. A zip (a
+/// GrabCAD download, PLAN 16.5) is unpacked and its models offered instead.
 #[tauri::command]
 pub async fn pick_import_files<R: Runtime>(
     window: Window<R>,
     state: State<'_, AppState>,
 ) -> AppResult<DroppedFiles> {
-    let extensions = both_cases(&IMPORT_EXTENSIONS);
+    let mut accepted: Vec<&str> = IMPORT_EXTENSIONS.to_vec();
+    accepted.push("zip");
+    let extensions = both_cases(&accepted);
     let filter: Vec<&str> = extensions.iter().map(String::as_str).collect();
     let files = window
         .dialog()
         .file()
         .set_parent(&window)
         .set_title("Import 3D or CAD files")
-        .add_filter("3D and CAD files", &filter)
+        .add_filter("3D and CAD files, or zips of them", &filter)
         .blocking_pick_files()
         .unwrap_or_default();
     let paths = files
         .into_iter()
         .map(into_path)
         .collect::<AppResult<Vec<_>>>()?;
-    Ok(state.picked()?.add_dropped(&paths))
+    let imports = state.imports_dir().map(PathBuf::from);
+    let (paths, skipped) =
+        blocking(move || Ok(expand_archives(&paths, imports.as_deref()))).await?;
+    Ok(with_skipped(state.picked()?.add_dropped(&paths), skipped))
+}
+
+/// `dropped` with what unpacking zips left out named first.
+fn with_skipped(mut dropped: DroppedFiles, mut skipped: Vec<String>) -> DroppedFiles {
+    skipped.append(&mut dropped.skipped);
+    dropped.skipped = skipped;
+    dropped
 }
 
 /// Files dropped on the window: supported ones get tokens and go to the webview as an
@@ -66,13 +79,19 @@ pub fn files_dropped<R: Runtime, T: Manager<R> + Emitter<R>>(target: &T, paths: 
         }
         return;
     }
-    let state = target.state::<AppState>();
-    let Ok(mut picked) = state.picked() else {
-        return;
-    };
-    let dropped = picked.add_dropped(paths);
-    drop(picked);
-    let _ = target.emit("import-drop", dropped);
+    // Unpacking a dropped zip can take a while: off the event thread.
+    let app = target.app_handle().clone();
+    let paths = paths.to_vec();
+    std::thread::spawn(move || {
+        let state = app.state::<AppState>();
+        let (paths, skipped) = expand_archives(&paths, state.imports_dir());
+        let Ok(mut picked) = state.picked() else {
+            return;
+        };
+        let dropped = with_skipped(picked.add_dropped(&paths), skipped);
+        drop(picked);
+        let _ = app.emit("import-drop", dropped);
+    });
 }
 
 #[tauri::command]

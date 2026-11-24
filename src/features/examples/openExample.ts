@@ -1,8 +1,10 @@
 import { toastNotifier } from "@/lib/notify"
 import { projectController } from "@/features/project/projectService"
 import { requestSchematicFit } from "@/features/schematic/fitRequest"
+import { viewportBridge } from "@/features/viewport/viewportBridge"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { documentHistory } from "@/store/document/history"
+import { guitarPedal } from "./guitarPedal"
 import { hingeDimmer } from "./hingeDimmer"
 import { leverTorque } from "./leverTorque"
 import { lightPath } from "./lightPath"
@@ -15,6 +17,7 @@ export const EXAMPLES = {
   limitSwitch: { name: "Limit switch cuts a motor", build: limitSwitch },
   leverTorque: { name: "Lever torque sets servo current", build: leverTorque },
   lightPath: { name: "Light path blocked by a part", build: lightPath },
+  guitarPedal: { name: "Guitar pedal", build: guitarPedal },
 } as const
 
 export type ExampleId = keyof typeof EXAMPLES
@@ -27,6 +30,7 @@ export async function openExample(id: ExampleId): Promise<void> {
   try {
     await EXAMPLES[id].build()
     requestSchematicFit()
+    viewportBridge.fitAllAfterChange()
     // The example is where the project starts: nothing to undo back through.
     documentHistory.clear()
   } catch (e) {

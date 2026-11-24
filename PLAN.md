@@ -1490,9 +1490,21 @@ transparent materials, X-ray) and orbits the view; this phase adds what it lacks
   says to export STEP (`core/import/skippedAdvice.ts`). Tests: models and their materials
   unpacked, PDFs and native files skipped, macOS forks ignored, names that would leave the
   folder or clash on Windows refused, a zip bomb refused with nothing left behind
-- [ ] 16.6 Help › Examples › Guitar pedal: a see-through box with pots and knobs, jacks, DC
+- [x] 16.6 Help › Examples › Guitar pedal: a see-through box with pots and knobs, jacks, DC
   jack, footswitch, LED, battery and PCB, wired with cables of set lengths through clips, and
-  its schematic linked to the parts.
+  its schematic linked to the parts. As built (`features/examples/guitarPedal.ts`,
+  `pedalWiring.ts`, `pedalCircuit.ts`, on `componentKit.ts`: Library parts inserted as the
+  Library does, from their generators' defaults): the enclosure stands upside down (its floor
+  the top panel in clear PC, its lid the aluminium base plate); pots, jacks, footswitch and
+  LED are fixed behind holes placed in world coordinates (anchors are in the part's own,
+  centred frame, so they go through the box's pose); pot lugs face the board's pads, knobs
+  point to 12 o'clock; battery, board and two front-wall clips are grounded. Twelve cables
+  (true-bypass 3PDT, battery and DC into the board, the LED, the Volume pot), each cut 5-80 %
+  over its route: arcs, a wave, a coil (battery +), a twisted pair (output); input and
+  output run through the clips. The schematic (9 V across the Volume pot, wiper through
+  470 Ω into the LED) is bound to the pot's `turn` mate (clockwise seen from above turns it
+  up: −150°…+150° onto 1…0) and the LED's light glows on the LED part. The 3D view fits
+  after any example is built.
 - [ ] 16.7 Tests: solver property tests, cable integrity and contract tests, generator golden
   tests, E2E (draw a cable through a clip, set its length, a short cable's warning, undo, the
   cut list, a zip import), the example builds and solves.

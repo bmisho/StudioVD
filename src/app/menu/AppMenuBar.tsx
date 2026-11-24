@@ -136,6 +136,7 @@ export function AppMenuBar() {
               <CommandMenuItem id="help.example.limitSwitch" />
               <CommandMenuItem id="help.example.leverTorque" />
               <CommandMenuItem id="help.example.lightPath" />
+              <CommandMenuItem id="help.example.guitarPedal" />
             </MenubarSubContent>
           </MenubarSub>
           <CommandMenuItem id="dev.insertTestRig" />

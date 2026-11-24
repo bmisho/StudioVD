@@ -121,6 +121,21 @@ test("a cable of a set length between two lugs: spare, too short, undo (PLAN 16.
   await panel.getByRole("combobox", { name: "Hook-up wire size" }).click()
   await page.getByRole("option", { name: "22 AWG (Ø1.46 mm)" }).click()
   await expect(panel.getByRole("textbox", { name: "Diameter (mm)" })).toHaveValue("1.46")
+  // Through a clip (PLAN 16.7): one from the Library in front, its cable anchor added as a
+  // waypoint. The route grows past the cut length (warned) until it is fitted again.
+  await page.getByRole("tab", { name: "Library" }).click()
+  await dragCardTo(page, "Cable clip for Ø2", [0, 0, 25])
+  await expect.poll(() => probe<unknown[]>(page, "components")).toHaveLength(3)
+  await page.getByRole("tab", { name: "Scene" }).click()
+  await page.getByRole("treeitem", { name: /^Cable/ }).click()
+  await panel.getByRole("combobox", { name: "Add waypoint" }).click()
+  await page.getByRole("option", { name: /^Clip · Cable through$/ }).click()
+  await expect(panel.getByRole("region", { name: "Waypoints" })).toContainText(
+    "1. Clip · Cable through"
+  )
+  await expect(panel.getByRole("alert")).toContainText("Too short by")
+  await panel.getByRole("button", { name: "Fit to route + 10%" }).click()
+  await expect(panel.getByRole("alert")).toBeHidden()
   await page
     .getByTestId("viewport-canvas")
     .screenshot({ path: test.info().outputPath("cable.png") })
@@ -135,9 +150,9 @@ test("a cable of a set length between two lugs: spare, too short, undo (PLAN 16.
     (window as unknown as E2EWindow).__E2E__.exportText("Untitled cut list.csv")
   )
   expect(csv).toMatch(
-    /^Cable,Colour,Diameter \(mm\),Wires,Length \(mm\),Waypoints,Note\r\nCable,Wire \(red\),1\.46,1,\d+,0,\r\n$/
+    /^Cable,Colour,Diameter \(mm\),Wires,Length \(mm\),Waypoints,Note\r\nCable,Wire \(red\),1\.46,1,\d+,1,\r\n$/
   )
-  // Five undo steps: size, colour, fit, the length typed, the cable itself.
-  for (let i = 0; i < 5; i++) await page.keyboard.press("Control+z")
+  // Eight undo steps: fit, waypoint, clip, size, colour, fit, the length typed, the cable.
+  for (let i = 0; i < 8; i++) await page.keyboard.press("Control+z")
   await expect.poll(() => probe<unknown[]>(page, "connectors")).toEqual([])
 })

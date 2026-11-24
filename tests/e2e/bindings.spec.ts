@@ -75,3 +75,41 @@ test("live loop: opening the lid in test mode lights the LED", async ({ page }) 
   await expect.poll(async () => (await reading.textContent()) ?? "0 cd").not.toBe("0 cd")
   await page.mouse.up()
 })
+
+/** A light readout ("4.21 mcd", "0 cd") in candela. */
+const candela = (text: string | null) => {
+  const m = /^([\d.]+) (µ|m)?cd$/.exec(text ?? "")
+  return m ? Number(m[1]) * (m[2] === "m" ? 1e-3 : m[2] === "µ" ? 1e-6 : 1) : Number.NaN
+}
+
+test("guitar pedal: cut cables, a solved circuit, and the Volume knob sets the LED (PLAN 16.6)", async ({
+  page,
+}) => {
+  test.setTimeout(120_000)
+  await openExample(page, "Guitar pedal", "Volume knob")
+  await expect(status(page)).toContainText("Solved")
+  const connectors = await page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.connectors() ?? [])
+  expect(connectors.filter((c) => c.kind === "cable")).toHaveLength(12)
+  // Every cable reaches along its route: no "too short" mark in the tree.
+  await expect(tree(page).getByRole("treeitem", { name: "Input" })).toBeVisible()
+  await expect(tree(page).getByRole("treeitem", { name: /too short/ })).toHaveCount(0)
+  // The knob at its centre: the wiper at half, the LED dim but lit.
+  const reading = page
+    .locator(".react-flow__node")
+    .filter({ hasText: "LED 1" })
+    .getByTestId("block-readout")
+  await expect.poll(async () => candela(await reading.textContent())).toBeGreaterThan(0)
+  const before = candela(await reading.textContent())
+  // Turn Volume clockwise seen from above (top view: X right, Z down the screen): grab the
+  // knob's top right of its axis and pull it down the screen.
+  await page.keyboard.press("Control+5")
+  await enterTestMode(page)
+  const grab = await project(page, [39, 60, -24])
+  await page.mouse.move(grab.x, grab.y)
+  await page.mouse.down()
+  for (let i = 1; i <= 20; i++) await page.mouse.move(grab.x - i, grab.y + i * 3)
+  await expect
+    .poll(async () => candela(await reading.textContent()), { timeout: 15_000 })
+    .toBeGreaterThan(before * 1.5)
+  await page.mouse.up()
+})

@@ -21,6 +21,11 @@ F fits everything; Ctrl+1…7 are the standard views.
 
 - **File › Import** (Ctrl+I) or drop files on the window: STEP, IGES, glTF/GLB, OBJ, STL.
   STL and OBJ ask for their unit (mm by default); a model's hierarchy becomes groups.
+- **Downloads as a zip** (GrabCAD and similar sites): pick or drop the `.zip` itself. The
+  Import dialog lists the models inside (with the materials and textures they name); anything
+  else is listed as skipped. Native CAD files (SolidWorks `.SLDPRT`/`.SLDASM`, Inventor,
+  Fusion, CATIA...) cannot be read: download or export STEP instead. StudioVD never fetches
+  from those sites itself, and a downloaded model keeps the licence its author gave it.
 - Select in the 3D view or the tree; Ctrl-click adds or removes. Move (T) and rotate (R)
   with the gizmo; a right click opens a context menu.
   Ctrl+G groups, Delete deletes, Ctrl+Z / Ctrl+Y undo and redo every change.
@@ -41,6 +46,28 @@ F fits everything; Ctrl+1…7 are the standard views.
 4. Ground a part (Edit › Grounded) to fix it in place. The tree shows each moving part's
    degrees of freedom and any conflict.
 
+## Cables
+
+Select two anchors (a lug, a pad, a jack's contact: any point or axis) and choose **Cable**
+in Properties. A cable leaves each end straight along its anchor, then curves to the other.
+
+- **Length (mm)** is the length as cut. Properties show the route and the spare; the spare is
+  laid as **Arcs** (bulging away from the surfaces its ends are on), **Waves** or one **Coil**.
+  A cable shorter than its route is drawn taut and marked "Too short by … mm" (in Properties
+  and the Scene tree); **Fit to route + 10%** cuts it to fit. It is never stretched.
+- **Route**: **Add waypoint** routes it through any other anchor, such as a cable clip's or
+  zip tie's "Cable through" anchor or an anchor you placed on a wall; reorder or remove
+  waypoints with the arrows. Deleting a waypoint's part takes it out of the route; deleting an
+  end deletes the cable.
+- **Look**: a wire colour (one shared material per colour), a hook-up wire size (16–30 AWG
+  sets the diameter), **One wire** or a **Twisted pair** (one twist every … mm), and how far it
+  leaves each end straight.
+- **File › Export › Cable Cut List (.csv)** lists every cable: name, colour, diameter, wires,
+  length, waypoints, and a note for one that is too short.
+
+Cables are drawn, not simulated: they pass through parts (waypoints are how you steer them)
+and never move a part.
+
 ## Testing the mechanism
 
 **Test mode** (toolbar) runs physics with collisions: drag a part and everything mated to it
@@ -55,6 +82,12 @@ The Library tab lists:
 
 - **Generators**: screws, nuts, washers, bearings, gears, pulleys, belts, springs, lead screws,
   profiles, batteries, connectors, enclosures, primitives; edit their parameters after insert.
+  For pedals and other small electronics: potentiometers (the shaft turns on a ±150° mate that
+  a binding can read), knobs, panel jacks (6.35 mm mono/stereo, DC), 3PDT/DPDT footswitches,
+  a 9 V battery with snap leads, a circuit board with mounting holes and wire pads, a 5 mm LED,
+  cable clips and zip ties. Panel parts mate behind a panel hole by their bushing; their lugs
+  and pads are anchors to start cables from. Sizes are typical starting values: check the
+  datasheet of the part you buy.
 - **Installed** and **My components**: packs you installed and components you saved
   (select parts, Edit › Save as Component…).
 - **Online catalog**: browse, then download a pack (see Network below).
@@ -87,7 +120,10 @@ Results in the status bar. Gravity (Simulation settings) loads parts and joints.
 a hinge angle drives a potentiometer, a part's weight a motor's torque, a contact a switch,
 the distance and line of sight between two anchors a light sensor; block outputs light up
 parts (glow, tint), draw arrows and labels, or show a commanded pose. In test mode the loop
-runs live. Help › Examples builds four small projects that show each kind.
+runs live. Help › Examples builds small projects that show each kind. **Guitar pedal** puts
+it together: a see-through enclosure with pots, knobs, jacks, a footswitch, an LED, a battery
+and a board, wired with cables of set lengths (two through clips); in test mode, turning the
+Volume knob dims or brightens the LED through the schematic.
 
 ## Projects
 

@@ -1505,9 +1505,20 @@ transparent materials, X-ray) and orbits the view; this phase adds what it lacks
   470 Ω into the LED) is bound to the pot's `turn` mate (clockwise seen from above turns it
   up: −150°…+150° onto 1…0) and the LED's light glows on the LED part. The 3D view fits
   after any example is built.
-- [ ] 16.7 Tests: solver property tests, cable integrity and contract tests, generator golden
+- [x] 16.7 Tests: solver property tests, cable integrity and contract tests, generator golden
   tests, E2E (draw a cable through a clip, set its length, a short cable's warning, undo, the
-  cut list, a zip import), the example builds and solves.
-- [ ] 16.8 Docs: user guide (cables, pedal parts, importing downloads), project-file format
-  (v3).
+  cut list, a zip import), the example builds and solves. As built: `cableSlack.test.ts`
+  (random routes keep the set length within 0.05 mm through every waypoint; taut when short;
+  arcs bulge away; deterministic), `cableActions.test.ts` (every action round-trips through
+  Save/Open with integrity checks; waypoint deletion; closed meshes), golden runs for the
+  pedal generators; E2E `connectors.spec.ts` (a cable between lugs: spare, too short, refit,
+  colour and gauge, then through a Library clip: warned short, refitted, the cut list counts
+  the waypoint; eight undos remove it all), `import.spec.ts` (a dropped zip's skipped native
+  files and the STEP advice; the unpacking itself is Rust-tested in `archive_tests.rs`, since
+  the E2E backend is a mock), `bindings.spec.ts` (the pedal solves, no cable short, turning
+  Volume in test mode brightens the LED) and `guitarPedal.test.ts` (headless: a valid
+  document, knobs above the panel, every cable reaches and stays inside the box).
+- [x] 16.8 Docs: user guide (cables, pedal parts, importing downloads), project-file format
+  (v3). As built: `docs/user-guide.md` (Cables; the pedal generators; zips from download
+  sites; the Guitar pedal example), `docs/formats/project-file.md` (the cable record).
 - [ ] ⛔ 16.9 **User approval**; then 14.7/14.8 and the v0.2.0 release (15.9)

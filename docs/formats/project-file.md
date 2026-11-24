@@ -72,7 +72,7 @@ definitions and licence texts; 5 000 schematic nodes, 20 000 edges.
 | `componentDefs` | The frozen `component.json` of every library component used (see `component-format.md`), its origin and manifest SHA-256. |
 | `components` | Placed instances: `{ id, def, designator, groupId, parts, anchors, mates, materials, bindings, nodeId?, unlinked? }`, each map from the manifest's local keys to document ids. |
 | `licenseTexts` | `{ path: "licenses/<sha256>.txt", spdx }` |
-| `connectors` | Belts, tubes and springs between anchors (v2), and cables (v3: two ends, waypoints in order, the length as cut, diameter, one wire or a twisted pair, how spare length lies). Their meshes are derived, never stored. |
+| `connectors` | Belts, tubes and springs between anchors (v2), and cables (v3): `{ id, name, materialId, visible, kind: "cable", ends: [anchor, anchor], via: anchor[] (≤ 32, route order), lengthMm (as cut, along the centreline), outerMm, conductors: 1\|2, pitchMm (one twist of a pair), slack: "arc"\|"wave"\|"coil", leadMm (straight out of each end) }`. Their meshes are derived from the anchors' frames, never stored; a cable shorter than its route is drawn taut and reported, never stretched. A waypoint whose anchor is deleted leaves the route; a deleted end deletes the cable. |
 
 ## Integrity rules (beyond the schema)
 

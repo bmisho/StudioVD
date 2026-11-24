@@ -66,6 +66,7 @@ test.describe("library", () => {
     const list = await openLibrary(page)
     await page.getByRole("searchbox", { name: "Search components" }).fill("cube 20")
     const card = list.getByRole("option", { name: /Cube 20 mm/ })
+    await expect(card).toBeVisible() // boundingBox() does not wait for the filtered list
     const from = await card.boundingBox()
     const view = await page.getByTestId("viewport-canvas").boundingBox()
     if (!from || !view) throw new Error("no boxes")
@@ -161,7 +162,11 @@ test.describe("library", () => {
     const over = await project(page, target.originMm as [number, number, number])
 
     await search.fill("m5 × 14 socket")
-    const card = await list.getByRole("option").first().boundingBox()
+    // The screw's card itself: right after typing, the list can still show the nut's results,
+    // and boundingBox() does not wait for anything.
+    const screw = list.getByRole("option").filter({ hasText: "M5 × 14" }).first()
+    await expect(screw).toBeVisible()
+    const card = await screw.boundingBox()
     if (!card) throw new Error("no card")
     await page.mouse.move(card.x + 20, card.y + 20)
     await page.mouse.down()

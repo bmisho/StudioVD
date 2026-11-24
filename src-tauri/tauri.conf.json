@@ -79,7 +79,7 @@
       }
     },
     "publisher": "StudioVD",
-    "category": "Graphics",
+    "category": "GraphicsAndDesign",
     "shortDescription": "3D CAD assembly visualizer and multi-domain simulator",
     "longDescription": "Import CAD parts, apply materials, mate them with mechanical constraints, test the mechanism and map its electrical, mechanical, fluid and light behaviour in a live schematic.",
     "windows": {

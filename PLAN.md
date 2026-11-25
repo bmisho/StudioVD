@@ -1433,9 +1433,14 @@ Exit criteria
   shipped npm package and crate with its licence texts), shown in Help › About.
   `@react-three/rapier` publishes no licence field or file; its repository's LICENSE is MIT
   (Copyright (c) 2022 Poimandres, checked 2026-11-23), so the notices carry that text
-- [ ] ⛔ 15.9 **User approval / release**. The owner approved the release on 2026-11-23, then
+- [x] ⛔ 15.9 **User approval / release**. The owner approved the release on 2026-11-23, then
   chose to hold it until Phase 16 is in: the first public release is v0.2.0, after 16.9.
-  Installers stay unsigned for now (docs/release.md: SmartScreen warns on first run)
+  Installers stay unsigned for now (docs/release.md: SmartScreen warns on first run).
+  Released 2026-11-25: the owner pushed tag `v0.2.0` (on `a76e289`; this session's git access
+  cannot push tags) and CI's tag release job published "StudioVD 0.2.0" with the NSIS and MSI
+  installers, the AppImage and .deb, `SHA256SUMS.txt` (checked against GitHub's asset digests)
+  and `docs/releases/v0.2.0.md` as notes. The first tag run's only failure was a WebKit
+  `page.goto` that never loaded, before any test body; the one re-run passed
 
 ---
 

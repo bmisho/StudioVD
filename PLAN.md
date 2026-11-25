@@ -1347,7 +1347,7 @@ Exit criteria
   cargo test here that installs every pack through the app's own staging, as Official, and every
   thumbnail through the preview path), release `packs-N`, record, publish a signed index.
   Adafruit/FreeCAD sources are not used yet: the first catalog is KiCad only
-- [ ] 14.8 First catalog (§4.9): Tier 2 electronics packs + Tier 3 boards/electromechanical
+- [x] 14.8 First catalog (§4.9): Tier 2 electronics packs + Tier 3 boards/electromechanical
   packs, each with schematic blocks from the Phase 11 registry. As built (the owner chose KiCad
   content, 2026-11-23): `kicad-electronics` (LED 5 and 3 mm, axial resistor, 1N4007, electrolytic
   and disc capacitors, 6 mm tactile switch, Bourns 3296W trimmer, CUI barrel and 3.5 mm jacks,
@@ -1355,7 +1355,11 @@ Exit criteria
   (Raspberry Pi Pico and Pico H, Songle SRD-05VDC relay); LEDs, passives, switch, trimmer,
   diode, relay and Picos carry their blocks (the diode's forward voltage from Vishay's
   datasheet; block defaults otherwise, stated as such). KiCad has no 16 mm pots or 6.35 mm
-  jacks, so pedal panel parts stay with the in-app generators (16.4)
+  jacks, so pedal panel parts stay with the in-app generators (16.4). Published 2026-11-25:
+  release `packs-1` and the signed index `catalog-2` (sequence 2, 18 components, 4 packs).
+  Checked from the live URLs: the signature with the compiled-in keys
+  (`live_official_catalog`), the index with the webview's `CatalogIndexSchema`, and both packs
+  installed as Official with every thumbnail (`official_packs_install`)
 - [x] 14.9 Tests: cargo tests against a mock HTTP server (200/206/416/429, redirects, truncated
   body, wrong hash, cancel mid-stream), signature tests (bad signature, rollback, mix-and-match,
   expired index), E2E with mocked IPC and test keys. As built: test keys sign like minisign

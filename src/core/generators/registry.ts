@@ -21,6 +21,7 @@ import { boardPcb } from "./board/pcb/v1"
 import { indicatorLed } from "./indicator/led/v1"
 import { cableClip } from "./cable/clip/v1"
 import { cableZipTie } from "./cable/zipTie/v1"
+import { cableTieMount } from "./cable/tieMount/v1"
 import { enclosureBox } from "./enclosure/box/v1"
 import { containerEurobox } from "./container/eurobox/v1"
 import { connectorJack } from "./connector/jack/v1"
@@ -68,6 +69,7 @@ export const GENERATORS: readonly AnyGenerator[] = [
   indicatorLed,
   cableClip,
   cableZipTie,
+  cableTieMount,
 ]
 
 /** The generator a manifest names, or undefined (unknown id, or a MAJOR this app lacks). */

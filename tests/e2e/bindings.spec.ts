@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test"
 import { expect, test } from "./fixtures"
-import { enterTestMode, project } from "./viewportHelpers"
+import { enterTestMode, partCenter, project } from "./viewportHelpers"
 
 // Phase 13: the examples, end to end (PLAN 13.5, 13.6): 3D measures feed the solver, and the
 // solver's results come back into the 3D view.
@@ -82,7 +82,7 @@ const candela = (text: string | null) => {
   return m ? Number(m[1]) * (m[2] === "m" ? 1e-3 : m[2] === "µ" ? 1e-6 : 1) : Number.NaN
 }
 
-test("guitar pedal: cut cables, a solved circuit, and the Volume knob sets the LED (PLAN 16.6)", async ({
+test("guitar pedal: cut cables, a solved circuit, the Volume knob and the footswitch set the LED (PLAN 16.6)", async ({
   page,
 }) => {
   test.setTimeout(120_000)
@@ -90,7 +90,7 @@ test("guitar pedal: cut cables, a solved circuit, and the Volume knob sets the L
   // The first solve of the pedal's circuit took over 5 s in WebKit on CI (0.2.1).
   await expect(status(page)).toContainText("Solved", { timeout: 30_000 })
   const connectors = await page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.connectors() ?? [])
-  expect(connectors.filter((c) => c.kind === "cable")).toHaveLength(12)
+  expect(connectors.filter((c) => c.kind === "cable")).toHaveLength(16)
   // Every cable reaches along its route: no "too short" mark in the tree.
   await expect(tree(page).getByRole("treeitem", { name: "Input" })).toBeVisible()
   await expect(tree(page).getByRole("treeitem", { name: /too short/ })).toHaveCount(0)
@@ -112,5 +112,31 @@ test("guitar pedal: cut cables, a solved circuit, and the Volume knob sets the L
   await expect
     .poll(async () => candela(await reading.textContent()), { timeout: 15_000 })
     .toBeGreaterThan(before * 1.5)
+  await page.mouse.up()
+
+  // Stamp on the footswitch (front view: its plunger's front, pushed down the screen): the
+  // LED goes out and stays out; let it up and stamp again, and it is back (0.2.2).
+  await page.keyboard.press("Control+1")
+  const parts = await page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.parts() ?? [])
+  const plunger = parts.find((p) => p.name === "Plunger")?.id ?? ""
+  const stamp = async () => {
+    const top = await partCenter(page, plunger)
+    await page.mouse.move(top.x, top.y)
+    await page.mouse.down()
+    for (let i = 1; i <= 10; i++) await page.mouse.move(top.x, top.y + i * 4)
+  }
+  const letUp = async () => {
+    const pos = await partCenter(page, plunger)
+    await page.mouse.move(pos.x, pos.y)
+    for (let i = 1; i <= 10; i++) await page.mouse.move(pos.x, pos.y - i * 8)
+    await page.mouse.up()
+  }
+  const lit = async () => candela(await reading.textContent())
+  await stamp()
+  await expect.poll(lit, { timeout: 15_000 }).toBeLessThan(1e-4)
+  await letUp()
+  await expect.poll(lit).toBeLessThan(1e-4) // latched off
+  await stamp()
+  await expect.poll(lit, { timeout: 15_000 }).toBeGreaterThan(1e-3)
   await page.mouse.up()
 })

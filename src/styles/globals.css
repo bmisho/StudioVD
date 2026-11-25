@@ -158,17 +158,20 @@
   outline: 2px solid var(--ring);
 }
 
-/* Flow along wires after a solve (PLAN 12.9): dots moving with the flow, faster for more. */
+/* Flow along wires after a solve (PLAN 12.9): beads in the wire's colour moving along it,
+   faster for more. They sit ON the wire, which stays unbroken: gaps cut into it made a busy
+   electrical wire look dashed or dotted, another domain's line (0.2.2 first-run report). */
 @keyframes sim-flow {
   from {
-    stroke-dashoffset: 12;
+    stroke-dashoffset: 14;
   }
   to {
     stroke-dashoffset: 0;
   }
 }
 .sim-flow {
-  stroke-dasharray: 2 10;
+  stroke-dasharray: 0 14;
+  stroke-linecap: round;
   animation: sim-flow linear infinite;
 }
 .sim-flow-1 {

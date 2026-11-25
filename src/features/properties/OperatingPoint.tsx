@@ -19,7 +19,12 @@ export function OperatingPoint({ id, def }: { id: NodeId; def: BlockDef }) {
       {def.ports.map((p, i) => (
         <PropertyField key={p.key} label={p.name} value={rows[i] ?? "—"} />
       ))}
-      {power !== undefined && <PropertyField label="Power taken" value={quantity(power, "W")} />}
+      {power !== undefined && (
+        <PropertyField
+          label={power < 0 ? "Power supplied" : "Power used"}
+          value={quantity(Math.abs(power), "W")}
+        />
+      )}
     </section>
   )
 }

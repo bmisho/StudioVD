@@ -16,6 +16,28 @@ const switchBlock: Behaviour = {
   },
 }
 
+/** Closed now: what the last press left it at, else its starting state (state `on`). */
+const latched = (c: Instance) =>
+  c.state.on === undefined ? flag(c, "closed") : c.state.on === true
+
+/**
+ * A latching push switch toggles on each press: the moment its input goes from released to
+ * pressed (state `pressed` remembers which it was in the last solve). Held down it stays put.
+ */
+const latchingSwitch: Behaviour = {
+  stamp: (s, c) => {
+    if (latched(c)) conductance(s, "a", "b", 1 / Math.max(num(c, "rOn"), 1e-6))
+  },
+  settle: (c, r) => {
+    const pressed = asBool(r.input("press"))
+    const was = c.state.pressed === true
+    c.state.pressed = pressed
+    if (!pressed || was) return false
+    c.state.on = !latched(c)
+    return true
+  },
+}
+
 /** A fuse conducts until it carries more than its rating; then it stays blown (state). */
 const fuse: Behaviour = {
   // About 0.1 Ω at 1 A, less for bigger fuses (estimated: datasheets give cold resistance).
@@ -57,6 +79,7 @@ const relay: Behaviour = {
 
 export const SWITCHING_BEHAVIOURS: Readonly<Record<string, Behaviour>> = {
   "electrical.switch": switchBlock,
+  "electrical.latchingSwitch": latchingSwitch,
   "electrical.fuse": fuse,
   "electrical.relay": relay,
 }

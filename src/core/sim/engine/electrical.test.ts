@@ -99,4 +99,28 @@ describe("electrical known answers", () => {
     const fresh = run(2)
     expect(fresh.r.state[fresh.relay]?.on).toBe(false)
   })
+  it("a latching push switch toggles on each press, not while held (0.2.2)", () => {
+    // Ids are minted in order, so every run's blocks have the same ids: state carries over.
+    const run = (pressed: boolean, state?: ReturnType<typeof simulate>["state"]) => {
+      const { doc, block, wire, bat, gnd } = powered(10)
+      const sw = block("electrical.latchingSwitch@1", {}, "SW1")
+      const r = block("electrical.resistor@1", { resistance: 1000 })
+      wire(bat, "pos", sw, "a")
+      wire(sw, "b", r, "a")
+      wire(r, "b", gnd, "gnd")
+      const injected = { params: {}, signals: { [`${sw}/press`]: pressed ? 1 : 0 }, light: {} }
+      const result = simulate(doc, { state, injected })
+      return { result, current: Math.abs(i(result, r, "a")) }
+    }
+    const start = run(false)
+    expect(start.current).toBeCloseTo(0.01, 6) // closed at start: 10 V over 1 kΩ
+    const pressed = run(true, start.result.state)
+    expect(pressed.current).toBeLessThan(1e-6) // the press opened it
+    const held = run(true, pressed.result.state)
+    expect(held.current).toBeLessThan(1e-6) // still held: no second toggle
+    const released = run(false, held.result.state)
+    expect(released.current).toBeLessThan(1e-6) // it latched open
+    const again = run(true, released.result.state)
+    expect(again.current).toBeCloseTo(0.01, 6) // the next press closes it
+  })
 })

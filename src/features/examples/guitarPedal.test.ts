@@ -34,12 +34,14 @@ describe("Help › Examples › Guitar pedal (PLAN 16.6)", () => {
     await guitarPedal()
     const d = doc()
     expect(checkIntegrity(d)).toEqual([])
-    expect(Object.keys(d.parts)).toHaveLength(20)
+    expect(Object.keys(d.parts)).toHaveLength(21) // the footswitch's plunger is a part of its own
     const cables = Object.values(d.connectors).filter((c) => c.kind === "cable")
     expect(cables.map((c) => c.name)).toContain("Battery +")
-    expect(cables).toHaveLength(12)
-    expect(Object.keys(d.schematic.nodes)).toHaveLength(5)
-    expect(Object.keys(d.bindings)).toHaveLength(2)
+    expect(cables).toHaveLength(16)
+    // Footswitch, battery, Volume, Gain, Tone, resistor, LED and three grounds (0.2.2).
+    expect(Object.keys(d.schematic.nodes)).toHaveLength(10)
+    // Three knobs and the footswitch in; the LED's glow out.
+    expect(Object.keys(d.bindings)).toHaveLength(5)
   }, 30_000)
 
   it("puts the knobs above the top panel and the battery on the base plate", async () => {

@@ -49,8 +49,8 @@ export function WireEdge(props: EdgeProps<WireFlowEdge>) {
         <path
           d={path}
           fill="none"
-          stroke="var(--background)"
-          strokeWidth={style.strokeWidth}
+          stroke={style.color}
+          strokeWidth={style.strokeWidth + 2.5}
           className={`sim-flow sim-flow-${Math.abs(level)}`}
           style={{ animationDirection: level < 0 ? "reverse" : "normal" }}
           pointerEvents="none"

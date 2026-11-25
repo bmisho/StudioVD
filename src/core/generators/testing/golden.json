@@ -2238,6 +2238,8 @@
         "mount",
         "bushing",
         "plunger",
+        "guide",
+        "plungerAxis",
         "lug1",
         "lug2",
         "lug3",
@@ -2248,14 +2250,21 @@
         "lug8",
         "lug9"
       ],
-      "mates": [],
+      "mates": ["press"],
       "bodies": {
         "switch": {
-          "triangles": 404,
-          "faces": 65,
-          "volumeMm3": 6793.47808,
-          "offsetMm": [0, 0, 0],
-          "bboxMm": [-8.5, -22, -8.5, 8.5, 22, 8.5]
+          "triangles": 276,
+          "faces": 63,
+          "volumeMm3": 5857.04453,
+          "offsetMm": [0, -6, 0],
+          "bboxMm": [-8.5, -16, -8.5, 8.5, 16, 8.5]
+        },
+        "plunger": {
+          "triangles": 124,
+          "faces": 3,
+          "volumeMm3": 1209.56,
+          "offsetMm": [0, 14.25, 0],
+          "bboxMm": [-5, -7.75, -5, 5, 7.75, 5]
         }
       }
     },
@@ -2264,6 +2273,8 @@
         "mount",
         "bushing",
         "plunger",
+        "guide",
+        "plungerAxis",
         "lug1",
         "lug2",
         "lug3",
@@ -2274,27 +2285,53 @@
         "lug8",
         "lug9"
       ],
-      "mates": [],
+      "mates": ["press"],
       "bodies": {
         "switch": {
-          "triangles": 404,
-          "faces": 65,
-          "volumeMm3": 6793.47808,
-          "offsetMm": [0, 0, 0],
-          "bboxMm": [-8.5, -22, -8.5, 8.5, 22, 8.5]
+          "triangles": 276,
+          "faces": 63,
+          "volumeMm3": 5857.04453,
+          "offsetMm": [0, -6, 0],
+          "bboxMm": [-8.5, -16, -8.5, 8.5, 16, 8.5]
+        },
+        "plunger": {
+          "triangles": 124,
+          "faces": 3,
+          "volumeMm3": 1209.56,
+          "offsetMm": [0, 14.25, 0],
+          "bboxMm": [-5, -7.75, -5, 5, 7.75, 5]
         }
       }
     },
     "twoPole": {
-      "anchors": ["mount", "bushing", "plunger", "lug1", "lug2", "lug3", "lug4", "lug5", "lug6"],
-      "mates": [],
+      "anchors": [
+        "mount",
+        "bushing",
+        "plunger",
+        "guide",
+        "plungerAxis",
+        "lug1",
+        "lug2",
+        "lug3",
+        "lug4",
+        "lug5",
+        "lug6"
+      ],
+      "mates": ["press"],
       "bodies": {
         "switch": {
-          "triangles": 368,
-          "faces": 47,
-          "volumeMm3": 6776.67808,
-          "offsetMm": [0, 0, 0],
-          "bboxMm": [-8.5, -22, -8.5, 8.5, 22, 8.5]
+          "triangles": 240,
+          "faces": 45,
+          "volumeMm3": 5840.24453,
+          "offsetMm": [0, -6, 0],
+          "bboxMm": [-8.5, -16, -8.5, 8.5, 16, 8.5]
+        },
+        "plunger": {
+          "triangles": 124,
+          "faces": 3,
+          "volumeMm3": 1209.56,
+          "offsetMm": [0, 14.25, 0],
+          "bboxMm": [-5, -7.75, -5, 5, 7.75, 5]
         }
       }
     }
@@ -2544,11 +2581,11 @@
       "mates": [],
       "bodies": {
         "tie": {
-          "triangles": 968,
-          "faces": 9,
-          "volumeMm3": 81.2363826,
-          "offsetMm": [0, -1.5937103, 0],
-          "bboxMm": [-1.5, -5.30628967, -3.71664977, 1.5, 5.30628967, 3.71664977]
+          "triangles": 412,
+          "faces": 18,
+          "volumeMm3": 156.227314,
+          "offsetMm": [0, -0.899999976, 1.40018225],
+          "bboxMm": [-2.54999995, -4.5999999, -5.09981775, 2.54999995, 4.5999999, 5.09981775]
         }
       }
     },
@@ -2557,11 +2594,11 @@
       "mates": [],
       "bodies": {
         "tie": {
-          "triangles": 968,
-          "faces": 9,
-          "volumeMm3": 69.5145052,
-          "offsetMm": [0, -1.74414992, 0],
-          "bboxMm": [-1.5, -4.25584984, -2.51445389, 1.5, 4.25584984, 2.51445389]
+          "triangles": 412,
+          "faces": 18,
+          "volumeMm3": 102.175984,
+          "offsetMm": [0, -0.5, 1.50002682],
+          "bboxMm": [-2.25, -4, -4.9999733, 2.25, 4, 4.9999733]
         }
       }
     },
@@ -2570,11 +2607,11 @@
       "mates": [],
       "bodies": {
         "tie": {
-          "triangles": 968,
-          "faces": 9,
-          "volumeMm3": 84.6616057,
-          "offsetMm": [0, -1.59423208, 0],
-          "bboxMm": [-1.5, -5.80576801, -4.21615362, 1.5, 5.80576801, 4.21615362]
+          "triangles": 412,
+          "faces": 18,
+          "volumeMm3": 169.766327,
+          "offsetMm": [0, -0.900000095, 1.15179324],
+          "bboxMm": [-2.54999995, -5.0999999, -5.34820652, 2.54999995, 5.0999999, 5.34820652]
         }
       }
     },
@@ -2583,11 +2620,65 @@
       "mates": [],
       "bodies": {
         "tie": {
-          "triangles": 968,
-          "faces": 9,
-          "volumeMm3": 122.472265,
-          "offsetMm": [0, -1.44587922, 0],
-          "bboxMm": [-1.5, -8.85412121, -7.41636372, 1.5, 8.85412121, 7.41636372]
+          "triangles": 412,
+          "faces": 18,
+          "volumeMm3": 326.676475,
+          "offsetMm": [0, -0.799999952, 0],
+          "bboxMm": [-2.8499999, -8.19999981, -7.39279318, 2.8499999, 8.19999981, 7.39279318]
+        }
+      }
+    }
+  },
+  "cable.tieMount@1": {
+    "defaults": {
+      "anchors": ["base", "cable"],
+      "mates": [],
+      "bodies": {
+        "mount": {
+          "triangles": 436,
+          "faces": 30,
+          "volumeMm3": 925.347282,
+          "offsetMm": [0, 5.39981794, 0],
+          "bboxMm": [-9.5, -5.39981794, -9.5, 9.5, 5.39981794, 9.5]
+        }
+      }
+    },
+    "m13": {
+      "anchors": ["base", "cable"],
+      "mates": [],
+      "bodies": {
+        "mount": {
+          "triangles": 436,
+          "faces": 30,
+          "volumeMm3": 470.705543,
+          "offsetMm": [0, 4.10000019, 0],
+          "bboxMm": [-6.5, -4.5, -6.5, 6.5, 4.5, 6.5]
+        }
+      }
+    },
+    "m19": {
+      "anchors": ["base", "cable"],
+      "mates": [],
+      "bodies": {
+        "mount": {
+          "triangles": 436,
+          "faces": 30,
+          "volumeMm3": 925.347282,
+          "offsetMm": [0, 5.39981794, 0],
+          "bboxMm": [-9.5, -5.39981794, -9.5, 9.5, 5.39981794, 9.5]
+        }
+      }
+    },
+    "m28": {
+      "anchors": ["base", "cable"],
+      "mates": [],
+      "bodies": {
+        "mount": {
+          "triangles": 436,
+          "faces": 30,
+          "volumeMm3": 1856.71033,
+          "offsetMm": [0, 7.99994326, 0],
+          "bboxMm": [-14, -7.99994326, -14, 14, 7.99994326, 14]
         }
       }
     }

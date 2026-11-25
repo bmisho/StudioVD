@@ -79,3 +79,44 @@ export function pathLength(path: readonly Vec3[]): number {
   for (let i = 1; i < path.length; i++) sum += length(sub(path[i] ?? ORIGIN, path[i - 1] ?? ORIGIN))
   return sum
 }
+
+/**
+ * A flat band of `width` × `thickness` along `path` (a zip tie's strap), its width across the
+ * path's bend (the rotation-minimizing frame's binormal: along X for a loop round X) and its
+ * thickness along the normal, capped at both ends. Four faces (inner, outer, two edges) and
+ * two caps; its volume is width × thickness × the path's length, as for `tube`.
+ */
+export function band(
+  b: BodyBuilder,
+  path: readonly Vec3[],
+  width: number,
+  thickness: number,
+  slot = 0
+): void {
+  if (path.length < 2) throw new Error("a band needs a path")
+  const f = frames(path)
+  // Corners counter-clockwise about the tangent (n × bn = t), as `tube`'s rings run.
+  const signs: readonly (readonly [number, number])[] = [
+    [1, 1],
+    [-1, 1],
+    [-1, -1],
+    [1, -1],
+  ]
+  const rings = path.map((c, i) => {
+    const { t, n } = f[i] ?? { t: [0, 0, 1] as Vec3, n: [1, 0, 0] as Vec3 }
+    const bn = cross(t, n)
+    return signs.map(([sn, sb]) =>
+      add(c, add(scale(n, (sn * thickness) / 2), scale(bn, (sb * width) / 2)))
+    )
+  })
+  for (let j = 0; j < 4; j++) {
+    const i = (j + 1) % 4
+    b.face(slot)
+    const lo = rings.map((ring) => b.vertex(ring[j] ?? ORIGIN))
+    const hi = rings.map((ring) => b.vertex(ring[i] ?? ORIGIN))
+    for (let k = 0; k + 1 < rings.length; k++)
+      b.quad(lo[k] ?? 0, hi[k] ?? 0, hi[k + 1] ?? 0, lo[k + 1] ?? 0)
+  }
+  planarFace(b, [rings[0] ?? []], scale(f[0]?.t ?? [0, 0, 1], -1), slot)
+  planarFace(b, [rings.at(-1) ?? []], f.at(-1)?.t ?? [0, 0, 1], slot)
+}

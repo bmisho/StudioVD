@@ -2,12 +2,8 @@ import { z } from "zod"
 import { estimated, mm } from "../../common"
 import { tinted } from "../../materials"
 import { BodyBuilder } from "../../mesh/builder"
-import { rectangle } from "../../mesh/outline"
-import { extrude } from "../../mesh/prism"
 import { defineGenerator } from "../../types"
-import { bundleAnchor, strap } from "../strap"
-
-const GAP = (12 * Math.PI) / 180 // where the strap enters the head
+import { bundleAnchor, zipTie } from "../strap"
 
 const Params = z
   .object({
@@ -17,13 +13,14 @@ const Params = z
   .strict()
 
 /**
- * A zip tie closed round a bundle (PLAN 16.4): its strap round the bundle's centre (the
- * component origin) and its head below. "Cable through" is a cable's waypoint.
+ * A zip tie closed round a bundle (PLAN 16.4): its flat strap round the bundle's centre (the
+ * component origin), its head below with the cut tail (1.1: a strap, not a round wire).
+ * "Cable through" is a cable's waypoint.
  */
 export const cableZipTie = defineGenerator({
   id: "cable.zipTie",
   major: 1,
-  version: "1.0.0",
+  version: "1.1.0",
   name: "Zip tie",
   summary: "Zip tie round a cable bundle: a waypoint for cables",
   category: ["electrical", "cable-management"],
@@ -38,7 +35,10 @@ export const cableZipTie = defineGenerator({
   sources: [
     {
       what: "Zip tie sizes",
-      source: estimated("Visual: a round strap and a head about 4 × 3 × 5 mm", "low"),
+      source: estimated(
+        "Visual: a flat strap 3 × as wide as thick (1.2 × 3.6 mm), a head about 5 × 3 × 5 mm, a 4 mm tail",
+        "low"
+      ),
     },
     {
       what: "Nylon density",
@@ -47,13 +47,7 @@ export const cableZipTie = defineGenerator({
   ],
   generate: (p) => {
     const b = new BodyBuilder()
-    const radius = p.bundleMm / 2 + p.strapMm / 2
-    // The strap from the head round the bundle and back (angles from +Y; the head is at −Y).
-    let volume = strap(b, 0, radius, p.strapMm, Math.PI + GAP / 2, 3 * Math.PI - GAP / 2)
-    const head = { w: 4, d: 3, h: 5 }
-    const y1 = -radius + p.strapMm
-    extrude(b, rectangle(head.d, head.w), [], y1 - head.h, y1)
-    volume += head.w * head.d * head.h
+    const volume = zipTie(b, 0, p.bundleMm, p.strapMm, "below")
     return {
       name: `Zip tie round Ø${mm(p.bundleMm)} mm`,
       tags: [`${mm(p.bundleMm)}mm`],

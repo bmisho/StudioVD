@@ -7,12 +7,14 @@ import { ELECTRICAL } from "./electrical"
 import { ELECTROMECHANICAL } from "./electromechanical"
 import { FLUID_LIGHT } from "./fluidLight"
 import { MECHANICAL } from "./mechanical"
+import { SWITCHES } from "./switches"
 
 export type { ModelCategory, ModelDef } from "./define"
 
 /** Every built-in block (PLAN 11.3), in the order the Add block menu lists them. */
 export const MODELS: readonly ModelDef[] = [
   ...ELECTRICAL,
+  ...SWITCHES,
   ...ELECTROMECHANICAL,
   ...DRIVERS,
   ...MECHANICAL,

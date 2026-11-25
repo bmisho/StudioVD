@@ -36,18 +36,25 @@ const DEFAULTS = {
 }
 
 const LUG = { width: 1.6, thickness: 0.5, length: 6 } as const
+/** How far the plunger goes down when stamped on (0.2.2; estimated, see sources). */
+const TRAVEL_MM = 2.5
+const TRAVEL_SOURCE = estimated(
+  "Stomp footswitches travel about 2-3 mm to latch; 2.5 mm taken. Check the datasheet",
+  "low"
+)
 const POLE_NAMES = ["A", "B", "C"] as const
 const THROWS = ["out 1", "common", "out 2"] as const
 
 /**
  * A latching stomp footswitch (PLAN 16.4): its square body behind the panel (y = 0 is the
- * mounting face), the threaded bushing and plunger through it, and a grid of solder lugs on
- * the back: one row per pole, the common in the middle (cable ends).
+ * mounting face), the threaded bushing through it, and a grid of solder lugs on the back: one
+ * row per pole, the common in the middle (cable ends). Since 1.1 the plunger is a body of its
+ * own on a `press` slide (2.5 mm down), so test mode can stamp on it and a binding can read it.
  */
 export const switchFootswitch = defineGenerator({
   id: "switch.footswitch",
   major: 1,
-  version: "1.0.0",
+  version: "1.1.0",
   name: "Footswitch",
   summary: "Stomp footswitch, 3PDT or DPDT, with a grid of solder lugs",
   category: ["electrical", "switches"],
@@ -67,6 +74,7 @@ export const switchFootswitch = defineGenerator({
         "low"
       ),
     },
+    { what: "Plunger travel", source: TRAVEL_SOURCE },
   ],
   generate: (p) => {
     const b = new BodyBuilder()
@@ -76,16 +84,18 @@ export const switchFootswitch = defineGenerator({
     const top = p.bushingLengthMm + p.plungerLengthMm
     extrude(b, rectangle(W, W), [], -p.bodyDepthMm, 0)
     let volume = W * W * p.bodyDepthMm
-    // Bushing and plunger in metal, sunk 0.5 mm into the body so they share no face with it.
+    // The bushing in metal, sunk 0.5 mm into the body so they share no face with it.
     volume += stack(
       b,
-      [
-        { outline: circle(rb, segmentsFor(rb)), y0: -0.5, y1: p.bushingLengthMm },
-        { outline: circle(rp, segmentsFor(rp)), y0: p.bushingLengthMm, y1: top },
-      ],
+      [{ outline: circle(rb, segmentsFor(rb)), y0: -0.5, y1: p.bushingLengthMm }],
       undefined,
       2
     )
+    // The plunger reaches into the bushing past its travel, so stamped down it shows no gap.
+    const plunger = new BodyBuilder()
+    const plungerVolume = stack(plunger, [
+      { outline: circle(rp, segmentsFor(rp)), y0: p.bushingLengthMm - TRAVEL_MM - 1, y1: top },
+    ])
     const anchors: Record<string, GeneratedAnchor> = {
       mount: axialY("switch", "Mounting face", 0, true, {
         kind: "planar",
@@ -96,7 +106,11 @@ export const switchFootswitch = defineGenerator({
         role: "mate",
         interface: `bushing-${mm(p.bushingDiameterMm)}mm`,
       }),
-      plunger: axialY("switch", "Plunger", top, true, { role: "reference" }),
+      plunger: axialY("plunger", "Plunger", top, true, { role: "reference" }),
+      guide: axialY("switch", "Plunger guide", p.bushingLengthMm, true, { role: "reference" }),
+      plungerAxis: axialY("plunger", "Plunger axis", p.bushingLengthMm, true, {
+        role: "reference",
+      }),
     }
     // Lugs out of the back, starting 1 mm inside it: rows are poles, columns the throws.
     const yTip = -p.bodyDepthMm - LUG.length
@@ -127,14 +141,34 @@ export const switchFootswitch = defineGenerator({
             { name: "Bushing", material: "metal" },
           ],
           collider: "hull",
-          role: "actuator",
+          role: "body",
           volumeMm3: volume,
+        },
+        plunger: {
+          name: "Plunger",
+          mesh: plunger.build(),
+          material: "metal",
+          collider: "hull",
+          role: "actuator",
+          volumeMm3: plungerVolume,
         },
       },
       rootBody: "switch",
       materials: { body: BLACK_PBT(), lugs: builtin("std.brass"), metal: builtin("std.steel") },
       anchors,
-      mates: {},
+      mates: {
+        press: {
+          name: "Plunger presses",
+          type: "prismatic",
+          anchorA: "guide",
+          anchorB: "plungerAxis",
+          flip: false,
+          angleOffsetRad: 0,
+          contactsEnabled: false,
+          limits: { min: -TRAVEL_MM, max: 0 },
+          limitsSource: TRAVEL_SOURCE,
+        },
+      },
       suggestedMates: [{ anchor: "mount", mateType: "fixed", flip: true, label: "Behind a panel" }],
       placement: { anchor: "mount", groundIfFirst: false },
     }

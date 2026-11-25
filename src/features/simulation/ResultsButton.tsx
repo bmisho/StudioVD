@@ -60,7 +60,7 @@ export function ResultsButton() {
         </p>
         {result && (
           <p className="mt-1 text-muted-foreground tabular-nums">
-            Supplied {quantity(result.supplied, "W")} · taken {quantity(result.dissipated, "W")}
+            Supplied {quantity(result.supplied, "W")} · used {quantity(result.dissipated, "W")}
           </p>
         )}
         {result && result.diagnostics.length > 0 && (
@@ -87,18 +87,22 @@ export function ResultsButton() {
           </ul>
         )}
         {power.length > 0 && (
+          // Sources and consumers in their own columns: the solver's sign (power taken, so a
+          // battery's is negative) read as an error (0.2.2 first-run report).
           <table className="mt-2 w-full tabular-nums" aria-label="Power by block">
             <thead>
               <tr className="text-muted-foreground">
                 <th className="text-left font-normal">Block</th>
-                <th className="text-right font-normal">Power</th>
+                <th className="text-right font-normal">Supplies</th>
+                <th className="text-right font-normal">Uses</th>
               </tr>
             </thead>
             <tbody>
               {power.map(([id, p]) => (
                 <tr key={id}>
                   <td className="truncate">{label(id)}</td>
-                  <td className="text-right">{quantity(p, "W")}</td>
+                  <td className="text-right">{p < 0 ? quantity(-p, "W") : ""}</td>
+                  <td className="text-right">{p > 0 ? quantity(p, "W") : ""}</td>
                 </tr>
               ))}
             </tbody>

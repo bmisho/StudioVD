@@ -55,6 +55,13 @@ test("a battery, a resistor and a voltmeter solve as they are wired", async ({ p
   await expect(status).toContainText("warnings")
   await page.getByRole("button", { name: "Results" }).click()
   await expect(page.getByRole("list", { name: "Findings" })).toContainText("rating")
+  // The battery supplies, the resistor uses: no negative power (0.2.2).
+  const table = page.getByRole("table", { name: "Power by block" })
+  const cells = (name: string) =>
+    table.getByRole("row", { name: new RegExp(name) }).getByRole("cell")
+  await expect(cells("Battery 1")).toHaveText(["Battery 1", /\d W$/, ""])
+  await expect(cells("Resistor 1")).toHaveText(["Resistor 1", "", /\d W$/])
+  await expect(table).not.toContainText(/[-\u2212]/)
 })
 
 test("a circuit without ground says what to add", async ({ page }) => {

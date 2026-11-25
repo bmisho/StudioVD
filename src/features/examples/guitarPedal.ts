@@ -17,7 +17,7 @@ const BASE = 2 // the lid's inner face
 const [SIDE, FRONT] = [BOX.w / 2 - BOX.wall, BOX.d / 2 - BOX.wall] // the walls' inner faces
 const UPSIDE_DOWN = [1, 0, 0, 0] as const
 const LYING_FLAT = [-0.5, -0.5, -0.5, 0.5] as const // the battery's height along +X, thickness up
-// Clips on the front wall: the base against the wall, the cable along X.
+// Zip tie mounts on the front wall: the base against the wall, the cables along X.
 const ON_FRONT_WALL = [-Math.SQRT1_2, 0, 0, Math.SQRT1_2] as const
 const DOWN: Vec3 = [0, -1, 0]
 
@@ -55,7 +55,8 @@ const partOf = (p: Placed, key: string): PartId => {
 /**
  * Help › Examples › Guitar pedal (PLAN 16.6): a see-through box with three pots and knobs,
  * input, output and DC jacks, a 3PDT footswitch, an LED, a 9 V battery and a board, wired
- * with cables cut to length through clips. Turning Volume in test mode dims the LED.
+ * with cables cut to length through zip ties on mounts. In test mode each knob dims the LED
+ * and stamping on the footswitch turns it on and off (0.2.2).
  */
 export async function guitarPedal(): Promise<void> {
   const store = useDocumentStore.getState
@@ -126,7 +127,7 @@ export async function guitarPedal(): Promise<void> {
   )
 
   // Held in place, not mated: the battery lies on the base plate under the board, the board
-  // hangs under the pots (pads to the front), clips sit on the walls.
+  // hangs under the pots (pads to the front), zip tie mounts sit on the front wall.
   const battery = await generated(
     "battery.pp3",
     { snap: true },
@@ -135,20 +136,25 @@ export async function guitarPedal(): Promise<void> {
   )
   const board = await generated(
     "board.pcb",
-    { widthMm: 64, depthMm: 26 },
+    { widthMm: 64, depthMm: 26, pads: 12 },
     [0, 26, -22],
     [0, 1, 0, 0]
   )
-  const clips = [
-    await generated("cable.clip", {}, [30, 14, FRONT], [...ON_FRONT_WALL]),
-    await generated("cable.clip", {}, [-30, 14, FRONT], [...ON_FRONT_WALL]),
-  ]
+  // Sized to what runs through them: one hook-up wire on the right, the twisted pair left.
+  const tie = (bundleMm: number, x: number) =>
+    generated(
+      "cable.tieMount",
+      { bundleMm, baseMm: 13, strapMm: 0.9 },
+      [x, 20, FRONT],
+      [...ON_FRONT_WALL]
+    )
+  const ties = [await tie(2, 30), await tie(3.5, -30)]
   store().setPartsGrounded(
-    [battery, board, ...clips].map((p) => Object.values(p.parts)).flat(),
+    [battery, board, ...ties].map((p) => Object.values(p.parts)).flat(),
     true
   )
 
-  const parts: PedalParts = { pots, input, output, dc, footswitch, led, battery, board, clips }
+  const parts: PedalParts = { pots, input, output, dc, footswitch, led, battery, board, ties }
   wirePedal(parts)
   pedalCircuit(parts)
 }

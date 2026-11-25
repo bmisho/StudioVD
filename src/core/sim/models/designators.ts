@@ -9,6 +9,7 @@ const BY_MODEL: Readonly<Record<string, string>> = {
   "electrical.capacitor": "C",
   "electrical.inductor": "L",
   "electrical.switch": "SW",
+  "electrical.latchingSwitch": "SW",
   "electrical.led": "LED",
   "electrical.diode": "D",
   "electrical.fuse": "F",

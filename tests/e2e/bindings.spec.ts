@@ -120,6 +120,20 @@ test("guitar pedal: cut cables, a solved circuit, the Volume knob and the footsw
   const parts = await page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.parts() ?? [])
   const plunger = parts.find((p) => p.name === "Plunger")?.id ?? ""
   const rest = (await partPose(page, plunger)).position[1] ?? 0
+  // The view eases to the front (about 2 s in WebKit on CI's runner): grab only once the
+  // plunger stays put on the screen.
+  let seen = { x: Infinity, y: Infinity }
+  await expect
+    .poll(
+      async () => {
+        const c = await partCenter(page, plunger)
+        const still = Math.hypot(c.x - seen.x, c.y - seen.y) < 2
+        seen = c
+        return still
+      },
+      { timeout: 15_000, intervals: [250] }
+    )
+    .toBe(true)
   const stamp = async () => {
     const top = await partCenter(page, plunger)
     await page.mouse.move(top.x, top.y)

@@ -23,6 +23,9 @@ const TOLERANCE_DEG = ((0.05 / 60.5) * 180) / Math.PI
 test("test mode: dragging the leaf into the base stops it at the face", async ({
   page,
 }, testInfo) => {
+  // The rig, test mode and 24 dragged steps with a probe read each: past 30 s on a GPU-less
+  // runner beside a WebKit worker (CI on the v0.2.1 tag).
+  test.setTimeout(60_000)
   await page.goto("/")
   await waitForViewport(page)
   const { leaf } = await insertTestRig(page)

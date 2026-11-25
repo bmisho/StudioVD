@@ -49,8 +49,14 @@ test("test mode: dragging the leaf into the base stops it at the face", async ({
     angles.push(angleZDeg(await partPose(page, leaf)))
   }
   expect(Math.min(...angles)).toBeGreaterThan(STOP_DEG - TOLERANCE_DEG)
-  const shot = await page.getByTestId("viewport-canvas").screenshot()
-  await testInfo.attach("leaf-at-stop.png", { body: shot, contentType: "image/png" })
+  // A page clip, not the element's own screenshot: that waits for the canvas to be "stable"
+  // over animation frames, which a GPU-less runner can starve while test mode renders every
+  // frame with the button held (CI timed out there, 0.2.1).
+  const clip = await page.getByTestId("viewport-canvas").boundingBox()
+  if (clip) {
+    const shot = await page.screenshot({ clip })
+    await testInfo.attach("leaf-at-stop.png", { body: shot, contentType: "image/png" })
+  }
 
   // Released, it stays where it is (damping, no gravity in Rapier).
   await page.mouse.up()

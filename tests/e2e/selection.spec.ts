@@ -33,6 +33,9 @@ test.describe("3D selection", () => {
   })
 
   test("a left drag over empty space selects with a box (0.2.1)", async ({ page }) => {
+    // The rig, a maximized view redrawn at full size and four drags: past 30 s on a GPU-less
+    // runner beside a WebKit worker (CI, 0.2.1).
+    test.setTimeout(60_000)
     await insertTestRig(page)
     // Room around the parts: the split 3D view is narrow beside the schematic.
     await page.getByRole("button", { name: "Maximize 3D View" }).click()

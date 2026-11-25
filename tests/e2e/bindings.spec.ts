@@ -87,7 +87,8 @@ test("guitar pedal: cut cables, a solved circuit, and the Volume knob sets the L
 }) => {
   test.setTimeout(120_000)
   await openExample(page, "Guitar pedal", "Volume knob")
-  await expect(status(page)).toContainText("Solved")
+  // The first solve of the pedal's circuit took over 5 s in WebKit on CI (0.2.1).
+  await expect(status(page)).toContainText("Solved", { timeout: 30_000 })
   const connectors = await page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.connectors() ?? [])
   expect(connectors.filter((c) => c.kind === "cable")).toHaveLength(12)
   // Every cable reaches along its route: no "too short" mark in the tree.

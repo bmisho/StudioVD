@@ -125,15 +125,18 @@ test("guitar pedal: cut cables, a solved circuit, the Volume knob and the footsw
     await page.mouse.move(top.x, top.y)
     await page.mouse.down()
     for (let i = 1; i <= 10; i++) await page.mouse.move(top.x, top.y + i * 4)
+    await expect
+      .poll(async () => (await partPose(page, plunger)).position[1] ?? 0, { timeout: 15_000 })
+      .toBeLessThan(rest - 2)
   }
-  // Held until the plunger is up: the drag's spring trails the pointer (more in WebKit, where
-  // letting go at once left it 1.5 mm down, still pressed).
+  // Held until the plunger is down, and up: the drag's spring trails the pointer (more in
+  // WebKit, where letting go at once left it 1.5 mm down, still pressed).
   const letUp = async () => {
     const pos = await partCenter(page, plunger)
     await page.mouse.move(pos.x, pos.y)
     for (let i = 1; i <= 10; i++) await page.mouse.move(pos.x, pos.y - i * 8)
     await expect
-      .poll(async () => (await partPose(page, plunger)).position[1] ?? 0)
+      .poll(async () => (await partPose(page, plunger)).position[1] ?? 0, { timeout: 15_000 })
       .toBeGreaterThan(rest - 0.5)
     await page.mouse.up()
   }

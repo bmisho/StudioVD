@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test"
 import { expect, test } from "./fixtures"
-import { enterTestMode, partCenter, project } from "./viewportHelpers"
+import { enterTestMode, partCenter, partPose, project } from "./viewportHelpers"
 
 // Phase 13: the examples, end to end (PLAN 13.5, 13.6): 3D measures feed the solver, and the
 // solver's results come back into the 3D view.
@@ -119,16 +119,22 @@ test("guitar pedal: cut cables, a solved circuit, the Volume knob and the footsw
   await page.keyboard.press("Control+1")
   const parts = await page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.parts() ?? [])
   const plunger = parts.find((p) => p.name === "Plunger")?.id ?? ""
+  const rest = (await partPose(page, plunger)).position[1] ?? 0
   const stamp = async () => {
     const top = await partCenter(page, plunger)
     await page.mouse.move(top.x, top.y)
     await page.mouse.down()
     for (let i = 1; i <= 10; i++) await page.mouse.move(top.x, top.y + i * 4)
   }
+  // Held until the plunger is up: the drag's spring trails the pointer (more in WebKit, where
+  // letting go at once left it 1.5 mm down, still pressed).
   const letUp = async () => {
     const pos = await partCenter(page, plunger)
     await page.mouse.move(pos.x, pos.y)
     for (let i = 1; i <= 10; i++) await page.mouse.move(pos.x, pos.y - i * 8)
+    await expect
+      .poll(async () => (await partPose(page, plunger)).position[1] ?? 0)
+      .toBeGreaterThan(rest - 0.5)
     await page.mouse.up()
   }
   const lit = async () => candela(await reading.textContent())

@@ -121,3 +121,35 @@ jobs:
             src-tauri/target/release/bundle/deb/*.deb
           retention-days: 14
           if-no-files-found: error
+
+  release:
+    name: Release
+    # A v* tag: the installers above become a GitHub release with SHA-256 sums and the notes
+    # in docs/releases/<tag>.md. The tag must be the version in package.json.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [bundle]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: installers-*
+          path: dist
+          merge-multiple: true
+      - name: Release with checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          test "${TAG#v}" = "$(jq -r .version package.json)"
+          test -f "docs/releases/$TAG.md"
+          mkdir release
+          find dist -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' \) \
+            -exec cp {} release/ \;
+          (cd release && sha256sum -- * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          # A draft first, so the release is never seen without its files.
+          gh release create "$TAG" release/* --draft --verify-tag \
+            --title "StudioVD ${TAG#v}" --notes-file "docs/releases/$TAG.md"
+          gh release edit "$TAG" --draft=false --latest

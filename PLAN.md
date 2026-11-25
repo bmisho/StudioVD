@@ -1327,15 +1327,35 @@ Exit criteria
   the pack if needed and reuses Edit parameters' key-matched swap (mates to its anchors survive,
   licence texts added); Replace removes the instance with its block, bindings and outside mates
   and places the new version in its frame, one undo entry
-- [ ] 14.7 Content pipeline (in the hosting repo's CI): pinned sources (KiCad tag 10.0.7, pinned
+- [x] 14.7 Content pipeline (in the hosting repo's CI): pinned sources (KiCad tag 10.0.7, pinned
   Adafruit/FreeCAD commits), STEP → GLB with occt-import-js + this app's `src/core`
   normalization in Node, `@gltf-transform/core` writer, Khronos glTF validator, KiCad footprint
   pads → electrical port anchors, licence allowlist gate, name validation (Windows reserved names,
   case collisions, path length), datasheet values with source + confidence, thumbnails via
-  headless Chromium. **Open: lives in the hosting repository (14.1)**
+  headless Chromium. As built (`docs/catalog-content.md`): the builder lives here,
+  `tools/packs`, run in Node through Vite's module runner with the app's aliases, so geometry
+  goes through the importer's own code (occt-import-js, normal quality, `prepareAsset`) and the
+  app's GLB writer (not gltf-transform: the strict reader wants its own v1/v2 layout), then the
+  Khronos validator (no errors or warnings). Footprints give pads (port anchors named from the
+  recipe's pins, a board-face mount anchor) and the model's offset (rotated or scaled models
+  refused). Licence text per component: KiCad's LICENSE.md, the folder's CREDITS.md and the
+  STEP header; grants carry pinned source URLs and are allowlist-checked. Zip names are checked
+  as the Rust guard checks them (charset, dot-edged and device names, case duplicates, 200
+  characters). Thumbnails: three.js in headless Chromium, offline. The hosting repo holds the
+  recipes (`content/kicad/packs`), a SHA-256 lock of the 44 KiCad files they need, the pinned
+  app commit, and the Build packs workflow: fetch, build, `official_packs_install` (an ignored
+  cargo test here that installs every pack through the app's own staging, as Official, and every
+  thumbnail through the preview path), release `packs-N`, record, publish a signed index.
+  Adafruit/FreeCAD sources are not used yet: the first catalog is KiCad only
 - [ ] 14.8 First catalog (§4.9): Tier 2 electronics packs + Tier 3 boards/electromechanical
-  packs, each with schematic blocks from the Phase 11 registry. **Open: needs 14.1, 14.2, 14.7
-  and the owner's choice of content**
+  packs, each with schematic blocks from the Phase 11 registry. As built (the owner chose KiCad
+  content, 2026-11-23): `kicad-electronics` (LED 5 and 3 mm, axial resistor, 1N4007, electrolytic
+  and disc capacitors, 6 mm tactile switch, Bourns 3296W trimmer, CUI barrel and 3.5 mm jacks,
+  Phoenix terminal block, TO-220, TO-92, DIP-8, Keystone 18650 holder) and `kicad-modules`
+  (Raspberry Pi Pico and Pico H, Songle SRD-05VDC relay); LEDs, passives, switch, trimmer,
+  diode, relay and Picos carry their blocks (the diode's forward voltage from Vishay's
+  datasheet; block defaults otherwise, stated as such). KiCad has no 16 mm pots or 6.35 mm
+  jacks, so pedal panel parts stay with the in-app generators (16.4)
 - [x] 14.9 Tests: cargo tests against a mock HTTP server (200/206/416/429, redirects, truncated
   body, wrong hash, cancel mid-stream), signature tests (bad signature, rollback, mix-and-match,
   expired index), E2E with mocked IPC and test keys. As built: test keys sign like minisign
@@ -1521,4 +1541,6 @@ transparent materials, X-ray) and orbits the view; this phase adds what it lacks
 - [x] 16.8 Docs: user guide (cables, pedal parts, importing downloads), project-file format
   (v3). As built: `docs/user-guide.md` (Cables; the pedal generators; zips from download
   sites; the Guitar pedal example), `docs/formats/project-file.md` (the cable record).
-- [ ] ⛔ 16.9 **User approval**; then 14.7/14.8 and the v0.2.0 release (15.9)
+- [x] ⛔ 16.9 **User approval**; then 14.7/14.8 and the v0.2.0 release (15.9). Approved by
+  the owner on 2026-11-25, with the StudioVD repository made public (the catalog's build
+  checks out the app's pinned commit)

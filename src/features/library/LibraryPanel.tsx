@@ -116,7 +116,9 @@ export function LibraryPanel() {
           </SelectContent>
         </Select>
       </div>
-      {filter === "catalog" && <CatalogBar />}
+      {/* The catalog's state and Refresh, also under All sources: its parts appear there once
+          it is downloaded, and nothing else would say it exists. */}
+      {(filter === "catalog" || filter === "all") && <CatalogBar />}
       <div className="min-h-0 flex-1 py-1">
         <LibraryList
           items={shown}

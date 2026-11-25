@@ -22,6 +22,7 @@ import { assetCache } from "../parts/assetCache"
 import { gizmoState } from "../gizmos/gizmoState"
 import { applySelectionChange } from "./applySelectionChange"
 import { viewportHover, type HoverStore } from "./hoverStore"
+import { beginMoveDrag } from "./moveDrag"
 import { pickRefOf } from "./pickTarget"
 import { useHoverRefresh } from "./useHoverRefresh"
 
@@ -116,6 +117,24 @@ export function PickRoot(props: PickRootProps) {
     grab(item, e)
   }
 
+  // Design mode: a primary press on a part may become a drag that moves it (or its component).
+  const onDesignPointerDown = (e: ThreeEvent<PointerEvent>) => {
+    const n = e.nativeEvent
+    const state = session.getState()
+    if (n.button !== 0 || n.ctrlKey || n.metaKey || state.activeTool !== "select") return
+    // A press on an anchor glyph too: a click there still picks the anchor, a drag moves.
+    if (gizmoState.ownsClick()) return
+    const raw = pickRefOf(e.object)
+    if (raw?.kind !== "part") return
+    const target = pickTarget(useDocumentStore.getState().doc, raw, state.enteredComponent)
+    if (!target) return
+    beginMoveDrag(get(), target, {
+      clientX: n.clientX,
+      clientY: n.clientY,
+      grab: e.point.toArray(),
+    })
+  }
+
   return (
     <group
       ref={ref}
@@ -124,7 +143,7 @@ export function PickRoot(props: PickRootProps) {
       onPointerOut={onPointerOut}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
-      onPointerDown={testMode ? onPointerDown : undefined}
+      onPointerDown={testMode ? onPointerDown : onDesignPointerDown}
     >
       {children}
     </group>

@@ -1553,3 +1553,21 @@ transparent materials, X-ray) and orbits the view; this phase adds what it lacks
 - [x] ⛔ 16.9 **User approval**; then 14.7/14.8 and the v0.2.0 release (15.9). Approved by
   the owner on 2026-11-25, with the StudioVD repository made public (the catalog's build
   checks out the app's pinned commit)
+
+---
+
+## After 0.2.0: fixes from the owner's first run
+
+- [x] v0.2.1 (2026-11-25), from the owner testing the Windows installer:
+  - A right click showed WebView2's own menu (Back, Refresh, Save as, Print) over the app's:
+    Windows sends `contextmenu` on the release, to the app's menu already under the pointer,
+    so the 3D view's guard never saw it. A window-level guard now keeps the native menu to
+    text fields, and the webview's reload, history and print keys are swallowed (a reload
+    would drop unsaved work; Tauri 2 has no switch for WebView2's browser keys).
+  - A dropped component could not be moved except with the gizmo, which only shows for one
+    part. Design mode: drag a part or component to slide it along the ground, Shift for up
+    and down, with everything mated to it (`core/scene/moveDrag.ts`,
+    `viewport/picking/moveDrag.ts`); scene objects move during the drag, one `setPartPoses`
+    on release (one undo entry), the moved item selected.
+  - The KiCad parts were hard to find: the catalog bar (status, Refresh, Packs) now also
+    shows under All sources.

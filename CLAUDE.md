@@ -349,7 +349,9 @@ AA); selected rows use `accent-foreground`. `--muted` is slate-50 (not slate-100
 
 Keyboard: all shortcuts go through the command registry (`src/app/commands`). In text fields and
 open menus/dialogs only commands marked `allowInTextInput` fire; Escape on the menu bar only
-releases focus. Never add a raw `keydown` listener for an app shortcut.
+releases focus. Never add a raw `keydown` listener for an app shortcut. The webview's own
+keys (reload, history, print: `shortcuts/browserGuards.ts`) are swallowed and may not be bound,
+and its native context menu never shows outside text fields (Tauri 2 cannot turn them off).
 
 Composite widgets (tree, toolbar, tabs, menus) follow their WAI-ARIA pattern: one tab stop
 (roving tabindex) and arrow keys inside. The widget handles and `preventDefault`s only its own

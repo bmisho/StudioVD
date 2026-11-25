@@ -5,6 +5,7 @@ import {
   hoveredId,
   insertTestRig,
   partCenter,
+  partPose,
   project,
   waitForViewport,
 } from "./viewportHelpers"
@@ -70,14 +71,18 @@ test.describe("3D selection", () => {
     await expect(row(page, "Base")).toHaveAttribute("aria-selected", "false")
   })
 
-  test("a press that moves beyond the click slop selects nothing", async ({ page }) => {
+  test("a press that moves beyond the click slop, short of a drag, does nothing", async ({
+    page,
+  }) => {
     const { base } = await insertTestRig(page)
+    const before = await partPose(page, base)
     const b = await partCenter(page, base)
     await page.mouse.move(b.x, b.y)
     await page.mouse.down()
-    await page.mouse.move(b.x + 6, b.y)
+    await page.mouse.move(b.x + 3, b.y) // past the 2 px click slop, short of the 4 px drag
     await page.mouse.up()
     await expect(row(page, "Base")).toHaveAttribute("aria-selected", "false")
+    expect(await partPose(page, base)).toEqual(before)
   })
 
   test("hover pre-highlights the part under the cursor, not while a button is held", async ({

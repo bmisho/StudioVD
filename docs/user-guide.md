@@ -26,8 +26,10 @@ F fits everything; Ctrl+1…7 are the standard views.
   else is listed as skipped. Native CAD files (SolidWorks `.SLDPRT`/`.SLDASM`, Inventor,
   Fusion, CATIA...) cannot be read: download or export STEP instead. StudioVD never fetches
   from those sites itself, and a downloaded model keeps the licence its author gave it.
-- Select in the 3D view or the tree; Ctrl-click adds or removes. Move (T) and rotate (R)
-  with the gizmo; a right click opens a context menu.
+- Select in the 3D view or the tree; Ctrl-click adds or removes. **Drag** a part (or a
+  library component) in the 3D view to slide it along the ground; hold **Shift** to move it
+  straight up or down. Everything mated to it moves along, and each drag is one undo step.
+  Move (T) and rotate (R) with the gizmo for exact moves; a right click opens a context menu.
   Ctrl+G groups, Delete deletes, Ctrl+Z / Ctrl+Y undo and redo every change.
 - **Materials**: pick a preset or make your own in the part's Material section (colour,
   metal, roughness, glass, emissive, density for mass, texture maps). A slot of a multi-colour
@@ -90,7 +92,10 @@ The Library tab lists:
   datasheet of the part you buy.
 - **Installed** and **My components**: packs you installed and components you saved
   (select parts, Edit › Save as Component…).
-- **Online catalog**: browse, then download a pack (see Network below).
+- **Online catalog**: electronic parts and boards from KiCad's libraries, and more. Press
+  **Refresh** in the catalog bar (shown under All sources and Online catalog; the first time
+  it asks before connecting), pick a card and download its pack; then drag it in like any
+  other card (see Network below).
 - **Schematic primitives**: every built-in schematic block.
 
 Drag a card into the 3D view (it snaps onto a fitting anchor, else onto the surface under the

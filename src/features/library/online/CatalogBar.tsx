@@ -24,7 +24,7 @@ export function CatalogBar() {
           ? error
           : index
             ? `Catalog #${index.sequence}, ${index.components.length} components, refreshed ${status.fetchedAt ? ago(status.fetchedAt) : "once"}${status.expired ? " (expired: refresh before installing)" : ""}.`
-            : "Not downloaded yet: Refresh to browse the catalog."
+            : "Online catalog not downloaded yet: Refresh to browse it."
   const icon = "size-7"
   return (
     <div

@@ -22,6 +22,7 @@ import { ShortcutsDialog } from "./dialogs/ShortcutsDialog"
 import { ContextMenuHost } from "./menu/ContextMenuHost"
 import { WorkspaceLayout } from "./layout/WorkspaceLayout"
 import { AppMenuBar } from "./menu/AppMenuBar"
+import { useNativeMenuGuard } from "./shortcuts/browserGuards"
 import { useGlobalShortcuts } from "./shortcuts/useGlobalShortcuts"
 import { StatusBar } from "./status/StatusBar"
 import { MainToolbar } from "./toolbar/MainToolbar"
@@ -29,6 +30,7 @@ import { MainToolbar } from "./toolbar/MainToolbar"
 /** Application shell: menu bar, toolbar, workspace (sidebars + 3D/schematic), status bar. */
 export function App() {
   useGlobalShortcuts(useCommands())
+  useNativeMenuGuard()
   useFileDrop()
   useProjectSession()
   useWeeklyCatalogCheck()

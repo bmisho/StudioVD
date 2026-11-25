@@ -1,6 +1,7 @@
 //! Library tests (PLAN 9.2, 9.9): Install from file end to end; `refusals` has every way a
 //! pack is refused before anything reaches the store.
 
+mod catalog_check;
 mod project;
 mod refusals;
 

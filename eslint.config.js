@@ -92,7 +92,7 @@ export default defineConfig([
       ecmaVersion: 2022,
       globals: globals.browser,
       parserOptions: {
-        project: ["./tsconfig.json", "./tsconfig.node.json"],
+        project: ["./tsconfig.json", "./tsconfig.node.json", "./tsconfig.tools.json"],
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -153,6 +153,11 @@ export default defineConfig([
     files: ["*.config.ts", "tests/e2e/**/*.ts"],
     languageOptions: { globals: globals.node },
     rules: { "no-restricted-syntax": "off" },
+  },
+  {
+    // The pack builder (PLAN 14.7) runs in Node, outside the app.
+    files: ["tools/packs/**/*.ts"],
+    languageOptions: { globals: globals.node },
   },
   {
     // Playwright fixtures call `use()`, which is not a React hook.

@@ -83,6 +83,8 @@ src-tauri/src/
   library/        Component store, install; online/ signed catalog, downloads, trust
   net/            Network settings, proxy plan (Windows registry), the one HTTP client
 tests/e2e/        Playwright specs
+tools/packs/      Catalog pack builder (PLAN 14.7): KiCad footprints + STEP → packs, run in
+                  Node through Vite's module runner with the app's own src/core
 docs/research/    Research behind PLAN.md decisions (not shipped; values need re-verification)
 ```
 
@@ -380,6 +382,9 @@ No hard-coded hex values in components; use Tailwind theme tokens.
   dependency changes; `STUDIOVD_PERF=1 npx playwright test perf.spec.ts`: the 200-part
   measurement (PLAN 15.3; add `E2E_GPU=1` on a machine with a GPU: headed, no SwiftShader)
 - `cd src-tauri && cargo deny check`: advisories, licences, bans, sources (`deny.toml`; CI)
+- `node tools/packs/run.mjs /tools/packs/cli.ts --recipes … --sources … --kicad-tag … --tag …
+  --out …`: build catalog packs (`docs/catalog-content.md`; the catalog repository runs it);
+  `official_packs_install` (ignored cargo test) installs what it built through the app
 - `cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test`
 
 Before every commit: lint, typecheck, unit tests, and `cargo clippy`/`cargo test` must pass.

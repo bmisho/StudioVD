@@ -32,7 +32,9 @@ test.describe("mates", () => {
     // An anchor at the hole's mouth and one at the pin's top end.
     await toolbar.getByRole("button", { name: "Place Anchor" }).click()
     const rim = await hover(page, [9.5, 8, 0], "circle")
+    await page.keyboard.down("Shift") // keep placing
     await page.mouse.click(rim.x, rim.y)
+    await page.keyboard.up("Shift")
     const end = await hover(page, [43.5, 20, 0], "circle")
     await page.mouse.click(end.x, end.y)
     await expect

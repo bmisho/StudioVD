@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { createTestRig } from "@/core/scene/testRig"
 import type { PartId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
+import { usePreferencesStore } from "@/store/preferences/preferencesStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { resetStores } from "@/test/resetStores"
 import { SELECTED_MARK, SUGGESTED_MARK, useAnchorGlyphs } from "./useAnchorGlyphs"
@@ -30,6 +31,21 @@ describe("anchor glyph plan", () => {
     expect(shown.sort()).toEqual(
       [SELECTED_MARK + hinge.anchorA, SELECTED_MARK + hinge.anchorB].sort()
     )
+  })
+
+  it("draws a selected part's anchors only when asked to (0.2.1: they read as being placed)", () => {
+    const { rig, mounted } = setup()
+    const [onBase] = rig.anchors
+    if (!onBase) throw new Error("rig incomplete")
+    const selectedPart = new Set<string>([onBase.partId])
+    const { result } = renderHook(() => useAnchorGlyphs(mounted, selectedPart))
+    expect(result.current.size).toBe(0) // the part is selected: still no glyphs
+    act(() => usePreferencesStore.getState().setShowSelectionAnchors(true))
+    expect(result.current.get(onBase.partId)).toContain(onBase.id)
+    act(() => usePreferencesStore.getState().setShowSelectionAnchors(false))
+    // Selecting the anchor itself always draws it (and its part's other anchors).
+    act(() => useSessionStore.getState().select([{ kind: "anchor", id: onBase.id }]))
+    expect(result.current.get(onBase.partId)).toContain(SELECTED_MARK + onBase.id)
   })
 
   it("while the Mate tool waits for its second pick, marks anchors whose tags fit the first", () => {

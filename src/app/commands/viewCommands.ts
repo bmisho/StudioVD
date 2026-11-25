@@ -3,6 +3,7 @@ import type { Command, CommandDeps } from "./types"
 
 export function viewCommands({
   session,
+  preferences,
   viewport,
   openDialog,
   focusMenuBar,
@@ -22,6 +23,17 @@ export function viewCommands({
       label: "Orthographic Projection",
       run: () => s().toggleProjection(),
       isChecked: () => s().projection === "orthographic",
+    },
+    {
+      id: "view.selectionAnchors",
+      label: "Show Anchors of Selected Parts",
+      // Off by default: selecting a part or component does not draw its anchors (they read as
+      // being placed). Place Anchor and Mate show every part's anchors either way.
+      run: () => {
+        const p = preferences.getState()
+        p.setShowSelectionAnchors(!p.showSelectionAnchors)
+      },
+      isChecked: () => preferences.getState().showSelectionAnchors,
     },
     {
       id: "view.toggleSplit",

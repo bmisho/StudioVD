@@ -38,6 +38,9 @@ const anchorPoint = async (page: Page, id: string) => {
  */
 async function twoBeltAnchorsSelected(page: Page) {
   await waitForViewport(page)
+  // Selecting a component draws its anchors only with this on (off by default since 0.2.1).
+  await page.getByRole("menuitem", { name: "View" }).click()
+  await page.getByRole("menuitemcheckbox", { name: "Show Anchors of Selected Parts" }).click()
   await page.getByRole("tab", { name: "Library" }).click()
   await dragCardTo(page, "20 teeth bore 5", [-30, 0, 0])
   await expect.poll(() => probe<unknown[]>(page, "components"), { timeout: 20_000 }).toHaveLength(1)
@@ -155,4 +158,52 @@ test("a cable of a set length between two lugs: spare, too short, undo (PLAN 16.
   // Eight undo steps: fit, waypoint, clip, size, colour, fit, the length typed, the cable.
   for (let i = 0; i < 8; i++) await page.keyboard.press("Control+z")
   await expect.poll(() => probe<unknown[]>(page, "connectors")).toEqual([])
+})
+
+test("a cable's waypoints laid by clicking, in order, and one placed again (0.2.1)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  const { panel, a, b } = await twoBeltAnchorsSelected(page)
+  await panel.getByRole("button", { name: "Cable" }).click()
+  await expect(panel.getByRole("heading", { name: "Cable" })).toBeVisible()
+  await panel.getByRole("button", { name: "Add waypoints by clicking" }).click()
+  const hint = page.getByRole("status").filter({ hasText: "Route Cable" })
+  await expect(hint).toBeVisible()
+  // On the second pulley first, then the first: the route takes them in that order.
+  for (const partId of [b.partId, a.partId]) {
+    const p = await probe<{ x: number; y: number } | null>(page, "projectPart", partId)
+    if (!p) throw new Error("pulley off screen")
+    await page.mouse.move(p.x, p.y + 25)
+    await page.mouse.move(p.x + 1, p.y + 25)
+    await page.mouse.click(p.x + 1, p.y + 25)
+  }
+  // A cable's anchors in route order: its ends round its waypoints.
+  const via = async () =>
+    (await probe<{ ends: string[] }[]>(page, "connectors"))[0]?.ends.slice(1, -1) ?? []
+  await expect.poll(async () => (await via()).length).toBe(2)
+  const owners = async () => {
+    const all = await probe<{ id: string; partId: string }[]>(page, "anchors")
+    return (await via()).map((id) => all.find((x) => x.id === id)?.partId)
+  }
+  expect(await owners()).toEqual([b.partId, a.partId])
+  await page.keyboard.press("Escape")
+  await expect(hint).toBeHidden()
+
+  // Waypoint 1 placed again lower on its pulley: the same anchor, somewhere else.
+  const [first] = await via()
+  const before = await probe<{ originMm: number[] } | null>(page, "anchorWorld", first)
+  await panel.getByRole("button", { name: "Place waypoint 1 again" }).click()
+  await expect(page.getByRole("status").filter({ hasText: /^Move Waypoint/ })).toBeVisible()
+  const p = await probe<{ x: number; y: number } | null>(page, "projectPart", b.partId)
+  if (!p) throw new Error("pulley off screen")
+  await page.mouse.move(p.x - 15, p.y + 20)
+  await page.mouse.move(p.x - 14, p.y + 20)
+  await page.mouse.click(p.x - 14, p.y + 20)
+  await expect.poll(async () => (await via())[0]).toBe(first)
+  await expect
+    .poll(
+      async () => (await probe<{ originMm: number[] } | null>(page, "anchorWorld", first))?.originMm
+    )
+    .not.toEqual(before?.originMm)
 })

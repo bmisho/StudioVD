@@ -32,6 +32,47 @@ test.describe("3D selection", () => {
     await waitForViewport(page)
   })
 
+  test("a left drag over empty space selects with a box (0.2.1)", async ({ page }) => {
+    await insertTestRig(page)
+    // Room around the parts: the split 3D view is narrow beside the schematic.
+    await page.getByRole("button", { name: "Maximize 3D View" }).click()
+    await page.waitForTimeout(300)
+    const canvas = await page.getByTestId("viewport-canvas").boundingBox()
+    if (!canvas) throw new Error("canvas not visible")
+    const boxDrag = async (from: { x: number; y: number }, to: { x: number; y: number }) => {
+      await page.mouse.move(from.x, from.y)
+      await page.mouse.down()
+      await page.mouse.move(to.x, to.y, { steps: 10 })
+      await expect(page.getByTestId("box-select")).toBeVisible()
+      await page.mouse.up()
+      await expect(page.getByTestId("box-select")).toBeHidden()
+    }
+    // Rightward round everything: a window, both parts entirely inside it (the leaf reaches
+    // close to the canvas's right edge in this view).
+    await page.keyboard.press("Escape")
+    await expect(row(page, "Base")).toHaveAttribute("aria-selected", "false")
+    const empty = await emptySpot(page)
+    await boxDrag(empty, { x: canvas.x + canvas.width - 6, y: canvas.y + canvas.height - 40 })
+    await expect(row(page, "Base")).toHaveAttribute("aria-selected", "true")
+    await expect(row(page, "Leaf")).toHaveAttribute("aria-selected", "true")
+
+    // A box over the leaf's right half only (the leaf spans x 61..121 mm, y 81..89; the base
+    // ends at x 60), between two empty points: above the leaf, and right of everything.
+    // Dragged rightward it holds nothing whole; dragged leftward it catches what it touches.
+    await page.keyboard.press("Escape") // no gizmo in the way of the next presses
+    const above = await project(page, [100, 140, 0])
+    const right = await project(page, [220, 60, 0])
+    for (const p of [above, right]) {
+      expect(p.x).toBeGreaterThan(canvas.x)
+      expect(p.x).toBeLessThan(canvas.x + canvas.width)
+    }
+    await boxDrag(above, right)
+    await expect(row(page, "Leaf")).toHaveAttribute("aria-selected", "false")
+    await expect(row(page, "Base")).toHaveAttribute("aria-selected", "false")
+    await boxDrag(right, above)
+    await expect(row(page, "Leaf")).toHaveAttribute("aria-selected", "true")
+  })
+
   test("clicks select parts, in sync with the scene tree", async ({ page }) => {
     const { base, leaf } = await insertTestRig(page)
     const b = await partCenter(page, base)

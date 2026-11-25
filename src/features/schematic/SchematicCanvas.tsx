@@ -6,6 +6,7 @@ import {
   MiniMap,
   Panel,
   ReactFlow,
+  SelectionMode,
   useReactFlow,
 } from "@xyflow/react"
 import { useCallback, useEffect, useRef, type MouseEvent } from "react"
@@ -30,6 +31,8 @@ import { WireEdge } from "./WireEdge"
 const NODE_TYPES = { block: BlockNode }
 const EDGE_TYPES = { wire: WireEdge }
 const SNAP: [number, number] = [GRID, GRID]
+/** Middle or right drag pans (as in the 3D view); a left drag on empty canvas draws a box. */
+const PAN_BUTTONS = [1, 2]
 
 /** The webview never leaves the app (CLAUDE.md §6): the attribution link does not navigate. */
 function keepOffline(e: MouseEvent) {
@@ -107,6 +110,10 @@ export function SchematicCanvas() {
         // Delete goes through the command registry (Edit › Delete), never React Flow's own.
         deleteKeyCode={null}
         multiSelectionKeyCode={["Control", "Meta"]}
+        // 0.2.1: a left drag on empty canvas selects what the box touches (Shift+drag too).
+        selectionOnDrag
+        panOnDrag={PAN_BUTTONS}
+        selectionMode={SelectionMode.Partial}
         minZoom={0.1}
         maxZoom={4}
         colorMode="light"

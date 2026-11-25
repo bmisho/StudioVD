@@ -3,6 +3,7 @@ import { glyphPlan } from "@/core/assembly/glyphPlan"
 import { suggestedAnchors } from "@/core/assembly/suggestions"
 import type { AnchorId, PartId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
+import { usePreferencesStore } from "@/store/preferences/preferencesStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 
 /** In a part's glyph list, the mark before an id: drawn selected, or as a suggestion. */
@@ -13,8 +14,10 @@ export const SUGGESTED_MARK = "g:"
  * Per mounted part, the anchors that get glyphs (PLAN 7.4, 8.2, 8.5), as their ids joined
  * (marked when selected or suggested): a string, so each part view compares its share by
  * value and only the parts whose share changed re-render. Shown: every part's while a tool
- * that works with anchors is on (Place Anchor, Mate), else those of the selected parts
- * (directly or through a group) and of the parts of selected anchors and mates. Selected:
+ * that works with anchors is on (Place Anchor, Mate), else the selected anchors and mates' (on
+ * their parts), and the selected parts' (directly or through a group) only with View › Show
+ * Anchors of Selected Parts: by default clicking a component draws no anchors, which read as
+ * being placed (0.2.1 first-run report). Selected:
  * selected anchors and a selected mate's two, or while mating only the Mate tool's picks (the
  * selection stays as it was). Suggested: while the Mate tool waits for its second pick,
  * anchors on other mounted parts whose interface tags fit the first (`suggestedAnchors`, as
@@ -30,6 +33,7 @@ export function useAnchorGlyphs(
   const draft = useSessionStore((s) => s.mateDraft)
   const everyPart = useSessionStore((s) => s.activeTool !== "select")
   const mating = useSessionStore((s) => s.activeTool === "mate")
+  const ofSelection = usePreferencesStore((s) => s.showSelectionAnchors)
   return useMemo(() => {
     const selected = new Set<AnchorId>()
     for (const item of mating ? [] : selection) {
@@ -45,7 +49,7 @@ export function useAnchorGlyphs(
         : []
     )
 
-    const own = new Set(mounted.filter((id) => highlighted.has(id)))
+    const own = new Set(ofSelection ? mounted.filter((id) => highlighted.has(id)) : [])
     for (const id of selected) {
       const anchor = Object.hasOwn(anchors, id) ? anchors[id] : undefined
       if (anchor && isMounted.has(anchor.partId)) own.add(anchor.partId)
@@ -55,5 +59,5 @@ export function useAnchorGlyphs(
     const mark = (id: AnchorId) =>
       (selected.has(id) ? SELECTED_MARK : suggested.has(id) ? SUGGESTED_MARK : "") + id
     return new Map([...plan].map(([part, ids]) => [part, ids.map(mark).join(",")]))
-  }, [anchors, mates, selection, draft, everyPart, mating, mounted, highlighted])
+  }, [anchors, mates, selection, draft, everyPart, mating, ofSelection, mounted, highlighted])
 }

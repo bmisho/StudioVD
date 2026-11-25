@@ -22,6 +22,8 @@ import { SceneBackground } from "./renderer/SceneBackground"
 import { SceneDressing } from "./scene/SceneDressing"
 import { ViewportProbe } from "./testing/ViewportProbe"
 import { ViewportContext, type PartGrabHandler } from "./ViewportContext"
+import { BoxSelect } from "./picking/BoxSelect"
+import { BoxSelectOverlay } from "./picking/BoxSelectOverlay"
 import { ViewportStatusOverlay } from "./ViewportStatusOverlay"
 
 // Rapier (WASM inlined in its JS) loads on the first entry into test mode, not at startup.
@@ -74,6 +76,7 @@ export function Viewport3D() {
           <MatePreview />
           <InsertionGhost />
           <GlyphScaler />
+          <BoxSelect />
           {testMode && (
             <Suspense fallback={null}>
               <PhysicsLayer />
@@ -84,6 +87,7 @@ export function Viewport3D() {
       </Canvas>
       <ViewportStatusOverlay />
       <AnchorToolHint />
+      <BoxSelectOverlay />
       <MateToolHint />
       <InterferencePanel />
       {import.meta.env.DEV && <PhysicsStatsOverlay />}

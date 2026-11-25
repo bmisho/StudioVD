@@ -54,7 +54,10 @@ test.describe("anchors", () => {
       })
       .click()
     const face = await hover(page, [-10, 8, -5], "face")
+    // Shift keeps the tool on for the next anchor (a plain click goes back to Select).
+    await page.keyboard.down("Shift")
     await page.mouse.click(face.x, face.y)
+    await page.keyboard.up("Shift")
     const corner = await hover(page, [19.6, 8, 14.6], "corner")
     await page.mouse.click(corner.x, corner.y)
     await expect
@@ -66,8 +69,7 @@ test.describe("anchors", () => {
     close(point?.frame.originMm, [20, 4, 15])
     expect(point?.name).toBe("Vertex")
 
-    // Escape ends the tool and keeps the last anchor selected.
-    await page.keyboard.press("Escape")
+    // The plain click ended the tool and kept its anchor selected.
     await expect(page.getByRole("status").filter({ hasText: "Place Anchor" })).toBeHidden()
     const panel = page.getByRole("complementary", { name: "Properties" })
     await expect(panel.getByRole("textbox", { name: "Name" })).toHaveValue("Vertex")

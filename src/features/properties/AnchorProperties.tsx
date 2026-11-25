@@ -7,6 +7,7 @@ import { useDocumentStore } from "@/store/document/documentStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { AnchorKindSelect } from "./AnchorKindSelect"
 import { AnchorOriginFields } from "./AnchorOriginFields"
+import { AnchorPlacementFields } from "./AnchorPlacementFields"
 import { NameField } from "./NameField"
 import { PropertyField } from "./PropertyField"
 import { FOCUSABLE_HEADING, anchorHeadingId, focusAnchorList } from "./inspectorFocus"
@@ -20,8 +21,8 @@ const SOURCE: Record<AnchorSource["kind"], string> = {
 }
 
 /**
- * Anchor inspector (PLAN 7.4): name, kind, interface tag, origin, direction (flip) and what it
- * was snapped to; Delete removes it with the mates on it and shows its part again, as does the
+ * Anchor inspector (PLAN 7.4): name, kind, interface tag, origin, direction (flip; since 0.2.1
+ * also placed again, pointed along a part axis, turned, moved along) and what it was snapped to; Delete removes it with the mates on it and shows its part again, as does the
  * part's name (back to its anchor list).
  */
 export function AnchorProperties({ id }: { id: AnchorId }) {
@@ -85,6 +86,11 @@ export function AnchorProperties({ id }: { id: AnchorId }) {
       <PropertyField
         label="Direction (z)"
         value={anchor.frame.z.map((v) => unit.format(v)).join(", ")}
+      />
+      <AnchorPlacementFields
+        id={id}
+        frame={anchor.frame}
+        onChange={(frame) => update(id, { frame })}
       />
       <p className="text-xs text-muted-foreground">{SOURCE[anchor.source.kind]}</p>
       <div className="mt-1 flex flex-wrap gap-1.5">

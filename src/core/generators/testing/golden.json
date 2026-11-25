@@ -1774,6 +1774,294 @@
       }
     }
   },
+  "container.eurobox@1": {
+    "defaults": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 1790777.65,
+          "offsetMm": [0, 110, 0],
+          "bboxMm": [-300, -110, -200, 300, 110, 200]
+        }
+      }
+    },
+    "s200x150x120": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 274448.848,
+          "offsetMm": [0, 60, 0],
+          "bboxMm": [-100, -60, -75, 100, 60, 75]
+        }
+      }
+    },
+    "s300x200x120": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 461198.844,
+          "offsetMm": [0, 60, 0],
+          "bboxMm": [-150, -60, -100, 150, 60, 100]
+        }
+      }
+    },
+    "s300x200x170": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 570157.532,
+          "offsetMm": [0, 85, 0],
+          "bboxMm": [-150, -85, -100, 150, 85, 100]
+        }
+      }
+    },
+    "s400x300x75": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 626297.45,
+          "offsetMm": [0, 37.5, 0],
+          "bboxMm": [-200, -37.5, -150, 200, 37.5, 150]
+        }
+      }
+    },
+    "s400x300x120": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 769360.267,
+          "offsetMm": [0, 60, 0],
+          "bboxMm": [-200, -60, -150, 200, 60, 150]
+        }
+      }
+    },
+    "s400x300x170": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 928318.954,
+          "offsetMm": [0, 85, 0],
+          "bboxMm": [-200, -85, -150, 200, 85, 150]
+        }
+      }
+    },
+    "s400x300x220": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 1087277.64,
+          "offsetMm": [0, 110, 0],
+          "bboxMm": [-200, -110, -150, 200, 110, 150]
+        }
+      }
+    },
+    "s400x300x270": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 1246236.33,
+          "offsetMm": [0, 135, 0],
+          "bboxMm": [-200, -135, -150, 200, 135, 150]
+        }
+      }
+    },
+    "s400x300x320": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 1405195.01,
+          "offsetMm": [0, 160, 0],
+          "bboxMm": [-200, -160, -150, 200, 160, 150]
+        }
+      }
+    },
+    "s600x400x75": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 1112297.45,
+          "offsetMm": [0, 37.5, 0],
+          "bboxMm": [-300, -37.5, -200, 300, 37.5, 200]
+        }
+      }
+    },
+    "s600x400x120": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 1322860.27,
+          "offsetMm": [0, 60, 0],
+          "bboxMm": [-300, -60, -200, 300, 60, 200]
+        }
+      }
+    },
+    "s600x400x170": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 1556818.96,
+          "offsetMm": [0, 85, 0],
+          "bboxMm": [-300, -85, -200, 300, 85, 200]
+        }
+      }
+    },
+    "s600x400x220": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 1790777.65,
+          "offsetMm": [0, 110, 0],
+          "bboxMm": [-300, -110, -200, 300, 110, 200]
+        }
+      }
+    },
+    "s600x400x270": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 2024736.34,
+          "offsetMm": [0, 135, 0],
+          "bboxMm": [-300, -135, -200, 300, 135, 200]
+        }
+      }
+    },
+    "s600x400x320": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 2258695.03,
+          "offsetMm": [0, 160, 0],
+          "bboxMm": [-300, -160, -200, 300, 160, 200]
+        }
+      }
+    },
+    "s600x400x420": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 2726612.4,
+          "offsetMm": [0, 210, 0],
+          "bboxMm": [-300, -210, -200, 300, 210, 200]
+        }
+      }
+    },
+    "s800x600x120": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 2300860.27,
+          "offsetMm": [0, 60, 0],
+          "bboxMm": [-400, -60, -300, 400, 60, 300]
+        }
+      }
+    },
+    "s800x600x220": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 2968777.66,
+          "offsetMm": [0, 110, 0],
+          "bboxMm": [-400, -110, -300, 400, 110, 300]
+        }
+      }
+    },
+    "s800x600x320": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 3636695.04,
+          "offsetMm": [0, 160, 0],
+          "bboxMm": [-400, -160, -300, 400, 160, 300]
+        }
+      }
+    },
+    "s800x600x420": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 4304612.42,
+          "offsetMm": [0, 210, 0],
+          "bboxMm": [-400, -210, -300, 400, 210, 300]
+        }
+      }
+    },
+    "s800x600x520": {
+      "anchors": ["bottom", "floor", "rim", "seat"],
+      "mates": [],
+      "bodies": {
+        "box": {
+          "triangles": 780,
+          "faces": 64,
+          "volumeMm3": 4972529.8,
+          "offsetMm": [0, 260, 0],
+          "bboxMm": [-400, -260, -300, 400, 260, 300]
+        }
+      }
+    }
+  },
   "control.pot@1": {
     "defaults": {
       "anchors": ["mount", "bushing", "axis", "shaftAxis", "shaftTip", "lug1", "lug2", "lug3"],

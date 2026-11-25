@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, X } from "lucide-react"
+import { ArrowDown, ArrowUp, Crosshair, X } from "lucide-react"
 import { useMemo } from "react"
 import { useShallow } from "zustand/react/shallow"
 import { Button } from "@/components/ui/button"
@@ -13,10 +13,13 @@ import type { Cable } from "@/core/connectors/cableMesh"
 import { anchorLabel, waypointChoices } from "@/core/connectors/routeLabels"
 import { MAX_CABLE_VIA, type AnchorId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
+import { startAnchorTarget, useAnchorTarget } from "@/store/session/anchorTargetStore"
+import { useSessionStore } from "@/store/session/sessionStore"
 
 /**
- * A cable's waypoints in route order (PLAN 16.3): move one up or down, remove it, or add any
- * other anchor (a clip's, a wall's) at the end of the list.
+ * A cable's waypoints in route order (PLAN 16.3): move one up or down, place it again on its
+ * part, remove it, add any other anchor (a clip's, a wall's) at the end of the list, or lay new
+ * ones by clicking surfaces in the 3D view, in route order (0.2.1).
  */
 export function CableWaypoints({ cable: c }: { cable: Cable }) {
   const { anchors, parts } = useDocumentStore(
@@ -26,6 +29,8 @@ export function CableWaypoints({ cable: c }: { cable: Cable }) {
   const route = useMemo(() => [c.ends[0], ...c.via, c.ends[1]], [c])
   const choices = useMemo(() => waypointChoices(doc, route), [doc, route])
   const setVia = (via: AnchorId[]) => useDocumentStore.getState().setCableVia(c.id, via)
+  const testMode = useSessionStore((s) => s.testMode)
+  const routing = useAnchorTarget((s) => s.target?.kind === "route" && s.target.cable === c.id)
   const moved = (i: number, by: -1 | 1) => {
     const via = [...c.via]
     const [item] = via.splice(i, 1)
@@ -66,6 +71,17 @@ export function CableWaypoints({ cable: c }: { cable: Cable }) {
               variant="ghost"
               size="icon"
               className="size-6"
+              aria-label={`Place waypoint ${i + 1} again`}
+              title="Click where it goes on its part"
+              disabled={testMode}
+              onClick={() => startAnchorTarget({ kind: "move", anchor: id })}
+            >
+              <Crosshair className="size-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-6"
               aria-label={`Remove waypoint ${i + 1}`}
               onClick={() => setVia(c.via.filter((_, j) => j !== i))}
             >
@@ -75,6 +91,23 @@ export function CableWaypoints({ cable: c }: { cable: Cable }) {
         ))}
         <li className="truncate text-muted-foreground">To {anchorLabel(doc, c.ends[1])}</li>
       </ol>
+      {c.via.length < MAX_CABLE_VIA && (
+        <Button
+          variant={routing ? "secondary" : "outline"}
+          size="sm"
+          className="h-7 text-xs"
+          aria-pressed={routing}
+          disabled={testMode}
+          title="Click surfaces in the 3D view in route order; Esc to finish"
+          onClick={() =>
+            routing
+              ? useSessionStore.getState().setTool("select")
+              : startAnchorTarget({ kind: "route", cable: c.id })
+          }
+        >
+          Add waypoints by clicking
+        </Button>
+      )}
       {c.via.length < MAX_CABLE_VIA && choices.length > 0 && (
         <Select value="" onValueChange={(v) => setVia([...c.via, v as AnchorId])}>
           <SelectTrigger size="sm" className="h-7 w-full text-xs" aria-label="Add waypoint">

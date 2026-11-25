@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { createTestRig } from "@/core/scene/testRig"
 import type { AnchorId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
+import { useAnchorTarget } from "@/store/session/anchorTargetStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { resetStores } from "@/test/resetStores"
 import { AnchorList } from "./AnchorList"
@@ -73,6 +74,26 @@ describe("AnchorProperties", () => {
 
 describe("AnchorList", () => {
   beforeEach(resetStores)
+
+  it("points, turns and moves the anchor along its direction, and places it again (0.2.1)", () => {
+    const { hinge } = setup()
+    render(<AnchorProperties id={hinge} />)
+    const start = anchor(hinge)?.frame
+    const before = steps()
+    expect(screen.getByRole("button", { name: "Point along +Z" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Point along -Y" }))
+    expect(anchor(hinge)?.frame.z).toEqual([0, -1, 0])
+    fireEvent.click(screen.getByRole("button", { name: "Out" }))
+    expect(anchor(hinge)?.frame.originMm[1]).toBeCloseTo((start?.originMm[1] ?? 0) - 1, 9)
+    fireEvent.click(screen.getByRole("button", { name: "Turn 90°" }))
+    expect(steps()).toBe(before + 3)
+    fireEvent.click(screen.getByRole("button", { name: /Place again/ }))
+    expect(useSessionStore.getState().activeTool).toBe("anchor")
+    expect(useAnchorTarget.getState().target).toEqual({ kind: "move", anchor: hinge })
+  })
 
   it("lists a part's anchors to select them, and starts Place Anchor (not in test mode)", () => {
     const { base, hinge } = setup()

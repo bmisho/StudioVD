@@ -29,6 +29,8 @@ export interface AnchorPatch {
   interface?: string | null
   kind?: AnchorKind
   frame?: Frame
+  /** Placed again with the tool: what it snapped to now. */
+  source?: AnchorSource
 }
 
 export interface AnchorActions {
@@ -88,6 +90,7 @@ export function anchorActions(set: Set, get: Get): AnchorActions {
         ...current,
         ...(patch.kind ? { kind: patch.kind } : {}),
         ...(patch.frame ? { frame: plainFrame(patch.frame) } : {}),
+        ...(patch.source ? { source: patch.source } : {}),
       }
       next = withText(next, "name", patch.name)
       next = withText(next, "interface", patch.interface)

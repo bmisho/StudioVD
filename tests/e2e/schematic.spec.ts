@@ -111,3 +111,39 @@ test("edits a parameter and a black box, and exports the schematic", async ({ pa
   expect(svg).toContain("Black box 1")
   expect(svg).toContain("Resistor 1")
 })
+
+test("a left drag on empty canvas selects blocks with a box; a middle drag pans (0.2.1)", async ({
+  page,
+}) => {
+  await addBlock(page, "Battery")
+  await addBlock(page, "Resistor")
+  await expect(page.locator(".react-flow__node")).toHaveCount(2)
+  await page.keyboard.press("Escape")
+  const canvas = await page.getByTestId("schematic-editor").boundingBox()
+  const boxes = [
+    await block(page, "Battery 1").boundingBox(),
+    await block(page, "Resistor 1").boundingBox(),
+  ]
+  if (!canvas || !boxes[0] || !boxes[1]) throw new Error("not on screen")
+  const left = Math.min(...boxes.map((b) => b?.x ?? 0)) - 30
+  const top = Math.min(...boxes.map((b) => b?.y ?? 0)) - 30
+  const right = Math.max(...boxes.map((b) => (b?.x ?? 0) + (b?.width ?? 0))) + 30
+  const bottom = Math.max(...boxes.map((b) => (b?.y ?? 0) + (b?.height ?? 0))) + 30
+  await page.mouse.move(left, top)
+  await page.mouse.down()
+  await page.mouse.move(right, bottom, { steps: 10 })
+  await page.mouse.up()
+  await expect(page.locator(".react-flow__node.selected")).toHaveCount(2)
+
+  const view = () =>
+    page.locator(".react-flow__viewport").evaluate((el) => (el as HTMLElement).style.transform)
+  const before = await view()
+  // Bottom middle: clear of the blocks, the zoom controls (left) and the overview (right).
+  const from = { x: canvas.x + canvas.width / 2, y: canvas.y + canvas.height - 40 }
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down({ button: "middle" })
+  await page.mouse.move(from.x - 100, from.y - 40, { steps: 8 })
+  await page.mouse.up({ button: "middle" })
+  await expect.poll(view).not.toBe(before)
+  await expect(page.locator(".react-flow__node.selected")).toHaveCount(2) // panning keeps it
+})

@@ -90,6 +90,7 @@ export function AppMenuBar() {
             </MenubarSubContent>
           </MenubarSub>
           <CommandMenuItem id="view.toggleProjection" />
+          <CommandMenuItem id="view.selectionAnchors" />
           <MenubarSub>
             <MenubarSubTrigger>Display Style</MenubarSubTrigger>
             <MenubarSubContent>

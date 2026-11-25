@@ -41,6 +41,7 @@ export type CommandId =
   | "view.toggleVisibility"
   | "view.showAll"
   | "view.isolate"
+  | "view.selectionAnchors"
   | "part.toggleGrounded"
   | "transform.translate"
   | "transform.rotate"

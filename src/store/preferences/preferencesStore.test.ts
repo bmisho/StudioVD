@@ -20,6 +20,12 @@ describe("preferences store", () => {
     }
   })
 
+  it("keeps a 0.2.0 file's choices: keys added later take their defaults", () => {
+    const old = { navigationPreset: "blender", zoomToCursor: false, zoomSpeed: 2 }
+    const store = createPreferencesStore(memoryStorage({ [KEY]: JSON.stringify(old) }))
+    expect(store.getState()).toMatchObject({ ...old, showSelectionAnchors: false })
+  })
+
   it("survives storage that throws", () => {
     const throwing = {
       getItem: () => {

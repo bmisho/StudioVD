@@ -1571,3 +1571,24 @@ transparent materials, X-ray) and orbits the view; this phase adds what it lacks
     on release (one undo entry), the moved item selected.
   - The KiCad parts were hard to find: the catalog bar (status, Refresh, Packs) now also
     shows under All sources.
+  - Second round (same release): clicking a component "placed anchors". Two causes: Place
+    Anchor stayed on after a placement, and selecting a part drew all its anchors' glyphs.
+    Place Anchor now places one and returns to Select (Shift+click keeps it on); selected
+    parts' anchors draw only with View › Show Anchors of Selected Parts (a per-machine
+    preference, off by default; 0.2.0 preference files keep their other choices).
+  - Anchors positioned from the inspector (`core/assembly/anchorEdit.ts`): point along a
+    part axis, quarter turn about z, move along z by a step, and *Place again* (a session
+    target, `anchorTargetStore`: the next click on that part re-snaps the same anchor, so
+    mates, cables and a component's record of it stay).
+  - Cables routed by clicking: *Add waypoints by clicking* sets a route target; each click
+    adds a "Waypoint" anchor at the end of the route (one undo step each); a waypoint can be
+    placed again.
+  - Box selection: 3D view (`core/scene/boxSelect.ts`, `viewport/picking/boxDrag.ts`): a
+    left press on empty space (no part under it, not a gizmo handle) and a drag past 4 px;
+    rightward = window (projected mesh bounds inside), leftward = crossing (overlapping);
+    components selected whole. Schematic: React Flow `selectionOnDrag`, pan on middle/right.
+  - `container.eurobox` generator: footprints 200 × 150 to 800 × 600 with the heights of the
+    Auer EG range as presets (21), from retailer listings and Weidinger datasheets (2026-11;
+    outer sizes medium confidence, opening/floor/stacking depth low, walls estimated). Rim
+    and stacking seat anchors share an interface tag. 600 × 400 × 170 models at 1.41 kg
+    against 1.51 kg listed.

@@ -26,7 +26,10 @@ F fits everything; Ctrl+1…7 are the standard views.
   else is listed as skipped. Native CAD files (SolidWorks `.SLDPRT`/`.SLDASM`, Inventor,
   Fusion, CATIA...) cannot be read: download or export STEP instead. StudioVD never fetches
   from those sites itself, and a downloaded model keeps the licence its author gave it.
-- Select in the 3D view or the tree; Ctrl-click adds or removes. **Drag** a part (or a
+- Select in the 3D view or the tree; Ctrl-click adds or removes. **Box selection**: drag
+  with the left button over empty space; dragged rightward the box selects what lies
+  entirely inside it, dragged leftward everything it touches (Ctrl adds to the selection).
+  **Drag** a part (or a
   library component) in the 3D view to slide it along the ground; hold **Shift** to move it
   straight up or down. Everything mated to it moves along, and each drag is one undo step.
   Move (T) and rotate (R) with the gizmo for exact moves; a right click opens a context menu.
@@ -39,7 +42,13 @@ F fits everything; Ctrl+1…7 are the standard views.
 ## Assembling
 
 1. **Place Anchor** (toolbar): hover a face, edge or hole; StudioVD proposes a point, plane
-   or axis; click to place it. Anchors carry interface tags (`bore-8mm`) used for snapping.
+   or axis; click to place it. The tool then goes back to Select; **Shift**+click to place
+   several in a row. Anchors carry interface tags (`bore-8mm`) used for snapping. To put an
+   anchor right, select it (from its part's Anchors list): **Place again on the part…** and
+   click where it goes (it keeps its mates and cables), **Point along** ±X/±Y/±Z of the part,
+   **Turn 90°** about its direction, **In**/**Out** along it by a step, or type its origin.
+   Selected parts show their anchors only with View › Show Anchors of Selected Parts; Place
+   Anchor and Mate always show them.
 2. **Mate** (toolbar): pick two anchors and a type (fixed, revolute, prismatic, spherical).
    The part that is not grounded moves onto the other; flip and angle offset adjust it.
    Revolute and prismatic mates can have limits.
@@ -57,9 +66,10 @@ in Properties. A cable leaves each end straight along its anchor, then curves to
   laid as **Arcs** (bulging away from the surfaces its ends are on), **Waves** or one **Coil**.
   A cable shorter than its route is drawn taut and marked "Too short by … mm" (in Properties
   and the Scene tree); **Fit to route + 10%** cuts it to fit. It is never stretched.
-- **Route**: **Add waypoint** routes it through any other anchor, such as a cable clip's or
-  zip tie's "Cable through" anchor or an anchor you placed on a wall; reorder or remove
-  waypoints with the arrows. Deleting a waypoint's part takes it out of the route; deleting an
+- **Route**: **Add waypoints by clicking**, then click surfaces in the 3D view in the order
+  the cable should pass them (Esc to finish). **Add waypoint** routes it through an existing
+  anchor, such as a cable clip's or zip tie's "Cable through" anchor. Reorder waypoints with
+  the arrows, place one again with the crosshair, or remove it. Deleting a waypoint's part takes it out of the route; deleting an
   end deletes the cable.
 - **Look**: a wire colour (one shared material per colour), a hook-up wire size (16–30 AWG
   sets the diameter), **One wire** or a **Twisted pair** (one twist every … mm), and how far it
@@ -89,7 +99,9 @@ The Library tab lists:
   a 9 V battery with snap leads, a circuit board with mounting holes and wire pads, a 5 mm LED,
   cable clips and zip ties. Panel parts mate behind a panel hole by their bushing; their lugs
   and pads are anchors to start cables from. Sizes are typical starting values: check the
-  datasheet of the part you buy.
+  datasheet of the part you buy. **Euroboxes** (search "eurobox"): Euro stacking containers
+  200 × 150 to 800 × 600 in the heights they are sold in, any height in Properties; mate one's
+  Stacking seat to another's Rim to stack them.
 - **Installed** and **My components**: packs you installed and components you saved
   (select parts, Edit › Save as Component…).
 - **Online catalog**: electronic parts and boards from KiCad's libraries, and more. Press
@@ -109,7 +121,8 @@ to it) or, for a new major version, **Replace**.
 ## The schematic
 
 Add blocks from the schematic toolbar (or the Library's primitives) and draw wires between
-ports. Colours, line patterns and port shapes show the domain (electrical, mechanical,
+ports. Drag with the left button over empty canvas to select blocks with a box; the middle
+or right button pans, the wheel zooms. Colours, line patterns and port shapes show the domain (electrical, mechanical,
 fluid, light, data); a wire that cannot connect says why while you drag. A block's Properties
 hold its parameters (type `4.7k`, `100n`, `10u`); a **black box** has your own ports,
 parameters and behaviour written as expressions. Link a block to parts to show the

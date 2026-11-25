@@ -20,6 +20,31 @@ async function openLibrary(page: Page) {
 test.describe("library", () => {
   test.describe.configure({ timeout: 90_000 })
 
+  test("every Eurobox size is in the Library, with its stacking anchors (0.2.1)", async ({
+    page,
+  }) => {
+    const list = await openLibrary(page)
+    const search = page.getByRole("searchbox", { name: "Search components" })
+    // The list draws only the rows in view: count one footprint's heights instead of all 21.
+    await search.fill("eurobox 800")
+    await expect(list.getByRole("option")).toHaveText([
+      /800 × 600 × 120/,
+      /800 × 600 × 220/,
+      /800 × 600 × 320/,
+      /800 × 600 × 420/,
+      /800 × 600 × 520/,
+    ])
+    await search.fill("eurobox 600 × 400 × 220")
+    await list.getByRole("option", { name: /600 × 400 × 220/ }).click()
+    await page.getByRole("button", { name: "Insert", exact: true }).click()
+    await expect.poll(() => components(page), { timeout: 20_000 }).toHaveLength(1)
+    const [box] = await components(page)
+    expect(box?.name).toBe("Eurobox 600 × 400 × 220")
+    // Its rim and stacking seat carry the same tag: the Mate tool pairs them.
+    const anchors = await page.evaluate(() => window.__STUDIOVD_VIEWPORT__?.anchors() ?? [])
+    expect(anchors.map((a) => a.name).sort()).toEqual(["Bottom", "Floor", "Rim", "Stacking seat"])
+  })
+
   test("search, insert with Enter and with Insert, undo and redo", async ({ page }) => {
     const list = await openLibrary(page)
     await expect(list.getByRole("option").first()).toBeVisible()

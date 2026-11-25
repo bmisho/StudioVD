@@ -19,6 +19,8 @@ const PreferencesSchema = z
     navigationPreset: z.enum(PRESETS),
     zoomToCursor: z.boolean(),
     zoomSpeed: z.number().min(0.1).max(5),
+    // 0.2.1: files saved before it lack the key; they keep their other choices.
+    showSelectionAnchors: z.boolean().default(false),
   })
   .strict()
 
@@ -28,11 +30,13 @@ export const DEFAULT_PREFERENCES: Preferences = {
   navigationPreset: "solidworks",
   zoomToCursor: true,
   zoomSpeed: 1,
+  showSelectionAnchors: false,
 }
 
 export interface PreferencesState extends Preferences {
   setNavigationPreset: (id: NavigationPresetId) => void
   setZoomToCursor: (on: boolean) => void
+  setShowSelectionAnchors: (on: boolean) => void
 }
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">
@@ -60,13 +64,14 @@ export function createPreferencesStore(storage: StorageLike | null) {
   return create<PreferencesState>()((set, get) => {
     const update = (patch: Partial<Preferences>) => {
       set(patch)
-      const { navigationPreset, zoomToCursor, zoomSpeed } = get()
-      save(storage, { navigationPreset, zoomToCursor, zoomSpeed })
+      const { navigationPreset, zoomToCursor, zoomSpeed, showSelectionAnchors } = get()
+      save(storage, { navigationPreset, zoomToCursor, zoomSpeed, showSelectionAnchors })
     }
     return {
       ...load(storage),
       setNavigationPreset: (navigationPreset) => update({ navigationPreset }),
       setZoomToCursor: (zoomToCursor) => update({ zoomToCursor }),
+      setShowSelectionAnchors: (showSelectionAnchors) => update({ showSelectionAnchors }),
     }
   })
 }

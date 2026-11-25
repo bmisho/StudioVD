@@ -6,6 +6,7 @@ import { createTestRig } from "@/core/scene/testRig"
 import type { Anchor, AnchorId, PartId } from "@/core/schema"
 import { glyphParts } from "@/features/assembly/glyphParts"
 import { useDocumentStore } from "@/store/document/documentStore"
+import { usePreferencesStore } from "@/store/preferences/preferencesStore"
 import { useSessionStore, type MateDraft } from "@/store/session/sessionStore"
 import { demandRoot, settle } from "@/test/demandRoot"
 import { resetStores } from "@/test/resetStores"
@@ -62,6 +63,7 @@ describe("PartsLayer anchor glyphs", () => {
   it("draws at most MAX_GLYPHS, the selected anchor always among them", async () => {
     const { base, ids, dots } = await mount(2 * MAX_GLYPHS)
     expect(dots()).toBe(0) // nothing selected, no tool: no glyphs
+    act(() => usePreferencesStore.getState().setShowSelectionAnchors(true))
     act(() => useSessionStore.getState().select([{ kind: "part", id: base }]))
     await settle()
     expect(dots()).toBe(MAX_GLYPHS)

@@ -11,6 +11,7 @@ import { MateToolHint } from "@/features/assembly/MateToolHint"
 import { InterferencePanel } from "@/features/physics/InterferencePanel"
 import { PhysicsStatsOverlay } from "@/features/physics/PhysicsStatsOverlay"
 import { PartTransformGizmo } from "./gizmos/PartTransformGizmo"
+import { SelectionTransformGizmo } from "./gizmos/SelectionTransformGizmo"
 import { createCameraRig } from "./camera/createCameraRig"
 import { MaterialSync } from "./materials/MaterialSync"
 import { PartsLayer } from "./parts/PartsLayer"
@@ -73,6 +74,7 @@ export function Viewport3D() {
           <MaterialSync />
           <PartsLayer />
           <PartTransformGizmo />
+          <SelectionTransformGizmo />
           <MatePreview />
           <InsertionGhost />
           <GlyphScaler />

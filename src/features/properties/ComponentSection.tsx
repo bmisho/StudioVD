@@ -7,6 +7,7 @@ import { useLibraryStore } from "@/store/session/libraryStore"
 import { ComponentSlots } from "./ComponentSlots"
 import { ComponentUpdate } from "./ComponentUpdate"
 import { GeneratorParamsForm } from "./GeneratorParamsForm"
+import { TieFitButton } from "./TieFitButton"
 
 const ORIGINS = {
   official: "Official catalog",
@@ -61,6 +62,7 @@ export function ComponentSection({ groupId }: { groupId: GroupId }) {
             params={made.params}
             onApply={(p) => editParameters(id, p)}
           />
+          <TieFitButton instance={id} />
         </>
       )}
       <ComponentSlots instance={id} />

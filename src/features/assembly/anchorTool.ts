@@ -7,7 +7,9 @@ import { documentHistory } from "@/store/document/history"
 import { useAnchorTarget } from "@/store/session/anchorTargetStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { anchorPreview, type AnchorPreview } from "./anchorPreviewStore"
+import { cableToolPick } from "./cableTool"
 import { candidateFromHit } from "./candidateFromHit"
+import { anchorAt } from "./glyphs"
 
 const cursorOf = (e: ThreeEvent<PointerEvent | MouseEvent>) => ({
   x: e.nativeEvent.clientX,
@@ -88,9 +90,18 @@ export function addWaypoint(cable: ConnectorId, preview: AnchorPreview): boolean
 export function clickAnchor(e: ThreeEvent<MouseEvent>, state: RootState): void {
   // Not a drag, and not a double click's second click (it would place the same anchor again).
   if (!isPlainClick(e.nativeEvent, e.delta)) return
+  const target = useAnchorTarget.getState().target
+  if (target?.kind === "cable") {
+    // An anchor already there (a lug, a pad, a tie) wins; else one where the cursor snaps.
+    const glyph = anchorAt(e.nativeEvent.clientX, e.nativeEvent.clientY)
+    if (glyph) return cableToolPick(glyph)
+    const at = candidateFromHit(e, cursorOf(e), state)
+    const id = at && placeAnchor(at, "Cable end")
+    if (id) cableToolPick(id)
+    return
+  }
   const preview = candidateFromHit(e, cursorOf(e), state)
   if (!preview) return
-  const target = useAnchorTarget.getState().target
   const session = useSessionStore.getState()
   if (target?.kind === "move") {
     if (!moveAnchor(target.anchor, preview)) return

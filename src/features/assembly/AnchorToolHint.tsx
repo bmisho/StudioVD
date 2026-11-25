@@ -4,7 +4,7 @@ import { useAnchorTarget } from "@/store/session/anchorTargetStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { anchorPreview } from "./anchorPreviewStore"
 
-/** What the clicks do: place anchors, lay a cable's waypoints, or move one anchor. */
+/** What the clicks do: place anchors, lay a cable's waypoints, move one anchor, draw cables. */
 function useTask(): { title: string; finish: string } {
   const target = useAnchorTarget((s) => s.target)
   const name = useDocumentStore((s) => {
@@ -19,6 +19,10 @@ function useTask(): { title: string; finish: string } {
     }
     return ""
   })
+  if (target?.kind === "cable")
+    return target.route.length === 0
+      ? { title: "Cable", finish: "Click where it starts: a lug, a pad or any surface" }
+      : { title: "Cable", finish: "Click zip ties on the way, then where it ends · Esc to stop" }
   if (target?.kind === "route")
     return {
       title: `Route ${name}`,

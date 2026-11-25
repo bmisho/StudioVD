@@ -106,4 +106,40 @@ test.describe("scene graph operations", () => {
     await page.keyboard.press("Control+z")
     await expect.poll(async () => (await partPose(page, leaf)).position).toEqual(start)
   })
+
+  test("Select All and one gizmo move the whole assembly as one undo step (0.2.2)", async ({
+    page,
+  }) => {
+    const { base, leaf } = await insertTestRig(page)
+    await page.getByTestId("viewport-canvas").click({ position: { x: 5, y: 5 } })
+    await page.keyboard.press("Control+a")
+    await expect(row(page, "Base")).toHaveAttribute("aria-selected", "true")
+    await expect(row(page, "Leaf")).toHaveAttribute("aria-selected", "true")
+    const [b0, l0] = [(await partPose(page, base)).position, (await partPose(page, leaf)).position]
+    // The pivot is the middle of both parts' boxes: x −60…121, y 0…89, z ±30.
+    const centre: [number, number, number] = [30.5, 44.5, 0]
+    const o = await project(page, centre)
+    const x = await project(page, [centre[0] + 10, centre[1], centre[2]])
+    const len = Math.hypot(x.x - o.x, x.y - o.y)
+    const dir = { x: (x.x - o.x) / len, y: (x.y - o.y) / len }
+    let grip: { x: number; y: number } | null = null
+    for (let d = 10; d <= 200 && !grip; d += 4) {
+      const p = { x: o.x + dir.x * d, y: o.y + dir.y * d }
+      await page.mouse.move(p.x, p.y)
+      if ((await gizmoAxis(page)) === "X") grip = p
+    }
+    if (!grip) throw new Error("no X handle on the selection's gizmo")
+    await page.mouse.down()
+    for (let i = 1; i <= 10; i++)
+      await page.mouse.move(grip.x + dir.x * 6 * i, grip.y + dir.y * 6 * i)
+    await page.mouse.up()
+    const [b1, l1] = [(await partPose(page, base)).position, (await partPose(page, leaf)).position]
+    const shift = (b1[0] ?? 0) - (b0[0] ?? 0)
+    expect(shift).toBeGreaterThan(5)
+    expect((l1[0] ?? 0) - (l0[0] ?? 0)).toBeCloseTo(shift, 3) // together
+    expect(l1[1]).toBeCloseTo(l0[1] ?? 0, 3)
+    await page.keyboard.press("Control+z") // both back in one step
+    await expect.poll(async () => (await partPose(page, base)).position).toEqual(b0)
+    await expect.poll(async () => (await partPose(page, leaf)).position).toEqual(l0)
+  })
 })

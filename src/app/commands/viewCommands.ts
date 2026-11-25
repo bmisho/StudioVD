@@ -1,4 +1,5 @@
 import { EXAMPLES, type ExampleId } from "@/features/examples/openExample"
+import { startAnchorTarget } from "@/store/session/anchorTargetStore"
 import type { Command, CommandDeps } from "./types"
 
 export function viewCommands({
@@ -78,6 +79,14 @@ export function viewCommands({
       label: "Place Anchor",
       run: () => s().setTool("anchor"),
       // Anchors are placed on the design pose, not on parts moving in test mode.
+      isEnabled: () => !s().testMode,
+      disabledReason: "leave test mode first",
+    },
+    {
+      id: "tool.cable",
+      label: "Cable",
+      // Click where it starts (a lug, a pad, any surface), zip ties on the way, where it ends.
+      run: () => startAnchorTarget({ kind: "cable", route: [] }),
       isEnabled: () => !s().testMode,
       disabledReason: "leave test mode first",
     },

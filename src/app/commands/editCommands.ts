@@ -129,6 +129,25 @@ export function editCommands(deps: CommandDeps): Command[] {
       disabledReason: "pick two anchors with the Mate tool first",
     },
     {
+      id: "edit.selectAll",
+      label: "Select All",
+      shortcuts: ["Ctrl+A"],
+      // Everything at the top of the tree: whole assemblies and components, loose parts; the
+      // gizmo then moves and turns it all together (0.2.2).
+      run: () => {
+        const { doc } = deps.document.getState()
+        const groups = Object.values(doc.groups).filter((g) => g.parentId === null)
+        const parts = Object.values(doc.parts).filter((p) => p.parentId === null)
+        session
+          .getState()
+          .select([
+            ...groups.map((g) => ({ kind: "group" as const, id: g.id })),
+            ...parts.map((p) => ({ kind: "part" as const, id: p.id })),
+          ])
+      },
+      isEnabled: () => Object.keys(deps.document.getState().doc.parts).length > 0,
+    },
+    {
       id: "edit.clearSelection",
       label: "Clear Selection",
       shortcuts: ["Escape"],

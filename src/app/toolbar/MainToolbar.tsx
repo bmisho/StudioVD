@@ -1,6 +1,7 @@
 import {
   Anchor,
   Box,
+  Cable,
   Columns2,
   FolderPlus,
   Link2,
@@ -16,6 +17,7 @@ import {
 import { Toolbar } from "radix-ui"
 import { useStore } from "zustand"
 import { useDocumentStore } from "@/store/document/documentStore"
+import { useAnchorTarget } from "@/store/session/anchorTargetStore"
 import { useSessionStore } from "@/store/session/sessionStore"
 import { ToolbarButton } from "./ToolbarButton"
 
@@ -25,6 +27,7 @@ function ToolbarDivider() {
 
 export function MainToolbar() {
   const activeTool = useSessionStore((s) => s.activeTool)
+  const drawingCables = useAnchorTarget((s) => s.target?.kind === "cable")
   const testMode = useSessionStore((s) => s.testMode)
   const ortho = useSessionStore((s) => s.projection === "orthographic")
   const vertical = useSessionStore((s) => s.splitOrientation === "vertical")
@@ -42,8 +45,13 @@ export function MainToolbar() {
       <ToolbarButton command="edit.redo" icon={Redo2} disabled={!canRedo} />
       <ToolbarDivider />
       <ToolbarButton command="tool.select" icon={MousePointer2} pressed={activeTool === "select"} />
-      <ToolbarButton command="tool.anchor" icon={Anchor} pressed={activeTool === "anchor"} />
+      <ToolbarButton
+        command="tool.anchor"
+        icon={Anchor}
+        pressed={activeTool === "anchor" && !drawingCables}
+      />
       <ToolbarButton command="tool.mate" icon={Link2} pressed={activeTool === "mate"} />
+      <ToolbarButton command="tool.cable" icon={Cable} pressed={drawingCables} />
       <ToolbarDivider />
       <ToolbarButton command="edit.newGroup" icon={FolderPlus} />
       <ToolbarDivider />

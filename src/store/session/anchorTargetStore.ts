@@ -4,10 +4,15 @@ import { useSessionStore } from "./sessionStore"
 
 /**
  * What Place Anchor's clicks are for, besides new anchors (session state): laying a cable's
- * waypoints in the order clicked, or putting one existing anchor somewhere else on its part.
+ * waypoints in the order clicked, putting one existing anchor somewhere else on its part, or
+ * drawing new cables end to end (the Cable tool).
  */
 export type AnchorTarget =
-  { kind: "route"; cable: ConnectorId } | { kind: "move"; anchor: AnchorId } | null
+  | { kind: "route"; cable: ConnectorId }
+  | { kind: "move"; anchor: AnchorId }
+  /** The Cable tool (0.2.2): the anchors of the cable being drawn, so far. */
+  | { kind: "cable"; route: readonly AnchorId[] }
+  | null
 
 export const useAnchorTarget = create<{ target: AnchorTarget }>()(() => ({ target: null }))
 

@@ -207,3 +207,55 @@ test("a cable's waypoints laid by clicking, in order, and one placed again (0.2.
     )
     .not.toEqual(before?.originMm)
 })
+
+test("the Cable tool draws a cable end to end through a zip tie, and fits the tie (0.2.2)", async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  await waitForViewport(page)
+  await page.getByRole("tab", { name: "Library" }).click()
+  await dragCardTo(page, "20 teeth bore 5", [-40, 0, 0])
+  await expect.poll(() => probe<unknown[]>(page, "components"), { timeout: 20_000 }).toHaveLength(1)
+  await dragCardTo(page, "36 teeth bore 8", [40, 0, 0])
+  await expect.poll(() => probe<unknown[]>(page, "components")).toHaveLength(2)
+  await dragCardTo(page, "Zip tie on a 19 mm mount", [0, 0, 30])
+  await expect.poll(() => probe<unknown[]>(page, "components")).toHaveLength(3)
+  await page.keyboard.press("Escape")
+  await page.getByTestId("viewport-canvas").click({ position: { x: 5, y: 5 } })
+  await page.keyboard.press("f")
+  await page.waitForTimeout(300)
+
+  type A = { id: string; name: string | null }
+  const anchors = await probe<A[]>(page, "anchors")
+  const [a, b] = anchors.filter((x) => x.name === "Belt line")
+  const tie = anchors.find((x) => x.name === "Cable through")
+  if (!a || !b || !tie) throw new Error("anchors missing")
+  await page
+    .getByRole("toolbar", { name: "Main toolbar" })
+    .getByRole("button", { name: "Cable" })
+    .click()
+  const hint = page.getByRole("status").filter({ hasText: "Cable" })
+  await expect(hint).toContainText("where it starts")
+  for (const id of [a.id, tie.id, b.id]) {
+    const at = await anchorPoint(page, id)
+    await page.mouse.click(at.x, at.y)
+  }
+  await expect
+    .poll(() => probe<{ kind: string; ends: string[] }[]>(page, "connectors"))
+    .toEqual([expect.objectContaining({ kind: "cable", ends: [a.id, tie.id, b.id] })])
+  await expect(hint).toContainText("where it starts") // ready for the next cable
+  await page.keyboard.press("Escape")
+
+  // The tie was sized to the one cable through it.
+  await page.getByRole("tab", { name: "Scene" }).click()
+  await page
+    .getByRole("treeitem", { name: /Zip tie on a 19 mm mount/ })
+    .first()
+    .click()
+  const panel = page.getByRole("complementary", { name: "Properties" })
+  await expect(panel.getByText(/1 cable runs through it/)).toBeVisible()
+  const text = (await panel.getByText(/1 cable runs through it/).textContent()) ?? ""
+  const [, fits, sized] = /Ø([\d.]+) mm bundle; it is sized for Ø([\d.]+) mm/.exec(text) ?? []
+  expect(fits).toBeDefined()
+  expect(sized).toBe(fits)
+})

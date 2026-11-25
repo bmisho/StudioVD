@@ -1,4 +1,5 @@
 import { isPrimaryClick, selectionChangeForClick } from "@/core/scene/pickPolicy"
+import { cableToolPick } from "@/features/assembly/cableTool"
 import { anchorAt } from "@/features/assembly/glyphs"
 import { pickMateAnchor } from "@/features/assembly/mateTool"
 import type { SelectionItem, SessionStore } from "@/store/session/sessionStore"
@@ -14,7 +15,12 @@ export function createViewportMissHandler(session: SessionStore) {
   return (event: MouseEvent) => {
     if (gizmoState.ownsClick()) return // a click on a gizmo handle is not a click on empty space
     const tool = session.getState().activeTool
-    if (tool === "anchor") return // Place Anchor: off a part, nothing
+    if (tool === "anchor") {
+      // Off a part Place Anchor does nothing; the Cable tool still takes a glyph sticking out.
+      const glyph = isPrimaryClick(event, 0) ? anchorAt(event.clientX, event.clientY) : null
+      if (glyph) cableToolPick(glyph)
+      return
+    }
     if (tool === "mate") {
       // The Mate tool picks anchors over empty space too (a glyph sticks out past its part).
       if (isPrimaryClick(event, 0)) pickMateAnchor(event.clientX, event.clientY)

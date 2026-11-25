@@ -98,7 +98,7 @@ export function installTauriMockScript(): void {
   const commands: Record<string, (args: Args, headers: Record<string, string>) => unknown> = {
     app_info: () => ({
       name: "StudioVD",
-      version: "0.2.1",
+      version: "0.2.2",
       tauriVersion: "2.e2e",
       os: "e2e-os",
       arch: "e2e-arch",

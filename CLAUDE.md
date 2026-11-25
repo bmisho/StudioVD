@@ -289,8 +289,10 @@ Further rules:
   physics. Cables (Phase 16, v3) add waypoint anchors and the length the user set:
   `cableRoute.ts` is the taut route, `cableSlack.ts` lays spare length (arcs away from the
   surfaces, waves, a coil) so the drawn centreline is that length (±0.05 mm), and a cable
-  shorter than its route is drawn taut and reported, never stretched. A deleted waypoint drops
-  out of the route; a deleted end deletes the cable.
+  shorter than its route is drawn taut and reported, never stretched. In design mode the drawn
+  centreline is then pushed out of the parts (`cableClearance.ts`, signed distance from
+  `partObstacles.ts`), so a cable lying round a part can draw a little longer than its
+  length. A deleted waypoint drops out of the route; a deleted end deletes the cable.
 - R3F requests a frame when objects are added or changed, **not when they are removed**: a
   component whose objects can go away (unmount, conditional children) calls
   `renderer/useRedrawOnRemoval.ts`, or the demand frameloop keeps drawing them.

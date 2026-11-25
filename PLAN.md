@@ -1592,3 +1592,20 @@ transparent materials, X-ray) and orbits the view; this phase adds what it lacks
     outer sizes medium confidence, opening/floor/stacking depth low, walls estimated). Rim
     and stacking seat anchors share an interface tag. 600 × 400 × 170 models at 1.41 kg
     against 1.51 kg listed.
+- [x] v0.2.2 (2026-11-25): the 0.2.1 tag build stopped on two runner faults (a 30 s timeout,
+  a WebKit `page.goto` internal error), so its installers never shipped; 0.2.2 carries all of
+  it plus the third round of feedback:
+  - Schematic flow drawn as beads on an unbroken wire (gaps made electrical wires look like
+    another domain's dashed line, and "not connected"); Results as Supplies / Uses.
+  - `electrical.latchingSwitch` (press toggles, state `pressed`/`on`); `switch.footswitch`
+    1.1 with its plunger on a 2.5 mm `press` slide; the pedal's circuit has Volume (divider),
+    Gain and Tone (trims) bound to their knobs and the footswitch bound to the latch.
+  - `cable.zipTie` 1.1 (flat strap, head, tail) and `cable.tieMount`; ties fit their cables
+    (`core/connectors/bundle.ts`: optimal equal-circle packings for up to ten wires, +5 %).
+  - Cable tool: a Place Anchor target (`cable`) that picks glyphs or snaps new "Cable end"
+    anchors; "Cable through" anchors become waypoints, any other anchor ends the cable.
+  - Select All and a selection gizmo (`core/scene/selectionTransform.ts`).
+  - Cables cleared of parts in design mode (`core/connectors/cableClearance.ts`: pushes out
+    along the part meshes' BVH signed distance, then walks segment lengths back, ends, leads
+    and waypoints pinned; `viewport/parts/partObstacles.ts`). Test mode redraws per frame and
+    keeps the laid route.

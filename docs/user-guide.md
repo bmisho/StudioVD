@@ -29,6 +29,8 @@ F fits everything; Ctrl+1…7 are the standard views.
 - Select in the 3D view or the tree; Ctrl-click adds or removes. **Box selection**: drag
   with the left button over empty space; dragged rightward the box selects what lies
   entirely inside it, dragged leftward everything it touches (Ctrl adds to the selection).
+  **Edit › Select All** (Ctrl+A) selects everything; a selection of several items, or an
+  assembly's group, gets one move/rotate gizmo and moves as one, mated parts included.
   **Drag** a part (or a
   library component) in the 3D view to slide it along the ground; hold **Shift** to move it
   straight up or down. Everything mated to it moves along, and each drag is one undo step.
@@ -59,8 +61,16 @@ F fits everything; Ctrl+1…7 are the standard views.
 
 ## Cables
 
-Select two anchors (a lug, a pad, a jack's contact: any point or axis) and choose **Cable**
-in Properties. A cable leaves each end straight along its anchor, then curves to the other.
+**Cable** (toolbar): click where a cable starts (a lug, a pad, a jack's contact, or any
+surface), click the "Cable through" of any zip tie it should pass, then click where it ends.
+The cable is cut to its route plus a little, and the tool stays on for the next one (Esc to
+stop). Or select two anchors and choose **Cable** in Properties. A cable leaves each end
+straight along its anchor, then curves to the other; in the 3D view it is kept out of the
+parts, lying on their surfaces where it would cross them.
+
+**Zip ties** (Library: "Zip tie", "Zip tie on a mount" for walls) size themselves to the
+cables the Cable tool runs through them; a tie's Properties show the bundle and offer **Fit to
+its cables**.
 
 - **Length (mm)** is the length as cut. Properties show the route and the spare; the spare is
   laid as **Arcs** (bulging away from the surfaces its ends are on), **Waves** or one **Coil**.

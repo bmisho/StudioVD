@@ -1,6 +1,7 @@
 import type { RootState, ThreeEvent } from "@react-three/fiber"
 import { uniqueAnchorName } from "@/core/assembly/anchorNames"
 import { isPlainClick } from "@/core/scene/pickPolicy"
+import { pickRefOf } from "@/features/viewport/picking/pickTarget"
 import { MAX_CABLE_VIA, type AnchorId, type ConnectorId } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
 import { documentHistory } from "@/store/document/history"
@@ -17,6 +18,13 @@ const cursorOf = (e: ThreeEvent<PointerEvent | MouseEvent>) => ({
 })
 const store = () => useDocumentStore.getState()
 
+/**
+ * The hit on the first part under the cursor: a cable (or anything else not a part) in front
+ * is looked through, since anchors go on parts (0.2.2: cables now lie on parts' surfaces).
+ */
+const partHit = (e: ThreeEvent<PointerEvent | MouseEvent>) =>
+  e.intersections.find((h) => pickRefOf(h.object)?.kind === "part") ?? e
+
 /** The part an anchor being placed again must stay on (null: any part will do). */
 function partOfTarget() {
   const target = useAnchorTarget.getState().target
@@ -31,7 +39,8 @@ function partOfTarget() {
  */
 export function previewAnchor(e: ThreeEvent<PointerEvent>, state: RootState): void {
   // Not while orbiting or panning: the preview would chase the moving view.
-  const preview = e.nativeEvent.buttons === 0 ? candidateFromHit(e, cursorOf(e), state) : null
+  const preview =
+    e.nativeEvent.buttons === 0 ? candidateFromHit(partHit(e), cursorOf(e), state) : null
   const only = partOfTarget()
   anchorPreview.set(preview && (!only || preview.partId === only) ? preview : null)
 }
@@ -95,12 +104,12 @@ export function clickAnchor(e: ThreeEvent<MouseEvent>, state: RootState): void {
     // An anchor already there (a lug, a pad, a tie) wins; else one where the cursor snaps.
     const glyph = anchorAt(e.nativeEvent.clientX, e.nativeEvent.clientY)
     if (glyph) return cableToolPick(glyph)
-    const at = candidateFromHit(e, cursorOf(e), state)
+    const at = candidateFromHit(partHit(e), cursorOf(e), state)
     const id = at && placeAnchor(at, "Cable end")
     if (id) cableToolPick(id)
     return
   }
-  const preview = candidateFromHit(e, cursorOf(e), state)
+  const preview = candidateFromHit(partHit(e), cursorOf(e), state)
   if (!preview) return
   const session = useSessionStore.getState()
   if (target?.kind === "move") {

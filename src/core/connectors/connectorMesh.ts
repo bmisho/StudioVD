@@ -5,6 +5,7 @@ import { applyPoint, type Rigid } from "@/core/math/rigid"
 import { add, cross, dot, length, normalize, rotate, scale, sub } from "@/core/math/vec3"
 import type { Connector, Vec3 } from "@/core/schema"
 import { beltPath } from "./beltPath"
+import { clearOfParts, pinnedPoints, type ClearPoint } from "./cableClearance"
 import { buildCable, cableLayout } from "./cableMesh"
 
 const originOf = (r: Rigid): Vec3 => applyPoint(r, [0, 0, 0])
@@ -68,13 +69,26 @@ const bezier = (p0: Vec3, p1: Vec3, p2: Vec3, p3: Vec3, n: number): Vec3[] =>
  * z and bending between them, a spring coiled from one anchor to the other. Null when the
  * ends make no shape (wheels inside each other, ends on one point).
  */
-export function connectorMesh(c: Connector, ends: readonly Rigid[]): BodyMesh | null {
+export function connectorMesh(
+  c: Connector,
+  ends: readonly Rigid[],
+  clear?: ClearPoint
+): BodyMesh | null {
   if (c.kind === "belt") return belt(c, ends)
   if (c.kind === "cable") {
     const laid = cableLayout(c, ends)
     if (!laid) return null
+    // Kept out of the parts (0.2.2): a twisted pair is a wire's thickness either side.
+    const points = clear
+      ? clearOfParts(
+          laid.points,
+          c.conductors === 1 ? c.outerMm / 2 : c.outerMm,
+          pinnedPoints(laid.points, c.leadMm, ends.slice(1, -1).map(originOf), 2),
+          clear
+        )
+      : laid.points
     const b = new BodyBuilder()
-    buildCable(b, c, laid)
+    buildCable(b, c, { ...laid, points })
     return outward(b.build())
   }
   const [a, z] = ends

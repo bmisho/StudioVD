@@ -4,9 +4,9 @@ import { useMemo, useRef, useState } from "react"
 import { Box3, Vector3, type Group } from "three"
 import { fromPose, type Rigid } from "@/core/math/rigid"
 import { movedWithPivot, partsOfSelection } from "@/core/scene/selectionTransform"
-import type { PartId, Vec3 } from "@/core/schema"
+import type { PartId, SceneDocument, Vec3 } from "@/core/schema"
 import { useDocumentStore } from "@/store/document/documentStore"
-import { useSessionStore } from "@/store/session/sessionStore"
+import { useSessionStore, type SelectionItem } from "@/store/session/sessionStore"
 import { visiblePartsBox } from "../camera/sceneBounds"
 import { partObject } from "../parts/partObjects"
 import { readSceneTokens } from "../theme/sceneTokens"
@@ -30,8 +30,20 @@ function centreOf(parts: readonly PartId[]): Vec3 | null {
 }
 
 /**
- * Move/rotate gizmo for a selection of several parts, or a group such as a whole assembly or
- * a library component (0.2.2; one part keeps PartTransformGizmo): one pivot at the middle of
+ * Whether a selection gets this gizmo: several items, or one group that is not a library
+ * component (an assembly, an imported model's hierarchy). One part has its own gizmo; a
+ * dropped component is moved by dragging it, which a gizmo on its middle would catch.
+ */
+function wantsGizmo(doc: SceneDocument, selection: readonly SelectionItem[]): boolean {
+  if (selection.length > 1) return true
+  const [only] = selection
+  if (only?.kind !== "group") return false
+  return !Object.values(doc.components).some((c) => c.groupId === only.id)
+}
+
+/**
+ * Move/rotate gizmo for a selection of several parts, or a group such as a whole assembly
+ * (0.2.2; one part keeps PartTransformGizmo): one pivot at the middle of
  * them, everything mated to them coming along. During a drag only scene objects move; release
  * writes every pose as ONE undo entry.
  */
@@ -45,11 +57,11 @@ export function SelectionTransformGizmo() {
   const [pivot, setPivot] = useState<Group | null>(null)
   const start = useRef<Rigid | null>(null)
 
-  const single = selection.length === 1 && selection[0]?.kind === "part"
   const moved = useMemo(() => {
-    if (!designing || single) return []
-    return partsOfSelection(useDocumentStore.getState().doc, selection)
-  }, [designing, single, selection])
+    const doc = useDocumentStore.getState().doc
+    if (!designing || !wantsGizmo(doc, selection)) return []
+    return partsOfSelection(doc, selection)
+  }, [designing, selection])
   const centre = moved.length > 0 ? centreOf(moved) : null
 
   if (moved.length === 0 || !centre) return null

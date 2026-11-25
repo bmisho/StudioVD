@@ -16,6 +16,7 @@ vi.mock("./candidateFromHit", () => ({ candidateFromHit: () => preview.current }
 const click = (detail: number, shiftKey = false) =>
   ({
     nativeEvent: { type: "click", button: 0, detail, clientX: 10, clientY: 10, shiftKey },
+    intersections: [],
     delta: 0,
   }) as unknown as ThreeEvent<MouseEvent>
 

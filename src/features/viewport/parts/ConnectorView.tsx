@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo } from "react"
 import { BufferGeometry, Float32BufferAttribute, Uint32BufferAttribute, type Group } from "three"
+import type { ClearPoint } from "@/core/connectors/cableClearance"
 import { connectorMesh } from "@/core/connectors/connectorMesh"
 import type { Rigid } from "@/core/math/rigid"
 import type { Connector } from "@/core/schema"
@@ -22,10 +23,13 @@ export const ConnectorView = memo(
   function ConnectorView({
     connector,
     frames,
+    clear,
     selected,
   }: {
     connector: Connector
     frames: readonly Rigid[]
+    /** Keeps a cable out of the parts (design mode); in `signature` as the parts' places. */
+    clear?: ClearPoint | undefined
     signature: string
     selected: boolean
   }) {
@@ -36,7 +40,7 @@ export const ConnectorView = memo(
     const hovered = useIsHovered(item)
     const xray = useSessionStore((s) => s.displayMode === "xray")
     const geometry = useMemo(() => {
-      const mesh = connectorMesh(connector, frames)
+      const mesh = connectorMesh(connector, frames, clear)
       if (!mesh) return null
       const g = new BufferGeometry()
       g.setAttribute("position", new Float32BufferAttribute(mesh.positions, 3))
@@ -45,7 +49,7 @@ export const ConnectorView = memo(
       g.computeBoundingSphere()
       ensureBoundsTree(g)
       return g
-    }, [connector, frames])
+    }, [connector, frames, clear])
     useEffect(() => () => geometry?.dispose(), [geometry])
     const material = useDocumentStore((s) =>
       materialCache.get(
